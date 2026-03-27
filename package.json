@@ -1,0 +1,14 @@
+{
+  "name": "warp-ttd",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "demo": "node --experimental-strip-types ./src/cli.ts demo",
+    "hello": "node --experimental-strip-types ./src/cli.ts hello",
+    "catalog": "node --experimental-strip-types ./src/cli.ts catalog",
+    "frame": "node --experimental-strip-types ./src/cli.ts frame",
+    "step": "node --experimental-strip-types ./src/cli.ts step",
+    "test": "node --experimental-strip-types --test"
+  }
+}

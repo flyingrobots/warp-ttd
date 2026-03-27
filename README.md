@@ -97,6 +97,44 @@ Those docs are intentionally more constrained than the broader architecture
 notes. They are meant to define the first real protocol/schema/design slice
 instead of trying to solve the whole ecosystem in one pass.
 
+## First Build Slice
+
+The repo now also contains a tiny zero-dependency proof slice in `src/`:
+
+- handwritten protocol types
+- a `TtdHostAdapter` interface
+- an in-memory Echo-flavored fixture adapter
+- a dumb CLI client that prints frames and receipts
+
+This is intentionally pre-Wesley and pre-GraphQL. Its only job is to prove the
+first data-flow claim: one debugger client can talk to one host-shaped adapter
+through a small finite protocol.
+
+The current slice is specified by tests in:
+
+- `test/echoFixtureAdapter.spec.ts`
+
+Run it with:
+
+```sh
+node --experimental-strip-types ./src/cli.ts demo
+```
+
+or via:
+
+```sh
+node --experimental-strip-types ./src/cli.ts hello
+node --experimental-strip-types ./src/cli.ts catalog
+node --experimental-strip-types ./src/cli.ts frame
+node --experimental-strip-types ./src/cli.ts step
+```
+
+Run the spec tests with:
+
+```sh
+node --experimental-strip-types --test
+```
+
 ## Near-Term Questions
 
 1. What is the minimal cross-host TTD capability protocol?
