@@ -179,19 +179,19 @@ export class EchoFixtureAdapter implements TtdHostAdapter {
     Object.values(FIXTURE.heads).map((head) => [head.headId, cloneValue(head)])
   );
 
-  hello(): HostHello {
+  async hello(): Promise<HostHello> {
     return cloneValue(FIXTURE.hello);
   }
 
-  laneCatalog(): LaneCatalog {
+  async laneCatalog(): Promise<LaneCatalog> {
     return cloneValue(FIXTURE.catalog);
   }
 
-  playbackHead(headId: string): PlaybackHeadSnapshot {
+  async playbackHead(headId: string): Promise<PlaybackHeadSnapshot> {
     return cloneValue(requireHeadState(this.#heads, headId));
   }
 
-  frame(headId: string, frameIndex?: number): PlaybackFrame {
+  async frame(headId: string, frameIndex?: number): Promise<PlaybackFrame> {
     const head = requireHeadState(this.#heads, headId);
     const frames = requireFrames(FIXTURE.frames, headId);
     const resolvedIndex = frameIndex ?? head.currentFrameIndex;
@@ -206,7 +206,7 @@ export class EchoFixtureAdapter implements TtdHostAdapter {
     return cloneValue(frame);
   }
 
-  receipts(headId: string, frameIndex?: number): ReceiptSummary[] {
+  async receipts(headId: string, frameIndex?: number): Promise<ReceiptSummary[]> {
     const head = requireHeadState(this.#heads, headId);
     const resolvedIndex = frameIndex ?? head.currentFrameIndex;
     const receipts = FIXTURE.receipts[headId] ?? [];
@@ -216,7 +216,7 @@ export class EchoFixtureAdapter implements TtdHostAdapter {
     );
   }
 
-  stepForward(headId: string): PlaybackFrame {
+  async stepForward(headId: string): Promise<PlaybackFrame> {
     const head = requireHeadState(this.#heads, headId);
     const frames = requireFrames(FIXTURE.frames, headId);
     const nextIndex = Math.min(head.currentFrameIndex + 1, frames.length - 1);
