@@ -191,7 +191,7 @@ export class GitWarpAdapter implements TtdHostAdapter {
     for (const strand of strands) {
       lanes.push({
         id: `ws:${strand.strandId}`,
-        kind: "working-set",
+        kind: "strand",
         parentId: "wl:live",
         writable: strand.overlay.writable,
         description: `Strand ${strand.strandId}${strand.scope ? ` (${strand.scope})` : ""}`

@@ -40,10 +40,10 @@ const FIXTURE: FixtureState = {
       },
       {
         id: "ws:sandbox",
-        kind: "working-set",
+        kind: "strand",
         parentId: "wl:main",
         writable: true,
-        description: "Speculative child working set at frame 1"
+        description: "Speculative child strand at frame 1"
       }
     ]
   },

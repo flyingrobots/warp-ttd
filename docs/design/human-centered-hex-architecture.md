@@ -16,7 +16,7 @@ The substrate remains responsible for causal truth:
 - worldlines
 - immutable `WarpGraph` snapshots
 - observers
-- working sets
+- strands
 - BTRs
 - replay/materialization
 
@@ -101,7 +101,7 @@ rather than host-specific reinvention.
 
 When a user wants to continue from the past, the debugger makes the boundary
 explicit: historical observation is read-only, and "try from here" creates a
-fork or working set.
+fork or strand.
 
 ### Non-Goals
 
@@ -213,7 +213,7 @@ Humans want one scrubber and one stepper.
 The substrate may contain:
 
 - many worldlines
-- many working sets
+- many strands
 - multiple observers
 - overlapping writable authorities
 
@@ -262,7 +262,7 @@ rather than pretending there is one universal "debug truth panel."
 Enumerates:
 
 - worldlines
-- working sets
+- strands
 - ancestry/braid relations
 - available playback heads
 - readable versus writable lanes
@@ -301,9 +301,9 @@ Supports:
 Optional, capability-gated support for:
 
 - fork from coordinate
-- create working set
+- create strand
 - enqueue intents
-- tick working set
+- tick strand
 
 ### `SessionStorePort`
 

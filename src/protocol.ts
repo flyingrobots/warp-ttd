@@ -1,6 +1,6 @@
 export type HostKind = "echo" | "git-warp";
 
-export type LaneKind = "worldline" | "working-set";
+export type LaneKind = "worldline" | "strand";
 
 export type LaneRef = {
   id: string;

@@ -44,7 +44,7 @@ test("LaneCatalog v0.1.0 shape", async () => {
   assert.equal(typeof lane.kind, "string");
   assert.equal(typeof lane.writable, "boolean");
   assert.equal(typeof lane.description, "string");
-  assert.ok(lane.kind === "worldline" || lane.kind === "working-set");
+  assert.ok(lane.kind === "worldline" || lane.kind === "strand");
 });
 
 test("PlaybackHeadSnapshot v0.1.0 shape", async () => {

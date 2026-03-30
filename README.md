@@ -73,7 +73,7 @@ Key domain concepts:
 - **DebuggerSession** — human-facing debugger object (planned, Cycle E)
 - **Frame** — composite snapshot across tracked lanes at a point in time
 - **Receipt** — per-operation provenance from a materialized tick
-- **Lane** — worldline (read-only history) or working-set (speculative)
+- **Lane** — worldline (read-only history) or strand (speculative)
 
 ## Design Documents
 
