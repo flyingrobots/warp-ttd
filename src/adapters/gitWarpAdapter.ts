@@ -63,7 +63,11 @@ type IndexedFrame = {
   readonly receipts: TickReceipt[];
 };
 
-const GIT_WARP_HOST_VERSION = "16.0.0";
+// Read the actual installed git-warp version at import time.
+// createRequire is needed because package.json isn't an ES module.
+import { createRequire } from "node:module";
+const gitWarpPkg = createRequire(import.meta.url)("@git-stunts/git-warp/package.json") as { version: string };
+const GIT_WARP_HOST_VERSION: string = gitWarpPkg.version;
 
 /**
  * Builds the frame index from TickReceipts.
