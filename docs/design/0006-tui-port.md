@@ -51,11 +51,12 @@ local file refs. This makes the repo self-contained and reproducible.
 - `WarpClientPort` — replaced by `TtdHostAdapter`
 - `domain/models/warp.ts` — replaced by `src/protocol.ts` types
 
-### Known boundary violation
+### Boundary violation (resolved)
 
-The TUI currently imports and constructs `EchoFixtureAdapter` and
-`GitWarpAdapter` directly in the render layer. This violates hexagonal
-architecture. Scheduled for fix in Cycle C (Hexagonal Cleanup).
+The initial TUI port imported and constructed concrete adapters directly
+in the render layer. This was resolved in Cycle C (Hexagonal Cleanup) by
+introducing the adapter registry (`src/app/adapterRegistry.ts`). See
+design doc 0007.
 
 ## Key files
 

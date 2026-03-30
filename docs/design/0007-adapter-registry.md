@@ -32,7 +32,7 @@ type AdapterConfig =
 A single async function resolves a config into a ready adapter:
 
 ```typescript
-async function resolveAdapter(config: AdapterConfig): Promise<TtdHostAdapter>
+async function resolveAdapter(config: AdapterConfig): Promise<ResolvedAdapter>
 ```
 
 This function lives at the application layer (`src/app/adapterRegistry.ts`),
