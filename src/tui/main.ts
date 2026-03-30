@@ -462,7 +462,11 @@ const mainApp = {
         if (msg.key === "escape") {
           pm = { ...pm, connectStep: "choose" };
         } else if (msg.key === "enter") {
-          pm = { ...pm, repoPath: pm.inputValue, connectStep: "input-graph", inputValue: "default" };
+          if (pm.inputValue.trim().length === 0) {
+            pm = { ...pm, error: "Repository path cannot be empty" };
+          } else {
+            pm = { ...pm, repoPath: pm.inputValue, connectStep: "input-graph", inputValue: "default", error: null };
+          }
         } else if (msg.key === "backspace") {
           pm = { ...pm, inputValue: pm.inputValue.slice(0, -1) };
         } else if (msg.key.length === 1) {
@@ -542,8 +546,12 @@ const mainApp = {
               const frame = await adapter.frame(headId, frameIndex);
               const receipts = await adapter.receipts(headId, frameIndex);
               emit({ type: "frame-result", frame, receipts });
-            } catch {
-              // Out-of-range frame index — no-op by design (0-9 keys)
+            } catch (err) {
+              const msg = err instanceof Error ? err.message : String(err);
+              // Out-of-range frame index is expected (0-9 keys); other errors surface
+              if (!msg.includes("out of range") && !msg.includes("out of bounds")) {
+                emit({ type: "connect-error", message: msg });
+              }
             }
           }
         ]];
@@ -564,4 +572,11 @@ const mainApp = {
   view: (model: any) => framedApp.view(model)
 };
 
-run(mainApp).then(() => process.exit(0));
+run(mainApp).then(
+  () => process.exit(0),
+  (err: unknown) => {
+    const message = err instanceof Error ? err.message : String(err);
+    process.stderr.write(`Fatal: ${message}\n`);
+    process.exit(1);
+  }
+);

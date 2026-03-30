@@ -12,12 +12,28 @@ CEILING=$(tr -d '[:space:]' < "$CEILING_FILE")
 
 # Use JSON output for reliable parsing (immune to locale/format changes)
 LINT_JSON=$(npx eslint . --format json 2>/dev/null || true)
+
+if [ -z "$LINT_JSON" ]; then
+  echo "ERROR: ESLint produced no output"
+  exit 1
+fi
+
 COUNT=$(echo "$LINT_JSON" | node -e "
   let d=''; process.stdin.on('data',c=>d+=c); process.stdin.on('end',()=>{
-    const r=JSON.parse(d); let n=0; for(const f of r) n+=f.errorCount;
-    process.stdout.write(String(n));
+    try {
+      const r=JSON.parse(d); let n=0; for(const f of r) n+=f.errorCount;
+      process.stdout.write(String(n));
+    } catch(e) {
+      process.stderr.write('ERROR: Failed to parse ESLint JSON output\n');
+      process.exit(1);
+    }
   });
 ")
+
+if [ -z "$COUNT" ]; then
+  echo "ERROR: Failed to extract error count from ESLint output"
+  exit 1
+fi
 
 echo "Lint errors: $COUNT / $CEILING ceiling"
 
