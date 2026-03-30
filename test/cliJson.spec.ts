@@ -97,3 +97,20 @@ test("demo --json outputs multiple envelope lines", async () => {
     parseLine(line);
   }
 });
+
+test("invalid command --json writes JSON error to stderr", async () => {
+  try {
+    await exec("node", [...NODE_ARGS, "badcommand", "--json"]);
+    assert.fail("Expected command to fail");
+  } catch (err) {
+    const execErr = err as { stderr: string; stdout: string };
+    // stdout should be empty
+    assert.equal(execErr.stdout.trim(), "");
+    // stderr should be valid JSON with error field
+    const errLine = execErr.stderr.trim();
+    assert.ok(errLine.startsWith("{"), `Expected JSON error on stderr, got: ${errLine}`);
+    const parsed = JSON.parse(errLine) as { error: string };
+    assert.equal(typeof parsed.error, "string");
+    assert.ok(parsed.error.includes("badcommand"));
+  }
+});

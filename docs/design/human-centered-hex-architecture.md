@@ -184,7 +184,7 @@ end
 subgraph domain["WARP Substrate Domain"]
     worldline["Worldline"]
     observer["Observer"]
-    ws["WorkingSet"]
+    strand["Strand"]
     head["PlaybackHead"]
     g["WarpGraph"]
     btr["BTR / provenance / receipts"]

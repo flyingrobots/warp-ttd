@@ -107,6 +107,13 @@ async function main(): Promise<void> {
 }
 
 main().catch((err: unknown) => {
-  console.error(err);
+  const message = err instanceof Error ? err.message : String(err);
+
+  if (process.argv.includes("--json")) {
+    process.stderr.write(JSON.stringify({ error: message }) + "\n");
+  } else {
+    console.error(message);
+  }
+
   process.exitCode = 1;
 });
