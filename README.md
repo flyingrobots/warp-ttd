@@ -59,7 +59,7 @@ npm run test:integration # git-warp integration (creates temp repos)
 
 TTD follows hexagonal architecture:
 
-```
+```text
 Delivery Adapters (CLI, TUI)
   → TTD Application Core
     → TTD Ports (TtdHostAdapter)

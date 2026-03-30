@@ -108,7 +108,7 @@ function requireIndexedFrame(
 
   if (!frame) {
     throw new Error(
-      `Frame index ${index + 1} not found (max: ${frameIndex.length})`
+      `Internal frame index ${index} out of bounds (length: ${frameIndex.length})`
     );
   }
 
@@ -265,6 +265,14 @@ export class GitWarpAdapter implements TtdHostAdapter {
     // Frame 0 has no receipts
     if (resolvedIndex === 0) {
       return [];
+    }
+
+    const maxFrame = this.#frameIndex.length;
+
+    if (resolvedIndex < 0 || resolvedIndex > maxFrame) {
+      throw new Error(
+        `Frame index ${resolvedIndex} out of range [0, ${maxFrame}]`
+      );
     }
 
     const indexed = this.#frameIndex[resolvedIndex - 1];

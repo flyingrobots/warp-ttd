@@ -42,8 +42,8 @@ import type {
 type Msg =
   | { type: "quit" }
   | { type: "pulse"; dt: number }
-  | { type: "select-adapter"; adapter: TtdHostAdapter; defaultHeadId: string }
-  | { type: "adapter-ready"; hello: HostHello; catalog: LaneCatalog; head: PlaybackHeadSnapshot; frame: PlaybackFrame; receipts: ReceiptSummary[] }
+  | { type: "select-adapter"; adapter: TtdHostAdapter; defaultHeadId: string; generation: number }
+  | { type: "adapter-ready"; hello: HostHello; catalog: LaneCatalog; head: PlaybackHeadSnapshot; frame: PlaybackFrame; receipts: ReceiptSummary[]; generation: number }
   | { type: "step-result"; head: PlaybackHeadSnapshot; frame: PlaybackFrame; receipts: ReceiptSummary[] }
   | { type: "frame-result"; frame: PlaybackFrame; receipts: ReceiptSummary[] }
   | { type: "connect-error"; message: string }
@@ -70,6 +70,7 @@ interface Model {
   inputValue: string;
   repoPath: string;
   error: string | null;
+  connectGeneration: number;
 }
 
 const CONNECT_OPTIONS = [
@@ -77,7 +78,6 @@ const CONNECT_OPTIONS = [
   "git-warp (local repository)"
 ];
 
-const INPUT_EXCLUDED_KEYS = new Set(["q", "j", "k"]);
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -282,7 +282,8 @@ const initialModel: Model = {
   connectChoice: 0,
   inputValue: process.cwd(),
   repoPath: "",
-  error: null
+  error: null,
+  connectGeneration: 0
 };
 
 const framedApp = createFramedApp<Model, Msg>({
@@ -392,8 +393,9 @@ const mainApp = {
       return [nextModel, fCmds];
     }
 
-    // --- Adapter ready ---
+    // --- Adapter ready (guard against stale async results) ---
     if (msg.type === "adapter-ready") {
+      if (msg.generation !== pm.connectGeneration) return [nextModel, fCmds];
       pm = {
         ...pm,
         adapter: pm.adapter,
@@ -431,18 +433,21 @@ const mainApp = {
         } else if (msg.key === "enter") {
           if (pm.connectChoice === 0) {
             // Echo fixture — resolve through registry
+            const gen = pm.connectGeneration + 1;
+            pm = { ...pm, connectGeneration: gen };
+            nextModel = { ...nextModel, pageModels: updateAllPages(pm) };
             return [nextModel, [
               ...fCmds,
               async (emit: (msg: Msg) => void) => {
                 try {
                   const { adapter, defaultHeadId } = await resolveAdapter({ kind: "echo-fixture" });
-                  emit({ type: "select-adapter", adapter, defaultHeadId });
+                  emit({ type: "select-adapter", adapter, defaultHeadId, generation: gen });
                   const hello = await adapter.hello();
                   const catalog = await adapter.laneCatalog();
                   const head = await adapter.playbackHead(defaultHeadId);
                   const frame = await adapter.frame(defaultHeadId);
                   const receipts = await adapter.receipts(defaultHeadId);
-                  emit({ type: "adapter-ready", hello, catalog, head, frame, receipts });
+                  emit({ type: "adapter-ready", hello, catalog, head, frame, receipts, generation: gen });
                 } catch (err) {
                   emit({ type: "connect-error", message: err instanceof Error ? err.message : String(err) });
                 }
@@ -460,7 +465,7 @@ const mainApp = {
           pm = { ...pm, repoPath: pm.inputValue, connectStep: "input-graph", inputValue: "default" };
         } else if (msg.key === "backspace") {
           pm = { ...pm, inputValue: pm.inputValue.slice(0, -1) };
-        } else if (msg.key.length === 1 && !INPUT_EXCLUDED_KEYS.has(msg.key)) {
+        } else if (msg.key.length === 1) {
           pm = { ...pm, inputValue: pm.inputValue + msg.key };
         }
       } else if (pm.connectStep === "input-graph") {
@@ -470,6 +475,8 @@ const mainApp = {
           // Connect to git-warp via registry
           const repoPath = pm.repoPath;
           const graphName = pm.inputValue;
+          const gen = pm.connectGeneration + 1;
+          pm = { ...pm, connectGeneration: gen };
           nextModel = { ...nextModel, pageModels: updateAllPages(pm) };
           return [nextModel, [
             ...fCmds,
@@ -480,13 +487,13 @@ const mainApp = {
                   repoPath,
                   graphName
                 });
-                emit({ type: "select-adapter", adapter, defaultHeadId });
+                emit({ type: "select-adapter", adapter, defaultHeadId, generation: gen });
                 const hello = await adapter.hello();
                 const catalog = await adapter.laneCatalog();
                 const head = await adapter.playbackHead(defaultHeadId);
                 const frame = await adapter.frame(defaultHeadId);
                 const receipts = await adapter.receipts(defaultHeadId);
-                emit({ type: "adapter-ready", hello, catalog, head, frame, receipts });
+                emit({ type: "adapter-ready", hello, catalog, head, frame, receipts, generation: gen });
               } catch (err) {
                 emit({ type: "connect-error", message: err instanceof Error ? err.message : String(err) });
               }
@@ -494,7 +501,7 @@ const mainApp = {
           ]];
         } else if (msg.key === "backspace") {
           pm = { ...pm, inputValue: pm.inputValue.slice(0, -1) };
-        } else if (msg.key.length === 1 && !INPUT_EXCLUDED_KEYS.has(msg.key)) {
+        } else if (msg.key.length === 1) {
           pm = { ...pm, inputValue: pm.inputValue + msg.key };
         }
       }
@@ -513,10 +520,14 @@ const mainApp = {
         return [nextModel, [
           ...fCmds,
           async (emit: (msg: Msg) => void) => {
-            const frame = await adapter.stepForward(headId);
-            const head = await adapter.playbackHead(headId);
-            const receipts = await adapter.receipts(headId, frame.frameIndex);
-            emit({ type: "step-result", head, frame, receipts });
+            try {
+              const frame = await adapter.stepForward(headId);
+              const head = await adapter.playbackHead(headId);
+              const receipts = await adapter.receipts(headId, frame.frameIndex);
+              emit({ type: "step-result", head, frame, receipts });
+            } catch (err) {
+              emit({ type: "connect-error", message: err instanceof Error ? err.message : String(err) });
+            }
           }
         ]];
       }
@@ -541,6 +552,7 @@ const mainApp = {
 
     // --- select-adapter (set adapter on model after async connect) ---
     if (msg.type === "select-adapter") {
+      if (msg.generation !== pm.connectGeneration) return [nextModel, fCmds];
       pm = { ...pm, adapter: msg.adapter, defaultHeadId: msg.defaultHeadId };
       nextModel = { ...nextModel, pageModels: updateAllPages(pm) };
       return [nextModel, fCmds];

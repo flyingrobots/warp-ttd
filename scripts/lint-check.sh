@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -uo pipefail
 
 CEILING_FILE="lint-ceiling.txt"
 
@@ -9,8 +9,15 @@ if [ ! -f "$CEILING_FILE" ]; then
 fi
 
 CEILING=$(tr -d '[:space:]' < "$CEILING_FILE")
-LINT_OUTPUT=$(npx eslint . 2>&1 || true)
-COUNT=$(echo "$LINT_OUTPUT" | grep -o '✖ [0-9]*' | grep -o '[0-9]*' || echo "0")
+
+# Use JSON output for reliable parsing (immune to locale/format changes)
+LINT_JSON=$(npx eslint . --format json 2>/dev/null || true)
+COUNT=$(echo "$LINT_JSON" | node -e "
+  let d=''; process.stdin.on('data',c=>d+=c); process.stdin.on('end',()=>{
+    const r=JSON.parse(d); let n=0; for(const f of r) n+=f.errorCount;
+    process.stdout.write(String(n));
+  });
+")
 
 echo "Lint errors: $COUNT / $CEILING ceiling"
 

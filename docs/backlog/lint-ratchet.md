@@ -14,6 +14,8 @@ reaches zero.
 
 ## Ratchet Schedule
 
+Cycles ordered by planned completion, not alphabetically (see BACKLOG.md).
+
 | After Cycle | Ceiling |
 |-------------|---------|
 | (baseline)  | 226     |

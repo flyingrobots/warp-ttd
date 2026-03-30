@@ -35,10 +35,13 @@ test("lane catalog exposes the live worldline", async () => {
     assert.ok(catalog.lanes.length >= 1);
 
     const worldline = catalog.lanes.find((l) => l.kind === "worldline");
-    assert.ok(worldline, "Expected at least one worldline lane");
-    // assert.ok guarantees non-null at this point
-    assert.equal(worldline!.writable, false, "Live worldline is read-only for TTD");
-    assert.ok(worldline!.id.startsWith("wl:"), "Worldline ID should be prefixed with wl:");
+
+    if (worldline === undefined) {
+      assert.fail("Expected at least one worldline lane");
+    }
+
+    assert.equal(worldline.writable, false, "Live worldline is read-only for TTD");
+    assert.ok(worldline.id.startsWith("wl:"), "Worldline ID should be prefixed with wl:");
   } finally {
     await fixture.cleanup();
   }
@@ -165,7 +168,8 @@ test("receipts contain operation counts that match tick receipt data", async () 
     const receipts1 = await adapter.receipts("head:default", 1);
     assert.equal(receipts1.length, 1, "Frame 1 has one receipt (one patch at tick 1)");
 
-    const r1 = receipts1[0]!;
+    const r1 = receipts1[0];
+    assert.ok(r1 !== undefined, "Expected receipt at index 0");
     assert.equal(r1.frameIndex, 1);
     assert.equal(r1.admittedRewriteCount, 2, "Tick 1: NodeAdd + PropSet = 2 admitted");
     assert.equal(r1.rejectedRewriteCount, 0);
@@ -175,7 +179,8 @@ test("receipts contain operation counts that match tick receipt data", async () 
     const receipts2 = await adapter.receipts("head:default", 2);
     assert.equal(receipts2.length, 1, "Frame 2 has one receipt (one patch at tick 2)");
 
-    const r2 = receipts2[0]!;
+    const r2 = receipts2[0];
+    assert.ok(r2 !== undefined, "Expected receipt at index 0");
     assert.equal(r2.frameIndex, 2);
     assert.equal(r2.admittedRewriteCount, 3, "Tick 2: NodeAdd + PropSet + EdgeAdd = 3 admitted");
   } finally {

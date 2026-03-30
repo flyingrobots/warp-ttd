@@ -9,15 +9,19 @@ function printSection(label: string, value: unknown): void {
   console.log(JSON.stringify(value, null, 2));
 }
 
+function isValidCommand(cmd: string): cmd is Command {
+  return (VALID_COMMANDS as Set<string>).has(cmd);
+}
+
 function parseCommand(argv: string[]): Command {
   const command = argv[2];
 
-  if (!command) {
+  if (command === undefined) {
     return "demo";
   }
 
-  if (VALID_COMMANDS.has(command as Command)) {
-    return command as Command;
+  if (isValidCommand(command)) {
+    return command;
   }
 
   throw new Error(`Unsupported command: ${command}`);
