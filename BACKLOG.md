@@ -21,8 +21,8 @@ lifecycle rules.
 
 | Order | Cycle | Status | File |
 |-------|-------|--------|------|
-| 1 | A — Housekeeping & Reality Sync | queued (next) | [A-housekeeping-reality-sync.md](docs/backlog/A-housekeeping-reality-sync.md) |
-| 2 | C — Hexagonal Cleanup | queued | [C-hexagonal-cleanup.md](docs/backlog/C-hexagonal-cleanup.md) |
+| 1 | A — Housekeeping & Reality Sync | closed | [A-housekeeping-reality-sync.md](docs/backlog/A-housekeeping-reality-sync.md) |
+| 2 | C — Hexagonal Cleanup | queued (next) | [C-hexagonal-cleanup.md](docs/backlog/C-hexagonal-cleanup.md) |
 | 3 | B — Protocol Freeze | queued | [B-protocol-freeze.md](docs/backlog/B-protocol-freeze.md) |
 | 4 | E — DebuggerSession | queued | [E-debugger-session.md](docs/backlog/E-debugger-session.md) |
 | 5 | D — Strand & Speculation | queued | [D-strand-speculation.md](docs/backlog/D-strand-speculation.md) |
