@@ -24,8 +24,7 @@ import {
 import type { BijouContext, Surface } from "@flyingrobots/bijou";
 import { renderWaveShader } from "./shaders/bgShader.ts";
 import { renderDagShader } from "./shaders/dagShader.ts";
-import { EchoFixtureAdapter } from "../adapters/echoFixtureAdapter.ts";
-import { GitWarpAdapter } from "../adapters/gitWarpAdapter.ts";
+import { resolveAdapter } from "../app/adapterRegistry.ts";
 import type { TtdHostAdapter } from "../adapter.ts";
 import type {
   HostHello,
@@ -42,7 +41,7 @@ import type {
 type Msg =
   | { type: "quit" }
   | { type: "pulse"; dt: number }
-  | { type: "select-adapter"; adapter: TtdHostAdapter }
+  | { type: "select-adapter"; adapter: TtdHostAdapter; defaultHeadId: string }
   | { type: "adapter-ready"; hello: HostHello; catalog: LaneCatalog; head: PlaybackHeadSnapshot; frame: PlaybackFrame; receipts: ReceiptSummary[] }
   | { type: "step-result"; head: PlaybackHeadSnapshot; frame: PlaybackFrame; receipts: ReceiptSummary[] }
   | { type: "frame-result"; frame: PlaybackFrame; receipts: ReceiptSummary[] }
@@ -57,6 +56,7 @@ type Msg =
 interface Model {
   time: number;
   adapter: TtdHostAdapter | null;
+  defaultHeadId: string;
   hello: HostHello | null;
   catalog: LaneCatalog | null;
   head: PlaybackHeadSnapshot | null;
@@ -262,6 +262,7 @@ function inspectorLayout(model: Model, w: number, h: number): Surface {
 const initialModel: Model = {
   time: 0,
   adapter: null,
+  defaultHeadId: "",
   hello: null,
   catalog: null,
   head: null,
@@ -411,18 +412,17 @@ const mainApp = {
           pm = { ...pm, connectChoice: Math.max(pm.connectChoice - 1, 0) };
         } else if (msg.key === "enter") {
           if (pm.connectChoice === 0) {
-            // Echo fixture — connect immediately
-            const adapter = new EchoFixtureAdapter();
-            pm = { ...pm, adapter };
-            nextModel = { ...nextModel, pageModels: updateAllPages(pm) };
+            // Echo fixture — resolve through registry
             return [nextModel, [
               ...fCmds,
               async (emit: (msg: Msg) => void) => {
+                const { adapter, defaultHeadId } = await resolveAdapter({ kind: "echo-fixture" });
+                emit({ type: "select-adapter", adapter, defaultHeadId });
                 const hello = await adapter.hello();
                 const catalog = await adapter.laneCatalog();
-                const head = await adapter.playbackHead("head:main");
-                const frame = await adapter.frame("head:main");
-                const receipts = await adapter.receipts("head:main");
+                const head = await adapter.playbackHead(defaultHeadId);
+                const frame = await adapter.frame(defaultHeadId);
+                const receipts = await adapter.receipts(defaultHeadId);
                 emit({ type: "adapter-ready", hello, catalog, head, frame, receipts });
               }
             ]];
@@ -445,27 +445,24 @@ const mainApp = {
         if (msg.key === "escape") {
           pm = { ...pm, connectStep: "input-path", inputValue: pm.repoPath };
         } else if (msg.key === "enter") {
-          // Connect to git-warp
+          // Connect to git-warp via registry
           const repoPath = pm.repoPath;
           const graphName = pm.inputValue;
           nextModel = { ...nextModel, pageModels: updateAllPages(pm) };
           return [nextModel, [
             ...fCmds,
             async (emit: (msg: Msg) => void) => {
-              const { GitGraphAdapter, WarpCore, WebCryptoAdapter } = await import("@git-stunts/git-warp");
-              const Plumbing = (await import("@git-stunts/plumbing")).default;
-              const plumbing = Plumbing.createDefault({ cwd: repoPath });
-              const persistence = new GitGraphAdapter({ plumbing });
-              const crypto = new WebCryptoAdapter();
-              const graph = await WarpCore.open({ persistence, graphName, writerId: "ttd-observer", crypto });
-              const adapter = await GitWarpAdapter.create(graph as any);
-              pm = { ...pm, adapter };
+              const { adapter, defaultHeadId } = await resolveAdapter({
+                kind: "git-warp",
+                repoPath,
+                graphName
+              });
+              emit({ type: "select-adapter", adapter, defaultHeadId });
               const hello = await adapter.hello();
               const catalog = await adapter.laneCatalog();
-              const head = await adapter.playbackHead("head:default");
-              const frame = await adapter.frame("head:default");
-              const receipts = await adapter.receipts("head:default");
-              emit({ type: "select-adapter", adapter });
+              const head = await adapter.playbackHead(defaultHeadId);
+              const frame = await adapter.frame(defaultHeadId);
+              const receipts = await adapter.receipts(defaultHeadId);
               emit({ type: "adapter-ready", hello, catalog, head, frame, receipts });
             }
           ]];
@@ -482,7 +479,7 @@ const mainApp = {
 
     // --- Navigator keyboard handling ---
     if (pm.adapter && isKeyMsg(msg)) {
-      const headId = pm.hello?.hostKind === "echo" ? "head:main" : "head:default";
+      const headId = pm.defaultHeadId;
 
       if (msg.key === "n" || msg.key === "right") {
         // Step forward
@@ -518,7 +515,7 @@ const mainApp = {
 
     // --- select-adapter (set adapter on model after async connect) ---
     if (msg.type === "select-adapter") {
-      pm = { ...pm, adapter: msg.adapter };
+      pm = { ...pm, adapter: msg.adapter, defaultHeadId: msg.defaultHeadId };
       nextModel = { ...nextModel, pageModels: updateAllPages(pm) };
       return [nextModel, fCmds];
     }

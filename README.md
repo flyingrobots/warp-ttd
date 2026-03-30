@@ -83,6 +83,7 @@ Key domain concepts:
 - [0004 — TTD Protocol Surface](docs/design/0004-ttd-protocol-surface.md)
 - [0005 — git-warp Adapter](docs/design/0005-git-warp-adapter.md)
 - [0006 — TUI Port](docs/design/0006-tui-port.md)
+- [0007 — Adapter Registry](docs/design/0007-adapter-registry.md)
 
 ## Roadmap
 

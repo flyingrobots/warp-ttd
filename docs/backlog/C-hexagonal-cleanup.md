@@ -1,6 +1,6 @@
 # Cycle C — Hexagonal Cleanup
 
-**Status:** queued
+**Status:** closed
 
 ## Sponsor Human
 
