@@ -2,64 +2,73 @@ import { EchoFixtureAdapter } from "./adapters/echoFixtureAdapter.ts";
 
 type Command = "demo" | "hello" | "catalog" | "frame" | "step";
 
+const VALID_COMMANDS = new Set<Command>(["demo", "hello", "catalog", "frame", "step"]);
+
 function printSection(label: string, value: unknown): void {
   console.log(`\n## ${label}`);
   console.log(JSON.stringify(value, null, 2));
 }
 
-function parseCommand(argv: string[]): Command {
-  const command = argv[2] as Command | undefined;
+function isValidCommand(cmd: string): cmd is Command {
+  return (VALID_COMMANDS as Set<string>).has(cmd);
+}
 
-  if (!command) {
+function parseCommand(argv: string[]): Command {
+  const command = argv[2];
+
+  if (command === undefined) {
     return "demo";
   }
 
-  if (command === "demo" || command === "hello" || command === "catalog" || command === "frame" || command === "step") {
+  if (isValidCommand(command)) {
     return command;
   }
 
   throw new Error(`Unsupported command: ${command}`);
 }
 
-function main(): void {
+async function main(): Promise<void> {
   const adapter = new EchoFixtureAdapter();
   const command = parseCommand(process.argv);
   const headId = "head:main";
 
   if (command === "hello") {
-    printSection("HostHello", adapter.hello());
+    printSection("HostHello", await adapter.hello());
     return;
   }
 
   if (command === "catalog") {
-    printSection("LaneCatalog", adapter.laneCatalog());
+    printSection("LaneCatalog", await adapter.laneCatalog());
     return;
   }
 
   if (command === "frame") {
-    printSection("PlaybackHeadSnapshot", adapter.playbackHead(headId));
-    printSection("PlaybackFrame", adapter.frame(headId));
-    printSection("ReceiptSummary[]", adapter.receipts(headId));
+    printSection("PlaybackHeadSnapshot", await adapter.playbackHead(headId));
+    printSection("PlaybackFrame", await adapter.frame(headId));
+    printSection("ReceiptSummary[]", await adapter.receipts(headId));
     return;
   }
 
   if (command === "step") {
-    printSection("Before", adapter.playbackHead(headId));
-    printSection("NextFrame", adapter.stepForward(headId));
-    printSection("After", adapter.playbackHead(headId));
-    printSection("ReceiptSummary[]", adapter.receipts(headId));
+    printSection("Before", await adapter.playbackHead(headId));
+    printSection("NextFrame", await adapter.stepForward(headId));
+    printSection("After", await adapter.playbackHead(headId));
+    printSection("ReceiptSummary[]", await adapter.receipts(headId));
     return;
   }
 
-  printSection("HostHello", adapter.hello());
-  printSection("LaneCatalog", adapter.laneCatalog());
-  printSection("PlaybackHeadSnapshot", adapter.playbackHead(headId));
-  printSection("PlaybackFrame", adapter.frame(headId));
-  printSection("ReceiptSummary[]", adapter.receipts(headId));
-  printSection("StepForward", adapter.stepForward(headId));
-  printSection("PlaybackHeadSnapshot (after step)", adapter.playbackHead(headId));
-  printSection("PlaybackFrame (after step)", adapter.frame(headId));
-  printSection("ReceiptSummary[] (after step)", adapter.receipts(headId));
+  printSection("HostHello", await adapter.hello());
+  printSection("LaneCatalog", await adapter.laneCatalog());
+  printSection("PlaybackHeadSnapshot", await adapter.playbackHead(headId));
+  printSection("PlaybackFrame", await adapter.frame(headId));
+  printSection("ReceiptSummary[]", await adapter.receipts(headId));
+  printSection("StepForward", await adapter.stepForward(headId));
+  printSection("PlaybackHeadSnapshot (after step)", await adapter.playbackHead(headId));
+  printSection("PlaybackFrame (after step)", await adapter.frame(headId));
+  printSection("ReceiptSummary[] (after step)", await adapter.receipts(headId));
 }
 
-main();
+main().catch((err) => {
+  console.error(err);
+  process.exitCode = 1;
+});

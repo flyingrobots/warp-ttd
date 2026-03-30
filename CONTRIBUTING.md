@@ -123,36 +123,76 @@ Do not treat implementation details as the primary unit of correctness.
 
 Each cycle should follow the same explicit loop:
 
-1. design docs first
-2. tests as spec second
-3. implementation third
-4. retrospective after delivery
-5. rewrite the root README to reflect reality
-6. close the cycle in backlog/status docs
+1. **Design docs** — write or revise design docs. Define the playback
+   questions that will be answered after implementation.
+2. **Tests as spec** — encode behavior as executable tests.
+3. **Implementation** — build it.
+4. **Playback** — answer every playback question from the design doc, from
+   both the human stakeholder and agent stakeholder perspectives. Write the
+   answers down. Do not proceed to the retrospective until every playback
+   question has a clear yes/no answer.
+5. **Retrospective** — evaluate what shipped, what worked, what didn't, and
+   what was learned. The retro must include:
+   - **Drift check:** compare what was built against the design doc from the
+     top of the cycle. Call out any divergence explicitly — intentional or
+     accidental.
+   - **Tech/design debt:** log any debt discovered during the cycle as new
+     items in `docs/backlog/`. These may be standalone cycles or notes
+     attached to existing cycle proposals.
+   - **Cool ideas:** capture interesting ideas, tangents, or future
+     possibilities that surfaced during the cycle in `docs/backlog/` as
+     exploratory items. These do not need sponsor framing — they are seeds,
+     not commitments.
+6. **README update** — rewrite the root README to reflect reality.
+7. **Close the cycle** — update BACKLOG.md, CHANGELOG.md, and the cycle's
+   backlog file status.
 
 This loop is part of the process, not optional cleanup.
+
+### Design kickoff
 
 At design kickoff, define explicitly:
 
 - sponsor human
 - sponsor agent
 - hill
-- playback questions
+- playback questions (these will be answered in step 4)
 - non-goals
 
-At cycle close, evaluate explicitly from both perspectives:
+### Playback
 
-- human stakeholder playback
-- agent stakeholder playback
+After implementation, before the retro, run the dual playback in order:
 
-In practice, that means:
+1. **Agent playback** — the coding agent answers every playback question from
+   the agent stakeholder perspective. Written down in the retrospective
+   document.
+2. **Stop.** The agent prompts the human to do their playback. Do not
+   proceed until the human responds.
+3. **Human playback** — the user answers every playback question from the
+   human stakeholder perspective. They may agree, disagree, or flag gaps.
+   Written down alongside the agent playback.
+4. **Gate** — both perspectives must agree the hill is met before proceeding
+   to the retrospective.
 
-- the user acts as the human stakeholder
-- the coding agent acts as the agent stakeholder
+Playback questions should be answerable with **yes/no**, not essays. If you
+cannot get a clear yes, that is the signal.
 
-Do not close a cycle without that dual playback check.
+### Playback outcomes
 
-The point is to keep the repo honest about:
+**Hill met** — proceed to retrospective, merge, close the cycle.
+
+**Hill partially met** — merge what is honest. The retrospective explains the
+gap explicitly (drift check). Remaining work is logged as debt or follow-up
+items in `docs/backlog/`. The cycle closes but the hill is marked partial in
+the backlog file. No pretending.
+
+**Hill not met** — do not merge to main. The retrospective explains why
+(wrong hill? wrong scope? wrong approach?). Two options:
+
+- **Re-scope:** rewrite the hill and try again within the same cycle.
+- **Abandon:** close the cycle as abandoned, capture learnings, move on.
+
+### What the repo should always be honest about
 
 - what is planned
 - what is specified
@@ -226,6 +266,24 @@ Local testing policy:
 - `npm test` is the default fast suite and should stay safe for CI use
 - integration suites against real hosts should be additive and clearly named
 - no host-backed suite should silently replace the default fast suite
+
+## Lint Ratchet
+
+ESLint is configured with strict typescript-eslint rules (zero `any`, zero
+`unknown`, explicit return types, custom error classes, complexity limits).
+The codebase converges to full compliance over time via a ratchet.
+
+Rules:
+
+- a lint error ceiling is stored in `lint-ceiling.txt`
+- `npm run lint:check` exits non-zero if the count exceeds the ceiling
+- after each cycle closes, the ceiling drops by 30% (rounded down)
+- new code must not introduce new lint violations
+- when the ceiling reaches zero, the ratchet is retired and `npm run lint`
+  becomes a hard gate
+
+See [`docs/backlog/lint-ratchet.md`](docs/backlog/lint-ratchet.md) for the
+full schedule.
 
 ## Protocol Guardrails
 
@@ -311,28 +369,51 @@ The point is not aesthetic Git history. The point is trustworthy collaboration.
 
 ## Keep A Backlog
 
-Maintain the root [BACKLOG.md](/Users/james/git/warp-ttd/BACKLOG.md).
+### Structure
 
-Use it to keep the repo honest about:
+Backlog items live as individual Markdown files in
+[`docs/backlog/`](docs/backlog/).
 
-- what is active now
-- what is next
-- what is deferred
-- what risks are known
+Each file is a self-contained cycle proposal with:
 
-Do not let roadmap thinking drift into untracked chat context.
+- status (`queued`, `active`, `closed`)
+- sponsor human and sponsor agent
+- hill
+- playback questions
+- non-goals
+- scope
+
+The root [`BACKLOG.md`](BACKLOG.md) is an index
+that links to these files and shows the current sequence.
+
+### Lifecycle
+
+1. **Queued:** the item lives in `docs/backlog/` with `status: queued`.
+2. **Active:** when a cycle begins, update the status to `active` and
+   promote its design doc(s) into `docs/design/`. The backlog file stays
+   in `docs/backlog/` as the cycle's anchor document.
+3. **Closed:** after the retrospective, update the status to `closed`.
+   The backlog file remains as a historical record.
+
+### Rules
+
+- Do not let roadmap thinking drift into untracked chat context.
+- Every cycle must have a backlog file before work begins.
+- The root `BACKLOG.md` index must stay current with reality.
 
 ## What To Read First
 
 Before making non-trivial changes, read:
 
-- [README.md](/Users/james/git/warp-ttd/README.md)
-- [docs/design/0001-why-warp-ttd.md](/Users/james/git/warp-ttd/docs/design/0001-why-warp-ttd.md)
-- [docs/design/0002-wesley-schema-profile.md](/Users/james/git/warp-ttd/docs/design/0002-wesley-schema-profile.md)
-- [docs/design/0003-shared-schema-strategy.md](/Users/james/git/warp-ttd/docs/design/0003-shared-schema-strategy.md)
-- [docs/design/0004-ttd-protocol-surface.md](/Users/james/git/warp-ttd/docs/design/0004-ttd-protocol-surface.md)
-- [docs/retrospectives/0001-first-protocol-slice.md](/Users/james/git/warp-ttd/docs/retrospectives/0001-first-protocol-slice.md)
-- [BACKLOG.md](/Users/james/git/warp-ttd/BACKLOG.md)
+- [README.md](README.md)
+- [docs/design/0001-why-warp-ttd.md](docs/design/0001-why-warp-ttd.md)
+- [docs/design/0002-wesley-schema-profile.md](docs/design/0002-wesley-schema-profile.md)
+- [docs/design/0003-shared-schema-strategy.md](docs/design/0003-shared-schema-strategy.md)
+- [docs/design/0004-ttd-protocol-surface.md](docs/design/0004-ttd-protocol-surface.md)
+- [docs/retrospectives/0001-first-protocol-slice.md](docs/retrospectives/0001-first-protocol-slice.md)
+- [BACKLOG.md](BACKLOG.md)
+- [`docs/backlog/`](docs/backlog/) — individual
+  cycle proposals
 
 ## Decision Rule
 

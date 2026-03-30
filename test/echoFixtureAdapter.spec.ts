@@ -3,9 +3,9 @@ import assert from "node:assert/strict";
 
 import { EchoFixtureAdapter } from "../src/adapters/echoFixtureAdapter.ts";
 
-test("hello exposes the minimal host handshake contract", () => {
+test("hello exposes the minimal host handshake contract", async () => {
   const adapter = new EchoFixtureAdapter();
-  const hello = adapter.hello();
+  const hello = await adapter.hello();
 
   assert.equal(hello.hostKind, "echo");
   assert.equal(hello.protocolVersion, "0.1.0");
@@ -20,9 +20,9 @@ test("hello exposes the minimal host handshake contract", () => {
   ]);
 });
 
-test("lane catalog exposes one canonical worldline and one speculative working set", () => {
+test("lane catalog exposes one canonical worldline and one speculative working set", async () => {
   const adapter = new EchoFixtureAdapter();
-  const catalog = adapter.laneCatalog();
+  const catalog = await adapter.laneCatalog();
 
   assert.equal(catalog.lanes.length, 2);
   assert.deepEqual(catalog.lanes[0], {
@@ -40,10 +40,10 @@ test("lane catalog exposes one canonical worldline and one speculative working s
   });
 });
 
-test("initial playback head state is pinned at frame zero", () => {
+test("initial playback head state is pinned at frame zero", async () => {
   const adapter = new EchoFixtureAdapter();
-  const head = adapter.playbackHead("head:main");
-  const frame = adapter.frame("head:main");
+  const head = await adapter.playbackHead("head:main");
+  const frame = await adapter.frame("head:main");
 
   assert.equal(head.currentFrameIndex, 0);
   assert.equal(head.paused, true);
@@ -59,16 +59,16 @@ test("initial playback head state is pinned at frame zero", () => {
       { laneId: "ws:sandbox", tick: 0, changed: false }
     ]
   );
-  assert.deepEqual(adapter.receipts("head:main"), []);
+  assert.deepEqual(await adapter.receipts("head:main"), []);
 });
 
-test("stepping forward advances the head and surfaces the canonical receipt", () => {
+test("stepping forward advances the head and surfaces the canonical receipt", async () => {
   const adapter = new EchoFixtureAdapter();
 
-  const steppedFrame = adapter.stepForward("head:main");
-  const headAfter = adapter.playbackHead("head:main");
-  const frameAfter = adapter.frame("head:main");
-  const receipts = adapter.receipts("head:main");
+  const steppedFrame = await adapter.stepForward("head:main");
+  const headAfter = await adapter.playbackHead("head:main");
+  const frameAfter = await adapter.frame("head:main");
+  const receipts = await adapter.receipts("head:main");
 
   assert.equal(steppedFrame.frameIndex, 1);
   assert.equal(headAfter.currentFrameIndex, 1);
@@ -89,10 +89,10 @@ test("stepping forward advances the head and surfaces the canonical receipt", ()
   });
 });
 
-test("explicit frame lookup allows receipt-bearing speculative frames to be inspected", () => {
+test("explicit frame lookup allows receipt-bearing speculative frames to be inspected", async () => {
   const adapter = new EchoFixtureAdapter();
-  const frame = adapter.frame("head:main", 2);
-  const receipts = adapter.receipts("head:main", 2);
+  const frame = await adapter.frame("head:main", 2);
+  const receipts = await adapter.receipts("head:main", 2);
 
   assert.equal(frame.frameIndex, 2);
   assert.deepEqual(

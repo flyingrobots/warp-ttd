@@ -1,14 +1,39 @@
 {
   "name": "warp-ttd",
   "version": "0.0.0",
+  "description": "Cross-host Time Travel Debugger for WARP systems",
   "private": true,
   "type": "module",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=22.6.0"
+  },
   "scripts": {
     "demo": "node --experimental-strip-types ./src/cli.ts demo",
     "hello": "node --experimental-strip-types ./src/cli.ts hello",
     "catalog": "node --experimental-strip-types ./src/cli.ts catalog",
     "frame": "node --experimental-strip-types ./src/cli.ts frame",
     "step": "node --experimental-strip-types ./src/cli.ts step",
-    "test": "node --experimental-strip-types --test"
+    "test": "node --experimental-strip-types --test test/echoFixtureAdapter.spec.ts test/adapterRegistry.spec.ts",
+    "test:integration": "node --experimental-strip-types --test test/gitWarpAdapter.spec.ts test/adapterRegistry.integration.spec.ts",
+    "test:all": "node --experimental-strip-types --test",
+    "tui": "node --experimental-strip-types ./src/tui/main.ts",
+    "lint": "eslint .",
+    "lint:check": "bash scripts/lint-check.sh",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@flyingrobots/bijou": "^4.0.0",
+    "@flyingrobots/bijou-node": "^4.0.0",
+    "@flyingrobots/bijou-tui": "^4.0.0",
+    "@git-stunts/git-warp": "^16.0.0",
+    "@git-stunts/plumbing": "^2.8.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^22.19.15",
+    "eslint": "^10.1.0",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.57.2"
   }
 }

@@ -15,12 +15,20 @@ export type Coordinate = {
   tick: number;
 };
 
+export type Capability =
+  | "read:hello"
+  | "read:lane-catalog"
+  | "read:playback-head"
+  | "read:frame"
+  | "read:receipts"
+  | "control:step-forward";
+
 export type HostHello = {
   hostKind: HostKind;
   hostVersion: string;
   protocolVersion: string;
   schemaId: string;
-  capabilities: string[];
+  capabilities: Capability[];
 };
 
 export type LaneCatalog = {

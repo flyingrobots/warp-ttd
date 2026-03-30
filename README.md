@@ -2,143 +2,104 @@
 
 Cross-host Time Travel Debugger for WARP systems.
 
-## Status
+## What It Is
 
-This repo is in a docs-first bootstrap phase.
+TTD is a human-facing debugger product for deterministic graph systems built
+on WARP-like causal history. It observes worldlines, materializes frames,
+surfaces receipts, and makes conflicts and counterfactuals inspectable.
 
-The immediate job is to extract the Time Travel Debugger into its own design
-home so it can serve:
+TTD works across hosts. The same debugger protocol serves git-warp, Echo, and
+future WARP-based runtimes through host adapters.
 
-- git-warp
-- Echo
-- XYPH
-- future WARP-based runtimes
+## Current Capability
 
-without the debugger architecture being trapped inside any one host repo.
+- **Protocol:** finite envelope set — `HostHello`, `LaneCatalog`,
+  `PlaybackHeadSnapshot`, `PlaybackFrame`, `ReceiptSummary`
+- **Adapters:** echo fixture (in-memory demo data) and git-warp v16 (real
+  git-backed graphs)
+- **TUI:** fullscreen terminal debugger with three pages (Connect, Navigator,
+  Inspector), wave shader background, DAG visualization
+- **CLI:** dumb client for protocol inspection (`hello`, `catalog`, `frame`,
+  `step`, `demo`)
+- **Tests:** 17 spec tests (7 fast + 10 integration)
 
-## Thesis
-
-TTD is not just a CLI family and it is not just a UI.
-
-TTD is a human-facing debugger product built on top of WARP substrate facts:
-
-- worldlines
-- immutable materialized snapshots
-- observers
-- working sets
-- BTRs
-- provenance
-- deterministic replay
-
-The debugger should be reusable across hosts, while remaining honest about the
-substrate semantics underneath.
-
-## Why This Repo Exists
-
-The current design work touched several repos at once:
-
-- `git-warp` owns the JavaScript substrate and current CLI/debug surfaces
-- `echo` contains an earlier Rust/WASM/browser TTD prototype
-- `wesley` points toward a schema-first, cross-language codegen path
-- `xyph` is the main human-facing application context driving the debugger DX
-
-That is exactly why TTD deserves its own repo. The debugger is now clearly a
-product and architecture concern in its own right.
-
-## Current Design Direction
-
-1. The substrate keeps independent worldlines and working sets.
-2. Human playback is a derived composite frame model, not proof of a global
-   substrate clock.
-3. `PlaybackHead` is a substrate-facing coordination primitive.
-4. `DebuggerSession` is the human-facing debugger object above the substrate.
-5. Panels are observer families over the same causal history.
-6. Observation is read-only; speculation is explicit and fork-based.
-7. Cross-host TTD should target capability ports and shared schemas, not host
-   internals.
-
-## Wesley / GraphQL Direction
-
-One promising direction is to make GraphQL the authored contract for:
-
-- graph/domain types
-- graph rewrite operations
-- playback/control protocol types
-- deterministic binary serialization metadata
-- footprint declarations
-- versioning
-
-with Wesley generating the Rust, TypeScript, and codec artifacts required by
-different hosts.
-
-This repo does not assume that move is already complete, but it treats it as a
-serious architecture path rather than a side experiment.
-
-## Initial Repo Layout
-
-- `docs/design/human-centered-hex-architecture.md`
-  Human-centered debugger framing and hexagonal architecture.
-- `docs/design/graphql-wesley-strategy.md`
-  Schema-first/codegen strategy for protocol, footprints, and cross-host
-  compatibility.
-- `docs/design/invariants.md`
-  TTD-specific invariants that must stay explicit as the design evolves.
-
-## Current Spike
-
-The current narrow design spike is captured in:
-
-- `docs/design/0001-why-warp-ttd.md`
-- `docs/design/0002-wesley-schema-profile.md`
-- `docs/design/0003-shared-schema-strategy.md`
-- `docs/design/0004-ttd-protocol-surface.md`
-
-Those docs are intentionally more constrained than the broader architecture
-notes. They are meant to define the first real protocol/schema/design slice
-instead of trying to solve the whole ecosystem in one pass.
-
-## First Build Slice
-
-The repo now also contains a tiny zero-dependency proof slice in `src/`:
-
-- handwritten protocol types
-- a `TtdHostAdapter` interface
-- an in-memory Echo-flavored fixture adapter
-- a dumb CLI client that prints frames and receipts
-
-This is intentionally pre-Wesley and pre-GraphQL. Its only job is to prove the
-first data-flow claim: one debugger client can talk to one host-shaped adapter
-through a small finite protocol.
-
-The current slice is specified by tests in:
-
-- `test/echoFixtureAdapter.spec.ts`
-
-Run it with:
+## Quick Start
 
 ```sh
-node --experimental-strip-types ./src/cli.ts demo
+npm install
 ```
 
-or via:
+### TUI
 
 ```sh
-node --experimental-strip-types ./src/cli.ts hello
-node --experimental-strip-types ./src/cli.ts catalog
-node --experimental-strip-types ./src/cli.ts frame
-node --experimental-strip-types ./src/cli.ts step
+npm run tui
 ```
 
-Run the spec tests with:
+Select "Echo Fixture" for built-in demo data, or "git-warp" to point at a
+local repository with an existing warp graph.
+
+### CLI
 
 ```sh
-node --experimental-strip-types --test
+npm run demo      # full protocol walkthrough
+npm run hello     # host handshake
+npm run catalog   # lane catalog
+npm run frame     # current frame + receipts
+npm run step      # step forward
 ```
 
-## Near-Term Questions
+### Tests
 
-1. What is the minimal cross-host TTD capability protocol?
-2. Which playback/session concepts belong in substrate repos versus this repo?
-3. How far can Wesley carry footprint enforcement and protocol generation?
-4. Which first implementation target should prove the architecture:
-   git-warp, Echo, or a host-neutral protocol package first?
+```sh
+npm test                 # fast suite (echo fixture)
+npm run test:integration # git-warp integration (creates temp repos)
+```
+
+## Architecture
+
+TTD follows hexagonal architecture:
+
+```text
+Delivery Adapters (CLI, TUI)
+  → TTD Application Core
+    → TTD Ports (TtdHostAdapter)
+      → Host Adapters (echo fixture, git-warp)
+        → WARP Substrates
+```
+
+Key domain concepts:
+
+- **PlaybackHead** — substrate-facing coordination primitive
+- **DebuggerSession** — human-facing debugger object (planned, Cycle E)
+- **Frame** — composite snapshot across tracked lanes at a point in time
+- **Receipt** — per-operation provenance from a materialized tick
+- **Lane** — worldline (read-only history) or working-set (speculative)
+
+## Design Documents
+
+- [0001 — Why warp-ttd](docs/design/0001-why-warp-ttd.md)
+- [0002 — Wesley Schema Profile](docs/design/0002-wesley-schema-profile.md)
+- [0003 — Shared Schema Strategy](docs/design/0003-shared-schema-strategy.md)
+- [0004 — TTD Protocol Surface](docs/design/0004-ttd-protocol-surface.md)
+- [0005 — git-warp Adapter](docs/design/0005-git-warp-adapter.md)
+- [0006 — TUI Port](docs/design/0006-tui-port.md)
+- [0007 — Adapter Registry](docs/design/0007-adapter-registry.md)
+
+## Roadmap
+
+See [BACKLOG.md](BACKLOG.md) for the current cycle sequence.
+
+## Dependencies
+
+- **Runtime:** `@git-stunts/git-warp` ^16.0.0, `@git-stunts/plumbing` ^2.8.0
+- **TUI:** `@flyingrobots/bijou` ^4.0.0 (bijou-tui, bijou-tui-app, bijou-node)
+- **Build:** TypeScript with `--experimental-strip-types` (no build step)
+- **Test:** Node.js built-in test runner
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## License
+
+Apache 2.0. See [LICENSE](LICENSE).
