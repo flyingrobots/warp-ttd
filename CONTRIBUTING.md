@@ -311,16 +311,37 @@ The point is not aesthetic Git history. The point is trustworthy collaboration.
 
 ## Keep A Backlog
 
-Maintain the root [BACKLOG.md](/Users/james/git/warp-ttd/BACKLOG.md).
+### Structure
 
-Use it to keep the repo honest about:
+Backlog items live as individual Markdown files in
+[`docs/backlog/`](/Users/james/git/warp-ttd/docs/backlog/).
 
-- what is active now
-- what is next
-- what is deferred
-- what risks are known
+Each file is a self-contained cycle proposal with:
 
-Do not let roadmap thinking drift into untracked chat context.
+- status (`queued`, `active`, `closed`)
+- sponsor human and sponsor agent
+- hill
+- playback questions
+- non-goals
+- scope
+
+The root [`BACKLOG.md`](/Users/james/git/warp-ttd/BACKLOG.md) is an index
+that links to these files and shows the current sequence.
+
+### Lifecycle
+
+1. **Queued:** the item lives in `docs/backlog/` with `status: queued`.
+2. **Active:** when a cycle begins, update the status to `active` and
+   promote its design doc(s) into `docs/design/`. The backlog file stays
+   in `docs/backlog/` as the cycle's anchor document.
+3. **Closed:** after the retrospective, update the status to `closed`.
+   The backlog file remains as a historical record.
+
+### Rules
+
+- Do not let roadmap thinking drift into untracked chat context.
+- Every cycle must have a backlog file before work begins.
+- The root `BACKLOG.md` index must stay current with reality.
 
 ## What To Read First
 
@@ -333,6 +354,8 @@ Before making non-trivial changes, read:
 - [docs/design/0004-ttd-protocol-surface.md](/Users/james/git/warp-ttd/docs/design/0004-ttd-protocol-surface.md)
 - [docs/retrospectives/0001-first-protocol-slice.md](/Users/james/git/warp-ttd/docs/retrospectives/0001-first-protocol-slice.md)
 - [BACKLOG.md](/Users/james/git/warp-ttd/BACKLOG.md)
+- [`docs/backlog/`](/Users/james/git/warp-ttd/docs/backlog/) — individual
+  cycle proposals
 
 ## Decision Rule
 
