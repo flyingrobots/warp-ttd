@@ -13,14 +13,11 @@ import {
   createFramedApp,
   createKeyMap,
   isKeyMsg,
-  vstack,
-  canvas
+  vstack
 } from "@flyingrobots/bijou-tui";
-import type { ShaderFn } from "@flyingrobots/bijou-tui";
 import {
   createSurface,
   stringToSurface,
-  surfaceToString,
   boxSurface,
   badge
 } from "@flyingrobots/bijou";
@@ -83,17 +80,17 @@ const CONNECT_OPTIONS = [
 
 const ctx: BijouContext = initDefaultContext();
 
-function centerBox(bg: Surface, content: Surface, title: string): string {
+function centerBox(bg: Surface, content: Surface, title: string): Surface {
   const box = boxSurface(content, { title: ` ${title} `, width: Math.min(60, bg.width - 4), ctx });
   bg.blit(box, Math.floor((bg.width - box.width) / 2), Math.floor((bg.height - box.height) / 2));
-  return surfaceToString(bg, ctx.style);
+  return bg;
 }
 
 // ---------------------------------------------------------------------------
 // Pages
 // ---------------------------------------------------------------------------
 
-function connectLayout(model: Model, w: number, h: number): string {
+function connectLayout(model: Model, w: number, h: number): Surface {
   const bg = renderWaveShader(w, h, model.time, ctx);
 
   if (model.adapter) {
@@ -149,10 +146,10 @@ function connectLayout(model: Model, w: number, h: number): string {
     return centerBox(bg, stringToSurface(content, 56, content.split("\n").length), "Graph Name");
   }
 
-  return surfaceToString(bg, ctx.style);
+  return bg;
 }
 
-function navigatorLayout(model: Model, w: number, h: number): string {
+function navigatorLayout(model: Model, w: number, h: number): Surface {
   if (!model.adapter || !model.frame || !model.head) {
     const bg = renderWaveShader(w, h, model.time, ctx);
     return centerBox(bg, stringToSurface(" Connect to a host first.", 40, 1), "Navigator");
@@ -202,10 +199,10 @@ function navigatorLayout(model: Model, w: number, h: number): string {
   const controlSurf = stringToSurface(controls, w - 2, 1);
   final.blit(controlSurf, 1, h - 2);
 
-  return surfaceToString(final, ctx.style);
+  return final;
 }
 
-function inspectorLayout(model: Model, w: number, h: number): string {
+function inspectorLayout(model: Model, w: number, h: number): Surface {
   if (!model.adapter || !model.frame || !model.head || !model.hello) {
     const bg = renderWaveShader(w, h, model.time, ctx);
     return centerBox(bg, stringToSurface(" Connect to a host first.", 40, 1), "Inspector");
@@ -255,7 +252,7 @@ function inspectorLayout(model: Model, w: number, h: number): string {
     );
   }
 
-  return surfaceToString(final, ctx.style);
+  return final;
 }
 
 // ---------------------------------------------------------------------------
