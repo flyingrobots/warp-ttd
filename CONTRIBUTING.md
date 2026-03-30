@@ -123,36 +123,54 @@ Do not treat implementation details as the primary unit of correctness.
 
 Each cycle should follow the same explicit loop:
 
-1. design docs first
-2. tests as spec second
-3. implementation third
-4. retrospective after delivery
-5. rewrite the root README to reflect reality
-6. close the cycle in backlog/status docs
+1. **Design docs** — write or revise design docs. Define the playback
+   questions that will be answered after implementation.
+2. **Tests as spec** — encode behavior as executable tests.
+3. **Implementation** — build it.
+4. **Playback** — answer every playback question from the design doc, from
+   both the human stakeholder and agent stakeholder perspectives. Write the
+   answers down. Do not proceed to the retrospective until every playback
+   question has a clear yes/no answer.
+5. **Retrospective** — evaluate what shipped, what worked, what didn't, and
+   what was learned. The retro must include:
+   - **Drift check:** compare what was built against the design doc from the
+     top of the cycle. Call out any divergence explicitly — intentional or
+     accidental.
+   - **Tech/design debt:** log any debt discovered during the cycle as new
+     items in `docs/backlog/`. These may be standalone cycles or notes
+     attached to existing cycle proposals.
+   - **Cool ideas:** capture interesting ideas, tangents, or future
+     possibilities that surfaced during the cycle in `docs/backlog/` as
+     exploratory items. These do not need sponsor framing — they are seeds,
+     not commitments.
+6. **README update** — rewrite the root README to reflect reality.
+7. **Close the cycle** — update BACKLOG.md, CHANGELOG.md, and the cycle's
+   backlog file status.
 
 This loop is part of the process, not optional cleanup.
+
+### Design kickoff
 
 At design kickoff, define explicitly:
 
 - sponsor human
 - sponsor agent
 - hill
-- playback questions
+- playback questions (these will be answered in step 4)
 - non-goals
 
-At cycle close, evaluate explicitly from both perspectives:
+### Playback
 
-- human stakeholder playback
-- agent stakeholder playback
-
-In practice, that means:
+After implementation, before the retro, answer every playback question from
+both perspectives:
 
 - the user acts as the human stakeholder
 - the coding agent acts as the agent stakeholder
 
-Do not close a cycle without that dual playback check.
+Do not close a cycle without that dual playback check. Write the answers into
+the retrospective document.
 
-The point is to keep the repo honest about:
+### What the repo should always be honest about
 
 - what is planned
 - what is specified
