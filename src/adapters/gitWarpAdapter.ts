@@ -21,7 +21,7 @@ import type {
  * instead of importing the class keeps the adapter testable against
  * any compatible implementation.
  */
-type TickReceipt = {
+interface TickReceipt {
   readonly patchSha: string;
   readonly writer: string;
   readonly lamport: number;
@@ -31,18 +31,18 @@ type TickReceipt = {
     readonly result: string;
     readonly reason?: string;
   }[];
-};
+}
 
-type StrandDescriptor = {
+interface StrandDescriptor {
   readonly strandId: string;
   readonly owner: string | null;
   readonly scope: string | null;
   readonly overlay: {
     readonly writable: boolean;
   };
-};
+}
 
-type WarpCoreLike = {
+interface WarpCoreLike {
   materialize(options: { receipts: true; ceiling?: number | null }): Promise<{
     state: unknown;
     receipts: TickReceipt[];
@@ -52,16 +52,16 @@ type WarpCoreLike = {
   listStrands(): Promise<StrandDescriptor[]>;
   getNodes(): Promise<string[]>;
   getEdges(): Promise<{ from: string; to: string; label: string }[]>;
-};
+}
 
 /**
  * A single indexed frame: the Lamport tick it represents and the
  * TickReceipts that belong to it.
  */
-type IndexedFrame = {
+interface IndexedFrame {
   readonly tick: number;
   readonly receipts: TickReceipt[];
-};
+}
 
 // Read the actual installed git-warp version at import time.
 // createRequire is needed because package.json isn't an ES module.
@@ -108,7 +108,7 @@ function requireIndexedFrame(
 
   if (!frame) {
     throw new Error(
-      `Internal frame index ${index} out of bounds (length: ${frameIndex.length})`
+      `Internal frame index ${index.toString()} out of bounds (length: ${frameIndex.length.toString()})`
     );
   }
 
@@ -136,7 +136,7 @@ function countOps(
 }
 
 export class GitWarpAdapter implements TtdHostAdapter {
-  readonly adapterName = "git-warp";
+  public readonly adapterName = "git-warp";
 
   readonly #graph: WarpCoreLike;
   readonly #frameIndex: IndexedFrame[];
@@ -172,7 +172,7 @@ export class GitWarpAdapter implements TtdHostAdapter {
    * The frame index is built once from the full materialized receipts.
    * This is a snapshot — it does not auto-refresh on new patches.
    */
-  static async create(graph: WarpCoreLike): Promise<GitWarpAdapter> {
+  public static async create(graph: WarpCoreLike): Promise<GitWarpAdapter> {
     const { receipts } = await graph.materialize({ receipts: true });
     const frameIndex = buildFrameIndex(receipts);
 
@@ -194,15 +194,15 @@ export class GitWarpAdapter implements TtdHostAdapter {
         kind: "strand",
         parentId: "wl:live",
         writable: strand.overlay.writable,
-        description: `Strand ${strand.strandId}${strand.scope ? ` (${strand.scope})` : ""}`
+        description: `Strand ${strand.strandId}${strand.scope !== null && strand.scope !== "" ? ` (${strand.scope})` : ""}`
       });
     }
 
     return new GitWarpAdapter(graph, frameIndex, lanes);
   }
 
-  async hello(): Promise<HostHello> {
-    return {
+  public hello(): Promise<HostHello> {
+    return Promise.resolve({
       hostKind: "git-warp",
       hostVersion: GIT_WARP_HOST_VERSION,
       protocolVersion: "0.1.0",
@@ -215,24 +215,24 @@ export class GitWarpAdapter implements TtdHostAdapter {
         "read:receipts",
         "control:step-forward"
       ]
-    };
+    });
   }
 
-  async laneCatalog(): Promise<LaneCatalog> {
-    return { lanes: [...this.#lanes] };
+  public laneCatalog(): Promise<LaneCatalog> {
+    return Promise.resolve({ lanes: [...this.#lanes] });
   }
 
-  async playbackHead(headId: string): Promise<PlaybackHeadSnapshot> {
+  public playbackHead(headId: string): Promise<PlaybackHeadSnapshot> {
     const head = this.#headStates.get(headId);
 
     if (!head) {
       throw new Error(`Unknown playback head: ${headId}`);
     }
 
-    return { ...head };
+    return Promise.resolve({ ...head });
   }
 
-  async frame(headId: string, frameIndex?: number): Promise<PlaybackFrame> {
+  public frame(headId: string, frameIndex?: number): Promise<PlaybackFrame> {
     const head = this.#headStates.get(headId);
 
     if (!head) {
@@ -246,14 +246,14 @@ export class GitWarpAdapter implements TtdHostAdapter {
 
     if (resolvedIndex < 0 || resolvedIndex > maxFrame) {
       throw new Error(
-        `Frame index ${resolvedIndex} out of range [0, ${maxFrame}]`
+        `Frame index ${resolvedIndex.toString()} out of range [0, ${maxFrame.toString()}]`
       );
     }
 
-    return this.#buildFrame(headId, resolvedIndex);
+    return Promise.resolve(this.#buildFrame(headId, resolvedIndex));
   }
 
-  async receipts(headId: string, frameIndex?: number): Promise<ReceiptSummary[]> {
+  public receipts(headId: string, frameIndex?: number): Promise<ReceiptSummary[]> {
     const head = this.#headStates.get(headId);
 
     if (!head) {
@@ -264,24 +264,24 @@ export class GitWarpAdapter implements TtdHostAdapter {
 
     // Frame 0 has no receipts
     if (resolvedIndex === 0) {
-      return [];
+      return Promise.resolve([]);
     }
 
     const maxFrame = this.#frameIndex.length;
 
     if (resolvedIndex < 0 || resolvedIndex > maxFrame) {
       throw new Error(
-        `Frame index ${resolvedIndex} out of range [0, ${maxFrame}]`
+        `Frame index ${resolvedIndex.toString()} out of range [0, ${maxFrame.toString()}]`
       );
     }
 
     const indexed = this.#frameIndex[resolvedIndex - 1];
 
     if (!indexed) {
-      return [];
+      return Promise.resolve([]);
     }
 
-    return indexed.receipts.map((r, i) => {
+    return Promise.resolve(indexed.receipts.map((r) => {
       const { admitted, rejected, counterfactual } = countOps(r);
 
       return {
@@ -295,12 +295,12 @@ export class GitWarpAdapter implements TtdHostAdapter {
         rejectedRewriteCount: rejected,
         counterfactualCount: counterfactual,
         digest: r.patchSha,
-        summary: `Writer ${r.writer} at lamport ${r.lamport}: ${admitted} applied, ${rejected} superseded, ${counterfactual} redundant`
+        summary: `Writer ${r.writer} at lamport ${r.lamport.toString()}: ${admitted.toString()} applied, ${rejected.toString()} superseded, ${counterfactual.toString()} redundant`
       };
-    });
+    }));
   }
 
-  async stepForward(headId: string): Promise<PlaybackFrame> {
+  public stepForward(headId: string): Promise<PlaybackFrame> {
     const head = this.#headStates.get(headId);
 
     if (!head) {
@@ -316,7 +316,7 @@ export class GitWarpAdapter implements TtdHostAdapter {
       paused: true
     });
 
-    return this.#buildFrame(headId, nextIndex);
+    return Promise.resolve(this.#buildFrame(headId, nextIndex));
   }
 
   #buildFrame(headId: string, frameIndex: number): PlaybackFrame {

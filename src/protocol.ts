@@ -2,18 +2,18 @@ export type HostKind = "echo" | "git-warp";
 
 export type LaneKind = "worldline" | "strand";
 
-export type LaneRef = {
+export interface LaneRef {
   id: string;
   kind: LaneKind;
   parentId?: string;
   writable: boolean;
   description: string;
-};
+}
 
-export type Coordinate = {
+export interface Coordinate {
   laneId: string;
   tick: number;
-};
+}
 
 export type Capability =
   | "read:hello"
@@ -23,41 +23,41 @@ export type Capability =
   | "read:receipts"
   | "control:step-forward";
 
-export type HostHello = {
+export interface HostHello {
   hostKind: HostKind;
   hostVersion: string;
   protocolVersion: string;
   schemaId: string;
   capabilities: Capability[];
-};
+}
 
-export type LaneCatalog = {
+export interface LaneCatalog {
   lanes: LaneRef[];
-};
+}
 
-export type PlaybackHeadSnapshot = {
+export interface PlaybackHeadSnapshot {
   headId: string;
   label: string;
   currentFrameIndex: number;
   trackedLaneIds: string[];
   writableLaneIds: string[];
   paused: boolean;
-};
+}
 
-export type LaneFrameView = {
+export interface LaneFrameView {
   laneId: string;
   coordinate: Coordinate;
   changed: boolean;
   btrDigest?: string;
-};
+}
 
-export type PlaybackFrame = {
+export interface PlaybackFrame {
   headId: string;
   frameIndex: number;
   lanes: LaneFrameView[];
-};
+}
 
-export type ReceiptSummary = {
+export interface ReceiptSummary {
   receiptId: string;
   headId: string;
   frameIndex: number;
@@ -69,4 +69,4 @@ export type ReceiptSummary = {
   counterfactualCount: number;
   digest: string;
   summary: string;
-};
+}

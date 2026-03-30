@@ -7,13 +7,13 @@ import type {
   ReceiptSummary
 } from "../protocol.ts";
 
-type FixtureState = {
+interface FixtureState {
   readonly hello: HostHello;
   readonly catalog: LaneCatalog;
   readonly heads: Record<string, PlaybackHeadSnapshot>;
   readonly frames: Record<string, PlaybackFrame[]>;
   readonly receipts: Record<string, ReceiptSummary[]>;
-};
+}
 
 const FIXTURE: FixtureState = {
   hello: {
@@ -174,24 +174,24 @@ function requireFrames(
 }
 
 export class EchoFixtureAdapter implements TtdHostAdapter {
-  readonly adapterName = "echo-fixture";
+  public readonly adapterName = "echo-fixture";
   readonly #heads = new Map<string, PlaybackHeadSnapshot>(
     Object.values(FIXTURE.heads).map((head) => [head.headId, cloneValue(head)])
   );
 
-  async hello(): Promise<HostHello> {
-    return cloneValue(FIXTURE.hello);
+  public hello(): Promise<HostHello> {
+    return Promise.resolve(cloneValue(FIXTURE.hello));
   }
 
-  async laneCatalog(): Promise<LaneCatalog> {
-    return cloneValue(FIXTURE.catalog);
+  public laneCatalog(): Promise<LaneCatalog> {
+    return Promise.resolve(cloneValue(FIXTURE.catalog));
   }
 
-  async playbackHead(headId: string): Promise<PlaybackHeadSnapshot> {
-    return cloneValue(requireHeadState(this.#heads, headId));
+  public playbackHead(headId: string): Promise<PlaybackHeadSnapshot> {
+    return Promise.resolve(cloneValue(requireHeadState(this.#heads, headId)));
   }
 
-  async frame(headId: string, frameIndex?: number): Promise<PlaybackFrame> {
+  public frame(headId: string, frameIndex?: number): Promise<PlaybackFrame> {
     const head = requireHeadState(this.#heads, headId);
     const frames = requireFrames(FIXTURE.frames, headId);
     const resolvedIndex = frameIndex ?? head.currentFrameIndex;
@@ -199,24 +199,24 @@ export class EchoFixtureAdapter implements TtdHostAdapter {
 
     if (!frame) {
       throw new Error(
-        `Unknown frame index ${resolvedIndex} for playback head ${headId}`
+        `Unknown frame index ${resolvedIndex.toString()} for playback head ${headId}`
       );
     }
 
-    return cloneValue(frame);
+    return Promise.resolve(cloneValue(frame));
   }
 
-  async receipts(headId: string, frameIndex?: number): Promise<ReceiptSummary[]> {
+  public receipts(headId: string, frameIndex?: number): Promise<ReceiptSummary[]> {
     const head = requireHeadState(this.#heads, headId);
     const resolvedIndex = frameIndex ?? head.currentFrameIndex;
     const receipts = FIXTURE.receipts[headId] ?? [];
 
-    return cloneValue(
+    return Promise.resolve(cloneValue(
       receipts.filter((receipt) => receipt.frameIndex === resolvedIndex)
-    );
+    ));
   }
 
-  async stepForward(headId: string): Promise<PlaybackFrame> {
+  public stepForward(headId: string): Promise<PlaybackFrame> {
     const head = requireHeadState(this.#heads, headId);
     const frames = requireFrames(FIXTURE.frames, headId);
     const nextIndex = Math.min(head.currentFrameIndex + 1, frames.length - 1);
@@ -232,6 +232,6 @@ export class EchoFixtureAdapter implements TtdHostAdapter {
       paused: true
     });
 
-    return cloneValue(nextFrame);
+    return Promise.resolve(cloneValue(nextFrame));
   }
 }

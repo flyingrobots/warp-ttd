@@ -42,7 +42,7 @@ async function main(): Promise<void> {
   const { command, json } = parseArgs(process.argv);
   const headId = "head:main";
 
-  const print = json ? printJsonl : (envelope: string, data: unknown) => printSection(envelope, data);
+  const print = json ? printJsonl : (envelope: string, data: unknown): void => { printSection(envelope, data); };
 
   if (command === "hello") {
     print("HostHello", await adapter.hello());
@@ -106,7 +106,7 @@ async function main(): Promise<void> {
   }
 }
 
-main().catch((err) => {
+main().catch((err: unknown) => {
   console.error(err);
   process.exitCode = 1;
 });

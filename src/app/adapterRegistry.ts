@@ -14,10 +14,10 @@ export type AdapterConfig =
   | { kind: "echo-fixture" }
   | { kind: "git-warp"; repoPath: string; graphName: string };
 
-export type ResolvedAdapter = {
+export interface ResolvedAdapter {
   adapter: TtdHostAdapter;
   defaultHeadId: string;
-};
+}
 
 export async function resolveAdapter(config: AdapterConfig): Promise<ResolvedAdapter> {
   switch (config.kind) {
