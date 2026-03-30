@@ -161,14 +161,36 @@ At design kickoff, define explicitly:
 
 ### Playback
 
-After implementation, before the retro, answer every playback question from
-both perspectives:
+After implementation, before the retro, run the dual playback in order:
 
-- the user acts as the human stakeholder
-- the coding agent acts as the agent stakeholder
+1. **Agent playback** — the coding agent answers every playback question from
+   the agent stakeholder perspective. Written down in the retrospective
+   document.
+2. **Stop.** The agent prompts the human to do their playback. Do not
+   proceed until the human responds.
+3. **Human playback** — the user answers every playback question from the
+   human stakeholder perspective. They may agree, disagree, or flag gaps.
+   Written down alongside the agent playback.
+4. **Gate** — both perspectives must agree the hill is met before proceeding
+   to the retrospective.
 
-Do not close a cycle without that dual playback check. Write the answers into
-the retrospective document.
+Playback questions should be answerable with **yes/no**, not essays. If you
+cannot get a clear yes, that is the signal.
+
+### Playback outcomes
+
+**Hill met** — proceed to retrospective, merge, close the cycle.
+
+**Hill partially met** — merge what is honest. The retrospective explains the
+gap explicitly (drift check). Remaining work is logged as debt or follow-up
+items in `docs/backlog/`. The cycle closes but the hill is marked partial in
+the backlog file. No pretending.
+
+**Hill not met** — do not merge to main. The retrospective explains why
+(wrong hill? wrong scope? wrong approach?). Two options:
+
+- **Re-scope:** rewrite the hill and try again within the same cycle.
+- **Abandon:** close the cycle as abandoned, capture learnings, move on.
 
 ### What the repo should always be honest about
 
