@@ -8,15 +8,6 @@ This project will use [Semantic Versioning](https://semver.org/) starting at
 
 ## [Unreleased]
 
-### Added (Cycle C — Hexagonal Cleanup)
-
-- **Adapter registry** (`src/app/adapterRegistry.ts`) — application-layer
-  seam that resolves adapter configs into ready `TtdHostAdapter` instances.
-  The TUI no longer imports concrete adapters or host infrastructure.
-- **Default head ID convention** — each adapter declares its default head
-  ID through the registry, eliminating hardcoded head ID branching.
-- **Design doc 0007** — adapter registry design and rationale.
-
 ### Added
 
 - **Async `TtdHostAdapter` interface** — all six adapter methods return
@@ -35,7 +26,12 @@ This project will use [Semantic Versioning](https://semver.org/) starting at
 - **Cycle backlog structure** — individual cycle proposals in `docs/backlog/`
   with sponsor framing, hills, playback questions per CONTRIBUTING.md.
 - **Design docs** — 0005 (git-warp adapter decisions), 0006 (TUI port
-  decisions).
+  decisions), 0007 (adapter registry).
+- **Adapter registry** (`src/app/adapterRegistry.ts`) — application-layer
+  seam for adapter construction. TUI no longer imports concrete adapters.
+  *(Cycle C)*
+- **Default head ID convention** — each adapter declares its default head
+  ID through the registry. *(Cycle C)*
 
 ### Changed
 

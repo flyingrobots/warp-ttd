@@ -21,7 +21,7 @@ future WARP-based runtimes through host adapters.
   Inspector), wave shader background, DAG visualization
 - **CLI:** dumb client for protocol inspection (`hello`, `catalog`, `frame`,
   `step`, `demo`)
-- **Tests:** 14 spec tests (5 echo fixture + 9 git-warp integration)
+- **Tests:** 17 spec tests (7 fast + 10 integration)
 
 ## Quick Start
 

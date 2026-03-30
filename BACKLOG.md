@@ -19,6 +19,9 @@ lifecycle rules.
 
 ## Active Sequence
 
+Cycles are ordered by dependency, not alphabetically: clear debt → clean
+architecture → freeze protocol → human UX → speculation.
+
 | Order | Cycle | Status | File |
 |-------|-------|--------|------|
 | 1 | A — Housekeeping & Reality Sync | closed | [A-housekeeping-reality-sync.md](docs/backlog/A-housekeeping-reality-sync.md) |

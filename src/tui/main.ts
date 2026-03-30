@@ -19,7 +19,8 @@ import {
   createSurface,
   stringToSurface,
   boxSurface,
-  badge
+  badge,
+  surfaceToString
 } from "@flyingrobots/bijou";
 import type { BijouContext, Surface } from "@flyingrobots/bijou";
 import { renderWaveShader } from "./shaders/bgShader.ts";
@@ -45,6 +46,7 @@ type Msg =
   | { type: "adapter-ready"; hello: HostHello; catalog: LaneCatalog; head: PlaybackHeadSnapshot; frame: PlaybackFrame; receipts: ReceiptSummary[] }
   | { type: "step-result"; head: PlaybackHeadSnapshot; frame: PlaybackFrame; receipts: ReceiptSummary[] }
   | { type: "frame-result"; frame: PlaybackFrame; receipts: ReceiptSummary[] }
+  | { type: "connect-error"; message: string }
   | { type: "disconnect" }
   | { type: "nav"; direction: "next" | "prev" }
   | { type: "step-forward" }
@@ -67,12 +69,15 @@ interface Model {
   connectChoice: number;
   inputValue: string;
   repoPath: string;
+  error: string | null;
 }
 
 const CONNECT_OPTIONS = [
   "Echo Fixture (built-in demo data)",
   "git-warp (local repository)"
 ];
+
+const INPUT_EXCLUDED_KEYS = new Set(["q", "j", "k"]);
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -91,11 +96,11 @@ function centerBox(bg: Surface, content: Surface, title: string): Surface {
 // ---------------------------------------------------------------------------
 
 function connectLayout(model: Model, w: number, h: number): Surface {
-  const bg = renderWaveShader(w, h, model.time, ctx);
+  const bg = renderWaveShader(w, h, model.time);
 
   if (model.adapter) {
     const info = vstack(
-      badge("CONNECTED", { variant: "success", ctx }),
+      surfaceToString(badge("CONNECTED", { variant: "success", ctx }), ctx.style),
       "",
       ` Host: ${model.hello?.hostKind ?? "unknown"}`,
       ` Protocol: ${model.hello?.protocolVersion ?? "?"}`,
@@ -114,12 +119,17 @@ function connectLayout(model: Model, w: number, h: number): Surface {
         : `   ${label}`
     ).join("\n");
 
+    const errorLine = model.error
+      ? vstack("", ctx.style.styled(ctx.status("error"), ` Error: ${model.error}`))
+      : "";
+
     const content = vstack(
       " Choose a host adapter:",
       "",
       items,
       "",
-      " [Enter] Select  [q] Quit"
+      " [Enter] Select  [q] Quit",
+      errorLine
     );
     return centerBox(bg, stringToSurface(content, 56, content.split("\n").length), "Connect");
   }
@@ -151,7 +161,7 @@ function connectLayout(model: Model, w: number, h: number): Surface {
 
 function navigatorLayout(model: Model, w: number, h: number): Surface {
   if (!model.adapter || !model.frame || !model.head) {
-    const bg = renderWaveShader(w, h, model.time, ctx);
+    const bg = renderWaveShader(w, h, model.time);
     return centerBox(bg, stringToSurface(" Connect to a host first.", 40, 1), "Navigator");
   }
 
@@ -159,7 +169,7 @@ function navigatorLayout(model: Model, w: number, h: number): Surface {
   final.fill({ char: " " });
 
   // DAG shader
-  const dag = renderDagShader(w - 4, 8, model.time, ctx);
+  const dag = renderDagShader(w - 4, 8, model.time);
   const dagBox = boxSurface(dag, { title: " Causal Provenance ", width: w - 2, ctx });
   final.blit(dagBox, 1, 1);
 
@@ -204,7 +214,7 @@ function navigatorLayout(model: Model, w: number, h: number): Surface {
 
 function inspectorLayout(model: Model, w: number, h: number): Surface {
   if (!model.adapter || !model.frame || !model.head || !model.hello) {
-    const bg = renderWaveShader(w, h, model.time, ctx);
+    const bg = renderWaveShader(w, h, model.time);
     return centerBox(bg, stringToSurface(" Connect to a host first.", 40, 1), "Inspector");
   }
 
@@ -271,7 +281,8 @@ const initialModel: Model = {
   connectStep: "choose",
   connectChoice: 0,
   inputValue: process.cwd(),
-  repoPath: ""
+  repoPath: "",
+  error: null
 };
 
 const framedApp = createFramedApp<Model, Msg>({
@@ -321,16 +332,16 @@ const mainApp = {
   init: () => {
     const [fModel, fCmds] = framedApp.init();
     return [fModel, [
-      // Pulse animation timer
-      (emit: (msg: Msg) => void) => {
+      // Pulse animation timer — returns cleanup function per bijou Cmd contract
+      ((emit: (msg: Msg) => void) => {
         const interval = setInterval(() => emit({ type: "pulse", dt: 1 / 30 }), 33);
         return () => clearInterval(interval);
-      },
+      }) as any,
       ...fCmds
-    ]];
+    ]] as [typeof fModel, typeof fCmds];
   },
 
-  update: (msg: any, model: any) => {
+  update: (msg: any, model: any): [any, any[]] => {
     const [nextFrame, fCmds] = framedApp.update(msg, model);
     let nextModel: any = nextFrame;
 
@@ -371,6 +382,13 @@ const mainApp = {
         connectChoice: 0
       };
       nextModel = { ...nextModel, activePageId: "connect", pageModels: updateAllPages(pm) };
+      return [nextModel, fCmds];
+    }
+
+    // --- Connect error ---
+    if (msg.type === "connect-error") {
+      pm = { ...pm, adapter: null, error: msg.message, connectStep: "choose" };
+      nextModel = { ...nextModel, pageModels: updateAllPages(pm) };
       return [nextModel, fCmds];
     }
 
@@ -416,14 +434,18 @@ const mainApp = {
             return [nextModel, [
               ...fCmds,
               async (emit: (msg: Msg) => void) => {
-                const { adapter, defaultHeadId } = await resolveAdapter({ kind: "echo-fixture" });
-                emit({ type: "select-adapter", adapter, defaultHeadId });
-                const hello = await adapter.hello();
-                const catalog = await adapter.laneCatalog();
-                const head = await adapter.playbackHead(defaultHeadId);
-                const frame = await adapter.frame(defaultHeadId);
-                const receipts = await adapter.receipts(defaultHeadId);
-                emit({ type: "adapter-ready", hello, catalog, head, frame, receipts });
+                try {
+                  const { adapter, defaultHeadId } = await resolveAdapter({ kind: "echo-fixture" });
+                  emit({ type: "select-adapter", adapter, defaultHeadId });
+                  const hello = await adapter.hello();
+                  const catalog = await adapter.laneCatalog();
+                  const head = await adapter.playbackHead(defaultHeadId);
+                  const frame = await adapter.frame(defaultHeadId);
+                  const receipts = await adapter.receipts(defaultHeadId);
+                  emit({ type: "adapter-ready", hello, catalog, head, frame, receipts });
+                } catch (err) {
+                  emit({ type: "connect-error", message: err instanceof Error ? err.message : String(err) });
+                }
               }
             ]];
           } else {
@@ -438,7 +460,7 @@ const mainApp = {
           pm = { ...pm, repoPath: pm.inputValue, connectStep: "input-graph", inputValue: "default" };
         } else if (msg.key === "backspace") {
           pm = { ...pm, inputValue: pm.inputValue.slice(0, -1) };
-        } else if (msg.key.length === 1 && !["q", "j", "k"].includes(msg.key)) {
+        } else if (msg.key.length === 1 && !INPUT_EXCLUDED_KEYS.has(msg.key)) {
           pm = { ...pm, inputValue: pm.inputValue + msg.key };
         }
       } else if (pm.connectStep === "input-graph") {
@@ -452,23 +474,27 @@ const mainApp = {
           return [nextModel, [
             ...fCmds,
             async (emit: (msg: Msg) => void) => {
-              const { adapter, defaultHeadId } = await resolveAdapter({
-                kind: "git-warp",
-                repoPath,
-                graphName
-              });
-              emit({ type: "select-adapter", adapter, defaultHeadId });
-              const hello = await adapter.hello();
-              const catalog = await adapter.laneCatalog();
-              const head = await adapter.playbackHead(defaultHeadId);
-              const frame = await adapter.frame(defaultHeadId);
-              const receipts = await adapter.receipts(defaultHeadId);
-              emit({ type: "adapter-ready", hello, catalog, head, frame, receipts });
+              try {
+                const { adapter, defaultHeadId } = await resolveAdapter({
+                  kind: "git-warp",
+                  repoPath,
+                  graphName
+                });
+                emit({ type: "select-adapter", adapter, defaultHeadId });
+                const hello = await adapter.hello();
+                const catalog = await adapter.laneCatalog();
+                const head = await adapter.playbackHead(defaultHeadId);
+                const frame = await adapter.frame(defaultHeadId);
+                const receipts = await adapter.receipts(defaultHeadId);
+                emit({ type: "adapter-ready", hello, catalog, head, frame, receipts });
+              } catch (err) {
+                emit({ type: "connect-error", message: err instanceof Error ? err.message : String(err) });
+              }
             }
           ]];
         } else if (msg.key === "backspace") {
           pm = { ...pm, inputValue: pm.inputValue.slice(0, -1) };
-        } else if (msg.key.length === 1 && !["q", "j", "k"].includes(msg.key)) {
+        } else if (msg.key.length === 1 && !INPUT_EXCLUDED_KEYS.has(msg.key)) {
           pm = { ...pm, inputValue: pm.inputValue + msg.key };
         }
       }
@@ -506,7 +532,7 @@ const mainApp = {
               const receipts = await adapter.receipts(headId, frameIndex);
               emit({ type: "frame-result", frame, receipts });
             } catch {
-              // Ignore out-of-range frame requests
+              // Out-of-range frame index — no-op by design (0-9 keys)
             }
           }
         ]];

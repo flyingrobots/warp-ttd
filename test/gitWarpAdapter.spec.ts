@@ -36,8 +36,9 @@ test("lane catalog exposes the live worldline", async () => {
 
     const worldline = catalog.lanes.find((l) => l.kind === "worldline");
     assert.ok(worldline, "Expected at least one worldline lane");
-    assert.equal(worldline.writable, false, "Live worldline is read-only for TTD");
-    assert.ok(worldline.id.startsWith("wl:"), "Worldline ID should be prefixed with wl:");
+    // assert.ok guarantees non-null at this point
+    assert.equal(worldline!.writable, false, "Live worldline is read-only for TTD");
+    assert.ok(worldline!.id.startsWith("wl:"), "Worldline ID should be prefixed with wl:");
   } finally {
     await fixture.cleanup();
   }

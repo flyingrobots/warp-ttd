@@ -9,6 +9,7 @@ import type { TtdHostAdapter } from "../adapter.ts";
 import type {
   HostHello,
   LaneCatalog,
+  LaneFrameView,
   LaneRef,
   PlaybackFrame,
   PlaybackHeadSnapshot,
@@ -62,6 +63,8 @@ type IndexedFrame = {
   readonly receipts: TickReceipt[];
 };
 
+const GIT_WARP_HOST_VERSION = "16.0.0";
+
 /**
  * Builds the frame index from TickReceipts.
  *
@@ -88,8 +91,24 @@ function buildFrameIndex(receipts: TickReceipt[]): IndexedFrame[] {
 
   return ticks.map((tick) => ({
     tick,
-    receipts: byTick.get(tick)!
+    // Safe: ticks array was built from byTick.keys()
+    receipts: byTick.get(tick) ?? []
   }));
+}
+
+function requireIndexedFrame(
+  frameIndex: IndexedFrame[],
+  index: number
+): IndexedFrame {
+  const frame = frameIndex[index];
+
+  if (!frame) {
+    throw new Error(
+      `Frame index ${index + 1} not found (max: ${frameIndex.length})`
+    );
+  }
+
+  return frame;
 }
 
 function countOps(
@@ -181,7 +200,7 @@ export class GitWarpAdapter implements TtdHostAdapter {
   async hello(): Promise<HostHello> {
     return {
       hostKind: "git-warp",
-      hostVersion: "16.0.0",
+      hostVersion: GIT_WARP_HOST_VERSION,
       protocolVersion: "0.1.0",
       schemaId: "ttd-protocol-git-warp-v1",
       capabilities: [
@@ -258,7 +277,7 @@ export class GitWarpAdapter implements TtdHostAdapter {
         headId,
         frameIndex: resolvedIndex,
         laneId: "wl:live",
-        inputTick: resolvedIndex === 1 ? 0 : this.#frameIndex[resolvedIndex - 2]!.tick,
+        inputTick: resolvedIndex === 1 ? 0 : requireIndexedFrame(this.#frameIndex, resolvedIndex - 2).tick,
         outputTick: indexed.tick,
         admittedRewriteCount: admitted,
         rejectedRewriteCount: rejected,
@@ -301,26 +320,28 @@ export class GitWarpAdapter implements TtdHostAdapter {
       };
     }
 
-    const indexed = this.#frameIndex[frameIndex - 1];
-
-    if (!indexed) {
-      throw new Error(`Frame index ${frameIndex} not found in index`);
-    }
+    const indexed = requireIndexedFrame(this.#frameIndex, frameIndex - 1);
 
     // Determine previous tick for change detection
-    const prevTick = frameIndex >= 2 ? this.#frameIndex[frameIndex - 2]!.tick : 0;
+    const prevTick = frameIndex >= 2 ? requireIndexedFrame(this.#frameIndex, frameIndex - 2).tick : 0;
 
     return {
       headId,
       frameIndex,
-      lanes: this.#lanes.map((lane) => ({
-        laneId: lane.id,
-        coordinate: { laneId: lane.id, tick: indexed.tick },
-        changed: lane.kind === "worldline" && indexed.tick !== prevTick,
-        btrDigest: lane.kind === "worldline" && indexed.tick !== prevTick
-          ? indexed.receipts[0]?.patchSha
-          : undefined
-      }))
+      lanes: this.#lanes.map((lane) => {
+        const changed = lane.kind === "worldline" && indexed.tick !== prevTick;
+        const view: LaneFrameView = {
+          laneId: lane.id,
+          coordinate: { laneId: lane.id, tick: indexed.tick },
+          changed
+        };
+
+        if (changed && indexed.receipts[0]) {
+          view.btrDigest = indexed.receipts[0].patchSha;
+        }
+
+        return view;
+      })
     };
   }
 }

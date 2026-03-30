@@ -6,7 +6,7 @@
  */
 import { canvas } from "@flyingrobots/bijou-tui";
 import type { ShaderFn } from "@flyingrobots/bijou-tui";
-import type { Surface, BijouContext } from "@flyingrobots/bijou";
+import type { Surface } from "@flyingrobots/bijou";
 
 function hex(n: number): string {
   return Math.max(0, Math.min(255, Math.floor(n))).toString(16).padStart(2, "0");
@@ -15,8 +15,7 @@ function hex(n: number): string {
 export function renderWaveShader(
   cols: number,
   rows: number,
-  time: number,
-  ctx: BijouContext
+  time: number
 ): Surface {
   const shader: ShaderFn = ({ u, v, time: t }) => {
     const wave1 = Math.sin(u * 10 + t * 0.5) * 0.1;

@@ -354,7 +354,7 @@ The point is not aesthetic Git history. The point is trustworthy collaboration.
 ### Structure
 
 Backlog items live as individual Markdown files in
-[`docs/backlog/`](/Users/james/git/warp-ttd/docs/backlog/).
+[`docs/backlog/`](docs/backlog/).
 
 Each file is a self-contained cycle proposal with:
 
@@ -365,7 +365,7 @@ Each file is a self-contained cycle proposal with:
 - non-goals
 - scope
 
-The root [`BACKLOG.md`](/Users/james/git/warp-ttd/BACKLOG.md) is an index
+The root [`BACKLOG.md`](BACKLOG.md) is an index
 that links to these files and shows the current sequence.
 
 ### Lifecycle
@@ -387,14 +387,14 @@ that links to these files and shows the current sequence.
 
 Before making non-trivial changes, read:
 
-- [README.md](/Users/james/git/warp-ttd/README.md)
-- [docs/design/0001-why-warp-ttd.md](/Users/james/git/warp-ttd/docs/design/0001-why-warp-ttd.md)
-- [docs/design/0002-wesley-schema-profile.md](/Users/james/git/warp-ttd/docs/design/0002-wesley-schema-profile.md)
-- [docs/design/0003-shared-schema-strategy.md](/Users/james/git/warp-ttd/docs/design/0003-shared-schema-strategy.md)
-- [docs/design/0004-ttd-protocol-surface.md](/Users/james/git/warp-ttd/docs/design/0004-ttd-protocol-surface.md)
-- [docs/retrospectives/0001-first-protocol-slice.md](/Users/james/git/warp-ttd/docs/retrospectives/0001-first-protocol-slice.md)
-- [BACKLOG.md](/Users/james/git/warp-ttd/BACKLOG.md)
-- [`docs/backlog/`](/Users/james/git/warp-ttd/docs/backlog/) — individual
+- [README.md](README.md)
+- [docs/design/0001-why-warp-ttd.md](docs/design/0001-why-warp-ttd.md)
+- [docs/design/0002-wesley-schema-profile.md](docs/design/0002-wesley-schema-profile.md)
+- [docs/design/0003-shared-schema-strategy.md](docs/design/0003-shared-schema-strategy.md)
+- [docs/design/0004-ttd-protocol-surface.md](docs/design/0004-ttd-protocol-surface.md)
+- [docs/retrospectives/0001-first-protocol-slice.md](docs/retrospectives/0001-first-protocol-slice.md)
+- [BACKLOG.md](BACKLOG.md)
+- [`docs/backlog/`](docs/backlog/) — individual
   cycle proposals
 
 ## Decision Rule

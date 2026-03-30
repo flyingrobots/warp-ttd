@@ -6,13 +6,12 @@
  */
 import { canvas } from "@flyingrobots/bijou-tui";
 import type { ShaderFn } from "@flyingrobots/bijou-tui";
-import type { Surface, BijouContext } from "@flyingrobots/bijou";
+import type { Surface } from "@flyingrobots/bijou";
 
 export function renderDagShader(
   cols: number,
   rows: number,
-  time: number,
-  ctx: BijouContext
+  time: number
 ): Surface {
   const shader: ShaderFn = ({ u, v }) => {
     // Main trunk (Gold/Amber)

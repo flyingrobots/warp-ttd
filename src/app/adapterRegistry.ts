@@ -45,14 +45,14 @@ export async function resolveAdapter(config: AdapterConfig): Promise<ResolvedAda
       });
 
       return {
-        adapter: await GitWarpAdapter.create(graph as any),
+        adapter: await GitWarpAdapter.create(graph),
         defaultHeadId: "head:default"
       };
     }
 
     default: {
       const exhaustive: never = config;
-      throw new Error(`Unknown adapter kind: ${(exhaustive as any).kind}`);
+      throw new Error(`Unknown adapter kind: ${(exhaustive as { kind: string }).kind}`);
     }
   }
 }

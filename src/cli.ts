@@ -2,20 +2,22 @@ import { EchoFixtureAdapter } from "./adapters/echoFixtureAdapter.ts";
 
 type Command = "demo" | "hello" | "catalog" | "frame" | "step";
 
+const VALID_COMMANDS = new Set<Command>(["demo", "hello", "catalog", "frame", "step"]);
+
 function printSection(label: string, value: unknown): void {
   console.log(`\n## ${label}`);
   console.log(JSON.stringify(value, null, 2));
 }
 
 function parseCommand(argv: string[]): Command {
-  const command = argv[2] as Command | undefined;
+  const command = argv[2];
 
   if (!command) {
     return "demo";
   }
 
-  if (command === "demo" || command === "hello" || command === "catalog" || command === "frame" || command === "step") {
-    return command;
+  if (VALID_COMMANDS.has(command as Command)) {
+    return command as Command;
   }
 
   throw new Error(`Unsupported command: ${command}`);
@@ -62,4 +64,7 @@ async function main(): Promise<void> {
   printSection("ReceiptSummary[] (after step)", await adapter.receipts(headId));
 }
 
-main();
+main().catch((err) => {
+  console.error(err);
+  process.exitCode = 1;
+});
