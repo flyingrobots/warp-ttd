@@ -10,13 +10,23 @@ fi
 
 CEILING=$(tr -d '[:space:]' < "$CEILING_FILE")
 
-# Use JSON output for reliable parsing (immune to locale/format changes)
-LINT_JSON=$(npx eslint . --format json 2>/dev/null || true)
-
-if [ -z "$LINT_JSON" ]; then
-  echo "ERROR: ESLint produced no output"
+if ! [[ "$CEILING" =~ ^[0-9]+$ ]]; then
+  echo "ERROR: $CEILING_FILE contains non-numeric value: '$CEILING'"
   exit 1
 fi
+
+# Use JSON output for reliable parsing. Stderr goes to a temp file
+# so config/plugin errors are visible on failure, not swallowed.
+LINT_STDERR=$(mktemp)
+LINT_JSON=$(npx eslint . --format json 2>"$LINT_STDERR" || true)
+
+if [ -z "$LINT_JSON" ]; then
+  echo "ERROR: ESLint produced no output. Stderr:"
+  cat "$LINT_STDERR"
+  rm -f "$LINT_STDERR"
+  exit 1
+fi
+rm -f "$LINT_STDERR"
 
 COUNT=$(echo "$LINT_JSON" | node -e "
   let d=''; process.stdin.on('data',c=>d+=c); process.stdin.on('end',()=>{
@@ -30,8 +40,8 @@ COUNT=$(echo "$LINT_JSON" | node -e "
   });
 ")
 
-if [ -z "$COUNT" ]; then
-  echo "ERROR: Failed to extract error count from ESLint output"
+if [ -z "$COUNT" ] || ! [[ "$COUNT" =~ ^[0-9]+$ ]]; then
+  echo "ERROR: Failed to extract numeric error count from ESLint output"
   exit 1
 fi
 

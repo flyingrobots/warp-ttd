@@ -547,10 +547,10 @@ const mainApp = {
               const receipts = await adapter.receipts(headId, frameIndex);
               emit({ type: "frame-result", frame, receipts });
             } catch (err) {
-              const msg = err instanceof Error ? err.message : String(err);
+              const errMsg = err instanceof Error ? err.message : String(err);
               // Out-of-range frame index is expected (0-9 keys); other errors surface
-              if (!msg.includes("out of range") && !msg.includes("out of bounds")) {
-                emit({ type: "connect-error", message: msg });
+              if (!errMsg.includes("out of range") && !errMsg.includes("out of bounds")) {
+                emit({ type: "connect-error", message: errMsg });
               }
             }
           }
