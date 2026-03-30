@@ -1,6 +1,6 @@
 {
   "name": "warp-ttd",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Cross-host Time Travel Debugger for WARP systems",
   "private": true,
   "type": "module",

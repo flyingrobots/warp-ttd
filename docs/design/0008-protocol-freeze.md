@@ -1,6 +1,6 @@
 # 0008 — Protocol Freeze (v0.1.0)
 
-**Status:** in progress
+**Status:** implemented
 **Cycle:** B — Protocol Freeze
 
 ## Context
