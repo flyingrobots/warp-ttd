@@ -97,5 +97,13 @@ export default tseslint.config(
       'no-param-reassign': 'error', // Immutability is mandatory.
       'object-shorthand': ['error', 'always'],
     },
+  },
+  // Test file overrides — Node test runner handles async tests natively
+  {
+    files: ['test/**/*.ts'],
+    rules: {
+      '@typescript-eslint/no-floating-promises': 'off',
+      'max-lines-per-function': ['error', 50],
+    },
   }
 );

@@ -14,33 +14,45 @@ const exec = promisify(execFile);
 const CLI = "./src/cli.ts";
 const NODE_ARGS = ["--experimental-strip-types", CLI];
 
+interface EnvelopeLine {
+  envelope: string;
+  data?: Record<string, string | number | boolean | null>;
+  label?: string;
+}
+
 async function runJson(command: string): Promise<string[]> {
   const { stdout } = await exec("node", [...NODE_ARGS, command, "--json"]);
   const lines = stdout.trim().split("\n").filter((l) => l.length > 0);
   return lines;
 }
 
-function parseLine(line: string): { envelope: string; data?: Record<string, unknown>; label?: string } {
-  const parsed = JSON.parse(line) as { envelope: string; data?: Record<string, unknown>; label?: string };
+function parseLine(line: string): EnvelopeLine {
+  const parsed = JSON.parse(line) as EnvelopeLine;
   assert.equal(typeof parsed.envelope, "string", `Missing envelope field in: ${line}`);
   return parsed;
+}
+
+function requireLine(lines: string[], index: number): string {
+  const line = lines[index];
+  assert.ok(line !== undefined, `Expected line at index ${index.toString()}`);
+  return line;
 }
 
 test("hello --json outputs a single HostHello JSONL line", async () => {
   const lines = await runJson("hello");
   assert.equal(lines.length, 1);
 
-  const obj = parseLine(lines[0]!);
+  const obj = parseLine(requireLine(lines, 0));
   assert.equal(obj.envelope, "HostHello");
   assert.ok(obj.data !== undefined);
-  assert.equal((obj.data as Record<string, unknown>)["protocolVersion"], "0.1.0");
+  assert.equal(obj.data["protocolVersion"], "0.1.0");
 });
 
 test("catalog --json outputs a single LaneCatalog JSONL line", async () => {
   const lines = await runJson("catalog");
   assert.equal(lines.length, 1);
 
-  const obj = parseLine(lines[0]!);
+  const obj = parseLine(requireLine(lines, 0));
   assert.equal(obj.envelope, "LaneCatalog");
   assert.ok(obj.data !== undefined);
 });
@@ -52,7 +64,6 @@ test("frame --json outputs PlaybackHeadSnapshot, PlaybackFrame, and ReceiptSumma
   const envelopes = lines.map((l) => parseLine(l).envelope);
   assert.ok(envelopes.includes("PlaybackHeadSnapshot"));
   assert.ok(envelopes.includes("PlaybackFrame"));
-  // ReceiptSummary may be absent at frame 0
 });
 
 test("step --json outputs before/after head snapshots with labels", async () => {
@@ -73,9 +84,8 @@ test("--json stdout contains no human-readable text", async () => {
   const lines = await runJson("hello");
 
   for (const line of lines) {
-    // Every line must start with { and be valid JSON
     assert.ok(line.startsWith("{"), `Non-JSON line found: ${line}`);
-    JSON.parse(line); // throws if invalid
+    JSON.parse(line);
   }
 });
 
@@ -83,7 +93,6 @@ test("demo --json outputs multiple envelope lines", async () => {
   const lines = await runJson("demo");
   assert.ok(lines.length >= 5, "Demo should produce multiple envelope lines");
 
-  // Every line is valid JSONL with envelope field
   for (const line of lines) {
     parseLine(line);
   }

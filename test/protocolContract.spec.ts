@@ -44,6 +44,7 @@ test("LaneCatalog v0.1.0 shape", async () => {
   assert.equal(typeof lane.kind, "string");
   assert.equal(typeof lane.writable, "boolean");
   assert.equal(typeof lane.description, "string");
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- contract test: pin allowed values
   assert.ok(lane.kind === "worldline" || lane.kind === "strand");
 });
 
