@@ -11,11 +11,22 @@ function isValidCommand(cmd: string): cmd is Command {
 function parseArgs(argv: string[]): { command: Command; json: boolean } {
   const args = argv.slice(2);
   const json = args.includes("--json");
-  const positional = args.filter((a) => a !== "--json");
+  const positional = args.filter((a) => !a.startsWith("--"));
+
+  if (positional.length > 1) {
+    throw new Error(`Unexpected arguments: ${positional.slice(1).join(", ")}`);
+  }
+
   const command = positional[0];
 
   if (command === undefined) {
     return { command: "demo", json };
+  }
+
+  const unknown = args.filter((a) => a.startsWith("--") && a !== "--json");
+
+  if (unknown.length > 0) {
+    throw new Error(`Unknown flags: ${unknown.join(", ")}`);
   }
 
   if (isValidCommand(command)) {
@@ -94,15 +105,15 @@ async function main(): Promise<void> {
   if (json) {
     print("PlaybackFrame", await adapter.stepForward(headId), "stepped");
     print("PlaybackHeadSnapshot", await adapter.playbackHead(headId), "after");
+    const receiptsAfter = await adapter.receipts(headId);
+    for (const r of receiptsAfter) {
+      print("ReceiptSummary", r);
+    }
   } else {
     printSection("StepForward", await adapter.stepForward(headId));
     printSection("PlaybackHeadSnapshot (after step)", await adapter.playbackHead(headId));
     printSection("PlaybackFrame (after step)", await adapter.frame(headId));
     printSection("ReceiptSummary[] (after step)", await adapter.receipts(headId));
-  }
-  const receiptsAfter = await adapter.receipts(headId);
-  for (const r of receiptsAfter) {
-    print("ReceiptSummary", r);
   }
 }
 

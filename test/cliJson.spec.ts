@@ -66,18 +66,20 @@ test("frame --json outputs PlaybackHeadSnapshot, PlaybackFrame, and ReceiptSumma
   assert.ok(envelopes.includes("PlaybackFrame"));
 });
 
-test("step --json outputs before/after head snapshots with labels", async () => {
+test("step --json outputs exact sequence: before, stepped, after, receipts", async () => {
   const lines = await runJson("step");
-  assert.ok(lines.length >= 3, "Expected before + stepped + after lines");
-
   const parsed = lines.map((l) => parseLine(l));
-  const beforeHead = parsed.find((p) => p.envelope === "PlaybackHeadSnapshot" && p.label === "before");
-  const steppedFrame = parsed.find((p) => p.envelope === "PlaybackFrame" && p.label === "stepped");
-  const afterHead = parsed.find((p) => p.envelope === "PlaybackHeadSnapshot" && p.label === "after");
+  const sequence = parsed.map((p) => `${p.envelope}${p.label !== undefined ? `:${p.label}` : ""}`);
 
-  assert.ok(beforeHead !== undefined, "Expected before head snapshot");
-  assert.ok(steppedFrame !== undefined, "Expected stepped frame");
-  assert.ok(afterHead !== undefined, "Expected after head snapshot");
+  // Pin exact sequence: head(before), frame(stepped), head(after), then receipts
+  assert.equal(sequence[0], "PlaybackHeadSnapshot:before");
+  assert.equal(sequence[1], "PlaybackFrame:stepped");
+  assert.equal(sequence[2], "PlaybackHeadSnapshot:after");
+
+  // Remaining lines (if any) must all be ReceiptSummary
+  for (const entry of sequence.slice(3)) {
+    assert.equal(entry, "ReceiptSummary");
+  }
 });
 
 test("--json stdout contains no human-readable text", async () => {

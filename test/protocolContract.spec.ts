@@ -37,15 +37,23 @@ test("LaneCatalog v0.1.0 shape", async () => {
   assert.ok(Array.isArray(catalog.lanes));
   assert.deepEqual(Object.keys(catalog).sort(), ["lanes"]);
 
-  // LaneRef shape
-  const lane = catalog.lanes[0];
-  assert.ok(lane !== undefined, "Expected at least one lane");
-  assert.equal(typeof lane.id, "string");
-  assert.equal(typeof lane.kind, "string");
-  assert.equal(typeof lane.writable, "boolean");
-  assert.equal(typeof lane.description, "string");
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- contract test: pin allowed values
-  assert.ok(lane.kind === "worldline" || lane.kind === "strand");
+  // LaneRef shape — worldline (required fields: id, kind, writable, description)
+  const worldline = catalog.lanes[0];
+  assert.ok(worldline !== undefined, "Expected at least one lane");
+  assert.equal(typeof worldline.id, "string");
+  assert.equal(typeof worldline.kind, "string");
+  assert.equal(typeof worldline.writable, "boolean");
+  assert.equal(typeof worldline.description, "string");
+  const worldlineKeys = Object.keys(worldline).sort();
+  assert.deepEqual(worldlineKeys, ["description", "id", "kind", "writable"]);
+
+  // LaneRef shape — strand (has parentId)
+  const strand = catalog.lanes.find((l) => l.kind === "strand");
+  if (strand !== undefined) {
+    const strandKeys = Object.keys(strand).sort();
+    assert.deepEqual(strandKeys, ["description", "id", "kind", "parentId", "writable"]);
+    assert.equal(typeof strand.parentId, "string");
+  }
 });
 
 test("PlaybackHeadSnapshot v0.1.0 shape", async () => {
@@ -78,8 +86,23 @@ test("PlaybackFrame v0.1.0 shape", async () => {
   assert.ok(laneView !== undefined, "Expected at least one lane view");
   assert.equal(typeof laneView.laneId, "string");
   assert.equal(typeof laneView.changed, "boolean");
+
+  // Coordinate shape (nested)
   assert.equal(typeof laneView.coordinate.laneId, "string");
   assert.equal(typeof laneView.coordinate.tick, "number");
+  assert.deepEqual(Object.keys(laneView.coordinate).sort(), ["laneId", "tick"]);
+
+  // LaneFrameView keys (changed lane has btrDigest)
+  const changedLane = frame.lanes.find((l) => l.changed);
+  if (changedLane !== undefined) {
+    assert.ok(Object.keys(changedLane).includes("btrDigest"));
+  }
+
+  // LaneFrameView keys (unchanged lane has no btrDigest)
+  const unchangedLane = frame.lanes.find((l) => !l.changed);
+  if (unchangedLane !== undefined) {
+    assert.ok(!Object.keys(unchangedLane).includes("btrDigest"));
+  }
 });
 
 test("ReceiptSummary v0.1.0 shape", async () => {
