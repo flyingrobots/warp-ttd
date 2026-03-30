@@ -17,7 +17,10 @@
     "test": "node --experimental-strip-types --test test/echoFixtureAdapter.spec.ts test/adapterRegistry.spec.ts",
     "test:integration": "node --experimental-strip-types --test test/gitWarpAdapter.spec.ts test/adapterRegistry.integration.spec.ts",
     "test:all": "node --experimental-strip-types --test",
-    "tui": "node --experimental-strip-types ./src/tui/main.ts"
+    "tui": "node --experimental-strip-types ./src/tui/main.ts",
+    "lint": "eslint .",
+    "lint:check": "bash scripts/lint-check.sh",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@flyingrobots/bijou": "^4.0.0",

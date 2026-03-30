@@ -30,6 +30,12 @@ architecture → freeze protocol → human UX → speculation.
 | 4 | E — DebuggerSession | queued | [E-debugger-session.md](docs/backlog/E-debugger-session.md) |
 | 5 | D — Strand & Speculation | queued | [D-strand-speculation.md](docs/backlog/D-strand-speculation.md) |
 
+## Ongoing
+
+| Policy | File |
+|--------|------|
+| Lint Ratchet — 30% reduction per cycle | [lint-ratchet.md](docs/backlog/lint-ratchet.md) |
+
 ## Deferred
 
 - [ ] Wesley / GraphQL schema formalization

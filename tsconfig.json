@@ -1,16 +1,35 @@
 {
   "compilerOptions": {
-    "target": "ES2022",
+    /* =======================================
+       THE BASELINE STRICTNESS
+       ======================================= */
+    "strict": true,
+    "alwaysStrict": true,
+    "target": "ESNext",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "strict": true,
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
     "noEmit": true,
-    "exactOptionalPropertyTypes": true,
+    "allowImportingTsExtensions": true,
+
+    /* =======================================
+       THE "MAXIMUM PAIN" PEDANTIC FLAGS
+       ======================================= */
+
     "noUncheckedIndexedAccess": true,
-    "allowImportingTsExtensions": true
+    "exactOptionalPropertyTypes": true,
+    "noImplicitReturns": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    // Unused vars/params enforced by ESLint (@typescript-eslint/no-unused-vars)
+    // rather than tsc, because ESLint allows per-case configuration.
+    "noUnusedLocals": false,
+    "noUnusedParameters": false
   },
-  "include": [
-    "src/**/*.ts",
-    "test/**/*.ts"
-  ]
+  "include": ["src/**/*.ts", "test/**/*.ts"],
+  "exclude": ["node_modules", "dist", "build"]
 }

@@ -267,6 +267,24 @@ Local testing policy:
 - integration suites against real hosts should be additive and clearly named
 - no host-backed suite should silently replace the default fast suite
 
+## Lint Ratchet
+
+ESLint is configured with strict typescript-eslint rules (zero `any`, zero
+`unknown`, explicit return types, custom error classes, complexity limits).
+The codebase converges to full compliance over time via a ratchet.
+
+Rules:
+
+- a lint error ceiling is stored in `lint-ceiling.txt`
+- `npm run lint:check` exits non-zero if the count exceeds the ceiling
+- after each cycle closes, the ceiling drops by 30% (rounded down)
+- new code must not introduce new lint violations
+- when the ceiling reaches zero, the ratchet is retired and `npm run lint`
+  becomes a hard gate
+
+See [`docs/backlog/lint-ratchet.md`](docs/backlog/lint-ratchet.md) for the
+full schedule.
+
 ## Protocol Guardrails
 
 Do not let TTD quietly become any of the following unless explicitly
