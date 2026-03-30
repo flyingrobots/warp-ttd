@@ -28,6 +28,9 @@
     "@git-stunts/plumbing": "^2.8.0"
   },
   "devDependencies": {
-    "@types/node": "^25.5.0"
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^25.5.0",
+    "eslint": "^10.1.0",
+    "typescript-eslint": "^8.57.2"
   }
 }
