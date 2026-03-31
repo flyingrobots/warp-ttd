@@ -1,6 +1,6 @@
 # Cycle B — Protocol Freeze
 
-**Status:** queued
+**Status:** closed
 
 ## Sponsor Human
 

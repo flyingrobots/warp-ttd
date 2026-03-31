@@ -16,7 +16,9 @@ test("resolveAdapter returns an echo fixture adapter for echo-fixture config", a
 });
 
 test("resolveAdapter throws for unknown adapter kind", async () => {
-  const config = { kind: "unknown" } as unknown as AdapterConfig;
+  // Force an invalid kind past the type system to test runtime error handling
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+  const config: AdapterConfig = { kind: "unknown" } as any;
   await assert.rejects(
     () => resolveAdapter(config),
     { message: /unknown adapter kind/i }

@@ -53,7 +53,7 @@ TTD `ReceiptSummary` is derived from git-warp `TickReceipt`:
 ### Lane catalog
 
 - The live frontier worldline is always present as `wl:live` (read-only).
-- Strands from `listStrands()` are mapped to `working-set` lanes with
+- Strands from `listStrands()` are mapped to `strand` lanes with
   `ws:` prefix. Their writability reflects `strand.overlay.writable`.
 
 ### Structural typing for WarpCore

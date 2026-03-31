@@ -43,7 +43,7 @@ The minimal host-neutral TTD protocol should expose:
 ### 2. Lane catalog
 
 - worldline ids
-- working set ids
+- strand ids
 - ancestry/fork relations
 - available playback heads
 - readable versus writable lanes
@@ -83,7 +83,7 @@ The minimal host-neutral TTD protocol should expose:
 These may be capability-gated and can remain thin at first:
 
 - create fork from coordinate
-- create working set from coordinate/frontier
+- create strand from coordinate/frontier
 - return the resulting lane identity and frontier metadata
 
 ## Recommended Envelope Shape

@@ -28,7 +28,7 @@ is extracted into its own repo.
 
 1. Historical observation is read-only.
 2. Observation must not mutate the live frontier.
-3. Continuing from the past requires a fork or working set, not silent rewind
+3. Continuing from the past requires a fork or strand, not silent rewind
    of canonical history.
 4. Multiple observer-relative panels may legitimately disagree on what matters
    while still inspecting the same underlying frame.

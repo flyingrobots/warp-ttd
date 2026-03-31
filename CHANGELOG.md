@@ -6,7 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project will use [Semantic Versioning](https://semver.org/) starting at
 `0.1.0` with the first cycle release (Cycle B — Protocol Freeze).
 
-## [Unreleased]
+## [0.1.0] — 2026-03-30
+
+Protocol freeze release. The read-only TTD protocol is frozen at v0.1.0.
 
 ### Added
 
@@ -33,8 +35,17 @@ This project will use [Semantic Versioning](https://semver.org/) starting at
 - **Default head ID convention** — each adapter declares its default head
   ID through the registry. *(Cycle C)*
 
+- **CLI `--json` flag** — every command (`hello`, `catalog`, `frame`,
+  `step`, `demo`) produces structured JSONL output with envelope fields.
+  *(Cycle B)*
+- **Protocol contract tests** — 5 tests pin v0.1.0 envelope shapes; 6
+  tests pin `--json` JSONL output format. *(Cycle B)*
+- **Design doc 0008** — protocol freeze specification. *(Cycle B)*
+
 ### Changed
 
+- **LaneKind `"working-set"` renamed to `"strand"`** — aligns with
+  official git-warp terminology.
 - `TtdHostAdapter` methods are now async (previously synchronous).
 - Echo fixture adapter methods are now async (no behavioral change).
 - CLI uses `await` for all adapter calls.

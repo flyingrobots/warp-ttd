@@ -16,7 +16,7 @@ import {
 
 type WarpCoreInstance = InstanceType<typeof WarpCore>;
 
-export type GitWarpFixture = {
+export interface GitWarpFixture {
   /** The WarpCore instance (plumbing surface with materialize + receipts). */
   readonly graph: WarpCoreInstance;
   /** Absolute path to the temporary git repo. */
@@ -27,7 +27,7 @@ export type GitWarpFixture = {
   readonly writerId: string;
   /** Tears down the temp directory. Call in afterEach. */
   cleanup(): Promise<void>;
-};
+}
 
 /**
  * Creates a temporary git repo and opens a WarpCore graph.
@@ -58,14 +58,14 @@ export async function createFixture(
       graphName,
       writerId,
       crypto
-    }) as WarpCoreInstance;
+    });
 
     return {
       graph,
       tempDir,
       graphName,
       writerId,
-      async cleanup() {
+      async cleanup(): Promise<void> {
         await rm(tempDir, { recursive: true, force: true });
       }
     };
@@ -133,14 +133,14 @@ export async function scenarioMultiWriter(): Promise<
       graphName: "collab",
       writerId: "alice",
       crypto
-    }) as WarpCoreInstance;
+    });
 
     const bobGraph = await WarpCore.open({
       persistence,
       graphName: "collab",
       writerId: "bob",
       crypto
-    }) as WarpCoreInstance;
+    });
 
     // Alice writes first
     const pa1 = await aliceGraph.createPatch();
@@ -171,7 +171,7 @@ export async function scenarioMultiWriter(): Promise<
       tempDir,
       graphName: "collab",
       writerId: "alice",
-      async cleanup() {
+      async cleanup(): Promise<void> {
         await rm(tempDir, { recursive: true, force: true });
       }
     };

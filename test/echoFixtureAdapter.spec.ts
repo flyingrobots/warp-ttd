@@ -20,7 +20,7 @@ test("hello exposes the minimal host handshake contract", async () => {
   ]);
 });
 
-test("lane catalog exposes one canonical worldline and one speculative working set", async () => {
+test("lane catalog exposes one canonical worldline and one speculative strand", async () => {
   const adapter = new EchoFixtureAdapter();
   const catalog = await adapter.laneCatalog();
 
@@ -33,10 +33,10 @@ test("lane catalog exposes one canonical worldline and one speculative working s
   });
   assert.deepEqual(catalog.lanes[1], {
     id: "ws:sandbox",
-    kind: "working-set",
+    kind: "strand",
     parentId: "wl:main",
     writable: true,
-    description: "Speculative child working set at frame 1"
+    description: "Speculative child strand at frame 1"
   });
 });
 
