@@ -218,23 +218,30 @@ function navigatorLayout(model: Model, w: number, h: number): Surface {
   // Effect emissions + delivery observations
   let yOffset = dagBox.height + infoBox.height + receiptBox.height + 4;
 
-  if (model.emissions.length > 0) {
-    const outcomeIcon = (o: string): string =>
-      o === "delivered" ? "+" : o === "suppressed" ? "~" : o === "failed" ? "!" : "-";
+  if (model.observations.length > 0) {
+    const statusLabel = (outcome: string): string => {
+      if (outcome === "delivered") return ctx.style.styled(ctx.status("success"), "delivered ");
+      if (outcome === "suppressed") return ctx.style.styled(ctx.status("warning"), "suppressed");
+      if (outcome === "failed") return ctx.style.styled(ctx.status("error"), "failed    ");
+      return "skipped   ";
+    };
 
-    const effectLines = model.emissions.map((e) => {
-      const deliveries = model.observations
-        .filter((o) => o.emissionId === e.emissionId)
-        .map((o) => `${outcomeIcon(o.outcome)}${o.sinkId.replace("sink:", "")}`)
-        .join(" ");
-      return `  ${e.effectKind.padEnd(14)} ${e.laneId.padEnd(16)} ${deliveries}`;
+    const header = `  ${"Effect".padEnd(14)} ${"Lane".padEnd(16)} ${"Sink".padEnd(14)} Status`;
+    const separator = `  ${"─".repeat(14)} ${"─".repeat(16)} ${"─".repeat(14)} ${"─".repeat(10)}`;
+
+    const rows = model.observations.map((o) => {
+      const emission = model.emissions.find((e) => e.emissionId === o.emissionId);
+      const kind = emission !== undefined ? emission.effectKind : "?";
+      const lane = emission !== undefined ? emission.laneId : "?";
+      const sink = o.sinkId.replace("sink:", "");
+      return `  ${kind.padEnd(14)} ${lane.padEnd(16)} ${sink.padEnd(14)} ${statusLabel(o.outcome)}`;
     }).join("\n");
 
     const modeLabel = model.execCtx !== null ? ` [${model.execCtx.mode}]` : "";
-    const effectStr = vstack(effectLines);
-    const effectSurf = stringToSurface(effectStr, w - 4, effectStr.split("\n").length);
-    const effectBox = boxSurface(effectSurf, { title: ` Effects${modeLabel} `, width: w - 2, ctx });
-    final.blit(effectBox, 1, yOffset);
+    const tableStr = vstack(header, separator, rows);
+    const tableSurf = stringToSurface(tableStr, w - 4, tableStr.split("\n").length);
+    const tableBox = boxSurface(tableSurf, { title: ` Effects${modeLabel} `, width: w - 2, ctx });
+    final.blit(tableBox, 1, yOffset);
   }
 
   // Controls / jump prompt
