@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -uo pipefail
+
+echo "pre-push: running tests + typecheck + lint ratchet..."
+
+npm test --silent || { echo "pre-push: tests failed"; exit 1; }
+npx tsc --noEmit || { echo "pre-push: typecheck failed"; exit 1; }
+bash scripts/lint-check.sh || { echo "pre-push: lint ceiling exceeded"; exit 1; }
+
+# If lint-check.sh ratcheted the ceiling down, stage it
+if ! git diff --quiet lint-ceiling.txt 2>/dev/null; then
+  git add lint-ceiling.txt
+  git commit -m "chore: ratchet lint ceiling to $(cat lint-ceiling.txt | tr -d '[:space:]')"
+  echo "pre-push: auto-committed ratcheted lint ceiling"
+fi
+
+echo "pre-push: all checks passed"

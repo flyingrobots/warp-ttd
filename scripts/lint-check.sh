@@ -54,8 +54,13 @@ fi
 
 if [ "$COUNT" -eq "0" ]; then
   echo "CLEAN: Zero lint errors!"
+  if [ "$CEILING" -ne "0" ]; then
+    echo "0" > "$CEILING_FILE"
+    echo "Ratcheted ceiling to 0."
+  fi
 elif [ "$COUNT" -lt "$CEILING" ]; then
-  echo "PASS: Under ceiling. Consider lowering to $COUNT."
+  echo "$COUNT" > "$CEILING_FILE"
+  echo "PASS: Ratcheted ceiling from $CEILING to $COUNT."
 else
   echo "PASS: At ceiling."
 fi
