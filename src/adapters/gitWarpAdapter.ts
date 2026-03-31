@@ -7,6 +7,9 @@
  */
 import type { TtdHostAdapter } from "../adapter.ts";
 import type {
+  DeliveryObservationSummary,
+  EffectEmissionSummary,
+  ExecutionContext,
   HostHello,
   LaneCatalog,
   LaneFrameView,
@@ -355,5 +358,21 @@ export class GitWarpAdapter implements TtdHostAdapter {
         return view;
       })
     };
+  }
+
+  // --- Effect/delivery inspection (provisional — awaiting git-warp substrate support) ---
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  public effectEmissions(_headId: string, _frameIndex?: number): Promise<EffectEmissionSummary[]> {
+    return Promise.resolve([]);
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  public deliveryObservations(_headId: string, _frameIndex?: number): Promise<DeliveryObservationSummary[]> {
+    return Promise.resolve([]);
+  }
+
+  public executionContext(): Promise<ExecutionContext> {
+    return Promise.resolve({ mode: "live" });
   }
 }

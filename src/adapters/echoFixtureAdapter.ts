@@ -1,5 +1,8 @@
 import type { TtdHostAdapter } from "../adapter.ts";
 import type {
+  DeliveryObservationSummary,
+  EffectEmissionSummary,
+  ExecutionContext,
   HostHello,
   LaneCatalog,
   PlaybackFrame,
@@ -13,6 +16,9 @@ interface FixtureState {
   readonly heads: Record<string, PlaybackHeadSnapshot>;
   readonly frames: Record<string, PlaybackFrame[]>;
   readonly receipts: Record<string, ReceiptSummary[]>;
+  readonly effectEmissions: Record<string, EffectEmissionSummary[]>;
+  readonly deliveryObservations: Record<string, DeliveryObservationSummary[]>;
+  readonly executionContext: ExecutionContext;
 }
 
 const FIXTURE: FixtureState = {
@@ -27,6 +33,9 @@ const FIXTURE: FixtureState = {
       "read:playback-head",
       "read:frame",
       "read:receipts",
+      "read:effect-emissions",
+      "read:delivery-observations",
+      "read:execution-context",
       "control:step-forward"
     ]
   },
@@ -140,6 +149,59 @@ const FIXTURE: FixtureState = {
         summary: "Accepted one speculative rewrite and captured one counterfactual."
       }
     ]
+  },
+  effectEmissions: {
+    "head:main": [
+      {
+        emissionId: "emit:echo:0001",
+        headId: "head:main",
+        frameIndex: 1,
+        laneId: "wl:main",
+        coordinate: { laneId: "wl:main", tick: 1 },
+        effectKind: "diagnostic",
+        producerWriterId: "echo-writer",
+        summary: "Diagnostic event emitted on canonical worldline advance."
+      },
+      {
+        emissionId: "emit:echo:0002",
+        headId: "head:main",
+        frameIndex: 2,
+        laneId: "ws:sandbox",
+        coordinate: { laneId: "ws:sandbox", tick: 1 },
+        effectKind: "notification",
+        producerWriterId: "echo-writer",
+        summary: "Notification emitted on speculative strand advance."
+      }
+    ]
+  },
+  deliveryObservations: {
+    "head:main": [
+      {
+        observationId: "deliv:echo:0001",
+        emissionId: "emit:echo:0001",
+        headId: "head:main",
+        frameIndex: 1,
+        sinkId: "sink:tui-log",
+        outcome: "delivered",
+        reason: "Live execution — delivered to local TUI log sink.",
+        executionMode: "live",
+        summary: "Diagnostic delivered to TUI log."
+      },
+      {
+        observationId: "deliv:echo:0002",
+        emissionId: "emit:echo:0002",
+        headId: "head:main",
+        frameIndex: 2,
+        sinkId: "sink:network",
+        outcome: "suppressed",
+        reason: "Replay-safe suppression — external delivery blocked during replay.",
+        executionMode: "replay",
+        summary: "Notification suppressed during replay."
+      }
+    ]
+  },
+  executionContext: {
+    mode: "live"
   }
 };
 
@@ -233,5 +295,29 @@ export class EchoFixtureAdapter implements TtdHostAdapter {
     });
 
     return Promise.resolve(cloneValue(nextFrame));
+  }
+
+  public effectEmissions(headId: string, frameIndex?: number): Promise<EffectEmissionSummary[]> {
+    const head = requireHeadState(this.#heads, headId);
+    const resolvedIndex = frameIndex ?? head.currentFrameIndex;
+    const emissions = FIXTURE.effectEmissions[headId] ?? [];
+
+    return Promise.resolve(cloneValue(
+      emissions.filter((e) => e.frameIndex === resolvedIndex)
+    ));
+  }
+
+  public deliveryObservations(headId: string, frameIndex?: number): Promise<DeliveryObservationSummary[]> {
+    const head = requireHeadState(this.#heads, headId);
+    const resolvedIndex = frameIndex ?? head.currentFrameIndex;
+    const observations = FIXTURE.deliveryObservations[headId] ?? [];
+
+    return Promise.resolve(cloneValue(
+      observations.filter((o) => o.frameIndex === resolvedIndex)
+    ));
+  }
+
+  public executionContext(): Promise<ExecutionContext> {
+    return Promise.resolve(cloneValue(FIXTURE.executionContext));
   }
 }

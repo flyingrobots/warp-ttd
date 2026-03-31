@@ -16,6 +16,9 @@ test("hello exposes the minimal host handshake contract", async () => {
     "read:playback-head",
     "read:frame",
     "read:receipts",
+    "read:effect-emissions",
+    "read:delivery-observations",
+    "read:execution-context",
     "control:step-forward"
   ]);
 });
