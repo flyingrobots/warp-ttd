@@ -42,6 +42,7 @@ architecture → freeze protocol → human UX → speculation.
 |------|------|
 | Navigator View Design | [navigator-view-design.md](docs/backlog/navigator-view-design.md) |
 | Add writerId to ReceiptSummary | [receipt-writer-field.md](docs/backlog/receipt-writer-field.md) |
+| Counterfactual Inspection & Strand Forking | [counterfactual-inspection.md](docs/backlog/counterfactual-inspection.md) |
 
 ## Deferred
 
