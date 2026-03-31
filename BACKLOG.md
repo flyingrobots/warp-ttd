@@ -36,6 +36,12 @@ architecture → freeze protocol → human UX → speculation.
 |--------|------|
 | Lint Ratchet — 30% reduction per cycle | [lint-ratchet.md](docs/backlog/lint-ratchet.md) |
 
+## Queued (unscheduled)
+
+| Item | File |
+|------|------|
+| Navigator View Design | [navigator-view-design.md](docs/backlog/navigator-view-design.md) |
+
 ## Deferred
 
 - [ ] Wesley / GraphQL schema formalization
