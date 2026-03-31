@@ -8,11 +8,14 @@
  */
 import type { TtdHostAdapter } from "../adapter.ts";
 
-export type AdapterKind = "echo-fixture" | "git-warp";
+export type ScenarioName = "live-with-effects" | "replay-with-suppression" | "multi-writer-conflicts";
+
+export type AdapterKind = "echo-fixture" | "git-warp" | "scenario";
 
 export type AdapterConfig =
   | { kind: "echo-fixture" }
-  | { kind: "git-warp"; repoPath: string; graphName: string };
+  | { kind: "git-warp"; repoPath: string; graphName: string }
+  | { kind: "scenario"; scenario: ScenarioName };
 
 export interface ResolvedAdapter {
   adapter: TtdHostAdapter;
@@ -46,6 +49,26 @@ export async function resolveAdapter(config: AdapterConfig): Promise<ResolvedAda
 
       return {
         adapter: await GitWarpAdapter.create(graph),
+        defaultHeadId: "head:default"
+      };
+    }
+
+    case "scenario": {
+      const {
+        scenarioLiveWithEffects,
+        scenarioReplayWithSuppression,
+        scenarioMultiWriterWithConflicts
+      } = await import("../../test/helpers/scenarioFixture.ts");
+
+      const scenarios: Record<ScenarioName, () => TtdHostAdapter> = {
+        "live-with-effects": scenarioLiveWithEffects,
+        "replay-with-suppression": scenarioReplayWithSuppression,
+        "multi-writer-conflicts": scenarioMultiWriterWithConflicts
+      };
+
+      const factory = scenarios[config.scenario];
+      return {
+        adapter: factory(),
         defaultHeadId: "head:default"
       };
     }

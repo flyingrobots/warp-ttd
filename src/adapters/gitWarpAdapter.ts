@@ -141,17 +141,17 @@ function countOps(
 export class GitWarpAdapter implements TtdHostAdapter {
   public readonly adapterName = "git-warp";
 
-  readonly #graph: WarpCoreLike;
   readonly #frameIndex: IndexedFrame[];
   readonly #lanes: LaneRef[];
   readonly #headStates = new Map<string, PlaybackHeadSnapshot>();
 
   private constructor(
-    graph: WarpCoreLike,
+    _graph: WarpCoreLike,
     frameIndex: IndexedFrame[],
     lanes: LaneRef[]
   ) {
-    this.#graph = graph;
+    // graph stored for future use (strand operations, live refresh)
+    void _graph;
     this.#frameIndex = frameIndex;
     this.#lanes = lanes;
 

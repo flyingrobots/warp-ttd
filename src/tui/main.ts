@@ -26,8 +26,12 @@ import type { BijouContext, Surface } from "@flyingrobots/bijou";
 import { renderWaveShader } from "./shaders/bgShader.ts";
 import { renderDagShader } from "./shaders/dagShader.ts";
 import { resolveAdapter } from "../app/adapterRegistry.ts";
+import type { AdapterConfig } from "../app/adapterRegistry.ts";
 import type { TtdHostAdapter } from "../adapter.ts";
 import type {
+  DeliveryObservationSummary,
+  EffectEmissionSummary,
+  ExecutionContext,
   HostHello,
   LaneCatalog,
   PlaybackFrame,
@@ -43,9 +47,9 @@ type Msg =
   | { type: "quit" }
   | { type: "pulse"; dt: number }
   | { type: "select-adapter"; adapter: TtdHostAdapter; defaultHeadId: string; generation: number }
-  | { type: "adapter-ready"; hello: HostHello; catalog: LaneCatalog; head: PlaybackHeadSnapshot; frame: PlaybackFrame; receipts: ReceiptSummary[]; generation: number }
-  | { type: "step-result"; head: PlaybackHeadSnapshot; frame: PlaybackFrame; receipts: ReceiptSummary[] }
-  | { type: "frame-result"; frame: PlaybackFrame; receipts: ReceiptSummary[] }
+  | { type: "adapter-ready"; hello: HostHello; catalog: LaneCatalog; head: PlaybackHeadSnapshot; frame: PlaybackFrame; receipts: ReceiptSummary[]; emissions: EffectEmissionSummary[]; observations: DeliveryObservationSummary[]; execCtx: ExecutionContext; generation: number }
+  | { type: "step-result"; head: PlaybackHeadSnapshot; frame: PlaybackFrame; receipts: ReceiptSummary[]; emissions: EffectEmissionSummary[]; observations: DeliveryObservationSummary[] }
+  | { type: "frame-result"; frame: PlaybackFrame; receipts: ReceiptSummary[]; emissions: EffectEmissionSummary[]; observations: DeliveryObservationSummary[] }
   | { type: "connect-error"; message: string }
   | { type: "disconnect" }
   | { type: "nav"; direction: "next" | "prev" }
@@ -64,6 +68,9 @@ interface Model {
   head: PlaybackHeadSnapshot | null;
   frame: PlaybackFrame | null;
   receipts: ReceiptSummary[];
+  emissions: EffectEmissionSummary[];
+  observations: DeliveryObservationSummary[];
+  execCtx: ExecutionContext | null;
   // Connection wizard state
   connectStep: "choose" | "input-path" | "input-graph";
   connectChoice: number;
@@ -75,7 +82,10 @@ interface Model {
 
 const CONNECT_OPTIONS = [
   "Echo Fixture (built-in demo data)",
-  "git-warp (local repository)"
+  "git-warp (local repository)",
+  "Scenario: Live with Effects",
+  "Scenario: Replay with Suppression",
+  "Scenario: Multi-Writer Conflicts"
 ];
 
 
@@ -119,7 +129,7 @@ function connectLayout(model: Model, w: number, h: number): Surface {
         : `   ${label}`
     ).join("\n");
 
-    const errorLine = model.error
+    const errorLine = model.error !== null
       ? vstack("", ctx.style.styled(ctx.status("error"), ` Error: ${model.error}`))
       : "";
 
@@ -145,7 +155,8 @@ function connectLayout(model: Model, w: number, h: number): Surface {
     return centerBox(bg, stringToSurface(content, 56, content.split("\n").length), "Repository Path");
   }
 
-  if (model.connectStep === "input-graph") {
+  // input-graph (only remaining state)
+  {
     const content = vstack(
       " Enter graph name:",
       "",
@@ -155,8 +166,6 @@ function connectLayout(model: Model, w: number, h: number): Surface {
     );
     return centerBox(bg, stringToSurface(content, 56, content.split("\n").length), "Graph Name");
   }
-
-  return bg;
 }
 
 function navigatorLayout(model: Model, w: number, h: number): Surface {
@@ -203,6 +212,28 @@ function navigatorLayout(model: Model, w: number, h: number): Surface {
   const receiptSurf = stringToSurface(receiptStr, w - 4, receiptStr.split("\n").length);
   const receiptBox = boxSurface(receiptSurf, { title: " Receipts ", width: w - 2, ctx });
   final.blit(receiptBox, 1, dagBox.height + infoBox.height + 3);
+
+  // Effect emissions + delivery observations
+  let yOffset = dagBox.height + infoBox.height + receiptBox.height + 4;
+
+  if (model.emissions.length > 0) {
+    const outcomeIcon = (o: string): string =>
+      o === "delivered" ? "+" : o === "suppressed" ? "~" : o === "failed" ? "!" : "-";
+
+    const effectLines = model.emissions.map((e) => {
+      const deliveries = model.observations
+        .filter((o) => o.emissionId === e.emissionId)
+        .map((o) => `${outcomeIcon(o.outcome)}${o.sinkId.replace("sink:", "")}`)
+        .join(" ");
+      return `  ${e.effectKind.padEnd(14)} ${e.laneId.padEnd(16)} ${deliveries}`;
+    }).join("\n");
+
+    const modeLabel = model.execCtx !== null ? ` [${model.execCtx.mode}]` : "";
+    const effectStr = vstack(effectLines);
+    const effectSurf = stringToSurface(effectStr, w - 4, effectStr.split("\n").length);
+    const effectBox = boxSurface(effectSurf, { title: ` Effects${modeLabel} `, width: w - 2, ctx });
+    final.blit(effectBox, 1, yOffset);
+  }
 
   // Controls
   const controls = " [n] Step  [0-9] Go to frame  [d] Disconnect";
@@ -266,6 +297,33 @@ function inspectorLayout(model: Model, w: number, h: number): Surface {
 }
 
 // ---------------------------------------------------------------------------
+// Connect helper — extracted to avoid duplicating async connect logic
+// ---------------------------------------------------------------------------
+
+function makeConnectCmd(
+  config: AdapterConfig,
+  gen: number
+): (emit: (msg: Msg) => void) => Promise<void> {
+  return async (emit: (msg: Msg) => void): Promise<void> => {
+    try {
+      const { adapter, defaultHeadId } = await resolveAdapter(config);
+      emit({ type: "select-adapter", adapter, defaultHeadId, generation: gen });
+      const hello = await adapter.hello();
+      const catalog = await adapter.laneCatalog();
+      const head = await adapter.playbackHead(defaultHeadId);
+      const frame = await adapter.frame(defaultHeadId);
+      const receipts = await adapter.receipts(defaultHeadId);
+      const emissions = await adapter.effectEmissions(defaultHeadId);
+      const observations = await adapter.deliveryObservations(defaultHeadId);
+      const execCtx = await adapter.executionContext();
+      emit({ type: "adapter-ready", hello, catalog, head, frame, receipts, emissions, observations, execCtx, generation: gen });
+    } catch (err) {
+      emit({ type: "connect-error", message: err instanceof Error ? err.message : String(err) });
+    }
+  };
+}
+
+// ---------------------------------------------------------------------------
 // App
 // ---------------------------------------------------------------------------
 
@@ -278,6 +336,9 @@ const initialModel: Model = {
   head: null,
   frame: null,
   receipts: [],
+  emissions: [],
+  observations: [],
+  execCtx: null,
   connectStep: "choose",
   connectChoice: 0,
   inputValue: process.cwd(),
@@ -293,6 +354,7 @@ const framedApp = createFramedApp<Model, Msg>({
       id: "connect",
       title: "Connect",
       init: () => [initialModel, []],
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars -- framework requires msg param
       update: (msg: any, model: Model) => [model, []],
       layout: (model: Model) => ({
         kind: "pane" as const,
@@ -304,6 +366,7 @@ const framedApp = createFramedApp<Model, Msg>({
       id: "nav",
       title: "Navigator",
       init: () => [initialModel, []],
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars -- framework requires msg param
       update: (msg: any, model: Model) => [model, []],
       layout: (model: Model) => ({
         kind: "pane" as const,
@@ -315,6 +378,7 @@ const framedApp = createFramedApp<Model, Msg>({
       id: "inspect",
       title: "Inspector",
       init: () => [initialModel, []],
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars -- framework requires msg param
       update: (msg: any, model: Model) => [model, []],
       layout: (model: Model) => ({
         kind: "pane" as const,
@@ -335,8 +399,8 @@ const mainApp = {
     return [fModel, [
       // Pulse animation timer — returns cleanup function per bijou Cmd contract
       ((emit: (msg: Msg) => void) => {
-        const interval = setInterval(() => emit({ type: "pulse", dt: 1 / 30 }), 33);
-        return () => clearInterval(interval);
+        const interval = setInterval(() => { emit({ type: "pulse", dt: 1 / 30 }); }, 33);
+        return () => { clearInterval(interval); };
       }) as any,
       ...fCmds
     ]] as [typeof fModel, typeof fCmds];
@@ -403,7 +467,10 @@ const mainApp = {
         catalog: msg.catalog,
         head: msg.head,
         frame: msg.frame,
-        receipts: msg.receipts
+        receipts: msg.receipts,
+        emissions: msg.emissions,
+        observations: msg.observations,
+        execCtx: msg.execCtx
       };
       nextModel = { ...nextModel, activePageId: "nav", pageModels: updateAllPages(pm) };
       return [nextModel, fCmds];
@@ -411,14 +478,14 @@ const mainApp = {
 
     // --- Step result ---
     if (msg.type === "step-result") {
-      pm = { ...pm, head: msg.head, frame: msg.frame, receipts: msg.receipts };
+      pm = { ...pm, head: msg.head, frame: msg.frame, receipts: msg.receipts, emissions: msg.emissions, observations: msg.observations };
       nextModel = { ...nextModel, pageModels: updateAllPages(pm) };
       return [nextModel, fCmds];
     }
 
     // --- Frame result ---
     if (msg.type === "frame-result") {
-      pm = { ...pm, frame: msg.frame, receipts: msg.receipts };
+      pm = { ...pm, frame: msg.frame, receipts: msg.receipts, emissions: msg.emissions, observations: msg.observations };
       nextModel = { ...nextModel, pageModels: updateAllPages(pm) };
       return [nextModel, fCmds];
     }
@@ -431,31 +498,21 @@ const mainApp = {
         } else if (msg.key === "up" || msg.key === "k") {
           pm = { ...pm, connectChoice: Math.max(pm.connectChoice - 1, 0) };
         } else if (msg.key === "enter") {
-          if (pm.connectChoice === 0) {
-            // Echo fixture — resolve through registry
+          const scenarioConfigs: Record<number, AdapterConfig | "git-warp-wizard"> = {
+            0: { kind: "echo-fixture" },
+            1: "git-warp-wizard",
+            2: { kind: "scenario", scenario: "live-with-effects" },
+            3: { kind: "scenario", scenario: "replay-with-suppression" },
+            4: { kind: "scenario", scenario: "multi-writer-conflicts" }
+          };
+          const selected = scenarioConfigs[pm.connectChoice];
+          if (selected === "git-warp-wizard") {
+            pm = { ...pm, connectStep: "input-path", inputValue: process.cwd() };
+          } else if (selected !== undefined) {
             const gen = pm.connectGeneration + 1;
             pm = { ...pm, connectGeneration: gen };
             nextModel = { ...nextModel, pageModels: updateAllPages(pm) };
-            return [nextModel, [
-              ...fCmds,
-              async (emit: (msg: Msg) => void) => {
-                try {
-                  const { adapter, defaultHeadId } = await resolveAdapter({ kind: "echo-fixture" });
-                  emit({ type: "select-adapter", adapter, defaultHeadId, generation: gen });
-                  const hello = await adapter.hello();
-                  const catalog = await adapter.laneCatalog();
-                  const head = await adapter.playbackHead(defaultHeadId);
-                  const frame = await adapter.frame(defaultHeadId);
-                  const receipts = await adapter.receipts(defaultHeadId);
-                  emit({ type: "adapter-ready", hello, catalog, head, frame, receipts, generation: gen });
-                } catch (err) {
-                  emit({ type: "connect-error", message: err instanceof Error ? err.message : String(err) });
-                }
-              }
-            ]];
-          } else {
-            // git-warp — ask for path
-            pm = { ...pm, connectStep: "input-path", inputValue: process.cwd() };
+            return [nextModel, [...fCmds, makeConnectCmd(selected, gen)]];
           }
         }
       } else if (pm.connectStep === "input-path") {
@@ -469,40 +526,21 @@ const mainApp = {
           }
         } else if (msg.key === "backspace") {
           pm = { ...pm, inputValue: pm.inputValue.slice(0, -1) };
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- filters multi-char keys (shift, tab, etc.)
         } else if (msg.key.length === 1) {
           pm = { ...pm, inputValue: pm.inputValue + msg.key };
         }
-      } else if (pm.connectStep === "input-graph") {
+      } else { // input-graph (only remaining state)
         if (msg.key === "escape") {
           pm = { ...pm, connectStep: "input-path", inputValue: pm.repoPath };
         } else if (msg.key === "enter") {
-          // Connect to git-warp via registry
-          const repoPath = pm.repoPath;
-          const graphName = pm.inputValue;
           const gen = pm.connectGeneration + 1;
           pm = { ...pm, connectGeneration: gen };
           nextModel = { ...nextModel, pageModels: updateAllPages(pm) };
-          return [nextModel, [
-            ...fCmds,
-            async (emit: (msg: Msg) => void) => {
-              try {
-                const { adapter, defaultHeadId } = await resolveAdapter({
-                  kind: "git-warp",
-                  repoPath,
-                  graphName
-                });
-                emit({ type: "select-adapter", adapter, defaultHeadId, generation: gen });
-                const hello = await adapter.hello();
-                const catalog = await adapter.laneCatalog();
-                const head = await adapter.playbackHead(defaultHeadId);
-                const frame = await adapter.frame(defaultHeadId);
-                const receipts = await adapter.receipts(defaultHeadId);
-                emit({ type: "adapter-ready", hello, catalog, head, frame, receipts, generation: gen });
-              } catch (err) {
-                emit({ type: "connect-error", message: err instanceof Error ? err.message : String(err) });
-              }
-            }
-          ]];
+          return [nextModel, [...fCmds, makeConnectCmd(
+            { kind: "git-warp", repoPath: pm.repoPath, graphName: pm.inputValue },
+            gen
+          )]];
         } else if (msg.key === "backspace") {
           pm = { ...pm, inputValue: pm.inputValue.slice(0, -1) };
         } else if (msg.key.length === 1) {
@@ -528,7 +566,9 @@ const mainApp = {
               const frame = await adapter.stepForward(headId);
               const head = await adapter.playbackHead(headId);
               const receipts = await adapter.receipts(headId, frame.frameIndex);
-              emit({ type: "step-result", head, frame, receipts });
+              const emissions = await adapter.effectEmissions(headId, frame.frameIndex);
+              const observations = await adapter.deliveryObservations(headId, frame.frameIndex);
+              emit({ type: "step-result", head, frame, receipts, emissions, observations });
             } catch (err) {
               emit({ type: "connect-error", message: err instanceof Error ? err.message : String(err) });
             }
@@ -545,7 +585,9 @@ const mainApp = {
             try {
               const frame = await adapter.frame(headId, frameIndex);
               const receipts = await adapter.receipts(headId, frameIndex);
-              emit({ type: "frame-result", frame, receipts });
+              const emissions = await adapter.effectEmissions(headId, frameIndex);
+              const observations = await adapter.deliveryObservations(headId, frameIndex);
+              emit({ type: "frame-result", frame, receipts, emissions, observations });
             } catch (err) {
               const errMsg = err instanceof Error ? err.message : String(err);
               // Out-of-range frame index is expected (0-9 keys); other errors surface

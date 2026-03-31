@@ -44,8 +44,10 @@ test("buildScenario exposes lanes from scenario", async () => {
 
   const catalog = await adapter.laneCatalog();
   assert.equal(catalog.lanes.length, 2);
-  assert.equal(catalog.lanes[1]?.kind, "strand");
-  assert.equal(catalog.lanes[1]?.parentId, "wl:live");
+  const strand = catalog.lanes[1];
+  assert.ok(strand !== undefined);
+  assert.equal(strand.kind, "strand");
+  assert.equal(strand.parentId, "wl:live");
 });
 
 test("buildScenario produces frames with correct tick indexing", async () => {
@@ -89,8 +91,10 @@ test("buildScenario maps receipts into ReceiptSummary", async () => {
 
   const receipts = await adapter.receipts("head:default", 1);
   assert.equal(receipts.length, 1);
-  assert.equal(receipts[0]?.admittedRewriteCount, 3);
-  assert.equal(receipts[0]?.rejectedRewriteCount, 1);
+  const r = receipts[0];
+  assert.ok(r !== undefined);
+  assert.equal(r.admittedRewriteCount, 3);
+  assert.equal(r.rejectedRewriteCount, 1);
 });
 
 test("buildScenario maps emissions and deliveries", async () => {
