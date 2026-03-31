@@ -176,11 +176,51 @@ When git-warp lands these, the GitWarpAdapter should:
 Until then, the git-warp adapter omits the capabilities and the methods
 return empty arrays.
 
+## CLI Integration
+
+New commands expose effect/delivery data in both human and `--json` modes:
+
+- `effects` — list effect emissions at the current frame
+- `deliveries` — list delivery observations at the current frame
+- `context` — show the execution context (live/replay/debug)
+
+These are added to the existing CLI alongside `hello`, `catalog`, `frame`,
+`step`, `demo`. The `demo` command includes effect/delivery data in its
+full walkthrough.
+
+## Fixture Enrichment
+
+The echo fixture should demonstrate all four delivery outcomes across
+multiple sinks to prove the protocol handles the full matrix:
+
+| Emission | Sink | Outcome | Mode |
+|----------|------|---------|------|
+| diagnostic (frame 1) | tui-log | delivered | live |
+| diagnostic (frame 1) | chunk-file | delivered | live |
+| notification (frame 2) | network | suppressed | replay |
+| notification (frame 2) | tui-log | delivered | replay |
+
+This proves: same emission → different outcomes per sink, and suppression
+is per-sink not per-emission.
+
+## Sync Point
+
+This slice is complete when:
+
+1. Protocol types, adapter interface, fixture data, and tests are green
+2. CLI commands expose effect/delivery data with `--json`
+3. All work is fixture-driven — no git-warp substrate dependency
+
+The first sync point with git-warp is when the GitWarpAdapter needs to
+return real data instead of empty arrays. That requires git-warp Phase 1
+(WarpCore.emit, Git persistence of effect records).
+
 ## Key Files
 
 - `src/protocol.ts` — new types
 - `src/adapter.ts` — new methods
 - `src/adapters/echoFixtureAdapter.ts` — fixture data for testing
 - `src/adapters/gitWarpAdapter.ts` — provisional empty implementation
-- `test/effectEmission.spec.ts` — new, pins effect/delivery behavior
-- `test/protocolContract.spec.ts` — updated with new envelope shapes
+- `src/cli.ts` — new commands (effects, deliveries, context)
+- `test/effectEmission.spec.ts` — pins effect/delivery behavior
+- `test/cliJson.spec.ts` — updated with new envelope tests
