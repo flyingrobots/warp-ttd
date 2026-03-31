@@ -77,15 +77,10 @@ Key domain concepts:
 
 ## Design Documents
 
-- [0001 — Why warp-ttd](docs/design/0001-why-warp-ttd.md)
-- [0002 — Wesley Schema Profile](docs/design/0002-wesley-schema-profile.md)
-- [0003 — Shared Schema Strategy](docs/design/0003-shared-schema-strategy.md)
-- [0004 — TTD Protocol Surface](docs/design/0004-ttd-protocol-surface.md)
-- [0005 — git-warp Adapter](docs/design/0005-git-warp-adapter.md)
-- [0006 — TUI Port](docs/design/0006-tui-port.md)
-- [0007 — Adapter Registry](docs/design/0007-adapter-registry.md)
-- [0008 — Protocol Freeze](docs/design/0008-protocol-freeze.md)
-- [0009 — Effect Emission & Delivery Observation](docs/design/0009-effect-emission-protocol.md)
+- [**Vision & Architecture**](docs/VISION.md) — north star document
+
+Cycle design docs and retrospectives live in `docs/cycles/`. See
+[BACKLOG.md](BACKLOG.md) for the full cycle history and upcoming work.
 
 ## Roadmap
 
