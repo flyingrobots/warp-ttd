@@ -44,6 +44,7 @@ architecture → freeze protocol → human UX → speculation.
 | Add writerId to ReceiptSummary | [receipt-writer-field.md](docs/backlog/receipt-writer-field.md) |
 | Counterfactual Inspection & Strand Forking | [counterfactual-inspection.md](docs/backlog/counterfactual-inspection.md) |
 | Design Vocabulary | [design-vocabulary.md](docs/backlog/design-vocabulary.md) |
+| Cool Ideas (Effect Slice) | [cool-ideas-effect-slice.md](docs/backlog/cool-ideas-effect-slice.md) |
 
 ## Deferred
 

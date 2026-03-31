@@ -21,7 +21,7 @@ future WARP-based runtimes through host adapters.
   Inspector), wave shader background, DAG visualization
 - **CLI:** dumb client for protocol inspection (`hello`, `catalog`, `frame`,
   `step`, `demo`)
-- **Tests:** 28 spec tests (18 fast + 10 integration)
+- **Tests:** 55 spec tests (45 fast + 10 integration)
 
 ## Quick Start
 
@@ -85,6 +85,7 @@ Key domain concepts:
 - [0006 — TUI Port](docs/design/0006-tui-port.md)
 - [0007 — Adapter Registry](docs/design/0007-adapter-registry.md)
 - [0008 — Protocol Freeze](docs/design/0008-protocol-freeze.md)
+- [0009 — Effect Emission & Delivery Observation](docs/design/0009-effect-emission-protocol.md)
 
 ## Roadmap
 

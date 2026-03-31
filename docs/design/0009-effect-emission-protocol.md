@@ -1,6 +1,6 @@
 # 0009 — Effect Emission & Delivery Observation Protocol
 
-**Status:** in progress
+**Status:** implemented
 **Cycle:** unscheduled (cross-repo alignment slice)
 
 ## Context

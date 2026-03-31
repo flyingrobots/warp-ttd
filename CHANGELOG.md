@@ -6,6 +6,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project will use [Semantic Versioning](https://semver.org/) starting at
 `0.1.0` with the first cycle release (Cycle B — Protocol Freeze).
 
+## [Unreleased]
+
+### Added
+
+- **Effect emission & delivery observation protocol** — new envelope
+  types: `EffectEmissionSummary`, `DeliveryObservationSummary`,
+  `ExecutionContext`. Closed `DeliveryOutcome` enum (delivered,
+  suppressed, failed, skipped). `ExecutionMode` (live, replay, debug).
+- **ScenarioFixtureAdapter** — declarative test fixture builder.
+  3 built-in scenarios: live-with-effects, replay-with-suppression,
+  multi-writer-conflicts.
+- **Navigation** — `stepBackward`, `seekToFrame` adapter methods.
+  TUI: `p`/`←` step back, `g` jump-to-tick prompt.
+- **CLI commands** — `effects`, `deliveries`, `context` with `--json`.
+- **Wesley schema** — `schemas/warp-ttd-protocol.graphql` covering
+  full protocol surface with registry IDs, codecs, invariants.
+- **Custom error classes** — zero raw `Error()` throws in `src/`.
+- **Auto-ratcheting lint ceiling** — `lint-check.sh` auto-lowers
+  ceiling when under budget. Pre-push hook enforces.
+- **TUI tables** — bijou `tableSurface` for Receipts and Effects.
+  Scenario fixtures selectable from connect page.
+
+### Changed
+
+- **Capabilities** — new: `read:effect-emissions`,
+  `read:delivery-observations`, `read:execution-context`,
+  `control:step-backward`, `control:seek`.
+
 ## [0.1.0] — 2026-03-30
 
 Protocol freeze release. The read-only TTD protocol is frozen at v0.1.0.
