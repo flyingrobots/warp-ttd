@@ -13,8 +13,11 @@ import {
   createFramedApp,
   createKeyMap,
   isKeyMsg,
-  vstack
+  vstack,
+  createNavigableTableState,
+  navigableTableSurface
 } from "@flyingrobots/bijou-tui";
+import type { TableColumn } from "@flyingrobots/bijou";
 import {
   createSurface,
   stringToSurface,
@@ -219,27 +222,24 @@ function navigatorLayout(model: Model, w: number, h: number): Surface {
   let yOffset = dagBox.height + infoBox.height + receiptBox.height + 4;
 
   if (model.observations.length > 0) {
-    const statusLabel = (outcome: string): string => {
-      if (outcome === "delivered") return ctx.style.styled(ctx.status("success"), "delivered ");
-      if (outcome === "suppressed") return ctx.style.styled(ctx.status("warning"), "suppressed");
-      if (outcome === "failed") return ctx.style.styled(ctx.status("error"), "failed    ");
-      return "skipped   ";
-    };
-
-    const header = `  ${"Effect".padEnd(14)} ${"Lane".padEnd(16)} ${"Sink".padEnd(14)} Status`;
-    const separator = `  ${"─".repeat(14)} ${"─".repeat(16)} ${"─".repeat(14)} ${"─".repeat(10)}`;
+    const columns: TableColumn[] = [
+      { header: "Effect", width: 14 },
+      { header: "Lane", width: 16 },
+      { header: "Sink", width: 14 },
+      { header: "Status", width: 12 }
+    ];
 
     const rows = model.observations.map((o) => {
       const emission = model.emissions.find((e) => e.emissionId === o.emissionId);
       const kind = emission !== undefined ? emission.effectKind : "?";
       const lane = emission !== undefined ? emission.laneId : "?";
       const sink = o.sinkId.replace("sink:", "");
-      return `  ${kind.padEnd(14)} ${lane.padEnd(16)} ${sink.padEnd(14)} ${statusLabel(o.outcome)}`;
-    }).join("\n");
+      return [kind, lane, sink, o.outcome];
+    });
 
+    const tableState = createNavigableTableState({ columns, rows, height: Math.min(rows.length, 10) });
     const modeLabel = model.execCtx !== null ? ` [${model.execCtx.mode}]` : "";
-    const tableStr = vstack(header, separator, rows);
-    const tableSurf = stringToSurface(tableStr, w - 4, tableStr.split("\n").length);
+    const tableSurf = navigableTableSurface(tableState, { ctx });
     const tableBox = boxSurface(tableSurf, { title: ` Effects${modeLabel} `, width: w - 2, ctx });
     final.blit(tableBox, 1, yOffset);
   }
