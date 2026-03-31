@@ -206,15 +206,28 @@ function navigatorLayout(model: Model, w: number, h: number): Surface {
   final.blit(infoBox, 1, dagBox.height + 2);
 
   // Receipt summaries
-  const receiptLines = model.receipts.length > 0
-    ? model.receipts.map((r) =>
-        `  ${r.laneId.padEnd(16)} +${r.admittedRewriteCount} -${r.rejectedRewriteCount} ~${r.counterfactualCount}`
-      ).join("\n")
-    : "  (none at this frame)";
+  let receiptBox: Surface;
 
-  const receiptStr = vstack(receiptLines);
-  const receiptSurf = stringToSurface(receiptStr, w - 4, receiptStr.split("\n").length);
-  const receiptBox = boxSurface(receiptSurf, { title: " Receipts ", width: w - 2, ctx });
+  if (model.receipts.length > 0) {
+    const receiptColumns: TableColumn[] = [
+      { header: "Lane", width: 18 },
+      { header: "Admitted", width: 10 },
+      { header: "Rejected", width: 10 },
+      { header: "Counterfactual", width: 14 }
+    ];
+    const receiptRows = model.receipts.map((r) => [
+      r.laneId,
+      r.admittedRewriteCount.toString(),
+      r.rejectedRewriteCount.toString(),
+      r.counterfactualCount.toString()
+    ]);
+    const receiptTableSurf = tableSurface({ columns: receiptColumns, rows: receiptRows, ctx });
+    receiptBox = boxSurface(receiptTableSurf, { title: " Receipts ", width: w - 2, ctx });
+  } else {
+    const emptySurf = stringToSurface("  (none at this frame)", w - 4, 1);
+    receiptBox = boxSurface(emptySurf, { title: " Receipts ", width: w - 2, ctx });
+  }
+
   final.blit(receiptBox, 1, dagBox.height + infoBox.height + 3);
 
   // Effect emissions + delivery observations
