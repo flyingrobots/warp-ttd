@@ -14,17 +14,16 @@ import {
   createKeyMap,
   isKeyMsg,
   vstack,
-  createNavigableTableState,
-  navigableTableSurface
 } from "@flyingrobots/bijou-tui";
-import type { TableColumn } from "@flyingrobots/bijou";
 import {
   createSurface,
   stringToSurface,
   boxSurface,
   badge,
-  surfaceToString
+  surfaceToString,
+  tableSurface
 } from "@flyingrobots/bijou";
+import type { TableColumn } from "@flyingrobots/bijou";
 import type { BijouContext, Surface } from "@flyingrobots/bijou";
 import { renderWaveShader } from "./shaders/bgShader.ts";
 import { renderDagShader } from "./shaders/dagShader.ts";
@@ -237,9 +236,8 @@ function navigatorLayout(model: Model, w: number, h: number): Surface {
       return [kind, lane, sink, o.outcome];
     });
 
-    const tableState = createNavigableTableState({ columns, rows, height: Math.min(rows.length, 10) });
     const modeLabel = model.execCtx !== null ? ` [${model.execCtx.mode}]` : "";
-    const tableSurf = navigableTableSurface(tableState, { ctx });
+    const tableSurf = tableSurface({ columns, rows, ctx });
     const tableBox = boxSurface(tableSurf, { title: ` Effects${modeLabel} `, width: w - 2, ctx });
     final.blit(tableBox, 1, yOffset);
   }
