@@ -100,6 +100,39 @@ test("demo --json outputs multiple envelope lines", async () => {
   }
 });
 
+test("effects --json at frame 0 returns no envelopes (correct: no emissions at frame 0)", async () => {
+  const lines = await runJson("effects");
+  assert.equal(lines.length, 0);
+});
+
+test("deliveries --json at frame 0 returns no envelopes (correct: no deliveries at frame 0)", async () => {
+  const lines = await runJson("deliveries");
+  assert.equal(lines.length, 0);
+});
+
+test("demo --json includes EffectEmissionSummary and DeliveryObservationSummary after stepping", async () => {
+  const lines = await runJson("demo");
+  const envelopes = lines.map((l) => parseLine(l).envelope);
+
+  assert.ok(
+    envelopes.includes("EffectEmissionSummary"),
+    "Demo should include effect emissions after stepping"
+  );
+  assert.ok(
+    envelopes.includes("DeliveryObservationSummary"),
+    "Demo should include delivery observations after stepping"
+  );
+});
+
+test("context --json outputs a single ExecutionContext line", async () => {
+  const lines = await runJson("context");
+  assert.equal(lines.length, 1);
+
+  const obj = parseLine(requireLine(lines, 0));
+  assert.equal(obj.envelope, "ExecutionContext");
+  assert.ok(obj.data !== undefined);
+});
+
 test("invalid command --json writes JSON error to stderr", async () => {
   try {
     await exec("node", [...NODE_ARGS, "badcommand", "--json"]);

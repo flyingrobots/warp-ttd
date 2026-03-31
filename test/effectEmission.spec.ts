@@ -116,6 +116,42 @@ test("delivery observations link back to effect emissions by emissionId", async 
   }
 });
 
+test("same emission fans out to multiple sinks with different outcomes", async () => {
+  const observations = await adapter.deliveryObservations(HEAD_ID, 1);
+
+  // Frame 1 diagnostic should have two delivery observations (tui-log + chunk-file)
+  const forEmission1 = observations.filter((o) => o.emissionId === "emit:echo:0001");
+  assert.equal(forEmission1.length, 2, "Expected 2 sinks for the diagnostic emission");
+
+  const sinks = forEmission1.map((o) => o.sinkId).sort();
+  assert.deepEqual(sinks, ["sink:chunk-file", "sink:tui-log"]);
+
+  // Both delivered in live mode
+  for (const obs of forEmission1) {
+    assert.equal(obs.outcome, "delivered");
+    assert.equal(obs.executionMode, "live");
+  }
+});
+
+test("replay suppresses network sink but delivers to local sink for same emission", async () => {
+  const observations = await adapter.deliveryObservations(HEAD_ID, 2);
+  const forEmission2 = observations.filter((o) => o.emissionId === "emit:echo:0002");
+
+  assert.equal(forEmission2.length, 2, "Expected 2 sinks for the notification emission");
+
+  const network = forEmission2.find((o) => o.sinkId === "sink:network");
+  const tuiLog = forEmission2.find((o) => o.sinkId === "sink:tui-log");
+
+  assert.ok(network !== undefined);
+  assert.ok(tuiLog !== undefined);
+
+  assert.equal(network.outcome, "suppressed");
+  assert.equal(network.executionMode, "replay");
+
+  assert.equal(tuiLog.outcome, "delivered");
+  assert.equal(tuiLog.executionMode, "replay");
+});
+
 test("suppressed delivery is distinguishable from absence", async () => {
   // Frame 2 should have a suppressed delivery observation in the fixture
   const observations = await adapter.deliveryObservations(HEAD_ID, 2);

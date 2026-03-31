@@ -1,8 +1,8 @@
 import { EchoFixtureAdapter } from "./adapters/echoFixtureAdapter.ts";
 
-type Command = "demo" | "hello" | "catalog" | "frame" | "step";
+type Command = "demo" | "hello" | "catalog" | "frame" | "step" | "effects" | "deliveries" | "context";
 
-const VALID_COMMANDS = new Set<Command>(["demo", "hello", "catalog", "frame", "step"]);
+const VALID_COMMANDS = new Set<Command>(["demo", "hello", "catalog", "frame", "step", "effects", "deliveries", "context"]);
 
 function isValidCommand(cmd: string): cmd is Command {
   return (VALID_COMMANDS as Set<string>).has(cmd);
@@ -75,6 +75,35 @@ async function main(): Promise<void> {
     return;
   }
 
+  if (command === "effects") {
+    const emissions = await adapter.effectEmissions(headId);
+    if (json) {
+      for (const e of emissions) {
+        print("EffectEmissionSummary", e);
+      }
+    } else {
+      printSection("EffectEmissions", emissions);
+    }
+    return;
+  }
+
+  if (command === "deliveries") {
+    const observations = await adapter.deliveryObservations(headId);
+    if (json) {
+      for (const o of observations) {
+        print("DeliveryObservationSummary", o);
+      }
+    } else {
+      printSection("DeliveryObservations", observations);
+    }
+    return;
+  }
+
+  if (command === "context") {
+    print("ExecutionContext", await adapter.executionContext());
+    return;
+  }
+
   if (command === "step") {
     if (json) {
       print("PlaybackHeadSnapshot", await adapter.playbackHead(headId), "before");
@@ -109,6 +138,16 @@ async function main(): Promise<void> {
     for (const r of receiptsAfter) {
       print("ReceiptSummary", r);
     }
+    // Effect/delivery data at the stepped frame
+    const emissions = await adapter.effectEmissions(headId);
+    for (const e of emissions) {
+      print("EffectEmissionSummary", e);
+    }
+    const observations = await adapter.deliveryObservations(headId);
+    for (const o of observations) {
+      print("DeliveryObservationSummary", o);
+    }
+    print("ExecutionContext", await adapter.executionContext());
   } else {
     printSection("StepForward", await adapter.stepForward(headId));
     printSection("PlaybackHeadSnapshot (after step)", await adapter.playbackHead(headId));

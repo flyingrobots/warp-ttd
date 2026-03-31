@@ -177,7 +177,7 @@ const FIXTURE: FixtureState = {
   deliveryObservations: {
     "head:main": [
       {
-        observationId: "deliv:echo:0001",
+        observationId: "deliv:echo:0001a",
         emissionId: "emit:echo:0001",
         headId: "head:main",
         frameIndex: 1,
@@ -188,7 +188,18 @@ const FIXTURE: FixtureState = {
         summary: "Diagnostic delivered to TUI log."
       },
       {
-        observationId: "deliv:echo:0002",
+        observationId: "deliv:echo:0001b",
+        emissionId: "emit:echo:0001",
+        headId: "head:main",
+        frameIndex: 1,
+        sinkId: "sink:chunk-file",
+        outcome: "delivered",
+        reason: "Live execution — written to rotating chunk file.",
+        executionMode: "live",
+        summary: "Diagnostic written to chunk file."
+      },
+      {
+        observationId: "deliv:echo:0002a",
         emissionId: "emit:echo:0002",
         headId: "head:main",
         frameIndex: 2,
@@ -197,6 +208,17 @@ const FIXTURE: FixtureState = {
         reason: "Replay-safe suppression — external delivery blocked during replay.",
         executionMode: "replay",
         summary: "Notification suppressed during replay."
+      },
+      {
+        observationId: "deliv:echo:0002b",
+        emissionId: "emit:echo:0002",
+        headId: "head:main",
+        frameIndex: 2,
+        sinkId: "sink:tui-log",
+        outcome: "delivered",
+        reason: "Local sink delivers even during replay.",
+        executionMode: "replay",
+        summary: "Notification delivered to TUI log (replay-safe sink)."
       }
     ]
   },
