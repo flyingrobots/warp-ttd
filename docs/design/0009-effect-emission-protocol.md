@@ -188,10 +188,61 @@ These are added to the existing CLI alongside `hello`, `catalog`, `frame`,
 `step`, `demo`. The `demo` command includes effect/delivery data in its
 full walkthrough.
 
-## Fixture Enrichment
+## Scenario Fixture Adapter
 
-The echo fixture should demonstrate all four delivery outcomes across
-multiple sinks to prove the protocol handles the full matrix:
+The hexagonal architecture means `TtdHostAdapter` is the seam. A
+**ScenarioFixtureAdapter** takes a declarative scenario description and
+returns a fully functional adapter — simulating what any real host
+adapter would produce, without touching a real substrate.
+
+### Why
+
+- Tests the full protocol surface without git, network, or substrate
+- Exercises multi-writer, multi-sink, all 4 delivery outcomes, strands
+- Reusable across unit tests, TUI development, CLI testing
+- Simulates git-warp-shaped behavior patterns (frame-per-tick, receipts)
+- Serves as the mock layer until git-warp lands substrate support
+
+### Scenario shape
+
+```typescript
+interface ScenarioFrame {
+  tick: number;
+  receipts: Array<{
+    laneId: string;
+    writerId: string;
+    admitted: number;
+    rejected: number;
+    counterfactual: number;
+  }>;
+  emissions: Array<{
+    effectKind: string;
+    laneId: string;
+    deliveries: Array<{
+      sinkId: string;
+      outcome: DeliveryOutcome;
+      reason: string;
+    }>;
+  }>;
+}
+
+interface Scenario {
+  hostKind: HostKind;
+  executionMode: ExecutionMode;
+  lanes: Array<{ id: string; kind: LaneKind; parentId?: string; writable: boolean }>;
+  frames: ScenarioFrame[];
+}
+```
+
+### Built-in scenarios
+
+- `scenarioLiveWithEffects()` — live mode, 2 frames, diagnostics delivered
+- `scenarioReplayWithSuppression()` — replay mode, suppressed network
+  delivery alongside delivered local sink
+- `scenarioMultiWriterWithConflicts()` — concurrent writers, rejected
+  rewrites, effect emissions on conflict resolution
+
+### Fixture matrix (covered by built-in scenarios)
 
 | Emission | Sink | Outcome | Mode |
 |----------|------|---------|------|
@@ -199,9 +250,8 @@ multiple sinks to prove the protocol handles the full matrix:
 | diagnostic (frame 1) | chunk-file | delivered | live |
 | notification (frame 2) | network | suppressed | replay |
 | notification (frame 2) | tui-log | delivered | replay |
-
-This proves: same emission → different outcomes per sink, and suppression
-is per-sink not per-emission.
+| export (frame 2) | export-sink | failed | live |
+| bridge (frame 2) | bridge-sink | skipped | debug |
 
 ## Sync Point
 
