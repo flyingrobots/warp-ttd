@@ -1,0 +1,273 @@
+# warp-ttd Protocol Schema
+#
+# Source of truth for the cross-host Time Travel Debugger protocol.
+# Compiled via Wesley (compile-ttd) to produce TypeScript types,
+# manifests, and codec contracts.
+#
+# Protocol version: 0.2.0 (adds effect emission & delivery observation)
+#
+# Doctrine:
+#   - warp-ttd is read-mostly and receipt-centric
+#   - Explicit envelopes, not implicit side channels
+#   - Observer/aperture shapes perception; delivery lens shapes realization
+#   - Replay/debug must inspect what would have been emitted
+
+scalar Hash       # SHA-256: 32 bytes / 64-char hex
+scalar Timestamp  # ISO 8601
+
+# ─── Host Identity ─────────────────────────────────────────────────────────────
+
+enum HostKind {
+  ECHO
+  GIT_WARP
+}
+
+enum LaneKind {
+  WORLDLINE
+  STRAND
+}
+
+enum Capability {
+  READ_HELLO
+  READ_LANE_CATALOG
+  READ_PLAYBACK_HEAD
+  READ_FRAME
+  READ_RECEIPTS
+  READ_EFFECT_EMISSIONS
+  READ_DELIVERY_OBSERVATIONS
+  READ_EXECUTION_CONTEXT
+  CONTROL_STEP_FORWARD
+}
+
+type HostHello
+  @wes_codec(format: "cbor", canonical: true)
+  @wes_registry(id: 1)
+  @wes_version(major: 0, minor: 2)
+{
+  hostKind: HostKind!
+  hostVersion: String!
+  protocolVersion: String!
+  schemaId: String!
+  capabilities: [Capability!]!
+}
+
+# ─── Lane Catalog ──────────────────────────────────────────────────────────────
+
+type LaneRef
+  @wes_codec(format: "cbor", canonical: true)
+  @wes_registry(id: 2)
+{
+  id: String!
+  kind: LaneKind!
+  parentId: String
+  writable: Boolean!
+  description: String!
+}
+
+type LaneCatalog
+  @wes_codec(format: "cbor", canonical: true)
+  @wes_registry(id: 3)
+{
+  lanes: [LaneRef!]!
+}
+
+# ─── Coordinates & Playback ───────────────────────────────────────────────────
+
+type Coordinate
+  @wes_codec(format: "cbor", canonical: true)
+  @wes_registry(id: 4)
+{
+  laneId: String!
+  tick: Int! @wes_constraint(min: 0)
+}
+
+type PlaybackHeadSnapshot
+  @wes_codec(format: "cbor", canonical: true)
+  @wes_registry(id: 5)
+  @wes_version(major: 0, minor: 1)
+{
+  headId: String!
+  label: String!
+  currentFrameIndex: Int! @wes_constraint(min: 0)
+  trackedLaneIds: [String!]!
+  writableLaneIds: [String!]!
+  paused: Boolean!
+}
+
+type LaneFrameView
+  @wes_codec(format: "cbor", canonical: true)
+  @wes_registry(id: 6)
+{
+  laneId: String!
+  coordinate: Coordinate!
+  changed: Boolean!
+  btrDigest: String
+}
+
+type PlaybackFrame
+  @wes_codec(format: "cbor", canonical: true)
+  @wes_registry(id: 7)
+{
+  headId: String!
+  frameIndex: Int! @wes_constraint(min: 0)
+  lanes: [LaneFrameView!]!
+}
+
+# ─── Receipts & Provenance ────────────────────────────────────────────────────
+
+type ReceiptSummary
+  @wes_codec(format: "cbor", canonical: true)
+  @wes_registry(id: 8)
+  @wes_version(major: 0, minor: 1)
+{
+  receiptId: String!
+  headId: String!
+  frameIndex: Int! @wes_constraint(min: 0)
+  laneId: String!
+  inputTick: Int! @wes_constraint(min: 0)
+  outputTick: Int! @wes_constraint(min: 0)
+  admittedRewriteCount: Int! @wes_constraint(min: 0)
+  rejectedRewriteCount: Int! @wes_constraint(min: 0)
+  counterfactualCount: Int! @wes_constraint(min: 0)
+  digest: String!
+  summary: String!
+}
+
+# ─── Effect Emission & Delivery Observation ───────────────────────────────────
+#
+# Three distinct layers (per effect-emission-alignment.md):
+#
+# 1. Effect emission: the system produced an outbound effect candidate
+# 2. Delivery observation: what happened to it at each adapter/sink
+# 3. Execution context: the session-level lens (live/replay/debug)
+#
+# These must NOT be collapsed into one thing.
+
+enum DeliveryOutcome {
+  DELIVERED    # Adapter successfully externalized the effect
+  SUPPRESSED  # Adapter blocked delivery (e.g., replay mode)
+  FAILED      # Adapter attempted delivery but it failed
+  SKIPPED     # Adapter decided not to attempt delivery
+}
+
+enum ExecutionMode {
+  LIVE     # Normal execution — effects may be externalized
+  REPLAY   # Replay/time-travel — external effects suppressed
+  DEBUG    # Debug inspection — read-only, no side effects
+}
+
+type EffectEmissionSummary
+  @wes_codec(format: "cbor", canonical: true)
+  @wes_registry(id: 20)
+  @wes_version(major: 0, minor: 2)
+{
+  emissionId: String!
+  headId: String!
+  frameIndex: Int! @wes_constraint(min: 0)
+  laneId: String!
+  coordinate: Coordinate!
+  effectKind: String!
+  producerWriterId: String!
+  summary: String!
+}
+
+type DeliveryObservationSummary
+  @wes_codec(format: "cbor", canonical: true)
+  @wes_registry(id: 21)
+  @wes_version(major: 0, minor: 2)
+{
+  observationId: String!
+  emissionId: String!
+  headId: String!
+  frameIndex: Int! @wes_constraint(min: 0)
+  sinkId: String!
+  outcome: DeliveryOutcome!
+  reason: String!
+  observerId: String
+  executionMode: ExecutionMode!
+  summary: String!
+}
+
+type ExecutionContext
+  @wes_codec(format: "cbor", canonical: true)
+  @wes_registry(id: 22)
+  @wes_version(major: 0, minor: 2)
+{
+  mode: ExecutionMode!
+  sessionId: String
+  observerId: String
+  apertureId: String
+}
+
+# ─── Protocol Channel ─────────────────────────────────────────────────────────
+
+type TtdProtocolChannel
+  @wes_channel(name: "ttd.protocol", version: 2, ordered: true)
+{
+  hostHello: HostHello!
+  laneCatalog: LaneCatalog!
+  playbackHeadSnapshot: PlaybackHeadSnapshot!
+  playbackFrame: PlaybackFrame!
+  receiptSummary: ReceiptSummary!
+  effectEmissionSummary: EffectEmissionSummary!
+  deliveryObservationSummary: DeliveryObservationSummary!
+  executionContext: ExecutionContext!
+}
+
+# ─── Protocol Invariants ──────────────────────────────────────────────────────
+
+type TtdProtocolInvariants
+  @wes_invariant(
+    name: "delivery_links_emission",
+    expr: "forall d in DeliveryObservationSummary: exists e in EffectEmissionSummary: d.emissionId == e.emissionId",
+    severity: "error"
+  )
+  @wes_invariant(
+    name: "tick_non_negative",
+    expr: "forall c in Coordinate: c.tick >= 0",
+    severity: "error"
+  )
+  @wes_invariant(
+    name: "frame_index_non_negative",
+    expr: "forall f in PlaybackFrame: f.frameIndex >= 0",
+    severity: "error"
+  )
+{
+  _placeholder: Boolean
+}
+
+# ─── Read Operations ──────────────────────────────────────────────────────────
+
+type Query {
+  hello: HostHello!
+    @wes_op(name: "hello", readonly: true)
+
+  laneCatalog: LaneCatalog!
+    @wes_op(name: "laneCatalog", readonly: true)
+
+  playbackHead(headId: String!): PlaybackHeadSnapshot!
+    @wes_op(name: "playbackHead", readonly: true)
+
+  frame(headId: String!, frameIndex: Int): PlaybackFrame!
+    @wes_op(name: "frame", readonly: true)
+
+  receipts(headId: String!, frameIndex: Int): [ReceiptSummary!]!
+    @wes_op(name: "receipts", readonly: true)
+
+  effectEmissions(headId: String!, frameIndex: Int): [EffectEmissionSummary!]!
+    @wes_op(name: "effectEmissions", readonly: true)
+
+  deliveryObservations(headId: String!, frameIndex: Int): [DeliveryObservationSummary!]!
+    @wes_op(name: "deliveryObservations", readonly: true)
+
+  executionContext: ExecutionContext!
+    @wes_op(name: "executionContext", readonly: true)
+}
+
+# ─── Control Operations ───────────────────────────────────────────────────────
+
+type Mutation {
+  stepForward(headId: String!): PlaybackFrame!
+    @wes_op(name: "stepForward", idempotent: false, readonly: false)
+    @wes_footprint(reads: ["PlaybackHeadSnapshot"], writes: ["PlaybackHeadSnapshot"])
+}
