@@ -6,6 +6,11 @@
  * derived from TickReceipts, lanes from worldlines and strands.
  */
 import type { TtdHostAdapter } from "../adapter.ts";
+import {
+  FrameOutOfRangeError,
+  InternalIndexError,
+  UnknownHeadError
+} from "../errors.ts";
 import type {
   DeliveryObservationSummary,
   EffectEmissionSummary,
@@ -110,9 +115,7 @@ function requireIndexedFrame(
   const frame = frameIndex[index];
 
   if (!frame) {
-    throw new Error(
-      `Internal frame index ${index.toString()} out of bounds (length: ${frameIndex.length.toString()})`
-    );
+    throw new InternalIndexError(index, frameIndex.length);
   }
 
   return frame;
@@ -229,7 +232,7 @@ export class GitWarpAdapter implements TtdHostAdapter {
     const head = this.#headStates.get(headId);
 
     if (!head) {
-      throw new Error(`Unknown playback head: ${headId}`);
+      throw new UnknownHeadError(headId);
     }
 
     return Promise.resolve({ ...head });
@@ -239,7 +242,7 @@ export class GitWarpAdapter implements TtdHostAdapter {
     const head = this.#headStates.get(headId);
 
     if (!head) {
-      throw new Error(`Unknown playback head: ${headId}`);
+      throw new UnknownHeadError(headId);
     }
 
     const resolvedIndex = frameIndex ?? head.currentFrameIndex;
@@ -248,9 +251,7 @@ export class GitWarpAdapter implements TtdHostAdapter {
     const maxFrame = this.#frameIndex.length;
 
     if (resolvedIndex < 0 || resolvedIndex > maxFrame) {
-      throw new Error(
-        `Frame index ${resolvedIndex.toString()} out of range [0, ${maxFrame.toString()}]`
-      );
+      throw new FrameOutOfRangeError(resolvedIndex, maxFrame);
     }
 
     return Promise.resolve(this.#buildFrame(headId, resolvedIndex));
@@ -260,7 +261,7 @@ export class GitWarpAdapter implements TtdHostAdapter {
     const head = this.#headStates.get(headId);
 
     if (!head) {
-      throw new Error(`Unknown playback head: ${headId}`);
+      throw new UnknownHeadError(headId);
     }
 
     const resolvedIndex = frameIndex ?? head.currentFrameIndex;
@@ -273,9 +274,7 @@ export class GitWarpAdapter implements TtdHostAdapter {
     const maxFrame = this.#frameIndex.length;
 
     if (resolvedIndex < 0 || resolvedIndex > maxFrame) {
-      throw new Error(
-        `Frame index ${resolvedIndex.toString()} out of range [0, ${maxFrame.toString()}]`
-      );
+      throw new FrameOutOfRangeError(resolvedIndex, maxFrame);
     }
 
     const indexed = this.#frameIndex[resolvedIndex - 1];
@@ -307,7 +306,7 @@ export class GitWarpAdapter implements TtdHostAdapter {
     const head = this.#headStates.get(headId);
 
     if (!head) {
-      throw new Error(`Unknown playback head: ${headId}`);
+      throw new UnknownHeadError(headId);
     }
 
     const maxFrame = this.#frameIndex.length;
@@ -320,6 +319,43 @@ export class GitWarpAdapter implements TtdHostAdapter {
     });
 
     return Promise.resolve(this.#buildFrame(headId, nextIndex));
+  }
+
+  public stepBackward(headId: string): Promise<PlaybackFrame> {
+    const head = this.#headStates.get(headId);
+
+    if (!head) {
+      throw new UnknownHeadError(headId);
+    }
+
+    const prevIndex = Math.max(head.currentFrameIndex - 1, 0);
+
+    this.#headStates.set(headId, {
+      ...head,
+      currentFrameIndex: prevIndex,
+      paused: true
+    });
+
+    return Promise.resolve(this.#buildFrame(headId, prevIndex));
+  }
+
+  public seekToFrame(headId: string, frameIndex: number): Promise<PlaybackFrame> {
+    const head = this.#headStates.get(headId);
+
+    if (!head) {
+      throw new UnknownHeadError(headId);
+    }
+
+    const maxFrame = this.#frameIndex.length;
+    const clampedIndex = Math.max(0, Math.min(frameIndex, maxFrame));
+
+    this.#headStates.set(headId, {
+      ...head,
+      currentFrameIndex: clampedIndex,
+      paused: true
+    });
+
+    return Promise.resolve(this.#buildFrame(headId, clampedIndex));
   }
 
   #buildFrame(headId: string, frameIndex: number): PlaybackFrame {

@@ -28,7 +28,9 @@ export type Capability =
   | "read:effect-emissions"
   | "read:delivery-observations"
   | "read:execution-context"
-  | "control:step-forward";
+  | "control:step-forward"
+  | "control:step-backward"
+  | "control:seek";
 
 export interface HostHello {
   hostKind: HostKind;

@@ -6,6 +6,7 @@
  * touching a real substrate.
  */
 import type { TtdHostAdapter } from "../../src/adapter.ts";
+import { FrameOutOfRangeError, UnknownHeadError } from "../../src/errors.ts";
 import type {
   Capability,
   DeliveryObservationSummary,
@@ -214,8 +215,7 @@ function buildPlaybackFrame(
   }
   const sf = scenario.frames[frameIndex - 1];
   if (sf === undefined) {
-    // eslint-disable-next-line no-restricted-syntax
-    throw new Error(`Frame index ${frameIndex.toString()} out of range`);
+    throw new FrameOutOfRangeError(frameIndex, scenario.frames.length);
   }
   return {
     headId: HEAD_ID, frameIndex,
@@ -244,8 +244,7 @@ export function buildScenario(scenario: Scenario): TtdHostAdapter {
   function requireHead(headId: string): PlaybackHeadSnapshot {
     const head = heads.get(headId);
     if (head === undefined) {
-      // eslint-disable-next-line no-restricted-syntax
-      throw new Error(`Unknown head: ${headId}`);
+      throw new UnknownHeadError(headId);
     }
     return head;
   }
@@ -274,6 +273,19 @@ export function buildScenario(scenario: Scenario): TtdHostAdapter {
       const nextIndex = Math.min(head.currentFrameIndex + 1, maxFrame);
       heads.set(headId, { ...head, currentFrameIndex: nextIndex, paused: true });
       return Promise.resolve(structuredClone(buildPlaybackFrame(built.lanes, scenario, nextIndex)));
+    },
+    stepBackward(headId: string): Promise<PlaybackFrame> {
+      const head = requireHead(headId);
+      const prevIndex = Math.max(head.currentFrameIndex - 1, 0);
+      heads.set(headId, { ...head, currentFrameIndex: prevIndex, paused: true });
+      return Promise.resolve(structuredClone(buildPlaybackFrame(built.lanes, scenario, prevIndex)));
+    },
+    seekToFrame(headId: string, frameIndex: number): Promise<PlaybackFrame> {
+      const head = requireHead(headId);
+      const maxFrame = scenario.frames.length;
+      const clamped = Math.max(0, Math.min(frameIndex, maxFrame));
+      heads.set(headId, { ...head, currentFrameIndex: clamped, paused: true });
+      return Promise.resolve(structuredClone(buildPlaybackFrame(built.lanes, scenario, clamped)));
     }
   };
 }

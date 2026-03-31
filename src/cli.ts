@@ -1,4 +1,9 @@
 import { EchoFixtureAdapter } from "./adapters/echoFixtureAdapter.ts";
+import {
+  UnexpectedArgumentsError,
+  UnknownFlagsError,
+  UnsupportedCommandError
+} from "./errors.ts";
 
 type Command = "demo" | "hello" | "catalog" | "frame" | "step" | "effects" | "deliveries" | "context";
 
@@ -14,7 +19,7 @@ function parseArgs(argv: string[]): { command: Command; json: boolean } {
   const positional = args.filter((a) => !a.startsWith("--"));
 
   if (positional.length > 1) {
-    throw new Error(`Unexpected arguments: ${positional.slice(1).join(", ")}`);
+    throw new UnexpectedArgumentsError(positional.slice(1));
   }
 
   const command = positional[0];
@@ -26,14 +31,14 @@ function parseArgs(argv: string[]): { command: Command; json: boolean } {
   const unknown = args.filter((a) => a.startsWith("--") && a !== "--json");
 
   if (unknown.length > 0) {
-    throw new Error(`Unknown flags: ${unknown.join(", ")}`);
+    throw new UnknownFlagsError(unknown);
   }
 
   if (isValidCommand(command)) {
     return { command, json };
   }
 
-  throw new Error(`Unsupported command: ${command}`);
+  throw new UnsupportedCommandError(command);
 }
 
 function printSection(label: string, value: unknown): void {

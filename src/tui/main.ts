@@ -236,7 +236,7 @@ function navigatorLayout(model: Model, w: number, h: number): Surface {
   }
 
   // Controls
-  const controls = " [n] Step  [0-9] Go to frame  [d] Disconnect";
+  const controls = " [n/\u2192] Fwd  [p/\u2190] Back  [0-9] Jump to tick  [d] Disconnect";
   const controlSurf = stringToSurface(controls, w - 2, 1);
   final.blit(controlSurf, 1, h - 2);
 
@@ -267,7 +267,7 @@ function inspectorLayout(model: Model, w: number, h: number): Surface {
   const laneLines = (model.catalog?.lanes ?? [])
     .map((l) => {
       const rw = l.writable ? "rw" : "ro";
-      const parent = l.parentId ? ` < ${l.parentId}` : "";
+      const parent = l.parentId !== undefined ? ` < ${l.parentId}` : "";
       return `  [${rw}] ${l.id.padEnd(16)} ${l.kind}${parent}`;
     })
     .join("\n");
@@ -576,18 +576,39 @@ const mainApp = {
         ]];
       }
 
-      if (msg.key >= "0" && msg.key <= "9") {
-        const frameIndex = parseInt(msg.key, 10);
+      if (msg.key === "p" || msg.key === "left") {
+        // Step backward
         const adapter = pm.adapter;
         return [nextModel, [
           ...fCmds,
           async (emit: (msg: Msg) => void) => {
             try {
-              const frame = await adapter.frame(headId, frameIndex);
-              const receipts = await adapter.receipts(headId, frameIndex);
-              const emissions = await adapter.effectEmissions(headId, frameIndex);
-              const observations = await adapter.deliveryObservations(headId, frameIndex);
-              emit({ type: "frame-result", frame, receipts, emissions, observations });
+              const frame = await adapter.stepBackward(headId);
+              const head = await adapter.playbackHead(headId);
+              const receipts = await adapter.receipts(headId, frame.frameIndex);
+              const emissions = await adapter.effectEmissions(headId, frame.frameIndex);
+              const observations = await adapter.deliveryObservations(headId, frame.frameIndex);
+              emit({ type: "step-result", head, frame, receipts, emissions, observations });
+            } catch (err) {
+              emit({ type: "connect-error", message: err instanceof Error ? err.message : String(err) });
+            }
+          }
+        ]];
+      }
+
+      if (msg.key >= "0" && msg.key <= "9") {
+        const tickIndex = parseInt(msg.key, 10);
+        const adapter = pm.adapter;
+        return [nextModel, [
+          ...fCmds,
+          async (emit: (msg: Msg) => void) => {
+            try {
+              const frame = await adapter.seekToFrame(headId, tickIndex);
+              const head = await adapter.playbackHead(headId);
+              const receipts = await adapter.receipts(headId, frame.frameIndex);
+              const emissions = await adapter.effectEmissions(headId, frame.frameIndex);
+              const observations = await adapter.deliveryObservations(headId, frame.frameIndex);
+              emit({ type: "step-result", head, frame, receipts, emissions, observations });
             } catch (err) {
               const errMsg = err instanceof Error ? err.message : String(err);
               // Out-of-range frame index is expected (0-9 keys); other errors surface

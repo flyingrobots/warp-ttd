@@ -7,6 +7,7 @@
  * the port type) to construct adapters.
  */
 import type { TtdHostAdapter } from "../adapter.ts";
+import { UnknownAdapterKindError } from "../errors.ts";
 
 export type ScenarioName = "live-with-effects" | "replay-with-suppression" | "multi-writer-conflicts";
 
@@ -75,7 +76,7 @@ export async function resolveAdapter(config: AdapterConfig): Promise<ResolvedAda
 
     default: {
       const exhaustive: never = config;
-      throw new Error(`Unknown adapter kind: ${(exhaustive as { kind: string }).kind}`);
+      throw new UnknownAdapterKindError((exhaustive as { kind: string }).kind);
     }
   }
 }

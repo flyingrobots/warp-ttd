@@ -1,4 +1,9 @@
 import type { TtdHostAdapter } from "../adapter.ts";
+import {
+  FrameResolutionError,
+  NoFramesConfiguredError,
+  UnknownHeadError
+} from "../errors.ts";
 import type {
   DeliveryObservationSummary,
   EffectEmissionSummary,
@@ -36,7 +41,9 @@ const FIXTURE: FixtureState = {
       "read:effect-emissions",
       "read:delivery-observations",
       "read:execution-context",
-      "control:step-forward"
+      "control:step-forward",
+      "control:step-backward",
+      "control:seek"
     ]
   },
   catalog: {
@@ -238,7 +245,7 @@ function requireHeadState(
   const head = heads.get(headId);
 
   if (!head) {
-    throw new Error(`Unknown playback head: ${headId}`);
+    throw new UnknownHeadError(headId);
   }
 
   return head;
@@ -251,7 +258,7 @@ function requireFrames(
   const frames = framesByHead[headId];
 
   if (!frames) {
-    throw new Error(`No frames configured for playback head: ${headId}`);
+    throw new NoFramesConfiguredError(headId);
   }
 
   return frames;
@@ -282,8 +289,7 @@ export class EchoFixtureAdapter implements TtdHostAdapter {
     const frame = frames[resolvedIndex];
 
     if (!frame) {
-      throw new Error(
-        `Unknown frame index ${resolvedIndex.toString()} for playback head ${headId}`
+      throw new FrameResolutionError(resolvedIndex, headId
       );
     }
 
@@ -307,7 +313,7 @@ export class EchoFixtureAdapter implements TtdHostAdapter {
     const nextFrame = frames[nextIndex];
 
     if (!nextFrame) {
-      throw new Error(`Unable to resolve next frame for playback head ${headId}`);
+      throw new FrameResolutionError(nextIndex, headId);
     }
 
     this.#heads.set(headId, {
@@ -317,6 +323,44 @@ export class EchoFixtureAdapter implements TtdHostAdapter {
     });
 
     return Promise.resolve(cloneValue(nextFrame));
+  }
+
+  public stepBackward(headId: string): Promise<PlaybackFrame> {
+    const head = requireHeadState(this.#heads, headId);
+    const frames = requireFrames(FIXTURE.frames, headId);
+    const prevIndex = Math.max(head.currentFrameIndex - 1, 0);
+    const prevFrame = frames[prevIndex];
+
+    if (!prevFrame) {
+      throw new FrameResolutionError(prevIndex, headId);
+    }
+
+    this.#heads.set(headId, {
+      ...head,
+      currentFrameIndex: prevIndex,
+      paused: true
+    });
+
+    return Promise.resolve(cloneValue(prevFrame));
+  }
+
+  public seekToFrame(headId: string, frameIndex: number): Promise<PlaybackFrame> {
+    const head = requireHeadState(this.#heads, headId);
+    const frames = requireFrames(FIXTURE.frames, headId);
+    const clampedIndex = Math.max(0, Math.min(frameIndex, frames.length - 1));
+    const frame = frames[clampedIndex];
+
+    if (!frame) {
+      throw new FrameResolutionError(frameIndex, headId);
+    }
+
+    this.#heads.set(headId, {
+      ...head,
+      currentFrameIndex: clampedIndex,
+      paused: true
+    });
+
+    return Promise.resolve(cloneValue(frame));
   }
 
   public effectEmissions(headId: string, frameIndex?: number): Promise<EffectEmissionSummary[]> {
