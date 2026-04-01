@@ -19,16 +19,23 @@ lifecycle rules.
 
 ## Active Sequence
 
-Cycles are ordered by dependency, not alphabetically: clear debt → clean
-architecture → freeze protocol → human UX → speculation.
+Cycles are ordered by dependency: clear debt → clean architecture →
+freeze protocol → fix vocabulary → fill protocol gaps → human UX →
+design layout → speculation → core views → capstone.
 
 | Order | Cycle | Status | File |
 |-------|-------|--------|------|
 | 1 | A — Housekeeping & Reality Sync | closed | [A-housekeeping-reality-sync.md](docs/backlog/A-housekeeping-reality-sync.md) |
 | 2 | C — Hexagonal Cleanup | closed | [C-hexagonal-cleanup.md](docs/backlog/C-hexagonal-cleanup.md) |
 | 3 | B — Protocol Freeze | closed | [B-protocol-freeze.md](docs/backlog/B-protocol-freeze.md) |
-| 4 | E — DebuggerSession | queued (next) | [E-debugger-session.md](docs/backlog/E-debugger-session.md) |
-| 5 | D — Strand & Speculation | queued | [D-strand-speculation.md](docs/backlog/D-strand-speculation.md) |
+| 4 | Effect Emission | closed | [0009-effect-emission-protocol.md](docs/cycles/0005-effect-emission/design/0009-effect-emission-protocol.md) |
+| 5 | Design Vocabulary | queued (next) | [design-vocabulary.md](docs/backlog/design-vocabulary.md) |
+| 6 | writerId on ReceiptSummary | queued | [receipt-writer-field.md](docs/backlog/receipt-writer-field.md) |
+| 7 | E — DebuggerSession | queued | [E-debugger-session.md](docs/backlog/E-debugger-session.md) |
+| 8 | Navigator View Design | queued | [navigator-view-design.md](docs/backlog/navigator-view-design.md) |
+| 9 | D — Strand & Speculation | queued | [D-strand-speculation.md](docs/backlog/D-strand-speculation.md) |
+| 10 | Core Views | queued | [core-views.md](docs/backlog/core-views.md) |
+| 11 | Counterfactual Inspection | queued | [counterfactual-inspection.md](docs/backlog/counterfactual-inspection.md) |
 
 ## Ongoing
 
@@ -36,15 +43,10 @@ architecture → freeze protocol → human UX → speculation.
 |--------|------|
 | Lint Ratchet — 30% reduction per cycle | [lint-ratchet.md](docs/backlog/lint-ratchet.md) |
 
-## Queued (unscheduled)
+## Seeds (not commitments)
 
 | Item | File |
 |------|------|
-| Core Views (Worldline, Graph, Provenance) | [core-views.md](docs/backlog/core-views.md) |
-| Navigator View Design | [navigator-view-design.md](docs/backlog/navigator-view-design.md) |
-| Add writerId to ReceiptSummary | [receipt-writer-field.md](docs/backlog/receipt-writer-field.md) |
-| Counterfactual Inspection & Strand Forking | [counterfactual-inspection.md](docs/backlog/counterfactual-inspection.md) |
-| Design Vocabulary | [design-vocabulary.md](docs/backlog/design-vocabulary.md) |
 | Cool Ideas (Effect Slice) | [cool-ideas-effect-slice.md](docs/backlog/cool-ideas-effect-slice.md) |
 
 ## Deferred
