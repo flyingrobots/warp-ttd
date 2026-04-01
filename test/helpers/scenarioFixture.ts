@@ -34,6 +34,7 @@ interface ScenarioDelivery {
 interface ScenarioEmission {
   effectKind: string;
   laneId: string;
+  producerWriterId?: string;
   deliveries: ScenarioDelivery[];
 }
 
@@ -156,7 +157,7 @@ function buildFrameData(
       emissionId: emId, headId: HEAD_ID, frameIndex,
       laneId: se.laneId, coordinate: { laneId: se.laneId, tick: sf.tick },
       effectKind: se.effectKind,
-      producerWriterId: sf.receipts[0]?.writerId ?? "scenario-writer",
+      producerWriterId: se.producerWriterId ?? sf.receipts[0]?.writerId ?? "scenario-writer",
       summary: `${se.effectKind} emitted at tick ${sf.tick.toString()}`
     });
 

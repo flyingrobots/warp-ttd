@@ -144,17 +144,18 @@ function countOps(
 export class GitWarpAdapter implements TtdHostAdapter {
   public readonly adapterName = "git-warp";
 
+  // eslint-disable-next-line no-unused-private-class-members -- retained for future strand operations & live refresh
+  readonly #graph: WarpCoreLike;
   readonly #frameIndex: IndexedFrame[];
   readonly #lanes: LaneRef[];
   readonly #headStates = new Map<string, PlaybackHeadSnapshot>();
 
   private constructor(
-    _graph: WarpCoreLike,
+    graph: WarpCoreLike,
     frameIndex: IndexedFrame[],
     lanes: LaneRef[]
   ) {
-    // graph stored for future use (strand operations, live refresh)
-    void _graph;
+    this.#graph = graph;
     this.#frameIndex = frameIndex;
     this.#lanes = lanes;
 
@@ -346,6 +347,8 @@ export class GitWarpAdapter implements TtdHostAdapter {
       throw new UnknownHeadError(headId);
     }
 
+    // maxFrame = #frameIndex.length because frame 0 is synthetic (empty)
+    // and real frames are 1-indexed into #frameIndex
     const maxFrame = this.#frameIndex.length;
     const clampedIndex = Math.max(0, Math.min(frameIndex, maxFrame));
 

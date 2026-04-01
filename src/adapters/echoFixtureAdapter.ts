@@ -347,6 +347,7 @@ export class EchoFixtureAdapter implements TtdHostAdapter {
   public seekToFrame(headId: string, frameIndex: number): Promise<PlaybackFrame> {
     const head = requireHeadState(this.#heads, headId);
     const frames = requireFrames(FIXTURE.frames, headId);
+    // frames is directly indexed by frameIndex (frames[0]=frame 0), so max valid index = length - 1
     const clampedIndex = Math.max(0, Math.min(frameIndex, frames.length - 1));
     const frame = frames[clampedIndex];
 

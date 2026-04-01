@@ -54,6 +54,7 @@ export async function resolveAdapter(config: AdapterConfig): Promise<ResolvedAda
       };
     }
 
+    // Dev/demo-only: lazy import — only loaded when user selects a scenario in the TUI connect wizard
     case "scenario": {
       const {
         scenarioLiveWithEffects,

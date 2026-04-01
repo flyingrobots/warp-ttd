@@ -231,7 +231,7 @@ function navigatorLayout(model: Model, w: number, h: number): Surface {
   final.blit(receiptBox, 1, dagBox.height + infoBox.height + 3);
 
   // Effect emissions + delivery observations
-  let yOffset = dagBox.height + infoBox.height + receiptBox.height + 4;
+  const yOffset = dagBox.height + infoBox.height + receiptBox.height + 4;
 
   if (model.observations.length > 0) {
     const columns: TableColumn[] = [
@@ -580,6 +580,42 @@ const mainApp = {
       const headId = pm.defaultHeadId;
       const currentAdapter = pm.adapter;
 
+      // Jump-to-tick mode — must be checked first so the prompt
+      // intercepts all keys (including n/p/arrows) while active
+      if (pm.jumpInput !== null) {
+        if (msg.key === "escape") {
+          pm = { ...pm, jumpInput: null };
+        } else if (msg.key === "enter") {
+          const tickIndex = parseInt(pm.jumpInput, 10);
+          pm = { ...pm, jumpInput: null };
+          if (!Number.isNaN(tickIndex)) {
+            const adapter = currentAdapter;
+            nextModel = { ...nextModel, pageModels: updateAllPages(pm) };
+            return [nextModel, [
+              ...fCmds,
+              async (emit: (msg: Msg) => void) => {
+                try {
+                  const frame = await adapter.seekToFrame(headId, tickIndex);
+                  const head = await adapter.playbackHead(headId);
+                  const receipts = await adapter.receipts(headId, frame.frameIndex);
+                  const emissions = await adapter.effectEmissions(headId, frame.frameIndex);
+                  const observations = await adapter.deliveryObservations(headId, frame.frameIndex);
+                  emit({ type: "step-result", head, frame, receipts, emissions, observations });
+                } catch (err) {
+                  emit({ type: "connect-error", message: err instanceof Error ? err.message : String(err) });
+                }
+              }
+            ]];
+          }
+        } else if (msg.key === "backspace") {
+          pm = { ...pm, jumpInput: pm.jumpInput.slice(0, -1) };
+        } else if (msg.key >= "0" && msg.key <= "9") {
+          pm = { ...pm, jumpInput: pm.jumpInput + msg.key };
+        }
+        nextModel = { ...nextModel, pageModels: updateAllPages(pm) };
+        return [nextModel, fCmds];
+      }
+
       if (msg.key === "n" || msg.key === "right") {
         // Step forward
         const adapter = currentAdapter;
@@ -618,41 +654,6 @@ const mainApp = {
             }
           }
         ]];
-      }
-
-      // Jump-to-tick mode
-      if (pm.jumpInput !== null) {
-        if (msg.key === "escape") {
-          pm = { ...pm, jumpInput: null };
-        } else if (msg.key === "enter") {
-          const tickIndex = parseInt(pm.jumpInput, 10);
-          pm = { ...pm, jumpInput: null };
-          if (!Number.isNaN(tickIndex)) {
-            const adapter = currentAdapter;
-            nextModel = { ...nextModel, pageModels: updateAllPages(pm) };
-            return [nextModel, [
-              ...fCmds,
-              async (emit: (msg: Msg) => void) => {
-                try {
-                  const frame = await adapter.seekToFrame(headId, tickIndex);
-                  const head = await adapter.playbackHead(headId);
-                  const receipts = await adapter.receipts(headId, frame.frameIndex);
-                  const emissions = await adapter.effectEmissions(headId, frame.frameIndex);
-                  const observations = await adapter.deliveryObservations(headId, frame.frameIndex);
-                  emit({ type: "step-result", head, frame, receipts, emissions, observations });
-                } catch (err) {
-                  emit({ type: "connect-error", message: err instanceof Error ? err.message : String(err) });
-                }
-              }
-            ]];
-          }
-        } else if (msg.key === "backspace") {
-          pm = { ...pm, jumpInput: pm.jumpInput.slice(0, -1) };
-        } else if (msg.key >= "0" && msg.key <= "9") {
-          pm = { ...pm, jumpInput: pm.jumpInput + msg.key };
-        }
-        nextModel = { ...nextModel, pageModels: updateAllPages(pm) };
-        return [nextModel, fCmds];
       }
 
       if (msg.key === "g") {
