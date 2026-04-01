@@ -212,7 +212,7 @@ export class GitWarpAdapter implements TtdHostAdapter {
     return Promise.resolve({
       hostKind: "git-warp",
       hostVersion: GIT_WARP_HOST_VERSION,
-      protocolVersion: "0.1.0",
+      protocolVersion: "0.2.0",
       schemaId: "ttd-protocol-git-warp-v1",
       capabilities: [
         "read:hello",
@@ -220,7 +220,12 @@ export class GitWarpAdapter implements TtdHostAdapter {
         "read:playback-head",
         "read:frame",
         "read:receipts",
-        "control:step-forward"
+        "read:effect-emissions",
+        "read:delivery-observations",
+        "read:execution-context",
+        "control:step-forward",
+        "control:step-backward",
+        "control:seek"
       ]
     });
   }

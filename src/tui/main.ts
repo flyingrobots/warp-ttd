@@ -260,8 +260,8 @@ function navigatorLayout(model: Model, w: number, h: number): Surface {
 
   // Controls / jump prompt
   const controlText = model.jumpInput !== null
-    ? ` Jump to tick: ${model.jumpInput}_  [Enter] Go  [Esc] Cancel`
-    : " [n/\u2192] Fwd  [p/\u2190] Back  [g] Jump to tick  [d] Disconnect";
+    ? ` Jump to frame: ${model.jumpInput}_  [Enter] Go  [Esc] Cancel`
+    : " [n/\u2192] Fwd  [p/\u2190] Back  [g] Jump to frame  [d] Disconnect";
   const controlSurf = stringToSurface(controlText, w - 2, 1);
   final.blit(controlSurf, 1, h - 2);
 
@@ -692,6 +692,7 @@ const mainApp = {
 
 run(mainApp).then(
   () => process.exit(0),
+  // eslint-disable-next-line @typescript-eslint/no-restricted-types -- unknown is correct for catch callbacks
   (err: unknown) => {
     const message = err instanceof Error ? err.message : String(err);
     process.stderr.write(`Fatal: ${message}\n`);

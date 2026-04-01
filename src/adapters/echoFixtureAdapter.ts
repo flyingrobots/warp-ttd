@@ -229,6 +229,9 @@ const FIXTURE: FixtureState = {
       }
     ]
   },
+  // Session mode is "live" but frame 2 observations record "replay" executionMode.
+  // This intentionally demonstrates that per-observation mode can differ from
+  // session context — the fixture exercises both live and replay code paths.
   executionContext: {
     mode: "live"
   }

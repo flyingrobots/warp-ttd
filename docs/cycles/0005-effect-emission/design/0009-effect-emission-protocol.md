@@ -139,16 +139,16 @@ mode was active at the time of the delivery attempt.
 
 ### Capabilities gate the new methods
 
-This preserves backward compatibility. Existing adapters (echo fixture,
-git-warp v16) do not declare the new capabilities and are not expected to
-return effect/delivery data. When git-warp adds substrate support, its
+This preserves backward compatibility. Existing adapters that have not
+yet added substrate support for effect/delivery data do not need to
+declare the new capabilities. When git-warp adds substrate support, its
 adapter declares the capabilities and implements the methods.
 
 ### Fixture adapter provides test data
 
 The echo fixture adapter gains contrived effect/delivery data for testing.
-The git-warp adapter returns empty arrays until git-warp v17+ provides
-substrate support.
+The git-warp adapter returns empty arrays until the git-warp substrate
+provides effect emission and delivery observation records.
 
 ## Protocol Version Impact
 
