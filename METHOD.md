@@ -1,58 +1,32 @@
 # METHOD
 
-A lightweight, filesystem-native system for moving work from idea to
-shipped code to retrospective. No milestones. No roadmap. Just a
-backlog, cycles, and honest bookkeeping.
+A backlog, a loop, and honest bookkeeping.
 
 ## Principles
 
-### Agents are first-class
+The agent and the human sit at the same table. They see different
+things — different failure modes, different interaction surfaces,
+different definitions of done. Both perspectives are named in every
+design. Both must agree before work is called finished. Build the
+agent surface first; it is the foundation the human experience
+stands on.
 
-Agents are first-class users of the product. They have distinct needs
-from humans — different interaction patterns, different failure modes,
-different definitions of "good UX." Every design doc names a sponsor
-agent alongside a sponsor human, because an agent's perspective on
-whether a hill is met is as legitimate as a human's.
+Everything traces to a playback question. If you cannot say which
+question your current work answers, you are drifting. Stop. Reconnect
+to the design, or change the design. There is no third option.
 
-Agents are also first-class peers in the development cycle. They write
-code, review designs, run playbacks, and ship work. The dual-playback
-gate exists because both perspectives — human and agent — must agree
-before work is called done.
+Tests are the spec. Documentation drifts silently; tests fail loud.
+Code exists because a test demanded it. Tests exist because a design
+said what should be true. There is no prose layer between intent and
+proof.
 
-Build the agent surface first. The agent operates at the protocol
-level, which is the low-level foundation the human experience sits on.
-Getting that right first means the human-level experience has solid
-ground to stand on.
+The filesystem is the database. A directory is a priority. A filename
+is an identity. Moving a file is a decision — tracked in version
+control, reviewable in a diff. `ls` is the only query you need.
 
-### Everything traces to a playback
-
-Nothing should be done "because we can" or "because it seemed right."
-Every action during a cycle should trace back to a playback question.
-Playback questions are written during design, before any code exists.
-They are the "why" made answerable.
-
-If you cannot explain which playback question your current work
-serves, you are drifting. Stop and reconnect to the design, or
-acknowledge that the design needs to change.
-
-### Tests are the spec
-
-Documentation drifts; tests fail loud. Every piece of code exists
-because a test demanded it, and every test exists because a design doc
-said what should be true. There is no layer of prose between the design
-and the executable specification.
-
-### The filesystem is the database
-
-Directory structure communicates priority. File names communicate
-domain. Moving a file from one directory to another is a meaningful
-act — a decision, tracked in version control, reviewable in a diff.
-
-### Process should be calm
-
-There are no sprints, no velocity metrics, no burndown charts. There
-is a backlog of things worth doing, ordered by judgment, and a loop
-for doing them well.
+Process should be calm. No sprints. No velocity. No burndown charts.
+A backlog of things worth doing, ordered by judgment, and a loop for
+doing them well.
 
 ## Structure
 
@@ -78,51 +52,39 @@ docs/
     *.md                            living design documents
 ```
 
-Signpost documents — the ones everyone is expected to read — live at
-the repository root or one level into `docs/`. They use `ALL_CAPS.md`
-naming: `README.md`, `CONTRIBUTING.md`, `ARCHITECTURE.md`, `VISION.md`,
-`METHOD.md`, `docs/GUIDE.md`. If a document needs to be buried deeper
-than that, it is not a signpost.
+Signpost documents live at the repository root or one level into
+`docs/`. They use `ALL_CAPS.md` naming. If a document needs to be
+buried deeper than that, it is not a signpost.
 
 ## Backlog
 
-The backlog is a directory of Markdown files. Each file is a
-self-contained description of work worth doing. There is no index file —
-the filesystem is the index.
+A directory of Markdown files. Each file describes work worth doing.
+The filesystem is the index — there is no other.
 
 ### Inbox
 
-The inbox (`backlog/inbox/`) is the landing zone for raw ideas. Anyone
-— human or agent — can toss something in at any time. No ceremony
-required. Write down what you can: a sentence, a paragraph, a sketch.
-It does not need a legend, a full design, or even a clear scope. The
-point is to capture the thought before it evaporates.
+The inbox is the landing zone. Anyone — human or agent — drops ideas
+in at any time. A sentence is enough. No legend, no scope, no ceremony.
+Capture the thought before it evaporates. Keep moving.
 
-Agents should use the inbox freely. If you notice bad code while
-working, a cool pattern worth exploring, or a feature gap — drop a
-file in `inbox/` and keep moving. Do not break flow to organize it.
-
-The inbox is processed during backlog maintenance (see below).
+Agents: if you notice bad code, a cool pattern, a gap — file it in
+`inbox/` without breaking flow. The inbox is processed later.
 
 ### Priority lanes
 
-Priority is communicated through subdirectories:
-
-- **`inbox/`** — raw ideas, unprocessed. From anyone, anytime.
-- **`asap/`** — urgent. Pull this into a cycle soon.
+- **`inbox/`** — unprocessed. From anyone, anytime.
+- **`asap/`** — pull this into a cycle soon.
 - **`up-next/`** — next in line. Dependencies are clear.
-- **`cool-ideas/`** — interesting experiments, far-fetched thoughts, things
-  worth trying when the time is right. Not commitments.
-- **`bad-code/`** — tech debt. Code that works but bothers you. Separating
-  debt from features makes the distinction obvious.
+- **`cool-ideas/`** — worth trying when the time is right. Not
+  commitments.
+- **`bad-code/`** — tech debt. It works, but it bothers you.
 
-Files that do not fit a named lane sit in the backlog root. That is the
+Files that fit no lane sit in the backlog root. That is the
 "someday" bucket.
 
-### File naming
+### Naming
 
-Files are named descriptively. If the work belongs to a legend (see
-below), prefix the filename with the legend code:
+Files are named descriptively. Legend prefix if applicable:
 
 ```
 VIZ_braille-rendering.md
@@ -130,9 +92,9 @@ PROTO_strand-lifecycle.md
 debt-trailer-codec-dts.md
 ```
 
-There are no numeric IDs. The name is the identity.
+No numeric IDs. The name is the identity.
 
-### Promoting work
+### Promoting
 
 When a backlog item is pulled into a cycle, it becomes a design doc:
 
@@ -145,183 +107,149 @@ The backlog file is removed. The design doc is the new home.
 
 ### Commitment
 
-Once you pull something from the backlog, you are committed. You
-cannot put it back. Either:
+Pull something from the backlog and you are committed. It does not
+go back. Either:
 
-- **Finish** — the hill is met, the cycle closes normally.
-- **Pivot** — end the cycle early with a retrospective explaining why.
-  Remaining work goes back to the backlog as a new item (not the
-  original — the context has changed).
+- **Finish** — the hill is met.
+- **Pivot** — end the cycle early with a retro. Remaining work
+  enters the backlog as a new item. The context has changed; the
+  original item no longer describes the situation.
 
-This prevents half-started work from accumulating. Pulling from the
-backlog is a deliberate act with consequences.
+Half-started work does not accumulate. Pulling is a deliberate act.
 
-### Backlog maintenance
+### Maintenance
 
-Backlog maintenance happens at the end of a cycle, during the close
-phase. This is when you:
+Backlog maintenance happens at the end of a cycle:
 
-- Process the inbox — promote items to priority lanes, add legends,
-  flesh out descriptions, or move to the graveyard.
-- Re-prioritize — shift items between lanes based on what you learned
-  during the cycle.
-- Clean up — merge duplicates, update stale items, kill dead ideas.
+- Process the inbox. Promote, flesh out, or bury.
+- Re-prioritize. What you learned changes what matters.
+- Clean up. Merge duplicates, update stale items, kill the dead.
 
-Do not reorganize the backlog mid-cycle. During active work, just
-throw things in `inbox/` and keep moving.
+Do not reorganize mid-cycle. Throw things in `inbox/` and keep
+moving.
 
 ### Cycle types
 
-Not every cycle ships features. The same loop applies to all cycle
-types:
+The same loop applies regardless of what a cycle ships:
 
-- **Feature cycles** — the default. Design, test, build, ship.
-- **Design cycles** — pure design iteration. The deliverable is design
-  docs, not code. Useful for exploratory work or system-level
-  planning.
-- **Debt cycles** — pay down tech debt. Pull from `bad-code/`.
-  The hill is "this code no longer bothers us."
+- **Feature cycles** — design, test, build, ship.
+- **Design cycles** — the deliverable is design docs, not code.
+- **Debt cycles** — pull from `bad-code/`. The hill is "this no
+  longer bothers us."
 
 ## Legends
 
 A legend is a named domain — a broad area of the product that spans
-multiple cycles. Legends are defined in `docs/method/legends/` as
-individual Markdown files.
+many cycles. Each legend lives as a file in `docs/method/legends/`
+and describes:
 
-Each legend describes:
+- what it covers
+- the human and agent perspectives that care
+- what success looks like
+- how you know
 
-- **What it covers** — the area of the product or system
-- **Sponsor users** — the human and agent perspectives that care
-- **Hills** — what success looks like for this domain
-- **Playback questions** — how you know the hills are met
+Legends are not milestones. They do not start or finish. They are
+reference frames — stable contexts that give individual tasks meaning.
 
-Legends are not milestones. They do not have deadlines or completion
-criteria. They are reference frames — stable contexts that give
-individual tasks meaning.
-
-A legend code (e.g., `VIZ`, `PROTO`, `TUI`) prefixes backlog filenames
-to signal which domain a task belongs to.
+A legend code (`VIZ`, `PROTO`, `TUI`) prefixes backlog filenames to
+signal domain.
 
 ## Cycles
 
-A cycle is a unit of shipped work. It has a design phase, an
-implementation phase, and a retrospective. Cycles are numbered
-sequentially (`0001`, `0002`, ...).
+A cycle is a unit of shipped work. Design, implementation,
+retrospective. Numbered sequentially.
 
-### Development loop
+### The loop
 
-0. **Pull from backlog** — choose a backlog item. Move it out of its
-   priority lane. This is the start of a cycle.
+0. **Pull** — choose a backlog item. Move it. You are committed.
 
-1. **Design** — write a design doc in `docs/design/<cycle>/`. Use
-   IBM Design Thinking-inspired framing:
+1. **Design** — write a design doc in `docs/design/<cycle>/`.
 
-   - **Sponsor human** — the human perspective that keeps the work honest
-   - **Sponsor agent** — the agent/tool perspective that keeps the
-     protocol and machine-readable contract honest
-   - **Hill** — a clear statement of what success looks like
-   - **Playback questions** — yes/no questions that will be answered
-     after implementation, from both perspectives. These inform the
-     specs. Write them now.
-   - **Non-goals** — what this cycle explicitly does not do
+   - **Sponsor human** — the perspective that keeps the work honest
+   - **Sponsor agent** — the perspective that keeps the contract honest
+   - **Hill** — what success looks like
+   - **Playback questions** — yes/no, from both perspectives. These
+     inform the specs. Write them before anything else.
+   - **Non-goals** — what this cycle will not do
 
-2. **RED — write failing tests** — the design doc's playback questions
-   become executable specifications. Tests are the literal spec. No
-   documentation layer sits between intent and verification. Build the
-   agent-facing surface first — it operates at the low level you need
-   anyway to make the user-level experience work.
+2. **RED** — write failing tests. The playback questions become
+   executable specifications. Build the agent surface first.
 
-3. **GREEN — implement** — write code until the tests pass. Code
-   exists because specs demanded it.
+3. **GREEN** — make the tests pass. Code exists because specs
+   demanded it.
 
-4. **Playback** — answer every playback question from both perspectives.
-   The agent checks the agent playback questions. The human is prompted
-   to check the user playback questions. Write the answers down. If you
-   cannot get a clear yes, that is the signal.
+4. **Playback** — the agent answers the agent questions. The human
+   answers the user questions. Write it down. If a clear yes does
+   not come, that is the signal.
 
-5. **PR → main** — open a pull request. Review loops until merge is
-   accepted.
+5. **PR → main** — review loops until merge.
 
-6. **Close** — merge. Write a retrospective in
-   `docs/method/retro/<cycle>/`. The retro must include:
+6. **Close** — merge. Write a retro in `docs/method/retro/<cycle>/`.
 
    - **Drift check** (mandatory) — compare what was built against the
-     design doc. Did you do what the design said? Call out every
-     divergence, intentional or accidental. Drift is not failure —
-     undocumented drift is.
-   - **New debt** — log anything that bothers you to `backlog/bad-code/`.
-   - **Cool ideas** — capture sparks to `backlog/cool-ideas/`.
+     design. Call out every divergence. Drift is not failure.
+     Undocumented drift is.
+   - **New debt** — file to `backlog/bad-code/`.
+   - **Cool ideas** — file to `backlog/cool-ideas/`.
    - **Backlog maintenance** — process inbox, re-prioritize, clean up.
 
-   Update CHANGELOG, bump version, tag if releasing, update README.
+   Update CHANGELOG. Bump version. Tag if releasing. Update README.
 
-### Playback
+### Playback outcomes
 
-After implementation, before the retro, run a dual playback:
-
-1. The agent answers every agent playback question.
-2. Stop. The human answers every user playback question.
-3. Both perspectives must agree the hill is met before proceeding.
-
-Outcomes:
-
-- **Hill met** — proceed to retrospective, merge, close.
+- **Hill met** — merge, close.
 - **Hill partially met** — merge what is honest. The retro explains
-  the gap. Remaining work goes to the backlog.
-- **Hill not met** — the cycle still concludes. Write the retro. Be
-  honest about what happened and why. The learnings usually surface
-  new backlog items — sometimes better-scoped versions of the
-  original idea, sometimes entirely different work that the failed
-  attempt revealed. A failed cycle that produces a good retro is
-  more valuable than a successful cycle with no learnings.
+  the gap. Remaining work enters the backlog.
+- **Hill not met** — the cycle still concludes. Write the retro.
+  A failed cycle that produces a good retro is worth more than a
+  successful cycle with no learnings.
 
 Every cycle ends with a retro. Success is not a prerequisite for
 conclusion.
 
 ## Graveyard
 
-When a backlog item is rejected or abandoned, move it to
-`docs/method/graveyard/`. Do not delete it. The file should include
-a brief note explaining why it was killed.
-
-The graveyard prevents ideas from being re-proposed without context.
-If someone wants to revive a graveyard item, the history is right there.
+Rejected or abandoned work moves to `docs/method/graveyard/`. The
+file stays, with a note explaining why it was killed. The graveyard
+prevents ideas from being re-proposed without context.
 
 ## Flow
 
-The full lifecycle of a piece of work:
-
 ```
 idea
-  → docs/method/backlog/inbox/       (captured, raw)
-  → docs/method/backlog/cool-ideas/  (sorted during backlog maintenance)
-  → docs/method/backlog/up-next/     (prioritized)
-  → docs/method/backlog/asap/        (urgent)
-  → docs/design/<cycle>/             (pulled into cycle — committed)
-  → RED (failing tests), GREEN (implement), playback
-  → docs/method/retro/<cycle>/       (retrospective written)
-  → CHANGELOG updated, released
+  → backlog/inbox/       (captured, raw)
+  → backlog/cool-ideas/  (sorted during maintenance)
+  → backlog/up-next/     (prioritized)
+  → backlog/asap/        (urgent)
+  → design/<cycle>/      (pulled — committed)
+  → RED, GREEN, playback
+  → retro/<cycle>/       (retro written)
+  → CHANGELOG, release
 
       — or —
 
-  → docs/method/graveyard/           (rejected, with rationale)
+  → graveyard/           (rejected, with rationale)
 ```
 
 ## What this system does not have
 
-- **No milestones.** Work is prioritized by judgment, not by calendar.
-- **No roadmap.** The backlog is ordered. That is enough.
-- **No index files.** The filesystem is the index. `ls` is the query.
-- **No velocity tracking.** Ship good work. That is the metric.
-- **No ticket numbers.** File names are descriptive. If you need to
-  reference a task, use its name.
+No milestones. Work is prioritized by judgment, not by calendar.
 
-## Naming conventions
+No roadmap. The backlog is ordered. That is enough.
+
+No index files. The filesystem is the index.
+
+No velocity tracking. Ship good work.
+
+No ticket numbers. Names are descriptive. If you need to reference
+a task, use its name.
+
+## Naming
 
 | Convention | Example | When |
 |------------|---------|------|
-| `ALL_CAPS.md` | `VISION.md`, `ARCHITECTURE.md` | Signpost docs at root or `docs/` |
-| `lowercase.md` | `doctrine.md`, `glossary.md` | Everything else |
-| `<LEGEND>_<name>.md` | `VIZ_braille.md` | Backlog items with a legend |
-| `<name>.md` | `debt-trailer-codec.md` | Backlog items without a legend |
-| `<cycle>/` | `0010-strand-speculation/` | Cycle directories in design/ and retro/ |
+| `ALL_CAPS.md` | `VISION.md` | Signpost — root or `docs/` |
+| `lowercase.md` | `doctrine.md` | Everything else |
+| `<LEGEND>_<name>.md` | `VIZ_braille.md` | Backlog item with legend |
+| `<name>.md` | `debt-trailer-codec.md` | Backlog item without |
+| `<cycle>/` | `0010-strand-speculation/` | Cycle directory |
