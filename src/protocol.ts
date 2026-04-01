@@ -15,13 +15,22 @@ export interface Coordinate {
   tick: number;
 }
 
+export type DeliveryOutcome = "delivered" | "suppressed" | "failed" | "skipped";
+
+export type ExecutionMode = "live" | "replay" | "debug";
+
 export type Capability =
   | "read:hello"
   | "read:lane-catalog"
   | "read:playback-head"
   | "read:frame"
   | "read:receipts"
-  | "control:step-forward";
+  | "read:effect-emissions"
+  | "read:delivery-observations"
+  | "read:execution-context"
+  | "control:step-forward"
+  | "control:step-backward"
+  | "control:seek";
 
 export interface HostHello {
   hostKind: HostKind;
@@ -69,4 +78,35 @@ export interface ReceiptSummary {
   counterfactualCount: number;
   digest: string;
   summary: string;
+}
+
+export interface EffectEmissionSummary {
+  emissionId: string;
+  headId: string;
+  frameIndex: number;
+  laneId: string;
+  coordinate: Coordinate;
+  effectKind: string;
+  producerWriterId: string;
+  summary: string;
+}
+
+export interface DeliveryObservationSummary {
+  observationId: string;
+  emissionId: string;
+  headId: string;
+  frameIndex: number;
+  sinkId: string;
+  outcome: DeliveryOutcome;
+  reason: string;
+  observerId?: string;
+  executionMode: ExecutionMode;
+  summary: string;
+}
+
+export interface ExecutionContext {
+  mode: ExecutionMode;
+  sessionId?: string;
+  observerId?: string;
+  apertureId?: string;
 }

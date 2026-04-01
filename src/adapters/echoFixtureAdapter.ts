@@ -1,5 +1,13 @@
 import type { TtdHostAdapter } from "../adapter.ts";
+import {
+  FrameResolutionError,
+  NoFramesConfiguredError,
+  UnknownHeadError
+} from "../errors.ts";
 import type {
+  DeliveryObservationSummary,
+  EffectEmissionSummary,
+  ExecutionContext,
   HostHello,
   LaneCatalog,
   PlaybackFrame,
@@ -13,13 +21,16 @@ interface FixtureState {
   readonly heads: Record<string, PlaybackHeadSnapshot>;
   readonly frames: Record<string, PlaybackFrame[]>;
   readonly receipts: Record<string, ReceiptSummary[]>;
+  readonly effectEmissions: Record<string, EffectEmissionSummary[]>;
+  readonly deliveryObservations: Record<string, DeliveryObservationSummary[]>;
+  readonly executionContext: ExecutionContext;
 }
 
 const FIXTURE: FixtureState = {
   hello: {
     hostKind: "echo",
     hostVersion: "0.0.0-fixture",
-    protocolVersion: "0.1.0",
+    protocolVersion: "0.2.0",
     schemaId: "ttd-protocol-fixture-v1",
     capabilities: [
       "read:hello",
@@ -27,7 +38,12 @@ const FIXTURE: FixtureState = {
       "read:playback-head",
       "read:frame",
       "read:receipts",
-      "control:step-forward"
+      "read:effect-emissions",
+      "read:delivery-observations",
+      "read:execution-context",
+      "control:step-forward",
+      "control:step-backward",
+      "control:seek"
     ]
   },
   catalog: {
@@ -140,6 +156,84 @@ const FIXTURE: FixtureState = {
         summary: "Accepted one speculative rewrite and captured one counterfactual."
       }
     ]
+  },
+  effectEmissions: {
+    "head:main": [
+      {
+        emissionId: "emit:echo:0001",
+        headId: "head:main",
+        frameIndex: 1,
+        laneId: "wl:main",
+        coordinate: { laneId: "wl:main", tick: 1 },
+        effectKind: "diagnostic",
+        producerWriterId: "echo-writer",
+        summary: "Diagnostic event emitted on canonical worldline advance."
+      },
+      {
+        emissionId: "emit:echo:0002",
+        headId: "head:main",
+        frameIndex: 2,
+        laneId: "ws:sandbox",
+        coordinate: { laneId: "ws:sandbox", tick: 1 },
+        effectKind: "notification",
+        producerWriterId: "echo-writer",
+        summary: "Notification emitted on speculative strand advance."
+      }
+    ]
+  },
+  deliveryObservations: {
+    "head:main": [
+      {
+        observationId: "deliv:echo:0001a",
+        emissionId: "emit:echo:0001",
+        headId: "head:main",
+        frameIndex: 1,
+        sinkId: "sink:tui-log",
+        outcome: "delivered",
+        reason: "Live execution — delivered to local TUI log sink.",
+        executionMode: "live",
+        summary: "Diagnostic delivered to TUI log."
+      },
+      {
+        observationId: "deliv:echo:0001b",
+        emissionId: "emit:echo:0001",
+        headId: "head:main",
+        frameIndex: 1,
+        sinkId: "sink:chunk-file",
+        outcome: "delivered",
+        reason: "Live execution — written to rotating chunk file.",
+        executionMode: "live",
+        summary: "Diagnostic written to chunk file."
+      },
+      {
+        observationId: "deliv:echo:0002a",
+        emissionId: "emit:echo:0002",
+        headId: "head:main",
+        frameIndex: 2,
+        sinkId: "sink:network",
+        outcome: "suppressed",
+        reason: "Replay-safe suppression — external delivery blocked during replay.",
+        executionMode: "replay",
+        summary: "Notification suppressed during replay."
+      },
+      {
+        observationId: "deliv:echo:0002b",
+        emissionId: "emit:echo:0002",
+        headId: "head:main",
+        frameIndex: 2,
+        sinkId: "sink:tui-log",
+        outcome: "delivered",
+        reason: "Local sink delivers even during replay.",
+        executionMode: "replay",
+        summary: "Notification delivered to TUI log (replay-safe sink)."
+      }
+    ]
+  },
+  // Session mode is "live" but frame 2 observations record "replay" executionMode.
+  // This intentionally demonstrates that per-observation mode can differ from
+  // session context — the fixture exercises both live and replay code paths.
+  executionContext: {
+    mode: "live"
   }
 };
 
@@ -154,7 +248,7 @@ function requireHeadState(
   const head = heads.get(headId);
 
   if (!head) {
-    throw new Error(`Unknown playback head: ${headId}`);
+    throw new UnknownHeadError(headId);
   }
 
   return head;
@@ -167,7 +261,7 @@ function requireFrames(
   const frames = framesByHead[headId];
 
   if (!frames) {
-    throw new Error(`No frames configured for playback head: ${headId}`);
+    throw new NoFramesConfiguredError(headId);
   }
 
   return frames;
@@ -198,9 +292,7 @@ export class EchoFixtureAdapter implements TtdHostAdapter {
     const frame = frames[resolvedIndex];
 
     if (!frame) {
-      throw new Error(
-        `Unknown frame index ${resolvedIndex.toString()} for playback head ${headId}`
-      );
+      throw new FrameResolutionError(resolvedIndex, headId);
     }
 
     return Promise.resolve(cloneValue(frame));
@@ -223,7 +315,7 @@ export class EchoFixtureAdapter implements TtdHostAdapter {
     const nextFrame = frames[nextIndex];
 
     if (!nextFrame) {
-      throw new Error(`Unable to resolve next frame for playback head ${headId}`);
+      throw new FrameResolutionError(nextIndex, headId);
     }
 
     this.#heads.set(headId, {
@@ -233,5 +325,68 @@ export class EchoFixtureAdapter implements TtdHostAdapter {
     });
 
     return Promise.resolve(cloneValue(nextFrame));
+  }
+
+  public stepBackward(headId: string): Promise<PlaybackFrame> {
+    const head = requireHeadState(this.#heads, headId);
+    const frames = requireFrames(FIXTURE.frames, headId);
+    const prevIndex = Math.max(head.currentFrameIndex - 1, 0);
+    const prevFrame = frames[prevIndex];
+
+    if (!prevFrame) {
+      throw new FrameResolutionError(prevIndex, headId);
+    }
+
+    this.#heads.set(headId, {
+      ...head,
+      currentFrameIndex: prevIndex,
+      paused: true
+    });
+
+    return Promise.resolve(cloneValue(prevFrame));
+  }
+
+  public seekToFrame(headId: string, frameIndex: number): Promise<PlaybackFrame> {
+    const head = requireHeadState(this.#heads, headId);
+    const frames = requireFrames(FIXTURE.frames, headId);
+    // frames is directly indexed by frameIndex (frames[0]=frame 0), so max valid index = length - 1
+    const clampedIndex = Math.max(0, Math.min(frameIndex, frames.length - 1));
+    const frame = frames[clampedIndex];
+
+    if (!frame) {
+      throw new FrameResolutionError(frameIndex, headId);
+    }
+
+    this.#heads.set(headId, {
+      ...head,
+      currentFrameIndex: clampedIndex,
+      paused: true
+    });
+
+    return Promise.resolve(cloneValue(frame));
+  }
+
+  public effectEmissions(headId: string, frameIndex?: number): Promise<EffectEmissionSummary[]> {
+    const head = requireHeadState(this.#heads, headId);
+    const resolvedIndex = frameIndex ?? head.currentFrameIndex;
+    const emissions = FIXTURE.effectEmissions[headId] ?? [];
+
+    return Promise.resolve(cloneValue(
+      emissions.filter((e) => e.frameIndex === resolvedIndex)
+    ));
+  }
+
+  public deliveryObservations(headId: string, frameIndex?: number): Promise<DeliveryObservationSummary[]> {
+    const head = requireHeadState(this.#heads, headId);
+    const resolvedIndex = frameIndex ?? head.currentFrameIndex;
+    const observations = FIXTURE.deliveryObservations[headId] ?? [];
+
+    return Promise.resolve(cloneValue(
+      observations.filter((o) => o.frameIndex === resolvedIndex)
+    ));
+  }
+
+  public executionContext(): Promise<ExecutionContext> {
+    return Promise.resolve(cloneValue(FIXTURE.executionContext));
   }
 }

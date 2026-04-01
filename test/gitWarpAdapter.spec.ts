@@ -12,7 +12,7 @@ test("hello identifies the host as git-warp", async () => {
     const hello = await adapter.hello();
 
     assert.equal(hello.hostKind, "git-warp");
-    assert.equal(hello.protocolVersion, "0.1.0");
+    assert.equal(hello.protocolVersion, "0.2.0");
     assert.ok(hello.hostVersion.length > 0);
     assert.ok(hello.capabilities.includes("read:hello"));
     assert.ok(hello.capabilities.includes("read:lane-catalog"));

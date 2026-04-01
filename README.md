@@ -15,28 +15,50 @@
 
 # WARP TTD
 
-Cross-host Time Travel Debugger for WARP systems.
+Cross-host time-travel debugger and wide-aperture observer for
+deterministic graph systems built on WARP.
 
 ## What It Is
 
-TTD is a human-facing debugger product for deterministic graph systems built
-on WARP-like causal history. It observes worldlines, materializes frames,
-surfaces receipts, and makes conflicts and counterfactuals inspectable.
+TTD observes substrate facts honestly — worldlines, receipts, effects,
+provenance — and, when the host declares the capability, drives
+explicit debugging controls: pause, step, seek, fork, speculative
+ticking, comparison, and multi-strand composition.
 
-TTD works across hosts. The same debugger protocol serves git-warp, Echo, and
-future WARP-based runtimes through host adapters.
+It works across hosts. The same debugger protocol serves git-warp,
+Echo, and future WARP-based runtimes through host adapters.
 
-## Current Capability
+**The invariant:** canonical history is never silently rewritten.
+Every continuation from the past is explicit, capability-gated, and
+provenance-bearing.
 
-- **Protocol:** finite envelope set — `HostHello`, `LaneCatalog`,
-  `PlaybackHeadSnapshot`, `PlaybackFrame`, `ReceiptSummary`
-- **Adapters:** echo fixture (in-memory demo data) and git-warp v16 (real
-  git-backed graphs)
-- **TUI:** fullscreen terminal debugger with three pages (Connect, Navigator,
-  Inspector), wave shader background, DAG visualization
-- **CLI:** dumb client for protocol inspection (`hello`, `catalog`, `frame`,
-  `step`, `demo`)
-- **Tests:** 28 spec tests (18 fast + 10 integration)
+## What It Does
+
+### Observe
+
+- Step forward and backward through worldline ticks
+- Inspect receipts: admitted rewrites, rejected counterfactuals
+- Inspect effect emissions and delivery observations (delivered,
+  suppressed, failed, skipped)
+- See execution context (live, replay, debug)
+
+### Control
+
+- Pause, step, seek to any tick
+- Fork strands from any point in history
+- Tick speculative strands independently
+- Compare strands against base worldlines
+
+### Inspect (planned)
+
+- **Worldline Viewer** — git-log-like view of ticks and strands
+- **Graph Viewer** — full materialized graph at any tick (nodes,
+  edges, properties, attachments)
+- **Provenance Viewer** — select any value and trace its reverse
+  causal cone through the receipt chain
+
+See [VISION.md](docs/VISION.md) for the full architecture and
+design philosophy.
 
 ## Quick Start
 
@@ -50,71 +72,85 @@ npm install
 npm run tui
 ```
 
-Select "Echo Fixture" for built-in demo data, or "git-warp" to point at a
-local repository with an existing warp graph.
+Select an adapter from the connect page:
+
+- **Echo Fixture** — built-in demo data
+- **git-warp** — point at a local repository with an existing graph
+- **Scenario fixtures** — contrived scenarios for effect emissions,
+  replay suppression, and multi-writer conflicts
+
+Navigate with `n`/`→` (forward), `p`/`←` (backward), `g` (jump to
+tick), `d` (disconnect), `[`/`]` (switch pages).
 
 ### CLI
 
 ```sh
-npm run demo      # full protocol walkthrough
-npm run hello     # host handshake
-npm run catalog   # lane catalog
-npm run frame     # current frame + receipts
-npm run step      # step forward
+npm run demo          # full protocol walkthrough
+npm run hello         # host handshake
+npm run catalog       # lane catalog
+npm run frame         # current frame + receipts
+npm run step          # step forward
+```
+
+Every command supports `--json` for structured JSONL output:
+
+```sh
+node --experimental-strip-types ./src/cli.ts hello --json
+node --experimental-strip-types ./src/cli.ts effects --json
+node --experimental-strip-types ./src/cli.ts deliveries --json
+node --experimental-strip-types ./src/cli.ts context --json
 ```
 
 ### Tests
 
 ```sh
-npm test                 # fast suite (echo fixture)
-npm run test:integration # git-warp integration (creates temp repos)
+npm test                 # fast suite (45 tests)
+npm run test:integration # git-warp integration (10 tests)
 ```
 
 ## Architecture
 
-TTD follows hexagonal architecture:
-
 ```text
-Delivery Adapters (CLI, TUI)
+Delivery Adapters (CLI, TUI, MCP, Web)
   → TTD Application Core
     → TTD Ports (TtdHostAdapter)
-      → Host Adapters (echo fixture, git-warp)
-        → WARP Substrates
+      → Host Adapters (echo fixture, git-warp, scenario fixture)
+        → WARP Substrates (git-warp, Echo)
 ```
 
-Key domain concepts:
+Key concepts:
 
-- **PlaybackHead** — substrate-facing coordination primitive
-- **DebuggerSession** — human-facing debugger object (planned, Cycle E)
-- **Frame** — composite snapshot across tracked lanes at a point in time
+- **Worldline** — causal history (not a timeline)
+- **Tick** — Lamport clock value on a worldline
+- **Strand** — speculative causal lane (durable, forkable)
+- **Aperture** — what an observer preserves/projects
 - **Receipt** — per-operation provenance from a materialized tick
-- **Lane** — worldline (read-only history) or strand (speculative)
+- **Effect emission** — substrate fact that something was produced
+- **Delivery observation** — what happened to an effect at each sink
+- **PlaybackHead** — substrate-facing coordination primitive
+- **DebuggerSession** — required foundation for speculative
+  investigation (next abstraction)
 
-## Design Documents
+## Documents
 
-- [0001 — Why warp-ttd](docs/design/0001-why-warp-ttd.md)
-- [0002 — Wesley Schema Profile](docs/design/0002-wesley-schema-profile.md)
-- [0003 — Shared Schema Strategy](docs/design/0003-shared-schema-strategy.md)
-- [0004 — TTD Protocol Surface](docs/design/0004-ttd-protocol-surface.md)
-- [0005 — git-warp Adapter](docs/design/0005-git-warp-adapter.md)
-- [0006 — TUI Port](docs/design/0006-tui-port.md)
-- [0007 — Adapter Registry](docs/design/0007-adapter-registry.md)
-- [0008 — Protocol Freeze](docs/design/0008-protocol-freeze.md)
+- [**VISION.md**](docs/VISION.md) — north star: what TTD is, how it
+  thinks, where it's going
+- [**CONTRIBUTING.md**](CONTRIBUTING.md) — development doctrine, cycle
+  loop, playback workflow, lint ratchet
+- [**BACKLOG.md**](BACKLOG.md) — cycle history and upcoming work
 
-## Roadmap
-
-See [BACKLOG.md](BACKLOG.md) for the current cycle sequence.
+Cycle design docs and retrospectives: `docs/cycles/`
+Wesley schema: `schemas/warp-ttd-protocol.graphql`
 
 ## Dependencies
 
-- **Runtime:** `@git-stunts/git-warp` ^16.0.0, `@git-stunts/plumbing` ^2.8.0
-- **TUI:** `@flyingrobots/bijou` ^4.0.0 (bijou-tui, bijou-tui-app, bijou-node)
-- **Build:** TypeScript with `--experimental-strip-types` (no build step)
+- **Runtime:** `@git-stunts/git-warp` ^16.0.0, `@git-stunts/plumbing`
+  ^2.8.0
+- **TUI:** `@flyingrobots/bijou` ^4.0.0 (bijou-tui, bijou-node)
+- **Build:** TypeScript with `--experimental-strip-types` (no build
+  step)
 - **Test:** Node.js built-in test runner
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md).
+- **Schema:** Wesley (`compile-ttd`)
 
 ## License
 

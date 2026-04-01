@@ -6,7 +6,15 @@
  * derived from TickReceipts, lanes from worldlines and strands.
  */
 import type { TtdHostAdapter } from "../adapter.ts";
+import {
+  FrameOutOfRangeError,
+  InternalIndexError,
+  UnknownHeadError
+} from "../errors.ts";
 import type {
+  DeliveryObservationSummary,
+  EffectEmissionSummary,
+  ExecutionContext,
   HostHello,
   LaneCatalog,
   LaneFrameView,
@@ -107,9 +115,7 @@ function requireIndexedFrame(
   const frame = frameIndex[index];
 
   if (!frame) {
-    throw new Error(
-      `Internal frame index ${index.toString()} out of bounds (length: ${frameIndex.length.toString()})`
-    );
+    throw new InternalIndexError(index, frameIndex.length);
   }
 
   return frame;
@@ -138,6 +144,7 @@ function countOps(
 export class GitWarpAdapter implements TtdHostAdapter {
   public readonly adapterName = "git-warp";
 
+  // eslint-disable-next-line no-unused-private-class-members -- retained for future strand operations & live refresh
   readonly #graph: WarpCoreLike;
   readonly #frameIndex: IndexedFrame[];
   readonly #lanes: LaneRef[];
@@ -205,7 +212,7 @@ export class GitWarpAdapter implements TtdHostAdapter {
     return Promise.resolve({
       hostKind: "git-warp",
       hostVersion: GIT_WARP_HOST_VERSION,
-      protocolVersion: "0.1.0",
+      protocolVersion: "0.2.0",
       schemaId: "ttd-protocol-git-warp-v1",
       capabilities: [
         "read:hello",
@@ -213,7 +220,12 @@ export class GitWarpAdapter implements TtdHostAdapter {
         "read:playback-head",
         "read:frame",
         "read:receipts",
-        "control:step-forward"
+        "read:effect-emissions",
+        "read:delivery-observations",
+        "read:execution-context",
+        "control:step-forward",
+        "control:step-backward",
+        "control:seek"
       ]
     });
   }
@@ -226,7 +238,7 @@ export class GitWarpAdapter implements TtdHostAdapter {
     const head = this.#headStates.get(headId);
 
     if (!head) {
-      throw new Error(`Unknown playback head: ${headId}`);
+      throw new UnknownHeadError(headId);
     }
 
     return Promise.resolve({ ...head });
@@ -236,7 +248,7 @@ export class GitWarpAdapter implements TtdHostAdapter {
     const head = this.#headStates.get(headId);
 
     if (!head) {
-      throw new Error(`Unknown playback head: ${headId}`);
+      throw new UnknownHeadError(headId);
     }
 
     const resolvedIndex = frameIndex ?? head.currentFrameIndex;
@@ -245,9 +257,7 @@ export class GitWarpAdapter implements TtdHostAdapter {
     const maxFrame = this.#frameIndex.length;
 
     if (resolvedIndex < 0 || resolvedIndex > maxFrame) {
-      throw new Error(
-        `Frame index ${resolvedIndex.toString()} out of range [0, ${maxFrame.toString()}]`
-      );
+      throw new FrameOutOfRangeError(resolvedIndex, maxFrame);
     }
 
     return Promise.resolve(this.#buildFrame(headId, resolvedIndex));
@@ -257,7 +267,7 @@ export class GitWarpAdapter implements TtdHostAdapter {
     const head = this.#headStates.get(headId);
 
     if (!head) {
-      throw new Error(`Unknown playback head: ${headId}`);
+      throw new UnknownHeadError(headId);
     }
 
     const resolvedIndex = frameIndex ?? head.currentFrameIndex;
@@ -270,9 +280,7 @@ export class GitWarpAdapter implements TtdHostAdapter {
     const maxFrame = this.#frameIndex.length;
 
     if (resolvedIndex < 0 || resolvedIndex > maxFrame) {
-      throw new Error(
-        `Frame index ${resolvedIndex.toString()} out of range [0, ${maxFrame.toString()}]`
-      );
+      throw new FrameOutOfRangeError(resolvedIndex, maxFrame);
     }
 
     const indexed = this.#frameIndex[resolvedIndex - 1];
@@ -304,7 +312,7 @@ export class GitWarpAdapter implements TtdHostAdapter {
     const head = this.#headStates.get(headId);
 
     if (!head) {
-      throw new Error(`Unknown playback head: ${headId}`);
+      throw new UnknownHeadError(headId);
     }
 
     const maxFrame = this.#frameIndex.length;
@@ -317,6 +325,45 @@ export class GitWarpAdapter implements TtdHostAdapter {
     });
 
     return Promise.resolve(this.#buildFrame(headId, nextIndex));
+  }
+
+  public stepBackward(headId: string): Promise<PlaybackFrame> {
+    const head = this.#headStates.get(headId);
+
+    if (!head) {
+      throw new UnknownHeadError(headId);
+    }
+
+    const prevIndex = Math.max(head.currentFrameIndex - 1, 0);
+
+    this.#headStates.set(headId, {
+      ...head,
+      currentFrameIndex: prevIndex,
+      paused: true
+    });
+
+    return Promise.resolve(this.#buildFrame(headId, prevIndex));
+  }
+
+  public seekToFrame(headId: string, frameIndex: number): Promise<PlaybackFrame> {
+    const head = this.#headStates.get(headId);
+
+    if (!head) {
+      throw new UnknownHeadError(headId);
+    }
+
+    // maxFrame = #frameIndex.length because frame 0 is synthetic (empty)
+    // and real frames are 1-indexed into #frameIndex
+    const maxFrame = this.#frameIndex.length;
+    const clampedIndex = Math.max(0, Math.min(frameIndex, maxFrame));
+
+    this.#headStates.set(headId, {
+      ...head,
+      currentFrameIndex: clampedIndex,
+      paused: true
+    });
+
+    return Promise.resolve(this.#buildFrame(headId, clampedIndex));
   }
 
   #buildFrame(headId: string, frameIndex: number): PlaybackFrame {
@@ -355,5 +402,27 @@ export class GitWarpAdapter implements TtdHostAdapter {
         return view;
       })
     };
+  }
+
+  // --- Effect/delivery inspection (provisional — awaiting git-warp substrate support) ---
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- interface requires frameIndex param
+  public effectEmissions(headId: string, _frameIndex?: number): Promise<EffectEmissionSummary[]> {
+    if (!this.#headStates.has(headId)) {
+      throw new UnknownHeadError(headId);
+    }
+    return Promise.resolve([]);
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- interface requires frameIndex param
+  public deliveryObservations(headId: string, _frameIndex?: number): Promise<DeliveryObservationSummary[]> {
+    if (!this.#headStates.has(headId)) {
+      throw new UnknownHeadError(headId);
+    }
+    return Promise.resolve([]);
+  }
+
+  public executionContext(): Promise<ExecutionContext> {
+    return Promise.resolve({ mode: "live" });
   }
 }

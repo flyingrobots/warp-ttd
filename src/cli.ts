@@ -1,8 +1,13 @@
 import { EchoFixtureAdapter } from "./adapters/echoFixtureAdapter.ts";
+import {
+  UnexpectedArgumentsError,
+  UnknownFlagsError,
+  UnsupportedCommandError
+} from "./errors.ts";
 
-type Command = "demo" | "hello" | "catalog" | "frame" | "step";
+type Command = "demo" | "hello" | "catalog" | "frame" | "step" | "effects" | "deliveries" | "context";
 
-const VALID_COMMANDS = new Set<Command>(["demo", "hello", "catalog", "frame", "step"]);
+const VALID_COMMANDS = new Set<Command>(["demo", "hello", "catalog", "frame", "step", "effects", "deliveries", "context"]);
 
 function isValidCommand(cmd: string): cmd is Command {
   return (VALID_COMMANDS as Set<string>).has(cmd);
@@ -14,7 +19,7 @@ function parseArgs(argv: string[]): { command: Command; json: boolean } {
   const positional = args.filter((a) => !a.startsWith("--"));
 
   if (positional.length > 1) {
-    throw new Error(`Unexpected arguments: ${positional.slice(1).join(", ")}`);
+    throw new UnexpectedArgumentsError(positional.slice(1));
   }
 
   const command = positional[0];
@@ -26,14 +31,14 @@ function parseArgs(argv: string[]): { command: Command; json: boolean } {
   const unknown = args.filter((a) => a.startsWith("--") && a !== "--json");
 
   if (unknown.length > 0) {
-    throw new Error(`Unknown flags: ${unknown.join(", ")}`);
+    throw new UnknownFlagsError(unknown);
   }
 
   if (isValidCommand(command)) {
     return { command, json };
   }
 
-  throw new Error(`Unsupported command: ${command}`);
+  throw new UnsupportedCommandError(command);
 }
 
 function printSection(label: string, value: unknown): void {
@@ -75,6 +80,25 @@ async function main(): Promise<void> {
     return;
   }
 
+  if (command === "effects" || command === "deliveries") {
+    const [envelope, items] = command === "effects"
+      ? ["EffectEmissionSummary", await adapter.effectEmissions(headId)] as const
+      : ["DeliveryObservationSummary", await adapter.deliveryObservations(headId)] as const;
+    if (json) {
+      for (const item of items) {
+        print(envelope, item);
+      }
+    } else {
+      printSection(envelope, items);
+    }
+    return;
+  }
+
+  if (command === "context") {
+    print("ExecutionContext", await adapter.executionContext());
+    return;
+  }
+
   if (command === "step") {
     if (json) {
       print("PlaybackHeadSnapshot", await adapter.playbackHead(headId), "before");
@@ -109,6 +133,16 @@ async function main(): Promise<void> {
     for (const r of receiptsAfter) {
       print("ReceiptSummary", r);
     }
+    // Effect/delivery data at the stepped frame (JSON-only; human-readable mode omits these)
+    const emissions = await adapter.effectEmissions(headId);
+    for (const e of emissions) {
+      print("EffectEmissionSummary", e);
+    }
+    const observations = await adapter.deliveryObservations(headId);
+    for (const o of observations) {
+      print("DeliveryObservationSummary", o);
+    }
+    print("ExecutionContext", await adapter.executionContext());
   } else {
     printSection("StepForward", await adapter.stepForward(headId));
     printSection("PlaybackHeadSnapshot (after step)", await adapter.playbackHead(headId));

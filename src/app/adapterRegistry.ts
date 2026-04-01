@@ -7,12 +7,16 @@
  * the port type) to construct adapters.
  */
 import type { TtdHostAdapter } from "../adapter.ts";
+import { UnknownAdapterKindError } from "../errors.ts";
 
-export type AdapterKind = "echo-fixture" | "git-warp";
+export type ScenarioName = "live-with-effects" | "replay-with-suppression" | "multi-writer-conflicts";
+
+export type AdapterKind = "echo-fixture" | "git-warp" | "scenario";
 
 export type AdapterConfig =
   | { kind: "echo-fixture" }
-  | { kind: "git-warp"; repoPath: string; graphName: string };
+  | { kind: "git-warp"; repoPath: string; graphName: string }
+  | { kind: "scenario"; scenario: ScenarioName };
 
 export interface ResolvedAdapter {
   adapter: TtdHostAdapter;
@@ -50,9 +54,33 @@ export async function resolveAdapter(config: AdapterConfig): Promise<ResolvedAda
       };
     }
 
+    case "scenario": {
+      const {
+        scenarioLiveWithEffects,
+        scenarioReplayWithSuppression,
+        scenarioMultiWriterWithConflicts
+      } = await import("../adapters/scenarioFixtureAdapter.ts");
+
+      const scenarios: Record<ScenarioName, () => TtdHostAdapter> = {
+        "live-with-effects": scenarioLiveWithEffects,
+        "replay-with-suppression": scenarioReplayWithSuppression,
+        "multi-writer-conflicts": scenarioMultiWriterWithConflicts
+      };
+
+      const factory = scenarios[config.scenario];
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition, @typescript-eslint/strict-boolean-expressions -- defensive guard per PR review
+      if (!factory) {
+        throw new UnknownAdapterKindError(`scenario:${config.scenario}`);
+      }
+      return {
+        adapter: factory(),
+        defaultHeadId: "head:default"
+      };
+    }
+
     default: {
       const exhaustive: never = config;
-      throw new Error(`Unknown adapter kind: ${(exhaustive as { kind: string }).kind}`);
+      throw new UnknownAdapterKindError((exhaustive as { kind: string }).kind);
     }
   }
 }

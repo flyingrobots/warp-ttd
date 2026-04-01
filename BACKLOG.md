@@ -36,6 +36,17 @@ architecture → freeze protocol → human UX → speculation.
 |--------|------|
 | Lint Ratchet — 30% reduction per cycle | [lint-ratchet.md](docs/backlog/lint-ratchet.md) |
 
+## Queued (unscheduled)
+
+| Item | File |
+|------|------|
+| Core Views (Worldline, Graph, Provenance) | [core-views.md](docs/backlog/core-views.md) |
+| Navigator View Design | [navigator-view-design.md](docs/backlog/navigator-view-design.md) |
+| Add writerId to ReceiptSummary | [receipt-writer-field.md](docs/backlog/receipt-writer-field.md) |
+| Counterfactual Inspection & Strand Forking | [counterfactual-inspection.md](docs/backlog/counterfactual-inspection.md) |
+| Design Vocabulary | [design-vocabulary.md](docs/backlog/design-vocabulary.md) |
+| Cool Ideas (Effect Slice) | [cool-ideas-effect-slice.md](docs/backlog/cool-ideas-effect-slice.md) |
+
 ## Deferred
 
 - [ ] Wesley / GraphQL schema formalization

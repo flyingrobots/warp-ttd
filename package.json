@@ -14,7 +14,7 @@
     "catalog": "node --experimental-strip-types ./src/cli.ts catalog",
     "frame": "node --experimental-strip-types ./src/cli.ts frame",
     "step": "node --experimental-strip-types ./src/cli.ts step",
-    "test": "node --experimental-strip-types --test test/echoFixtureAdapter.spec.ts test/adapterRegistry.spec.ts test/protocolContract.spec.ts test/cliJson.spec.ts",
+    "test": "node --experimental-strip-types --test test/echoFixtureAdapter.spec.ts test/adapterRegistry.spec.ts test/protocolContract.spec.ts test/cliJson.spec.ts test/effectEmission.spec.ts test/scenarioFixture.spec.ts",
     "test:integration": "node --experimental-strip-types --test test/gitWarpAdapter.spec.ts test/adapterRegistry.integration.spec.ts",
     "test:all": "node --experimental-strip-types --test",
     "tui": "node --experimental-strip-types ./src/tui/main.ts",
