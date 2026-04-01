@@ -9,13 +9,16 @@ import assert from "node:assert/strict";
 
 import { EchoFixtureAdapter } from "../src/adapters/echoFixtureAdapter.ts";
 
-const adapter = new EchoFixtureAdapter();
 const HEAD_ID = "head:main";
+
+function createAdapter(): EchoFixtureAdapter {
+  return new EchoFixtureAdapter();
+}
 
 // --- Capability declarations ---
 
 test("hello declares effect-emission and delivery-observation capabilities", async () => {
-  const hello = await adapter.hello();
+  const hello = await createAdapter().hello();
   assert.ok(
     hello.capabilities.includes("read:effect-emissions"),
     "Should declare read:effect-emissions capability"
@@ -33,12 +36,12 @@ test("hello declares effect-emission and delivery-observation capabilities", asy
 // --- Effect emissions ---
 
 test("effectEmissions returns empty array at frame 0", async () => {
-  const emissions = await adapter.effectEmissions(HEAD_ID, 0);
+  const emissions = await createAdapter().effectEmissions(HEAD_ID, 0);
   assert.deepEqual(emissions, []);
 });
 
 test("effectEmissions returns emission records at frame 1", async () => {
-  const emissions = await adapter.effectEmissions(HEAD_ID, 1);
+  const emissions = await createAdapter().effectEmissions(HEAD_ID, 1);
   assert.ok(emissions.length > 0, "Expected at least one emission at frame 1");
 
   const emission = emissions[0];
@@ -62,12 +65,12 @@ test("effectEmissions returns emission records at frame 1", async () => {
 // --- Delivery observations ---
 
 test("deliveryObservations returns empty array at frame 0", async () => {
-  const observations = await adapter.deliveryObservations(HEAD_ID, 0);
+  const observations = await createAdapter().deliveryObservations(HEAD_ID, 0);
   assert.deepEqual(observations, []);
 });
 
 test("deliveryObservations returns observations at frame 1 with correct outcomes", async () => {
-  const observations = await adapter.deliveryObservations(HEAD_ID, 1);
+  const observations = await createAdapter().deliveryObservations(HEAD_ID, 1);
   assert.ok(observations.length > 0, "Expected at least one observation at frame 1");
 
   const obs = observations[0];
@@ -100,8 +103,8 @@ test("deliveryObservations returns observations at frame 1 with correct outcomes
 });
 
 test("delivery observations link back to effect emissions by emissionId", async () => {
-  const emissions = await adapter.effectEmissions(HEAD_ID, 1);
-  const observations = await adapter.deliveryObservations(HEAD_ID, 1);
+  const emissions = await createAdapter().effectEmissions(HEAD_ID, 1);
+  const observations = await createAdapter().deliveryObservations(HEAD_ID, 1);
 
   assert.ok(emissions.length > 0);
   assert.ok(observations.length > 0);
@@ -117,7 +120,7 @@ test("delivery observations link back to effect emissions by emissionId", async 
 });
 
 test("same emission fans out to multiple sinks with different outcomes", async () => {
-  const observations = await adapter.deliveryObservations(HEAD_ID, 1);
+  const observations = await createAdapter().deliveryObservations(HEAD_ID, 1);
 
   // Frame 1 diagnostic should have two delivery observations (tui-log + chunk-file)
   const forEmission1 = observations.filter((o) => o.emissionId === "emit:echo:0001");
@@ -134,7 +137,7 @@ test("same emission fans out to multiple sinks with different outcomes", async (
 });
 
 test("replay suppresses network sink but delivers to local sink for same emission", async () => {
-  const observations = await adapter.deliveryObservations(HEAD_ID, 2);
+  const observations = await createAdapter().deliveryObservations(HEAD_ID, 2);
   const forEmission2 = observations.filter((o) => o.emissionId === "emit:echo:0002");
 
   assert.equal(forEmission2.length, 2, "Expected 2 sinks for the notification emission");
@@ -154,7 +157,7 @@ test("replay suppresses network sink but delivers to local sink for same emissio
 
 test("suppressed delivery is distinguishable from absence", async () => {
   // Frame 2 should have a suppressed delivery observation in the fixture
-  const observations = await adapter.deliveryObservations(HEAD_ID, 2);
+  const observations = await createAdapter().deliveryObservations(HEAD_ID, 2);
   const suppressed = observations.filter((o) => o.outcome === "suppressed");
 
   assert.ok(
@@ -171,7 +174,7 @@ test("suppressed delivery is distinguishable from absence", async () => {
 // --- Execution context ---
 
 test("executionContext returns session-level metadata", async () => {
-  const ctx = await adapter.executionContext();
+  const ctx = await createAdapter().executionContext();
 
   assert.equal(typeof ctx.mode, "string");
   const validModes = ["live", "replay", "debug"];
@@ -184,7 +187,7 @@ test("executionContext returns session-level metadata", async () => {
 // --- Protocol contract: envelope key sets ---
 
 test("EffectEmissionSummary v0.2.0 shape", async () => {
-  const emissions = await adapter.effectEmissions(HEAD_ID, 1);
+  const emissions = await createAdapter().effectEmissions(HEAD_ID, 1);
   const emission = emissions[0];
   assert.ok(emission !== undefined);
 
@@ -199,7 +202,7 @@ test("EffectEmissionSummary v0.2.0 shape", async () => {
 });
 
 test("DeliveryObservationSummary v0.2.0 shape", async () => {
-  const observations = await adapter.deliveryObservations(HEAD_ID, 1);
+  const observations = await createAdapter().deliveryObservations(HEAD_ID, 1);
   const obs = observations[0];
   assert.ok(obs !== undefined);
 

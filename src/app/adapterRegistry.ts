@@ -69,6 +69,10 @@ export async function resolveAdapter(config: AdapterConfig): Promise<ResolvedAda
       };
 
       const factory = scenarios[config.scenario];
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition, @typescript-eslint/strict-boolean-expressions -- defensive guard per PR review
+      if (!factory) {
+        throw new UnknownAdapterKindError(`scenario:${config.scenario}`);
+      }
       return {
         adapter: factory(),
         defaultHeadId: "head:default"

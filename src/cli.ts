@@ -80,26 +80,16 @@ async function main(): Promise<void> {
     return;
   }
 
-  if (command === "effects") {
-    const emissions = await adapter.effectEmissions(headId);
+  if (command === "effects" || command === "deliveries") {
+    const [envelope, items] = command === "effects"
+      ? ["EffectEmissionSummary", await adapter.effectEmissions(headId)] as const
+      : ["DeliveryObservationSummary", await adapter.deliveryObservations(headId)] as const;
     if (json) {
-      for (const e of emissions) {
-        print("EffectEmissionSummary", e);
+      for (const item of items) {
+        print(envelope, item);
       }
     } else {
-      printSection("EffectEmissions", emissions);
-    }
-    return;
-  }
-
-  if (command === "deliveries") {
-    const observations = await adapter.deliveryObservations(headId);
-    if (json) {
-      for (const o of observations) {
-        print("DeliveryObservationSummary", o);
-      }
-    } else {
-      printSection("DeliveryObservations", observations);
+      printSection(envelope, items);
     }
     return;
   }

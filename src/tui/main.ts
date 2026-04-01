@@ -53,6 +53,7 @@ type Msg =
   | { type: "step-result"; head: PlaybackHeadSnapshot; frame: PlaybackFrame; receipts: ReceiptSummary[]; emissions: EffectEmissionSummary[]; observations: DeliveryObservationSummary[] }
   | { type: "frame-result"; frame: PlaybackFrame; receipts: ReceiptSummary[]; emissions: EffectEmissionSummary[]; observations: DeliveryObservationSummary[] }
   | { type: "connect-error"; message: string; generation?: number }
+  | { type: "nav-error"; message: string }
   | { type: "disconnect" }
   | { type: "nav"; direction: "next" | "prev" }
   | { type: "step-forward" }
@@ -80,6 +81,8 @@ interface Model {
   repoPath: string;
   error: string | null;
   connectGeneration: number;
+  // Connection lifecycle
+  connecting: boolean;
   // Jump-to-tick prompt state
   jumpInput: string | null;
 }
@@ -195,11 +198,11 @@ function navigatorLayout(model: Model, w: number, h: number): Surface {
     .join("\n");
 
   const frameInfo = vstack(
-    ` Frame ${model.frame.frameIndex} / ${model.head.label}`,
+    ` Frame ${model.frame.frameIndex.toString()} / ${model.head.label}`,
     "",
     lanes,
     "",
-    ` Receipts: ${model.receipts.length}`
+    ` Receipts: ${model.receipts.length.toString()}`
   );
   const infoSurf = stringToSurface(frameInfo, w - 4, frameInfo.split("\n").length);
   const infoBox = boxSurface(infoSurf, { title: " Playback Head ", width: w - 2, ctx });
@@ -280,7 +283,7 @@ function inspectorLayout(model: Model, w: number, h: number): Surface {
     ` Version:      ${model.hello.hostVersion}`,
     ` Protocol:     ${model.hello.protocolVersion}`,
     ` Schema:       ${model.hello.schemaId}`,
-    ` Capabilities: ${model.hello.capabilities.length}`
+    ` Capabilities: ${model.hello.capabilities.length.toString()}`
   );
   const hostSurf = stringToSurface(hostInfo, w - 4, hostInfo.split("\n").length);
   final.blit(boxSurface(hostSurf, { title: " Host ", width: w - 2, ctx }), 1, 1);
@@ -302,8 +305,8 @@ function inspectorLayout(model: Model, w: number, h: number): Surface {
     const detailLines = model.receipts.map((r) =>
       vstack(
         `  ${r.receiptId}`,
-        `    Lane: ${r.laneId}  Tick: ${r.inputTick} -> ${r.outputTick}`,
-        `    Admitted: ${r.admittedRewriteCount}  Rejected: ${r.rejectedRewriteCount}  Counterfactual: ${r.counterfactualCount}`,
+        `    Lane: ${r.laneId}  Tick: ${r.inputTick.toString()} -> ${r.outputTick.toString()}`,
+        `    Admitted: ${r.admittedRewriteCount.toString()}  Rejected: ${r.rejectedRewriteCount.toString()}  Counterfactual: ${r.counterfactualCount.toString()}`,
         `    ${r.summary}`
       )
     ).join("\n");
@@ -367,6 +370,7 @@ const initialModel: Model = {
   repoPath: "",
   error: null,
   connectGeneration: 0,
+  connecting: false,
   jumpInput: null
 };
 
@@ -476,7 +480,14 @@ const mainApp = {
     // --- Connect error (generation-gated when from connect flow) ---
     if (msg.type === "connect-error") {
       if (msg.generation !== undefined && msg.generation !== pm.connectGeneration) return [nextModel, fCmds];
-      pm = { ...pm, adapter: null, error: msg.message, connectStep: "choose" };
+      pm = { ...pm, adapter: null, connecting: false, error: msg.message, connectStep: "choose" };
+      nextModel = { ...nextModel, pageModels: updateAllPages(pm) };
+      return [nextModel, fCmds];
+    }
+
+    // --- Nav error (non-destructive — keeps adapter connected) ---
+    if (msg.type === "nav-error") {
+      pm = { ...pm, error: msg.message };
       nextModel = { ...nextModel, pageModels: updateAllPages(pm) };
       return [nextModel, fCmds];
     }
@@ -486,6 +497,7 @@ const mainApp = {
       if (msg.generation !== pm.connectGeneration) return [nextModel, fCmds];
       pm = {
         ...pm,
+        connecting: false,
         adapter: pm.adapter,
         hello: msg.hello,
         catalog: msg.catalog,
@@ -534,7 +546,7 @@ const mainApp = {
             pm = { ...pm, connectStep: "input-path", inputValue: process.cwd() };
           } else if (selected !== undefined) {
             const gen = pm.connectGeneration + 1;
-            pm = { ...pm, connectGeneration: gen };
+            pm = { ...pm, connectGeneration: gen, connecting: true };
             nextModel = { ...nextModel, pageModels: updateAllPages(pm) };
             return [nextModel, [...fCmds, makeConnectCmd(selected, gen)]];
           }
@@ -559,7 +571,7 @@ const mainApp = {
           pm = { ...pm, connectStep: "input-path", inputValue: pm.repoPath };
         } else if (msg.key === "enter") {
           const gen = pm.connectGeneration + 1;
-          pm = { ...pm, connectGeneration: gen };
+          pm = { ...pm, connectGeneration: gen, connecting: true };
           nextModel = { ...nextModel, pageModels: updateAllPages(pm) };
           return [nextModel, [...fCmds, makeConnectCmd(
             { kind: "git-warp", repoPath: pm.repoPath, graphName: pm.inputValue },
@@ -576,8 +588,8 @@ const mainApp = {
       return [nextModel, fCmds];
     }
 
-    // --- Navigator keyboard handling ---
-    if (pm.adapter !== null && isKeyMsg(msg)) {
+    // --- Navigator keyboard handling (blocked while connecting) ---
+    if (pm.adapter !== null && !pm.connecting && isKeyMsg(msg)) {
       const headId = pm.defaultHeadId;
       const currentAdapter = pm.adapter;
 
@@ -603,7 +615,7 @@ const mainApp = {
                   const observations = await adapter.deliveryObservations(headId, frame.frameIndex);
                   emit({ type: "step-result", head, frame, receipts, emissions, observations });
                 } catch (err) {
-                  emit({ type: "connect-error", message: err instanceof Error ? err.message : String(err) });
+                  emit({ type: "nav-error", message: err instanceof Error ? err.message : String(err) });
                 }
               }
             ]];
@@ -631,7 +643,7 @@ const mainApp = {
               const observations = await adapter.deliveryObservations(headId, frame.frameIndex);
               emit({ type: "step-result", head, frame, receipts, emissions, observations });
             } catch (err) {
-              emit({ type: "connect-error", message: err instanceof Error ? err.message : String(err) });
+              emit({ type: "nav-error", message: err instanceof Error ? err.message : String(err) });
             }
           }
         ]];
@@ -651,7 +663,7 @@ const mainApp = {
               const observations = await adapter.deliveryObservations(headId, frame.frameIndex);
               emit({ type: "step-result", head, frame, receipts, emissions, observations });
             } catch (err) {
-              emit({ type: "connect-error", message: err instanceof Error ? err.message : String(err) });
+              emit({ type: "nav-error", message: err instanceof Error ? err.message : String(err) });
             }
           }
         ]];

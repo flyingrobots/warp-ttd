@@ -401,13 +401,19 @@ export class GitWarpAdapter implements TtdHostAdapter {
 
   // --- Effect/delivery inspection (provisional — awaiting git-warp substrate support) ---
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  public effectEmissions(_headId: string, _frameIndex?: number): Promise<EffectEmissionSummary[]> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- interface requires frameIndex param
+  public effectEmissions(headId: string, _frameIndex?: number): Promise<EffectEmissionSummary[]> {
+    if (!this.#headStates.has(headId)) {
+      throw new UnknownHeadError(headId);
+    }
     return Promise.resolve([]);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  public deliveryObservations(_headId: string, _frameIndex?: number): Promise<DeliveryObservationSummary[]> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- interface requires frameIndex param
+  public deliveryObservations(headId: string, _frameIndex?: number): Promise<DeliveryObservationSummary[]> {
+    if (!this.#headStates.has(headId)) {
+      throw new UnknownHeadError(headId);
+    }
     return Promise.resolve([]);
   }
 

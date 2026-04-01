@@ -192,10 +192,21 @@ test("scenarioReplayWithSuppression shows suppressed and delivered for same emis
 test("scenarioMultiWriterWithConflicts has rejected rewrites and effect emissions", async () => {
   const adapter = scenarioMultiWriterWithConflicts();
 
+  // Verify scenario has the expected frame count
+  const head = await adapter.playbackHead("head:default");
+  const maxFrames = 3;
+  assert.equal(head.currentFrameIndex, 0, "Head starts at frame 0");
+
+  // Step to verify frame count matches expectation
+  for (let step = 0; step < maxFrames; step++) {
+    await adapter.stepForward("head:default");
+  }
+  const afterSteps = await adapter.playbackHead("head:default");
+  assert.equal(afterSteps.currentFrameIndex, maxFrames, `Expected ${maxFrames.toString()} frames`);
+
   // Find a frame with rejected rewrites
   let foundRejected = false;
   let foundEmissions = false;
-  const maxFrames = 3;
 
   for (let i = 1; i <= maxFrames; i++) {
     const receipts = await adapter.receipts("head:default", i);
