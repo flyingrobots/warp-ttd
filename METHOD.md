@@ -6,22 +6,23 @@ A backlog, a loop, and honest bookkeeping.
 
 The agent and the human sit at the same table. They see different
 things. Both are named in every design. Both must agree before work
-ships. Build the agent surface first — it is the foundation the
-human experience stands on.
+ships. Default to building the agent surface first — it is the
+foundation the human experience stands on. If the work is
+human-first exploratory design, say so in the design doc.
 
 Everything traces to a playback question. If you cannot say which
-question your work answers, you are drifting. Stop. Reconnect to the
-design, or change it.
+question your work answers, you are drifting. Stop. Reconnect to
+the design, or change it.
 
-Tests are the spec. Code exists because a test demanded it. Tests
-exist because a design said what should be true. No prose layer
-between intent and proof.
+Tests are the executable spec. Design names the hill and the playback
+questions. Tests prove the answers. No ceremonial prose between
+intent and proof.
 
 The filesystem is the database. A directory is a priority. A filename
 is an identity. Moving a file is a decision. `ls` is the query.
 
 Process should be calm. No sprints. No velocity. No burndown. A
-backlog ordered by judgment, and a loop for doing it well.
+backlog tiered by judgment, and a loop for doing it well.
 
 ## Structure
 
@@ -142,12 +143,15 @@ Numbered sequentially.
    - Non-goals
 
 2. **RED** — write failing tests. Playback questions become specs.
-   Agent surface first.
+   Default to agent surface first.
 
 3. **GREEN** — make them pass.
 
-4. **Playback** — agent answers agent questions. Human answers user
-   questions. Write it down. No clear yes means no.
+4. **Playback** — produce a witness. The agent answers agent
+   questions. The human answers user questions. Write it down. The
+   witness is the concrete artifact — test output, transcript,
+   screenshot, recording — that shows both answers. No clear yes
+   means no.
 
 5. **PR → main** — review until merge.
 
@@ -156,7 +160,10 @@ Numbered sequentially.
    - New debt to `bad-code/`.
    - Cool ideas to `cool-ideas/`.
    - Backlog maintenance.
-   - CHANGELOG. Version. Tag. README.
+
+   Releases happen when externally meaningful behavior changes.
+   Not every cycle is a release. Update CHANGELOG and README
+   regardless.
 
 ### Outcomes
 
@@ -177,18 +184,19 @@ graveyard prevents re-proposing without context.
 ```
 idea → inbox/ → cool-ideas/ → up-next/ → asap/
   → design/<cycle>/  (committed)
-  → RED → GREEN → playback
+  → RED → GREEN → playback (witness)
   → retro/<cycle>/
-  → CHANGELOG, release
+  → release (when meaningful)
       — or →
   → graveyard/
 ```
 
 ## What this system does not have
 
-No milestones. No roadmap. No index files. No velocity. No ticket
-numbers. Names are descriptive. Judgment is the prioritization
-engine. The backlog is ordered. That is enough.
+No milestones. No velocity. No ticket numbers.
+
+The backlog is tiered by lane. Choice within a lane is judgment at
+pull time. That is enough.
 
 ## Naming
 
