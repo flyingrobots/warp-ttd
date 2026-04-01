@@ -8,21 +8,29 @@ frozen at a point in time. This document captures the current truth.
 
 ## What warp-ttd IS
 
-warp-ttd is a cross-host time-travel debugger for deterministic graph
-systems built on WARP-like causal history.
+warp-ttd is a cross-host time-travel debugger and **wide-aperture
+observer** for deterministic graph systems built on WARP-like causal
+history.
 
-It is an **observer**. It does not execute, orchestrate, or mutate. It
-reads substrate facts — worldlines, receipts, effects, provenance — and
-presents them honestly to humans and agents.
+It observes substrate facts honestly and, when the host declares the
+capability, can drive explicit debugging controls: pause, step, seek,
+strand fork, speculative ticking, comparison, and braid composition.
 
 It works across hosts. The same debugger protocol serves git-warp, Echo,
-and future WARP-based runtimes through host adapters.
+and future WARP-based runtimes through host adapters. A practical
+consequence: an application might use git-warp for persistence and Echo
+for rapid speculative simulation of 1000 counterfactual worldlines —
+and TTD should be able to drive and inspect both through the same
+protocol.
 
 ## What warp-ttd is NOT
 
 - Not a query engine. It inspects finite protocol envelopes.
-- Not a simulation engine. It reads what happened, not what might.
-- Not an orchestrator. It does not control substrate execution.
+- Not the simulation engine. Hosts perform replay and speculative
+  execution; warp-ttd may request and inspect those operations.
+- Not a general-purpose orchestrator. It does not own application
+  workflows or runtime policy, but it may drive explicit
+  debugger/scenario controls through substrate-defined capabilities.
 - Not a UI framework. The TUI is one delivery adapter among many.
 - Not XYPH. It does not interpret domain meaning.
 
@@ -30,19 +38,32 @@ and future WARP-based runtimes through host adapters.
 
 The system obeys a strict boundary discipline:
 
-1. **Graph (causal)** — the substrate owns causal truth. Worldlines,
-   patches, materialization, deterministic replay. git-warp and Echo
-   implement this layer. warp-ttd does not.
+1. **Graph (causal)** — the substrate owns causal truth and execution
+   semantics. Worldlines, patches, materialization, deterministic
+   replay, speculative execution. git-warp and Echo implement this
+   layer.
 
-2. **Observer (non-causal read)** — observers describe the graph without
-   modifying it. Apertures shape what is visible. warp-ttd lives here.
-   It is an observer of worldlines.
+2. **Debugger (observer + explicit control)** — TTD observes, pauses,
+   steps, seeks, forks, and ticks through substrate-owned capabilities.
+   It is a wide-aperture observer with control surfaces. It never
+   silently rewrites canonical history. Every continuation from the
+   past is explicit, capability-gated, and provenance-bearing.
 
-3. **Application (non-causal act)** — application logic acts on
-   observations. XYPH interprets effects, enforces policy, drives
-   workflows. warp-ttd does not.
+3. **Application (domain act)** — XYPH and apps interpret meaning,
+   policy, and workflows. They consume substrate facts and debugger
+   observations. warp-ttd does not own this layer.
 
-The graph is inert. Observers describe. Application logic acts.
+### The Real Invariant
+
+The honest boundary is not "read-only forever." It is:
+
+> Canonical history is never silently rewritten. Every continuation
+> from the past is explicit, capability-gated, and provenance-bearing.
+
+This is what makes TTD a debugger and not a sneaky second runtime.
+It can drive speculative operations — but those operations are
+substrate-executed, explicitly requested, and the results are
+inspectable substrate facts with full provenance.
 
 ## Theoretical Foundations
 
@@ -169,6 +190,32 @@ The debugger should let users:
 - Compare the strand against the canonical worldline
 
 This is not speculation. It is structured exploration of degeneracy.
+
+### Speculative control surfaces
+
+TTD is not limited to observing what happened. When the host declares
+the capability, TTD can drive speculative operations:
+
+- **Batch strand creation** — fork N strands from a tick to explore
+  counterfactual alternatives in parallel
+- **Independent ticking** — advance a speculative strand without
+  advancing the canonical worldline
+- **Braid composition** — combine observations from multiple strands
+  into a composite view
+- **Comparison** — diff a strand against its base worldline or against
+  another strand
+- **Result handles** — a DebuggerSession tracks speculative results
+  so they survive navigation and can be revisited
+
+The substrate performs the actual execution. TTD requests it through
+capability-gated interfaces, then inspects the results as honest
+substrate facts with full provenance.
+
+A practical example: an application using git-warp for persistence and
+Echo for rapid simulation might use TTD to fork 1000 counterfactual
+strands, tick them independently through Echo's fast runtime, compare
+the outcomes, and present the results in a DebuggerSession. TTD drives
+the scenario; the substrates execute it.
 
 ## Architecture
 
