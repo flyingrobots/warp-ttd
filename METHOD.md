@@ -6,24 +6,42 @@ backlog, cycles, and honest bookkeeping.
 
 ## Principles
 
-Tests are the spec. Documentation drifts; tests fail loud. Every piece
-of code exists because a test demanded it, and every test exists
-because a design doc said what should be true. There is no layer of
-prose between the design and the executable specification.
+### Agents are first-class
 
-Design for two audiences, always: the human who uses the product and
-the agent who operates at the protocol level. Build the agent surface
-first — it operates at the low level you need anyway to make the
-human-level experience work.
+Agents are first-class users of the product. They have distinct needs
+from humans — different interaction patterns, different failure modes,
+different definitions of "good UX." Every design doc names a sponsor
+agent alongside a sponsor human, because an agent's perspective on
+whether a hill is met is as legitimate as a human's.
 
-The filesystem is the database. Directory structure communicates
-priority. File names communicate domain. Moving a file from one
-directory to another is a meaningful act — a decision, tracked in
-version control, reviewable in a diff.
+Agents are also first-class peers in the development cycle. They write
+code, review designs, run playbacks, and ship work. The dual-playback
+gate exists because both perspectives — human and agent — must agree
+before work is called done.
 
-Process should be calm. There are no sprints, no velocity metrics, no
-burndown charts. There is a backlog of things worth doing, ordered by
-judgment, and a loop for doing them well.
+Build the agent surface first. The agent operates at the protocol
+level, which is the low-level foundation the human experience sits on.
+Getting that right first means the human-level experience has solid
+ground to stand on.
+
+### Tests are the spec
+
+Documentation drifts; tests fail loud. Every piece of code exists
+because a test demanded it, and every test exists because a design doc
+said what should be true. There is no layer of prose between the design
+and the executable specification.
+
+### The filesystem is the database
+
+Directory structure communicates priority. File names communicate
+domain. Moving a file from one directory to another is a meaningful
+act — a decision, tracked in version control, reviewable in a diff.
+
+### Process should be calm
+
+There are no sprints, no velocity metrics, no burndown charts. There
+is a backlog of things worth doing, ordered by judgment, and a loop
+for doing them well.
 
 ## Structure
 
