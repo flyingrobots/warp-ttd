@@ -1,6 +1,6 @@
 # Design Doc 0010 — Design Vocabulary
 
-**Status:** in progress
+**Status:** closed
 **Cycle:** 0006-design-vocabulary
 
 ## Sponsor Human

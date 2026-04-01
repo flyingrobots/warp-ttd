@@ -80,7 +80,7 @@ Select an adapter from the connect page:
   replay suppression, and multi-writer conflicts
 
 Navigate with `n`/`→` (forward), `p`/`←` (backward), `g` (jump to
-tick), `d` (disconnect), `[`/`]` (switch pages).
+frame), `d` (disconnect), `[`/`]` (switch pages).
 
 ### CLI
 
@@ -104,7 +104,7 @@ node --experimental-strip-types ./src/cli.ts context --json
 ### Tests
 
 ```sh
-npm test                 # fast suite (45 tests)
+npm test                 # fast suite (48 tests)
 npm run test:integration # git-warp integration (10 tests)
 ```
 
@@ -135,8 +135,10 @@ Key concepts:
 
 - [**VISION.md**](docs/VISION.md) — north star: what TTD is, how it
   thinks, where it's going
-- [**CONTRIBUTING.md**](CONTRIBUTING.md) — development doctrine, cycle
-  loop, playback workflow, lint ratchet
+- [**CONTRIBUTING.md**](CONTRIBUTING.md) — quickstart, rules, and links
+  to [doctrine](docs/doctrine.md), [glossary](docs/glossary.md),
+  [cycle process](docs/cycle-process.md), and
+  [release discipline](docs/release.md)
 - [**BACKLOG.md**](BACKLOG.md) — cycle history and upcoming work
 
 Cycle design docs and retrospectives: `docs/cycles/`

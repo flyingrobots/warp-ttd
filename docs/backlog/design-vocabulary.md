@@ -1,6 +1,6 @@
 # Design Vocabulary
 
-**Status:** queued
+**Status:** closed
 
 ## Problem
 

@@ -10,6 +10,14 @@ This project will use [Semantic Versioning](https://semver.org/) starting at
 
 ### Added
 
+- **Canonical glossary** (`docs/glossary.md`) — 11 domain terms with
+  frame-vs-tick decision. Contract test pins required terms.
+- **CONTRIBUTING.md restructured** — split into practical front door
+  + linked docs: `docs/doctrine.md`, `docs/glossary.md`,
+  `docs/cycle-process.md`, `docs/release.md`.
+
+### Previous (effect emission cycle)
+
 - **Effect emission & delivery observation protocol** — new envelope
   types: `EffectEmissionSummary`, `DeliveryObservationSummary`,
   `ExecutionContext`. Closed `DeliveryOutcome` enum (delivered,
