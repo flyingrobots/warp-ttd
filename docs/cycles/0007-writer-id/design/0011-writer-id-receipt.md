@@ -1,6 +1,6 @@
 # Design Doc 0011 — writerId on ReceiptSummary
 
-**Status:** in progress
+**Status:** closed
 **Cycle:** 0007-writer-id
 
 ## Sponsor Human

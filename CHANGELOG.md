@@ -10,6 +10,9 @@ This project will use [Semantic Versioning](https://semver.org/) starting at
 
 ### Added
 
+- **writerId on ReceiptSummary** — optional `writerId` field shows
+  who wrote each receipt. Wired through git-warp, echo, and scenario
+  adapters. TUI receipts table includes Writer column.
 - **Canonical glossary** (`docs/glossary.md`) — 11 domain terms with
   frame-vs-tick decision. Contract test pins required terms.
 - **CONTRIBUTING.md restructured** — split into practical front door

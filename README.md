@@ -37,7 +37,8 @@ provenance-bearing.
 ### Observe
 
 - Step forward and backward through worldline ticks
-- Inspect receipts: admitted rewrites, rejected counterfactuals
+- Inspect receipts: who wrote what, admitted rewrites, rejected
+  counterfactuals
 - Inspect effect emissions and delivery observations (delivered,
   suppressed, failed, skipped)
 - See execution context (live, replay, debug)
