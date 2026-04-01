@@ -26,7 +26,7 @@ import {
 import type { TableColumn } from "@flyingrobots/bijou";
 import type { BijouContext, Surface } from "@flyingrobots/bijou";
 import { renderWaveShader } from "./shaders/bgShader.ts";
-import { renderDagShader } from "./shaders/dagShader.ts";
+import type { Capability, LaneRef } from "../protocol.ts";
 import { resolveAdapter } from "../app/adapterRegistry.ts";
 import type { AdapterConfig } from "../app/adapterRegistry.ts";
 import { DebuggerSession } from "../app/debuggerSession.ts";
@@ -156,6 +156,53 @@ function connectLayout(model: Model, w: number, h: number): Surface {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Navigator helpers
+// ---------------------------------------------------------------------------
+
+const MAX_LANES = 8;
+const MAX_RECEIPTS = 6;
+const MAX_EFFECTS = 6;
+const MAX_PINS = 3;
+const HORIZONTAL_THRESHOLD = 93;
+
+function hasCap(caps: Capability[], cap: Capability): boolean {
+  return caps.includes(cap);
+}
+
+function pluralize(n: number, noun: string): string {
+  return n === 1 ? `${n.toString()} ${noun}` : `${n.toString()} ${noun}s`;
+}
+
+/** Build lane tree: roots in catalog order, depth-first pre-order. */
+function buildLaneTree(catalog: LaneRef[]): LaneRef[] {
+  const roots = catalog.filter((l) => l.parentId === undefined);
+  const childrenOf = (parentId: string): LaneRef[] =>
+    catalog.filter((l) => l.parentId === parentId);
+
+  const result: LaneRef[] = [];
+  for (const root of roots) {
+    result.push(root);
+    const addChildren = (parent: string): void => {
+      for (const child of childrenOf(parent)) {
+        result.push(child);
+        addChildren(child.id);
+      }
+    };
+    addChildren(root.id);
+  }
+  return result;
+}
+
+/** Truncate rows, preserving tree integrity for lanes. */
+function truncateRows<T>(rows: readonly T[], max: number): { visible: T[]; total: number } {
+  return { visible: rows.slice(0, max), total: rows.length };
+}
+
+// ---------------------------------------------------------------------------
+// Navigator layout
+// ---------------------------------------------------------------------------
+
 function navigatorLayout(model: Model, w: number, h: number): Surface {
   if (model.session === null) {
     const bg = renderWaveShader(w, h, model.time);
@@ -163,111 +210,255 @@ function navigatorLayout(model: Model, w: number, h: number): Surface {
   }
 
   const snap = model.session.snapshot;
+  const caps = model.hello?.capabilities ?? [];
+  const catalog = model.catalog?.lanes ?? [];
   const final = createSurface(w, h);
   final.fill({ char: " " });
+  let y = 0;
 
-  // DAG shader
-  const dag = renderDagShader(w - 4, 8, model.time);
-  const dagBox = boxSurface(dag, { title: " Causal Provenance ", width: w - 2, ctx });
-  final.blit(dagBox, 1, 1);
+  // --- position-bar (always visible) ---
+  const receiptCount = snap.receipts.length;
+  const effectCount = snap.emissions.length;
+  const hasReceipts = hasCap(caps, "read:receipts");
+  const hasEmissions = hasCap(caps, "read:effect-emissions");
 
-  // Frame info
-  const lanes = snap.frame.lanes
-    .map((l) => {
-      const changed = l.changed ? ctx.style.styled(ctx.status("warning"), "*") : " ";
-      return `  ${changed} ${l.laneId.padEnd(16)} tick ${l.coordinate.tick.toString()}`;
-    })
-    .join("\n");
-
-  const frameInfo = vstack(
-    ` Frame ${snap.frame.frameIndex.toString()} / ${snap.head.label}`,
-    "",
-    lanes,
-    "",
-    ` Receipts: ${snap.receipts.length.toString()}`
-  );
-  const infoSurf = stringToSurface(frameInfo, w - 4, frameInfo.split("\n").length);
-  const infoBox = boxSurface(infoSurf, { title: " Playback Head ", width: w - 2, ctx });
-  final.blit(infoBox, 1, dagBox.height + 2);
-
-  // Receipt summaries
-  let receiptBox: Surface;
-
-  if (snap.receipts.length > 0) {
-    const receiptColumns: TableColumn[] = [
-      { header: "Lane", width: 16 },
-      { header: "Writer", width: 14 },
-      { header: "Admitted", width: 9 },
-      { header: "Rejected", width: 9 },
-      { header: "CF", width: 5 }
-    ];
-    const receiptRows = snap.receipts.map((r) => [
-      r.laneId,
-      r.writerId ?? "\u2014",
-      r.admittedRewriteCount.toString(),
-      r.rejectedRewriteCount.toString(),
-      r.counterfactualCount.toString()
-    ]);
-    const receiptTableSurf = tableSurface({ columns: receiptColumns, rows: receiptRows, ctx });
-    receiptBox = boxSurface(receiptTableSurf, { title: " Receipts ", width: w - 2, ctx });
+  const positionParts = [
+    `Frame ${snap.frame.frameIndex.toString()}`,
+    catalog[0]?.id ?? "—",
+    snap.execCtx.mode
+  ];
+  if (hasReceipts) {
+    positionParts.push(w >= HORIZONTAL_THRESHOLD ? pluralize(receiptCount, "receipt") : `${receiptCount.toString()}r`);
   } else {
-    const emptySurf = stringToSurface("  (none at this frame)", w - 4, 1);
-    receiptBox = boxSurface(emptySurf, { title: " Receipts ", width: w - 2, ctx });
+    positionParts.push("receipts: unsupported");
+  }
+  if (hasEmissions) {
+    positionParts.push(w >= HORIZONTAL_THRESHOLD ? pluralize(effectCount, "effect") : `${effectCount.toString()}e`);
+  } else {
+    positionParts.push("effects: unsupported");
+  }
+  const positionBar = ` ${positionParts.join(" \u2502 ")}`;
+  final.blit(stringToSurface(positionBar, w - 1, 1), 1, y);
+  y += 1;
+  final.blit(stringToSurface("\u2500".repeat(w - 2), w - 2, 1), 1, y);
+  y += 1;
+
+  // --- lane-table ---
+  const laneTree = buildLaneTree(catalog);
+  const receiptLanes = new Set(snap.receipts.map((r) => r.laneId));
+  const { visible: visibleLanes, total: totalLanes } = truncateRows(laneTree, MAX_LANES);
+
+  const laneLines = visibleLanes.map((lane) => {
+    const frameView = snap.frame.lanes.find((l) => l.laneId === lane.id);
+    const tick = frameView !== undefined ? frameView.coordinate.tick.toString() : "—";
+    const prefix = lane.parentId !== undefined ? " \u2514 " : " ";
+    const chgCol = hasReceipts ? (receiptLanes.has(lane.id) ? " *" : "  ") : "";
+    return `${prefix}${lane.id.padEnd(16)} ${lane.kind.padEnd(10)} tick ${tick.padStart(3)}${chgCol}`;
+  });
+  if (totalLanes > MAX_LANES) {
+    laneLines.push(` +${(totalLanes - MAX_LANES).toString()} more lanes`);
   }
 
-  final.blit(receiptBox, 1, dagBox.height + infoBox.height + 3);
+  const laneHeader = hasReceipts ? " Lane             Kind       Tick  Chg" : " Lane             Kind       Tick";
+  final.blit(stringToSurface(laneHeader, w - 2, 1), 1, y);
+  y += 1;
+  for (const line of laneLines) {
+    final.blit(stringToSurface(line, w - 2, 1), 1, y);
+    y += 1;
+  }
+  y += 1;
 
-  // Effect emissions + delivery observations
-  const yOffset = dagBox.height + infoBox.height + receiptBox.height + 4;
+  // --- receipt-summary + effect-summary ---
+  const wideLayout = w >= HORIZONTAL_THRESHOLD;
 
-  if (snap.emissions.length > 0) {
-    const columns: TableColumn[] = [
-      { header: "Effect", width: 14 },
-      { header: "Lane", width: 16 },
-      { header: "Sink", width: 14 },
-      { header: "Status", width: 12 }
-    ];
-
-    // Build rows from emissions, joining with observations where available
-    const rows: string[][] = snap.emissions.flatMap((em) => {
-      const deliveries = snap.observations.filter((o) => o.emissionId === em.emissionId);
-      if (deliveries.length === 0) {
-        return [[em.effectKind, em.laneId, "(none)", "emitted"]];
-      }
-      return deliveries.map((o) => [em.effectKind, em.laneId, o.sinkId.replace("sink:", ""), o.outcome]);
-    });
-
-    const modeLabel = ` [${snap.execCtx.mode}]`;
-    const tableSurf = tableSurface({ columns, rows, ctx });
-    const tableBox = boxSurface(tableSurf, { title: ` Effects${modeLabel} `, width: w - 2, ctx });
-    final.blit(tableBox, 1, yOffset);
+  const sectionArgs: SectionArgs = { final, snap, caps, w, startY: y };
+  if (wideLayout) {
+    renderHorizontalSections(sectionArgs);
+  } else {
+    renderVerticalSections(sectionArgs);
   }
 
-  // Pins
+  // --- pins-panel (anchored at bottom, above status bar) ---
   const pins = model.session.pins;
-  if (pins.length > 0) {
-    const pinLines = pins.map((p) =>
-      `  [f${p.pinnedAt.toString()}] ${p.emission.effectKind} \u2192 ${p.observation.sinkId.replace("sink:", "")}: ${p.observation.outcome}`
-    ).join("\n");
-    const pinSurf = stringToSurface(pinLines, w - 4, pinLines.split("\n").length);
-    const pinBox = boxSurface(pinSurf, { title: ` Pins (${pins.length.toString()}) `, width: w - 2, ctx });
-    final.blit(pinBox, 1, h - pinBox.height - 3);
-  }
-
-  // Status flash (pin/unpin feedback, nav errors)
+  const statusY = h - 2;
+  const flashY = h - 3;
+  let pinsEndY = flashY;
   if (model.error !== null) {
-    const statusSurf = stringToSurface(` ${model.error}`, w - 2, 1);
-    final.blit(statusSurf, 1, h - 3);
+    pinsEndY = flashY - 1;
   }
 
-  // Controls / jump prompt
+  if (pins.length > 0) {
+    const { visible: visiblePins, total: totalPins } = truncateRows(pins, MAX_PINS);
+    const pinLines = visiblePins.map((p) =>
+      `  [f${p.pinnedAt.toString()}] ${p.emission.effectKind} \u2192 ${p.observation.sinkId.replace("sink:", "")}: ${p.observation.outcome}`
+    );
+    if (totalPins > MAX_PINS) {
+      pinLines.push(`  +${(totalPins - MAX_PINS).toString()} older pins`);
+    }
+    const pinStartY = pinsEndY - pinLines.length - 1;
+    final.blit(stringToSurface(` \u2550\u2550\u2550 Pins (${totalPins.toString()}) \u2550\u2550\u2550`, w - 2, 1), 1, pinStartY);
+    for (let i = 0; i < pinLines.length; i++) {
+      final.blit(stringToSurface(pinLines[i] ?? "", w - 2, 1), 1, pinStartY + 1 + i);
+    }
+  }
+
+  // --- status-bar ---
+  if (model.error !== null) {
+    final.blit(stringToSurface(` ${model.error}`, w - 2, 1), 1, flashY);
+  }
+
   const controlText = model.jumpInput !== null
     ? ` Jump to frame: ${model.jumpInput}_  [Enter] Go  [Esc] Cancel`
     : " [n/\u2192] Fwd  [p/\u2190] Back  [g] Jump  [P] Pin  [u] Unpin  [d] Disc";
-  const controlSurf = stringToSurface(controlText, w - 2, 1);
-  final.blit(controlSurf, 1, h - 2);
+  final.blit(stringToSurface(controlText, w - 2, 1), 1, statusY);
 
   return final;
+}
+
+function renderReceiptRows(snap: SessionSnapshot, max: number): { rows: string[][]; total: number } {
+  const sortedReceipts = [...snap.receipts].sort((a, b) => {
+    const laneCompare = a.laneId.localeCompare(b.laneId);
+    if (laneCompare !== 0) return laneCompare;
+    return (a.writerId ?? "").localeCompare(b.writerId ?? "");
+  });
+  const { visible, total } = truncateRows(sortedReceipts, max);
+  const rows = visible.map((r) => [
+    r.laneId,
+    r.writerId ?? "\u2014",
+    r.admittedRewriteCount.toString(),
+    r.rejectedRewriteCount.toString(),
+    r.counterfactualCount.toString()
+  ]);
+  return { rows, total };
+}
+
+function renderEffectRows(snap: SessionSnapshot, caps: Capability[], max: number): { rows: string[][]; total: number } {
+  const hasDeliveries = hasCap(caps, "read:delivery-observations");
+  const allRows: string[][] = snap.emissions.flatMap((em) => {
+    if (!hasDeliveries) {
+      return [[em.effectKind, em.laneId, "\u2014", "(delivery unsupported)"]];
+    }
+    const deliveries = snap.observations.filter((o) => o.emissionId === em.emissionId);
+    if (deliveries.length === 0) {
+      return [[em.effectKind, em.laneId, "(none)", "emitted"]];
+    }
+    return deliveries.map((o) => [em.effectKind, em.laneId, o.sinkId.replace("sink:", ""), o.outcome]);
+  });
+  const { visible, total } = truncateRows(allRows, max);
+  return { rows: visible, total };
+}
+
+interface SectionArgs {
+  final: Surface;
+  snap: SessionSnapshot;
+  caps: Capability[];
+  w: number;
+  startY: number;
+}
+
+function renderHorizontalSections(args: SectionArgs): number {
+  const { final, snap, caps, w, startY } = args;
+  let y = startY;
+  const hasReceipts = hasCap(caps, "read:receipts");
+  const hasEmissions = hasCap(caps, "read:effect-emissions");
+  const halfW = Math.floor((w - 3) / 2);
+
+  if (hasReceipts) {
+    const { rows, total } = renderReceiptRows(snap, MAX_RECEIPTS);
+    const title = total > MAX_RECEIPTS ? ` Receipts (${MAX_RECEIPTS.toString()} of ${total.toString()}) ` : " Receipts ";
+    if (rows.length > 0) {
+      const cols: TableColumn[] = [
+        { header: "Lane", width: 14 }, { header: "Writer", width: 10 },
+        { header: "Adm", width: 4 }, { header: "Rej", width: 4 }, { header: "CF", width: 3 }
+      ];
+      const tbl = tableSurface({ columns: cols, rows, ctx });
+      const box = boxSurface(tbl, { title, width: halfW, ctx });
+      final.blit(box, 1, y);
+
+      if (hasEmissions) {
+        const eff = renderEffectRows(snap, caps, MAX_EFFECTS);
+        const effTitle = eff.total > MAX_EFFECTS
+          ? ` Effects [${snap.execCtx.mode}] (${MAX_EFFECTS.toString()} of ${eff.total.toString()}) `
+          : ` Effects [${snap.execCtx.mode}] `;
+        if (eff.rows.length > 0) {
+          const effCols: TableColumn[] = [
+            { header: "Kind", width: 10 }, { header: "Lane", width: 10 },
+            { header: "Sink", width: 10 }, { header: "Stat", width: 8 }
+          ];
+          const effTbl = tableSurface({ columns: effCols, rows: eff.rows, ctx });
+          const effBox = boxSurface(effTbl, { title: effTitle, width: halfW, ctx });
+          final.blit(effBox, halfW + 2, y);
+          y += Math.max(box.height, effBox.height) + 1;
+        } else {
+          final.blit(boxSurface(stringToSurface(" (none at this frame)", halfW - 4, 1), { title: effTitle, width: halfW, ctx }), halfW + 2, y);
+          y += box.height + 1;
+        }
+      } else {
+        y += box.height + 1;
+      }
+    } else {
+      final.blit(stringToSurface(" (no receipts at this frame)", w - 2, 1), 1, y);
+      y += 2;
+    }
+  }
+
+  if (!hasReceipts && hasEmissions) {
+    y = renderEffectSection({ final, snap, caps, w, startY: y });
+  }
+
+  return y;
+}
+
+function renderEffectSection(args: SectionArgs): number {
+  const { final, snap, caps, w, startY } = args;
+  let y = startY;
+  const { rows, total } = renderEffectRows(snap, caps, MAX_EFFECTS);
+  const title = total > MAX_EFFECTS
+    ? ` Effects [${snap.execCtx.mode}] (${MAX_EFFECTS.toString()} of ${total.toString()}) `
+    : ` Effects [${snap.execCtx.mode}] `;
+  if (rows.length > 0) {
+    const cols: TableColumn[] = [
+      { header: "Kind", width: 12 }, { header: "Lane", width: 14 },
+      { header: "Sink", width: 12 }, { header: "Stat", width: 10 }
+    ];
+    const tbl = tableSurface({ columns: cols, rows, ctx });
+    final.blit(boxSurface(tbl, { title, width: w - 2, ctx }), 1, y);
+    y += tbl.height + 3;
+  } else {
+    final.blit(stringToSurface(" (no effects at this frame)", w - 2, 1), 1, y);
+    y += 2;
+  }
+  return y;
+}
+
+function renderVerticalSections(args: SectionArgs): number {
+  const { final, snap, caps, w, startY } = args;
+  let y = startY;
+  const hasReceipts = hasCap(caps, "read:receipts");
+  const hasEmissions = hasCap(caps, "read:effect-emissions");
+
+  if (hasReceipts) {
+    const { rows, total } = renderReceiptRows(snap, MAX_RECEIPTS);
+    const title = total > MAX_RECEIPTS ? ` Receipts (${MAX_RECEIPTS.toString()} of ${total.toString()}) ` : " Receipts ";
+    if (rows.length > 0) {
+      const cols: TableColumn[] = [
+        { header: "Lane", width: 14 }, { header: "Writer", width: 12 },
+        { header: "Adm", width: 5 }, { header: "Rej", width: 5 }, { header: "CF", width: 4 }
+      ];
+      const tbl = tableSurface({ columns: cols, rows, ctx });
+      final.blit(boxSurface(tbl, { title, width: w - 2, ctx }), 1, y);
+      y += tbl.height + 3;
+    } else {
+      final.blit(stringToSurface(" (no receipts at this frame)", w - 2, 1), 1, y);
+      y += 2;
+    }
+  }
+
+  if (hasEmissions) {
+    y = renderEffectSection({ final, snap, caps, w, startY: y });
+  }
+
+  return y;
 }
 
 function inspectorLayout(model: Model, w: number, h: number): Surface {
@@ -580,7 +771,7 @@ const mainApp = {
             nextModel = { ...nextModel, pageModels: updateAllPages(pm) };
             return [nextModel, [
               ...fCmds,
-              async (emit: (msg: Msg) => void) => {
+              async (emit: (msg: Msg) => void): Promise<void> => {
                 try {
                   const snapshot = await currentSession.seekToFrame(frameIndex);
                   emit({ type: "snapshot-updated", snapshot });
@@ -602,7 +793,7 @@ const mainApp = {
       if (msg.key === "n" || msg.key === "right") {
         return [nextModel, [
           ...fCmds,
-          async (emit: (msg: Msg) => void) => {
+          async (emit: (msg: Msg) => void): Promise<void> => {
             try {
               const snapshot = await currentSession.stepForward();
               emit({ type: "snapshot-updated", snapshot });
@@ -616,7 +807,7 @@ const mainApp = {
       if (msg.key === "p" || msg.key === "left") {
         return [nextModel, [
           ...fCmds,
-          async (emit: (msg: Msg) => void) => {
+          async (emit: (msg: Msg) => void): Promise<void> => {
             try {
               const snapshot = await currentSession.stepBackward();
               emit({ type: "snapshot-updated", snapshot });
