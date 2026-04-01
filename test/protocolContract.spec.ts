@@ -123,10 +123,13 @@ test("ReceiptSummary v0.1.0 shape", async () => {
   assert.equal(typeof r.digest, "string");
   assert.equal(typeof r.summary, "string");
 
+  // writerId is optional but present in fixtures that have writer data
+  assert.equal(typeof r.writerId, "string", "writerId should be a string when present");
+
   const keys = Object.keys(r).sort();
   assert.deepEqual(keys, [
     "admittedRewriteCount", "counterfactualCount", "digest",
     "frameIndex", "headId", "inputTick", "laneId", "outputTick",
-    "receiptId", "rejectedRewriteCount", "summary"
+    "receiptId", "rejectedRewriteCount", "summary", "writerId"
   ]);
 });

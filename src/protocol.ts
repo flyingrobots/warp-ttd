@@ -71,6 +71,7 @@ export interface ReceiptSummary {
   headId: string;
   frameIndex: number;
   laneId: string;
+  writerId?: string;
   inputTick: number;
   outputTick: number;
   admittedRewriteCount: number;
