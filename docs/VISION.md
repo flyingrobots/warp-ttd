@@ -197,8 +197,9 @@ the capability, TTD can drive speculative operations:
   counterfactual alternatives in parallel
 - **Independent ticking** — advance a speculative strand without
   advancing the canonical worldline
-- **Multi-strand composition** — combine observations from multiple
-  strands into a composite view
+- **Multi-strand composition** — coordinate, compare, or present
+  multiple speculative strands together without implying they share
+  one canonical history
 - **Comparison** — diff a strand against its base worldline or against
   another strand
 - **Result handles** — a DebuggerSession tracks speculative results
@@ -239,9 +240,9 @@ Delivery Adapters (CLI, TUI, MCP, Web)
 - **Delivery observation** — what happened to an effect at each sink
 - **Execution context** — live/replay/debug lens
 - **PlaybackHead** — substrate-facing coordination primitive
-- **DebuggerSession** — human-facing investigation object that scopes
-  speculative state, tracks result handles, and prevents the debugger
-  from becoming a spaghetti launcher (critical next abstraction)
+- **DebuggerSession** — human-facing investigation object that tracks
+  result handles and scopes speculative investigation state (critical
+  next abstraction)
 
 ### Host adapter boundary
 
@@ -295,7 +296,10 @@ contract.
 ## Core Views
 
 The debugger provides three foundational views into the substrate.
-These are the views that make TTD a real debugging instrument.
+These are the intended foundational views; some are partially
+implemented, others are planned. The protocol and adapter surface
+will evolve to support them.
+
 
 ### Worldline Viewer
 
@@ -311,7 +315,7 @@ are branches. The user can:
 This is the primary navigation view. Everything else is anchored to
 "what tick am I looking at?"
 
-### WARP Graph Viewer
+### Graph Viewer
 
 At any tick, the user can inspect the full materialized WARP graph:
 
@@ -365,7 +369,7 @@ chain backwards reconstructs the full causal history of any value.
 
 ### Next
 
-- DebuggerSession (human-facing investigation object)
+- DebuggerSession — required foundation for speculative investigation
 - Strand lifecycle through adapter + TUI
 - Counterfactual inspection and strand forking
 - Navigator view redesign
