@@ -22,6 +22,7 @@ envelopes so the agent can predict what data appears where.
 The Navigator has an intentional layout organized around the shared
 protocol nouns, not around implementation artifacts. The layout
 works identically regardless of which host adapter is connected.
+The layout handles absence, overflow, and truncation truthfully.
 
 ## Context: What the Navigator IS
 
@@ -69,8 +70,8 @@ The Navigator consumes the protocol surface, not the host.
 Problems:
 
 1. **Decorative DAG shader** occupies 10 rows showing nothing real.
-   It was ported from warp-lens. It should either show real lane
-   structure or be removed.
+   It was ported from warp-lens. It should show real lane structure
+   or be removed.
 
 2. **Frame info mixes concerns.** "Frame N / label" and the lane
    coordinate table are useful but conflated with a receipt count.
@@ -83,32 +84,36 @@ Problems:
 
 4. **No capability-driven layout.** If an adapter doesn't declare
    `read:effect-emissions`, the Effects box just doesn't appear.
-   But the layout doesn't adapt — it leaves a gap. The layout
-   should respond to what the host actually provides.
+   But the layout doesn't adapt — it leaves a gap.
 
-5. **Lane coordinates are hard to scan.** The lane list is plain
-   text with tick numbers. In a multi-lane scenario with strands,
-   this becomes a wall of text.
+5. **No overflow policy.** 30 lanes, 18 receipts, 40 effects — the
+   layout has no answer for this. No truncation, no row budgets,
+   no summary lines.
 
 6. **No visual hierarchy.** Everything has equal weight. The
    operator can't quickly answer "what happened?" because nothing
    is foregrounded.
 
+7. **Changed marker is undefined.** The `*` next to a lane means
+   the lane has a receipt at this frame, but that isn't documented
+   or consistent across adapters.
+
 ## Design Principles
 
 ### 1. Protocol nouns are the layout primitives
 
-The Navigator's structure should map directly to the protocol
-surface. Each section corresponds to a protocol type:
+The Navigator's structure maps directly to the protocol surface.
+Each section corresponds to a protocol type and has a stable
+section identifier for UI/JSON/test alignment:
 
-| Protocol Noun | Navigator Section |
-|---------------|-------------------|
-| PlaybackHeadSnapshot | Position bar (frame index, head label, mode) |
-| PlaybackFrame + LaneFrameView | Lane table (coordinate + changed status per lane) |
-| ReceiptSummary | Receipt table (writer, admitted/rejected/CF per lane) |
-| EffectEmissionSummary + DeliveryObservationSummary | Effects table (emission → delivery outcome) |
-| ExecutionContext | Mode badge in position bar |
-| PinnedObservation (session) | Pins panel (comparison data) |
+| Section ID | Protocol Noun | What it shows |
+|------------|---------------|---------------|
+| `position-bar` | PlaybackHeadSnapshot + ExecutionContext | Frame index, primary lane, mode, counts |
+| `lane-table` | PlaybackFrame + LaneFrameView + LaneCatalog | Coordinate + changed status per lane, tree structure |
+| `receipt-summary` | ReceiptSummary | Writer, admitted/rejected/CF per lane |
+| `effect-summary` | EffectEmissionSummary + DeliveryObservationSummary | Emission → delivery outcome |
+| `pins-panel` | PinnedObservation (session) | Comparison data from other frames |
+| `status-bar` | (UI state) | Status flash, keybinding hints |
 
 ### 2. Position bar is the anchor
 
@@ -127,8 +132,8 @@ Replace the plain text lane list with a compact table that shows
 parent-child relationships:
 
 ```
- Lane              Kind        Tick  Changed
- wl:main           worldline      3  *
+ Lane              Kind        Tick  Chg
+ wl:main           worldline      3   *
  └ ws:sandbox      strand         1
 ```
 
@@ -136,19 +141,18 @@ The tree structure (indent + connector) makes strand parentage
 visible at a glance. This is the "DAG" the decorative shader was
 pretending to show.
 
+**Changed marker (`*`) definition:** A lane is marked changed at
+frame N if it has at least one receipt at frame N. This is the
+only definition. It does not mean "advanced coordinate" (a lane
+can advance without a receipt if it's a synthetic frame), and it
+does not mean "emitted an effect" (emissions are separate from
+lane advancement). The marker derives from `ReceiptSummary`,
+not from `LaneFrameView.changed`.
+
 ### 4. Receipts and effects share horizontal space
 
-Instead of stacking vertically (receipts THEN effects), use a
-two-column layout when terminal width permits:
-
-```
-┌─ Receipts ──────────┬─ Effects [live] ──────────┐
-│ Lane   Writer  A R C│ diag → tui-log: delivered  │
-│ wl:main alice  3 0 0│ diag → chunk:   delivered  │
-└─────────────────────┴────────────────────────────┘
-```
-
-Falls back to vertical stacking on narrow terminals.
+Instead of stacking vertically, use a two-column layout when
+terminal width permits. Falls back to vertical on narrow terminals.
 
 ### 5. The decorative shader goes
 
@@ -158,19 +162,94 @@ of data.
 
 ### 6. Capability-driven sections
 
-If the adapter doesn't declare a capability, the corresponding
-section is omitted — not shown empty. The layout contracts to
-fill available space:
+Sections have four render states. Each state has explicit rules:
 
-- No `read:effect-emissions` → no Effects column
-- No `read:receipts` → no Receipts column
-- No receipts at this frame → section collapses to "(none)"
+| State | Meaning | Render |
+|-------|---------|--------|
+| **unavailable** | Adapter does not declare the capability | Section omitted entirely. Position bar shows `(unsupported)` for the missing noun. |
+| **empty** | Capability declared, zero items at this frame | Section header visible, body shows `(none at this frame)` |
+| **populated** | Capability declared, 1+ items | Normal table rendering, subject to row budget |
+| **truncated** | Items exceed row budget | Render up to budget, footer shows `showing N of M` |
 
-### 7. Pins sit at the bottom, always
+Capability → section mapping:
+
+- `read:receipts` → `receipt-summary`
+- `read:effect-emissions` + `read:delivery-observations` → `effect-summary`
+- Pins are always available (session-local, not adapter-dependent)
+
+### 7. Navigator is summary-first, not detail-complete
+
+The Navigator answers:
+
+- Where am I?
+- What changed?
+- Were there receipts?
+- Were there effects?
+- Were there delivery outcomes?
+- What comparison context is pinned?
+
+It does NOT try to fully render every field of every envelope.
+Detailed inspection belongs in Inspector or a drill-down surface.
+
+### 8. Pins sit at the bottom, capped
 
 Pins are comparison data — the operator looks at them *relative
-to* the current frame. They should be visually separated from
-the current-frame data and anchored at the bottom.
+to* the current frame. They should be visually separated and
+anchored at the bottom. Capped at 3 visible; excess summarized.
+
+## Overflow Policy
+
+### Row budgets
+
+| Section | Max visible rows | Overflow behavior |
+|---------|-----------------|-------------------|
+| `lane-table` | 8 | Show first 8, footer: `+N more lanes` |
+| `receipt-summary` | 6 | Show first 6, footer: `showing 6 of N receipts` |
+| `effect-summary` | 6 | Show first 6, footer: `showing 6 of N effects` |
+| `pins-panel` | 3 | Show 3 most recent, footer: `+N older pins` |
+
+### Priority order (when vertical space is tight)
+
+If the terminal is too short for all sections, sections are
+removed in this order (lowest priority first):
+
+1. `pins-panel` (removed first — comparison context, not current truth)
+2. `effect-summary` (removed second — effects are downstream of receipts)
+3. `receipt-summary` (removed third — receipts summarize tick activity)
+4. `lane-table` (removed fourth — lanes are the structural frame)
+5. `position-bar` (never removed — always visible)
+6. `status-bar` (never removed — always visible)
+
+The position bar counts always reflect the full data, even when
+sections are truncated or removed. The operator can always see
+"3 receipts" even if the receipt section isn't visible.
+
+## Sorting Rules
+
+Deterministic ordering for every section. No adapter-dependent or
+random ordering.
+
+| Section | Sort order |
+|---------|-----------|
+| `lane-table` | Worldlines first, then strands. Within each kind: catalog order (as declared by adapter). Child strands immediately follow their parent. |
+| `receipt-summary` | Grouped by lane (catalog order), then by writer (alphabetical). |
+| `effect-summary` | Grouped by emission (frame order), then by delivery (sink alphabetical). |
+| `pins-panel` | Most recently pinned first. |
+
+## Width Thresholds
+
+The horizontal split threshold derives from minimum content width,
+not a magic number.
+
+| Pane | Minimum legible width |
+|------|----------------------|
+| `receipt-summary` | 45 chars (Lane 16 + Writer 14 + Adm 5 + Rej 5 + CF 5) |
+| `effect-summary` | 45 chars (Kind 10 + Lane 14 + Sink 12 + Stat 9) |
+| Gutter | 3 chars |
+
+**Horizontal split when:** `w >= 45 + 3 + 45 = 93`
+
+Below 93: vertical stack. Above 93: side by side.
 
 ## Proposed Layout
 
@@ -196,10 +275,10 @@ the current-frame data and anchored at the bottom.
  [n/→] Fwd  [p/←] Back  [g] Jump  [P] Pin  [u] Unpin
 ```
 
-### Narrow terminal (< 80 cols)
+### Narrow terminal (< 93 cols)
 
 ```
- Frame 3 │ wl:main │ live
+ Frame 3 │ wl:main │ live │ 2r 1e
 
  wl:main     worldline  tick 3 *
  └ ws:sandbox strand    tick 1
@@ -228,7 +307,51 @@ the current-frame data and anchored at the bottom.
  [n/→] Fwd  [g] Jump  [d] Disconnect
 ```
 
-## Playback Questions
+### Truncated (overflow)
+
+```
+ Frame 7 of 50 │ wl:main │ live │ 18 receipts │ 23 effects
+
+ Lane              Kind        Tick  Chg
+ wl:main           worldline     12   *
+ └ ws:alpha        strand         4   *
+ └ ws:beta         strand         3
+ +3 more lanes
+
+┌─ Receipts (6 of 18) ───────┬─ Effects [live] (6 of 23) ─┐
+│ Lane    Writer  Adm Rej  CF │ Kind   Lane    Sink   Stat  │
+│ wl:main alice     3   0   0 │ diag   wl:main tui    deliv │
+│ wl:main bob       1   1   0 │ diag   wl:main chunk  deliv │
+│ ws:alpha carol    2   0   1 │ notif  ws:alpha net   suppr │
+│ ws:alpha dave     1   0   0 │ notif  ws:alpha tui   deliv │
+│ wl:main eve       1   0   0 │ export wl:main  file  deliv │
+│ ws:beta  frank    0   2   0 │ export wl:main  net   fail  │
+└─────────────────────────────┴────────────────────────────┘
+
+ ═══ Pins (3 of 5) ═══
+ [f2] notification → network: suppressed (replay)
+ [f5] diagnostic → tui-log: delivered (live)
+ [f6] export → file: delivered (live)
+
+ [n/→] Fwd  [p/←] Back  [g] Jump  [P] Pin  [u] Unpin
+```
+
+### Unsupported capability
+
+```
+ Frame 1 │ wl:main │ live │ 1 receipt │ effects: unsupported
+
+ wl:main     worldline  tick 1 *
+
+ ─ Receipts ─
+ wl:main alice 2/0/0
+
+ [n/→] Fwd  [p/←] Back  [g] Jump  [d] Disconnect
+```
+
+## Evaluation Questions
+
+### Human recognition test
 
 1. Is the decorative DAG shader removed?
 2. Does the position bar show frame index, lane, mode, and counts
@@ -236,10 +359,19 @@ the current-frame data and anchored at the bottom.
 3. Does the lane table show parent-child structure with tree
    connectors?
 4. Do receipts and effects share horizontal space on wide terminals?
-5. Does the layout adapt when capabilities are missing?
-6. Does the layout collapse gracefully on narrow terminals?
-7. Can both a human and an agent answer "what happened at this
-   frame?" within 2 seconds of looking at the Navigator?
+5. Does the layout collapse gracefully on narrow terminals?
+6. Can the operator distinguish "unsupported" from "empty" from
+   "truncated" at a glance?
+7. Can the operator answer "what happened at this frame?" within
+   2 seconds of looking at the Navigator?
+
+### Agent structure predictability test
+
+8. Does every section have a stable identifier that maps to protocol
+   nouns?
+9. Is section ordering deterministic across hosts and frames?
+10. Can the agent predict which sections will appear based solely on
+    `HostHello.capabilities`?
 
 ## Non-Goals
 
@@ -252,9 +384,14 @@ the current-frame data and anchored at the bottom.
 ## Implementation Notes
 
 - The position bar is a single `stringToSurface` call, not a box.
-- The lane tree can be built from `LaneCatalog` (for parentage) +
-  `PlaybackFrame.lanes` (for current coordinates).
-- Horizontal split uses bijou's existing `createSurface` + `blit`
-  for side-by-side placement. No new framework features needed.
-- Terminal width detection already exists in bijou (`ResizeMsg`).
-  Use `w >= 100` as the threshold for horizontal layout.
+- The lane tree is built from `LaneCatalog` (for parentage) +
+  `PlaybackFrame.lanes` (for current coordinates) +
+  `ReceiptSummary[]` (for changed marker).
+- Horizontal split uses bijou's existing `createSurface` + `blit`.
+- Width threshold is 93 (derived from minimum pane widths + gutter).
+- Row budgets are enforced in the layout function, not in the
+  session or adapter.
+- The `changed` marker on `LaneFrameView` should be ignored by the
+  Navigator — derive it from receipts instead. This avoids adapter
+  inconsistency (git-warp and scenario fixture compute `changed`
+  differently today).
