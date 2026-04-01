@@ -250,9 +250,16 @@ Outcomes:
 
 - **Hill met** — proceed to retrospective, merge, close.
 - **Hill partially met** — merge what is honest. The retro explains
-  the gap. Remaining work goes to the backlog as debt.
-- **Hill not met** — do not merge. Re-scope or abandon. Capture
-  learnings.
+  the gap. Remaining work goes to the backlog.
+- **Hill not met** — the cycle still concludes. Write the retro. Be
+  honest about what happened and why. The learnings usually surface
+  new backlog items — sometimes better-scoped versions of the
+  original idea, sometimes entirely different work that the failed
+  attempt revealed. A failed cycle that produces a good retro is
+  more valuable than a successful cycle with no learnings.
+
+Every cycle ends with a retro. Success is not a prerequisite for
+conclusion.
 
 ## Graveyard
 
