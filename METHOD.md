@@ -243,11 +243,17 @@ sequentially (`0001`, `0002`, ...).
    accepted.
 
 6. **Close** — merge. Write a retrospective in
-   `docs/method/retro/<cycle>/`. The retro includes a drift check
-   (what diverged from the design), new debt logged to
-   `backlog/bad-code/`, and cool ideas captured to
-   `backlog/cool-ideas/`. Update CHANGELOG, bump version, tag if
-   releasing, update README, maintain the backlog.
+   `docs/method/retro/<cycle>/`. The retro must include:
+
+   - **Drift check** (mandatory) — compare what was built against the
+     design doc. Did you do what the design said? Call out every
+     divergence, intentional or accidental. Drift is not failure —
+     undocumented drift is.
+   - **New debt** — log anything that bothers you to `backlog/bad-code/`.
+   - **Cool ideas** — capture sparks to `backlog/cool-ideas/`.
+   - **Backlog maintenance** — process inbox, re-prioritize, clean up.
+
+   Update CHANGELOG, bump version, tag if releasing, update README.
 
 ### Playback
 
