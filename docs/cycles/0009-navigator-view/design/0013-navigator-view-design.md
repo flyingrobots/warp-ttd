@@ -149,6 +149,12 @@ does not mean "emitted an effect" (emissions are separate from
 lane advancement). The marker derives from `ReceiptSummary`,
 not from `LaneFrameView.changed`.
 
+**When receipts are unsupported:** If the adapter does not declare
+`read:receipts`, the `Chg` column is omitted entirely from the
+lane table. The lane table still renders coordinates and tree
+structure — it just cannot show change markers. This is the
+cleanest truthful behavior: don't show a column you can't populate.
+
 ### 4. Receipts and effects share horizontal space
 
 Instead of stacking vertically, use a two-column layout when
@@ -174,7 +180,12 @@ Sections have four render states. Each state has explicit rules:
 Capability → section mapping:
 
 - `read:receipts` → `receipt-summary`
-- `read:effect-emissions` + `read:delivery-observations` → `effect-summary`
+- `read:effect-emissions` → `effect-summary` (required; without
+  emissions, the section is omitted entirely)
+- `read:delivery-observations` → delivery columns within
+  `effect-summary` (optional; if emissions are supported but
+  deliveries are not, the effects table renders with the Status
+  column showing `(delivery unsupported)` instead of an outcome)
 - Pins are always available (session-local, not adapter-dependent)
 
 ### 7. Navigator is summary-first, not detail-complete
@@ -224,6 +235,16 @@ The position bar counts always reflect the full data, even when
 sections are truncated or removed. The operator can always see
 "3 receipts" even if the receipt section isn't visible.
 
+When a populated section is removed due to vertical priority
+(not capability absence), the status bar shows a one-line
+summary of hidden activity:
+
+```
+ hidden: 18 receipts, 23 effects
+```
+
+This prevents the removal from feeling silent.
+
 ## Sorting Rules
 
 Deterministic ordering for every section. No adapter-dependent or
@@ -231,7 +252,7 @@ random ordering.
 
 | Section | Sort order |
 |---------|-----------|
-| `lane-table` | Worldlines first, then strands. Within each kind: catalog order (as declared by adapter). Child strands immediately follow their parent. |
+| `lane-table` | Roots in catalog order, then depth-first pre-order traversal of children. Each parent is immediately followed by its child strands before the next root. No orphan child is shown without its parent — lane truncation preserves tree integrity for visible rows. |
 | `receipt-summary` | Grouped by lane (catalog order), then by writer (alphabetical). |
 | `effect-summary` | Grouped by emission (frame order), then by delivery (sink alphabetical). |
 | `pins-panel` | Most recently pinned first. |
@@ -380,6 +401,39 @@ Below 93: vertical stack. Above 93: side by side.
 - Not implementing the full comparison view for pins (that's the
   pin-design cycle).
 - Not changing the Inspector page layout (separate concern).
+
+## Count Formatting
+
+Three forms, used consistently across all render paths:
+
+| Context | Format | Example |
+|---------|--------|---------|
+| Wide position bar | `N noun(s)` | `2 receipts │ 1 effect` |
+| Narrow position bar | `Nr Ne` | `2r 1e` |
+| Unsupported | `noun: unsupported` | `effects: unsupported` |
+| Hidden (priority removal) | `hidden: N noun(s)` | `hidden: 18 receipts` |
+| Truncation footer | `showing N of M` | `showing 6 of 18 receipts` |
+| Overflow footer | `+N more noun(s)` | `+3 more lanes` |
+
+Singular when count is 1, plural otherwise.
+
+## Test Fixture Matrix
+
+Implementation should cover these scenarios:
+
+| Scenario | Width | Capabilities | Data |
+|----------|-------|-------------|------|
+| Wide, all capabilities | ≥93 | all | receipts + effects |
+| Narrow, all capabilities | <93 | all | receipts + effects |
+| Frame 0, empty | any | all | no receipts, no effects |
+| No receipts capability | any | no `read:receipts` | effects only |
+| No effects capability | any | no `read:effect-emissions` | receipts only |
+| Emissions without deliveries | any | emissions, no deliveries | emissions with `(delivery unsupported)` |
+| Lane overflow | any | all | 12 lanes |
+| Receipt overflow | any | all | 10 receipts |
+| Effect overflow | any | all | 10 effects |
+| Height-constrained | any | all | full data, short terminal |
+| Multi-strand tree | any | all | worldline + 3 nested strands |
 
 ## Implementation Notes
 
