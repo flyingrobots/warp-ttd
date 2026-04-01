@@ -30,8 +30,8 @@ design layout → speculation → core views → capstone.
 | 3 | B — Protocol Freeze | closed | [B-protocol-freeze.md](docs/backlog/B-protocol-freeze.md) |
 | 4 | Effect Emission | closed | [0009-effect-emission-protocol.md](docs/cycles/0005-effect-emission/design/0009-effect-emission-protocol.md) |
 | 5 | Design Vocabulary | closed | [design-vocabulary.md](docs/backlog/design-vocabulary.md) |
-| 6 | writerId on ReceiptSummary | queued (next) | [receipt-writer-field.md](docs/backlog/receipt-writer-field.md) |
-| 7 | E — DebuggerSession | queued | [E-debugger-session.md](docs/backlog/E-debugger-session.md) |
+| 6 | writerId on ReceiptSummary | closed | [receipt-writer-field.md](docs/backlog/receipt-writer-field.md) |
+| 7 | E — DebuggerSession | queued (next) | [E-debugger-session.md](docs/backlog/E-debugger-session.md) |
 | 8 | Navigator View Design | queued | [navigator-view-design.md](docs/backlog/navigator-view-design.md) |
 | 9 | D — Strand & Speculation | queued | [D-strand-speculation.md](docs/backlog/D-strand-speculation.md) |
 | 10 | Core Views | queued | [core-views.md](docs/backlog/core-views.md) |

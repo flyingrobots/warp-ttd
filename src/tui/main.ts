@@ -213,13 +213,15 @@ function navigatorLayout(model: Model, w: number, h: number): Surface {
 
   if (model.receipts.length > 0) {
     const receiptColumns: TableColumn[] = [
-      { header: "Lane", width: 18 },
-      { header: "Admitted", width: 10 },
-      { header: "Rejected", width: 10 },
-      { header: "Counterfactual", width: 14 }
+      { header: "Lane", width: 16 },
+      { header: "Writer", width: 14 },
+      { header: "Admitted", width: 9 },
+      { header: "Rejected", width: 9 },
+      { header: "CF", width: 5 }
     ];
     const receiptRows = model.receipts.map((r) => [
       r.laneId,
+      r.writerId ?? "—",
       r.admittedRewriteCount.toString(),
       r.rejectedRewriteCount.toString(),
       r.counterfactualCount.toString()

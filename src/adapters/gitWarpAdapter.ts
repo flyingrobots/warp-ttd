@@ -297,6 +297,7 @@ export class GitWarpAdapter implements TtdHostAdapter {
         headId,
         frameIndex: resolvedIndex,
         laneId: "wl:live",
+        writerId: r.writer,
         inputTick: resolvedIndex === 1 ? 0 : requireIndexedFrame(this.#frameIndex, resolvedIndex - 2).tick,
         outputTick: indexed.tick,
         admittedRewriteCount: admitted,

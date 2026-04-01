@@ -120,12 +120,13 @@ type PlaybackFrame
 type ReceiptSummary
   @wes_codec(format: "cbor", canonical: true)
   @wes_registry(id: 8)
-  @wes_version(major: 0, minor: 1)
+  @wes_version(major: 0, minor: 2)
 {
   receiptId: String!
   headId: String!
   frameIndex: Int! @wes_constraint(min: 0)
   laneId: String!
+  writerId: String
   inputTick: Int! @wes_constraint(min: 0)
   outputTick: Int! @wes_constraint(min: 0)
   admittedRewriteCount: Int! @wes_constraint(min: 0)

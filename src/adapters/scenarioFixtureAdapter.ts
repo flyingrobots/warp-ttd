@@ -139,7 +139,7 @@ function buildFrameData(
     const id = counters.receipt.toString().padStart(4, "0");
     return {
       receiptId: `receipt:scenario:${id}`,
-      headId: HEAD_ID, frameIndex, laneId: sr.laneId,
+      headId: HEAD_ID, frameIndex, laneId: sr.laneId, writerId: sr.writerId,
       inputTick: prevTick, outputTick: sf.tick,
       admittedRewriteCount: sr.admitted, rejectedRewriteCount: sr.rejected,
       counterfactualCount: sr.counterfactual,

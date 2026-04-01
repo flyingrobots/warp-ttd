@@ -1,6 +1,6 @@
 # Add writerId to ReceiptSummary
 
-**Status:** queued
+**Status:** closed
 
 ## Problem
 

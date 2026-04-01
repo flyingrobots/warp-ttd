@@ -95,6 +95,7 @@ test("buildScenario maps receipts into ReceiptSummary", async () => {
   assert.ok(r !== undefined);
   assert.equal(r.admittedRewriteCount, 3);
   assert.equal(r.rejectedRewriteCount, 1);
+  assert.equal(r.writerId, "alice", "writerId should flow from ScenarioReceipt to ReceiptSummary");
 });
 
 test("buildScenario maps emissions and deliveries", async () => {
