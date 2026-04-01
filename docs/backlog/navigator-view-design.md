@@ -1,6 +1,6 @@
 # Navigator View Design
 
-**Status:** queued
+**Status:** closed
 
 ## Problem
 

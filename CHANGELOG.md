@@ -10,6 +10,10 @@ This project will use [Semantic Versioning](https://semver.org/) starting at
 
 ### Added
 
+- **Navigator redesign** — position bar, lane tree with depth-first
+  pre-order, horizontal receipt/effect split, capability-driven
+  section states, row budgets, truncation. Extracted to testable
+  navigatorLayout module (29 tests). Lint ceiling 117 → 110.
 - **DebuggerSession** — app-layer domain object wrapping
   TtdHostAdapter. Manages navigation, snapshot state, and pinned
   observations. TUI refactored to consume sessions. CLI `session

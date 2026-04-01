@@ -26,7 +26,7 @@ import {
 import type { TableColumn } from "@flyingrobots/bijou";
 import type { BijouContext, Surface } from "@flyingrobots/bijou";
 import { renderWaveShader } from "./shaders/bgShader.ts";
-import { renderDagShader } from "./shaders/dagShader.ts";
+import { renderNavigator } from "./navigatorLayout.ts";
 import { resolveAdapter } from "../app/adapterRegistry.ts";
 import type { AdapterConfig } from "../app/adapterRegistry.ts";
 import { DebuggerSession } from "../app/debuggerSession.ts";
@@ -162,112 +162,16 @@ function navigatorLayout(model: Model, w: number, h: number): Surface {
     return centerBox(bg, stringToSurface(" Connect to a host first.", 40, 1), "Navigator");
   }
 
-  const snap = model.session.snapshot;
-  const final = createSurface(w, h);
-  final.fill({ char: " " });
-
-  // DAG shader
-  const dag = renderDagShader(w - 4, 8, model.time);
-  const dagBox = boxSurface(dag, { title: " Causal Provenance ", width: w - 2, ctx });
-  final.blit(dagBox, 1, 1);
-
-  // Frame info
-  const lanes = snap.frame.lanes
-    .map((l) => {
-      const changed = l.changed ? ctx.style.styled(ctx.status("warning"), "*") : " ";
-      return `  ${changed} ${l.laneId.padEnd(16)} tick ${l.coordinate.tick.toString()}`;
-    })
-    .join("\n");
-
-  const frameInfo = vstack(
-    ` Frame ${snap.frame.frameIndex.toString()} / ${snap.head.label}`,
-    "",
-    lanes,
-    "",
-    ` Receipts: ${snap.receipts.length.toString()}`
-  );
-  const infoSurf = stringToSurface(frameInfo, w - 4, frameInfo.split("\n").length);
-  const infoBox = boxSurface(infoSurf, { title: " Playback Head ", width: w - 2, ctx });
-  final.blit(infoBox, 1, dagBox.height + 2);
-
-  // Receipt summaries
-  let receiptBox: Surface;
-
-  if (snap.receipts.length > 0) {
-    const receiptColumns: TableColumn[] = [
-      { header: "Lane", width: 16 },
-      { header: "Writer", width: 14 },
-      { header: "Admitted", width: 9 },
-      { header: "Rejected", width: 9 },
-      { header: "CF", width: 5 }
-    ];
-    const receiptRows = snap.receipts.map((r) => [
-      r.laneId,
-      r.writerId ?? "\u2014",
-      r.admittedRewriteCount.toString(),
-      r.rejectedRewriteCount.toString(),
-      r.counterfactualCount.toString()
-    ]);
-    const receiptTableSurf = tableSurface({ columns: receiptColumns, rows: receiptRows, ctx });
-    receiptBox = boxSurface(receiptTableSurf, { title: " Receipts ", width: w - 2, ctx });
-  } else {
-    const emptySurf = stringToSurface("  (none at this frame)", w - 4, 1);
-    receiptBox = boxSurface(emptySurf, { title: " Receipts ", width: w - 2, ctx });
-  }
-
-  final.blit(receiptBox, 1, dagBox.height + infoBox.height + 3);
-
-  // Effect emissions + delivery observations
-  const yOffset = dagBox.height + infoBox.height + receiptBox.height + 4;
-
-  if (snap.emissions.length > 0) {
-    const columns: TableColumn[] = [
-      { header: "Effect", width: 14 },
-      { header: "Lane", width: 16 },
-      { header: "Sink", width: 14 },
-      { header: "Status", width: 12 }
-    ];
-
-    // Build rows from emissions, joining with observations where available
-    const rows: string[][] = snap.emissions.flatMap((em) => {
-      const deliveries = snap.observations.filter((o) => o.emissionId === em.emissionId);
-      if (deliveries.length === 0) {
-        return [[em.effectKind, em.laneId, "(none)", "emitted"]];
-      }
-      return deliveries.map((o) => [em.effectKind, em.laneId, o.sinkId.replace("sink:", ""), o.outcome]);
-    });
-
-    const modeLabel = ` [${snap.execCtx.mode}]`;
-    const tableSurf = tableSurface({ columns, rows, ctx });
-    const tableBox = boxSurface(tableSurf, { title: ` Effects${modeLabel} `, width: w - 2, ctx });
-    final.blit(tableBox, 1, yOffset);
-  }
-
-  // Pins
-  const pins = model.session.pins;
-  if (pins.length > 0) {
-    const pinLines = pins.map((p) =>
-      `  [f${p.pinnedAt.toString()}] ${p.emission.effectKind} \u2192 ${p.observation.sinkId.replace("sink:", "")}: ${p.observation.outcome}`
-    ).join("\n");
-    const pinSurf = stringToSurface(pinLines, w - 4, pinLines.split("\n").length);
-    const pinBox = boxSurface(pinSurf, { title: ` Pins (${pins.length.toString()}) `, width: w - 2, ctx });
-    final.blit(pinBox, 1, h - pinBox.height - 3);
-  }
-
-  // Status flash (pin/unpin feedback, nav errors)
-  if (model.error !== null) {
-    const statusSurf = stringToSurface(` ${model.error}`, w - 2, 1);
-    final.blit(statusSurf, 1, h - 3);
-  }
-
-  // Controls / jump prompt
-  const controlText = model.jumpInput !== null
-    ? ` Jump to frame: ${model.jumpInput}_  [Enter] Go  [Esc] Cancel`
-    : " [n/\u2192] Fwd  [p/\u2190] Back  [g] Jump  [P] Pin  [u] Unpin  [d] Disc";
-  const controlSurf = stringToSurface(controlText, w - 2, 1);
-  final.blit(controlSurf, 1, h - 2);
-
-  return final;
+  return renderNavigator({
+    snap: model.session.snapshot,
+    caps: model.hello?.capabilities ?? [],
+    catalog: model.catalog?.lanes ?? [],
+    pins: model.session.pins,
+    error: model.error,
+    jumpInput: model.jumpInput,
+    w, h,
+    ctx
+  });
 }
 
 function inspectorLayout(model: Model, w: number, h: number): Surface {
@@ -580,7 +484,7 @@ const mainApp = {
             nextModel = { ...nextModel, pageModels: updateAllPages(pm) };
             return [nextModel, [
               ...fCmds,
-              async (emit: (msg: Msg) => void) => {
+              async (emit: (msg: Msg) => void): Promise<void> => {
                 try {
                   const snapshot = await currentSession.seekToFrame(frameIndex);
                   emit({ type: "snapshot-updated", snapshot });
@@ -602,7 +506,7 @@ const mainApp = {
       if (msg.key === "n" || msg.key === "right") {
         return [nextModel, [
           ...fCmds,
-          async (emit: (msg: Msg) => void) => {
+          async (emit: (msg: Msg) => void): Promise<void> => {
             try {
               const snapshot = await currentSession.stepForward();
               emit({ type: "snapshot-updated", snapshot });
@@ -616,7 +520,7 @@ const mainApp = {
       if (msg.key === "p" || msg.key === "left") {
         return [nextModel, [
           ...fCmds,
-          async (emit: (msg: Msg) => void) => {
+          async (emit: (msg: Msg) => void): Promise<void> => {
             try {
               const snapshot = await currentSession.stepBackward();
               emit({ type: "snapshot-updated", snapshot });
