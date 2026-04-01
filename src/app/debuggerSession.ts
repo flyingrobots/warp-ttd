@@ -48,7 +48,7 @@ export interface SerializedSession {
 // ---------------------------------------------------------------------------
 
 export class DebuggerSession {
-  readonly sessionId: string;
+  public readonly sessionId: string;
   readonly #adapter: TtdHostAdapter;
   readonly #activeHeadId: string;
   #snapshot: SessionSnapshot;
@@ -66,7 +66,7 @@ export class DebuggerSession {
     this.#pins = [];
   }
 
-  static async create(
+  public static async create(
     adapter: TtdHostAdapter,
     headId: string
   ): Promise<DebuggerSession> {
@@ -74,19 +74,19 @@ export class DebuggerSession {
     return new DebuggerSession(adapter, headId, snapshot);
   }
 
-  get activeHeadId(): string {
+  public get activeHeadId(): string {
     return this.#activeHeadId;
   }
 
-  get snapshot(): SessionSnapshot {
+  public get snapshot(): SessionSnapshot {
     return this.#snapshot;
   }
 
-  get pins(): readonly PinnedObservation[] {
+  public get pins(): readonly PinnedObservation[] {
     return this.#pins;
   }
 
-  async stepForward(): Promise<SessionSnapshot> {
+  public async stepForward(): Promise<SessionSnapshot> {
     await this.#adapter.stepForward(this.#activeHeadId);
     this.#snapshot = await fetchSnapshot(
       this.#adapter, this.#activeHeadId
@@ -94,7 +94,7 @@ export class DebuggerSession {
     return this.#snapshot;
   }
 
-  async stepBackward(): Promise<SessionSnapshot> {
+  public async stepBackward(): Promise<SessionSnapshot> {
     await this.#adapter.stepBackward(this.#activeHeadId);
     this.#snapshot = await fetchSnapshot(
       this.#adapter, this.#activeHeadId
@@ -102,7 +102,7 @@ export class DebuggerSession {
     return this.#snapshot;
   }
 
-  async seekToFrame(frameIndex: number): Promise<SessionSnapshot> {
+  public async seekToFrame(frameIndex: number): Promise<SessionSnapshot> {
     await this.#adapter.seekToFrame(this.#activeHeadId, frameIndex);
     this.#snapshot = await fetchSnapshot(
       this.#adapter, this.#activeHeadId
@@ -110,7 +110,7 @@ export class DebuggerSession {
     return this.#snapshot;
   }
 
-  pin(observationId: string): PinnedObservation | null {
+  public pin(observationId: string): PinnedObservation | null {
     const obs = this.#snapshot.observations.find(
       (o) => o.observationId === observationId
     );
@@ -130,7 +130,7 @@ export class DebuggerSession {
     return pinned;
   }
 
-  unpin(observationId: string): boolean {
+  public unpin(observationId: string): boolean {
     const index = this.#pins.findIndex(
       (p) => p.observation.observationId === observationId
     );
@@ -139,7 +139,7 @@ export class DebuggerSession {
     return true;
   }
 
-  toJSON(): SerializedSession {
+  public toJSON(): SerializedSession {
     return {
       sessionId: this.sessionId,
       activeHeadId: this.#activeHeadId,
