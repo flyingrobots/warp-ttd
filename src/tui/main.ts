@@ -254,6 +254,12 @@ function navigatorLayout(model: Model, w: number, h: number): Surface {
     final.blit(pinBox, 1, h - pinBox.height - 3);
   }
 
+  // Status flash (pin/unpin feedback, nav errors)
+  if (model.error !== null) {
+    const statusSurf = stringToSurface(` ${model.error}`, w - 2, 1);
+    final.blit(statusSurf, 1, h - 3);
+  }
+
   // Controls / jump prompt
   const controlText = model.jumpInput !== null
     ? ` Jump to frame: ${model.jumpInput}_  [Enter] Go  [Esc] Cancel`
@@ -490,7 +496,8 @@ const mainApp = {
 
     // --- Snapshot updated (after step/seek) ---
     if (msg.type === "snapshot-updated") {
-      // Session has already been mutated; just trigger a re-render
+      // Session has already been mutated; clear any status flash and re-render
+      pm = { ...pm, error: null };
       nextModel = { ...nextModel, pageModels: updateAllPages(pm) };
       return [nextModel, fCmds];
     }
@@ -627,12 +634,16 @@ const mainApp = {
       }
 
       // Pin first observation at current frame
-      if (msg.key === "P" || msg.key === "shift+p") {
+      if (msg.key === "P") {
         const obs = currentSession.snapshot.observations[0];
         if (obs !== undefined) {
-          currentSession.pin(obs.observationId);
-          nextModel = { ...nextModel, pageModels: updateAllPages(pm) };
+          const pinned = currentSession.pin(obs.observationId);
+          const label = pinned !== null ? pinned.emission.effectKind : "observation";
+          pm = { ...pm, error: `Pinned: ${label} at frame ${currentSession.snapshot.frame.frameIndex.toString()}` };
+        } else {
+          pm = { ...pm, error: "Nothing to pin — no observations at this frame" };
         }
+        nextModel = { ...nextModel, pageModels: updateAllPages(pm) };
         return [nextModel, fCmds];
       }
 
@@ -641,8 +652,11 @@ const mainApp = {
         const lastPin = currentSession.pins[currentSession.pins.length - 1];
         if (lastPin !== undefined) {
           currentSession.unpin(lastPin.observation.observationId);
-          nextModel = { ...nextModel, pageModels: updateAllPages(pm) };
+          pm = { ...pm, error: `Unpinned: ${lastPin.emission.effectKind} from frame ${lastPin.pinnedAt.toString()}` };
+        } else {
+          pm = { ...pm, error: "No pins to remove" };
         }
+        nextModel = { ...nextModel, pageModels: updateAllPages(pm) };
         return [nextModel, fCmds];
       }
     }
