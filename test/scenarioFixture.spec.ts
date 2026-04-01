@@ -202,7 +202,7 @@ test("scenarioMultiWriterWithConflicts has rejected rewrites and effect emission
     await adapter.stepForward("head:default");
   }
   const afterSteps = await adapter.playbackHead("head:default");
-  assert.equal(afterSteps.currentFrameIndex, maxFrames, `Expected ${maxFrames.toString()} frames`);
+  assert.equal(afterSteps.currentFrameIndex, maxFrames, `Expected head at frame ${maxFrames.toString()} after ${maxFrames.toString()} steps`);
 
   // Find a frame with rejected rewrites
   let foundRejected = false;

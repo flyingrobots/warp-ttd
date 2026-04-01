@@ -276,21 +276,24 @@ export function buildScenario(scenario: Scenario): TtdHostAdapter {
       const head = requireHead(headId);
       const maxFrame = scenario.frames.length;
       const nextIndex = Math.min(head.currentFrameIndex + 1, maxFrame);
+      const frame = buildPlaybackFrame(built.lanes, scenario, nextIndex);
       heads.set(headId, { ...head, currentFrameIndex: nextIndex, paused: true });
-      return Promise.resolve(structuredClone(buildPlaybackFrame(built.lanes, scenario, nextIndex)));
+      return Promise.resolve(structuredClone(frame));
     },
     stepBackward(headId: string): Promise<PlaybackFrame> {
       const head = requireHead(headId);
       const prevIndex = Math.max(head.currentFrameIndex - 1, 0);
+      const frame = buildPlaybackFrame(built.lanes, scenario, prevIndex);
       heads.set(headId, { ...head, currentFrameIndex: prevIndex, paused: true });
-      return Promise.resolve(structuredClone(buildPlaybackFrame(built.lanes, scenario, prevIndex)));
+      return Promise.resolve(structuredClone(frame));
     },
     seekToFrame(headId: string, frameIndex: number): Promise<PlaybackFrame> {
       const head = requireHead(headId);
       const maxFrame = scenario.frames.length;
       const clamped = Math.max(0, Math.min(frameIndex, maxFrame));
+      const frame = buildPlaybackFrame(built.lanes, scenario, clamped);
       heads.set(headId, { ...head, currentFrameIndex: clamped, paused: true });
-      return Promise.resolve(structuredClone(buildPlaybackFrame(built.lanes, scenario, clamped)));
+      return Promise.resolve(structuredClone(frame));
     }
   };
 }

@@ -18,7 +18,7 @@ This project will use [Semantic Versioning](https://semver.org/) starting at
   3 built-in scenarios: live-with-effects, replay-with-suppression,
   multi-writer-conflicts.
 - **Navigation** — `stepBackward`, `seekToFrame` adapter methods.
-  TUI: `p`/`←` step back, `g` jump-to-tick prompt.
+  TUI: `p`/`←` step back, `g` jump-to-frame prompt.
 - **CLI commands** — `effects`, `deliveries`, `context` with `--json`.
 - **Wesley schema** — `schemas/warp-ttd-protocol.graphql` covering
   full protocol surface with registry IDs, codecs, invariants.

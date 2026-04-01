@@ -244,12 +244,13 @@ function navigatorLayout(model: Model, w: number, h: number): Surface {
       { header: "Status", width: 12 }
     ];
 
-    const rows = model.observations.map((o) => {
-      const emission = model.emissions.find((e) => e.emissionId === o.emissionId);
-      const kind = emission !== undefined ? emission.effectKind : "?";
-      const lane = emission !== undefined ? emission.laneId : "?";
-      const sink = o.sinkId.replace("sink:", "");
-      return [kind, lane, sink, o.outcome];
+    // Build rows from emissions, joining with observations where available
+    const rows: string[][] = model.emissions.flatMap((em) => {
+      const deliveries = model.observations.filter((o) => o.emissionId === em.emissionId);
+      if (deliveries.length === 0) {
+        return [[em.effectKind, em.laneId, "(none)", "emitted"]];
+      }
+      return deliveries.map((o) => [em.effectKind, em.laneId, o.sinkId.replace("sink:", ""), o.outcome]);
     });
 
     const modeLabel = model.execCtx !== null ? ` [${model.execCtx.mode}]` : "";

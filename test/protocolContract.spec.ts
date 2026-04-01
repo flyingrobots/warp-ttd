@@ -1,5 +1,5 @@
 /**
- * Protocol contract tests — pin the v0.1.0 envelope shapes.
+ * Protocol contract tests — pin the v0.2.0 envelope shapes.
  *
  * These tests assert that every protocol type has exactly the expected
  * fields with the correct types. If a future change breaks one of these
