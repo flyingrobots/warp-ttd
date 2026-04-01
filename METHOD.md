@@ -24,6 +24,17 @@ level, which is the low-level foundation the human experience sits on.
 Getting that right first means the human-level experience has solid
 ground to stand on.
 
+### Everything traces to a playback
+
+Nothing should be done "because we can" or "because it seemed right."
+Every action during a cycle should trace back to a playback question.
+Playback questions are written during design, before any code exists.
+They are the "why" made answerable.
+
+If you cannot explain which playback question your current work
+serves, you are drifting. Stop and reconnect to the design, or
+acknowledge that the design needs to change.
+
 ### Tests are the spec
 
 Documentation drifts; tests fail loud. Every piece of code exists
