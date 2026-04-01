@@ -1,6 +1,6 @@
 # Design Doc 0013 — Navigator View Design
 
-**Status:** in progress
+**Status:** closed
 **Cycle:** 0009-navigator-view
 
 ## Sponsor Human

@@ -32,8 +32,8 @@ design layout → speculation → core views → capstone.
 | 5 | Design Vocabulary | closed | [design-vocabulary.md](docs/backlog/design-vocabulary.md) |
 | 6 | writerId on ReceiptSummary | closed | [receipt-writer-field.md](docs/backlog/receipt-writer-field.md) |
 | 7 | E — DebuggerSession | closed (partial) | [E-debugger-session.md](docs/backlog/E-debugger-session.md) |
-| 8 | Navigator View Design | queued (next) | [navigator-view-design.md](docs/backlog/navigator-view-design.md) |
-| 9 | D — Strand & Speculation | queued | [D-strand-speculation.md](docs/backlog/D-strand-speculation.md) |
+| 8 | Navigator View Design | closed | [navigator-view-design.md](docs/backlog/navigator-view-design.md) |
+| 9 | D — Strand & Speculation | queued (next) | [D-strand-speculation.md](docs/backlog/D-strand-speculation.md) |
 | 10 | Core Views | queued | [core-views.md](docs/backlog/core-views.md) |
 | 11 | Counterfactual Inspection | queued | [counterfactual-inspection.md](docs/backlog/counterfactual-inspection.md) |
 
