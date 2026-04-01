@@ -1,6 +1,6 @@
 # Cycle E — DebuggerSession
 
-**Status:** queued
+**Status:** closed (hill partially met — pinning deferred to pin-design.md)
 
 ## Sponsor Human
 

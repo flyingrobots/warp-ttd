@@ -10,6 +10,10 @@ This project will use [Semantic Versioning](https://semver.org/) starting at
 
 ### Added
 
+- **DebuggerSession** — app-layer domain object wrapping
+  TtdHostAdapter. Manages navigation, snapshot state, and pinned
+  observations. TUI refactored to consume sessions. CLI `session
+  --json` command. Lint ceiling dropped from 140 to 117.
 - **writerId on ReceiptSummary** — optional `writerId` field shows
   who wrote each receipt. Wired through git-warp, echo, and scenario
   adapters. TUI receipts table includes Writer column.

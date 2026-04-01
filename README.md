@@ -42,6 +42,7 @@ provenance-bearing.
 - Inspect effect emissions and delivery observations (delivered,
   suppressed, failed, skipped)
 - See execution context (live, replay, debug)
+- Pin observations to compare across frames
 
 ### Control
 
@@ -81,7 +82,8 @@ Select an adapter from the connect page:
   replay suppression, and multi-writer conflicts
 
 Navigate with `n`/`→` (forward), `p`/`←` (backward), `g` (jump to
-frame), `d` (disconnect), `[`/`]` (switch pages).
+frame), `P` (pin observation), `u` (unpin), `d` (disconnect),
+`[`/`]` (switch pages).
 
 ### CLI
 
@@ -105,7 +107,7 @@ node --experimental-strip-types ./src/cli.ts context --json
 ### Tests
 
 ```sh
-npm test                 # fast suite (48 tests)
+npm test                 # fast suite (61 tests)
 npm run test:integration # git-warp integration (10 tests)
 ```
 
@@ -113,10 +115,11 @@ npm run test:integration # git-warp integration (10 tests)
 
 ```text
 Delivery Adapters (CLI, TUI, MCP, Web)
-  → TTD Application Core
-    → TTD Ports (TtdHostAdapter)
-      → Host Adapters (echo fixture, git-warp, scenario fixture)
-        → WARP Substrates (git-warp, Echo)
+  → DebuggerSession (investigation state, pins)
+    → TTD Application Core
+      → TTD Ports (TtdHostAdapter)
+        → Host Adapters (echo fixture, git-warp, scenario fixture)
+          → WARP Substrates (git-warp, Echo)
 ```
 
 Key concepts:
@@ -129,8 +132,8 @@ Key concepts:
 - **Effect emission** — substrate fact that something was produced
 - **Delivery observation** — what happened to an effect at each sink
 - **PlaybackHead** — substrate-facing coordination primitive
-- **DebuggerSession** — required foundation for speculative
-  investigation (next abstraction)
+- **DebuggerSession** — app-layer investigation state: wraps a
+  playback head, manages snapshot + pinned observations
 
 ## Documents
 

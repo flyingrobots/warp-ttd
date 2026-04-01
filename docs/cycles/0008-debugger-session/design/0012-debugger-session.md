@@ -1,6 +1,6 @@
 # Design Doc 0012 — DebuggerSession
 
-**Status:** in progress
+**Status:** closed
 **Cycle:** 0008-debugger-session
 
 ## Sponsor Human
