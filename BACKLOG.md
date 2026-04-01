@@ -54,6 +54,7 @@ design layout → speculation → core views → capstone.
 | Item | File |
 |------|------|
 | Cool Ideas (Effect Slice) | [cool-ideas-effect-slice.md](docs/backlog/cool-ideas-effect-slice.md) |
+| Cool Ideas (Braille Rendering) | [cool-ideas-braille-rendering.md](docs/backlog/cool-ideas-braille-rendering.md) |
 
 ## Deferred
 
