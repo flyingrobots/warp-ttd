@@ -10,6 +10,27 @@ This project will use [Semantic Versioning](https://semver.org/) starting at
 
 ### Added
 
+- **METHOD.md** — formal specification of the cycle-based development
+  system. Filesystem-native backlog with priority lanes (`asap/`,
+  `up-next/`, `cool-ideas/`, `bad-code/`), legends for named domains,
+  graveyard for rejected ideas.
+
+### Changed
+
+- **docs/ restructure** — design docs moved to `docs/design/<cycle>/`,
+  retrospectives to `docs/method/retro/<cycle>/`, backlog to
+  `docs/method/backlog/` with priority subdirectories. Root `BACKLOG.md`
+  removed (filesystem is the index). `VISION.md` moved to repo root.
+  Foundational architecture docs promoted to `docs/design/` root.
+  Completed backlog items archived to `docs/method/graveyard/`.
+- **CONTRIBUTING.md** — thinned out, cross-references updated to new
+  docs/ paths.
+- **ALL_CAPS convention** — signpost docs (`README.md`, `VISION.md`,
+  `METHOD.md`, `CONTRIBUTING.md`) live at root or `docs/`, never
+  deeper.
+
+### Added (prior)
+
 - **Navigator redesign** — position bar, lane tree with depth-first
   pre-order, horizontal receipt/effect split, capability-driven
   section states, row budgets, truncation. Extracted to testable

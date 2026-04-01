@@ -27,15 +27,15 @@ Before promoting a new direction, ask:
 - does this preserve substrate honesty?
 - does this keep the protocol narrow enough to survive?
 
-If the answer is unclear, the work belongs in the backlog, not the
-roadmap.
+If the answer is unclear, the work belongs in the backlog, not a cycle.
 
 ## Development Loop
 
 Each cycle follows the same explicit loop:
 
-1. **Design docs** — write or revise design docs. Define the playback
-   questions that will be answered after implementation.
+1. **Design docs** — write or revise design docs in
+   `docs/design/<cycle>/`. Define the playback questions that will
+   be answered after implementation.
 2. **Tests as spec** — encode behavior as executable tests.
 3. **Implementation** — build it.
 4. **Playback** — answer every playback question from the design doc,
@@ -43,15 +43,14 @@ Each cycle follows the same explicit loop:
    Do not proceed to the retrospective until every playback question
    has a clear yes/no answer.
 5. **Retrospective** — evaluate what shipped, what worked, what didn't,
-   and what was learned. The retro must include:
+   and what was learned. Write the retro in
+   `docs/method/retro/<cycle>/`. The retro must include:
    - **Drift check:** compare what was built against the design doc.
      Call out any divergence — intentional or accidental.
-   - **Tech/design debt:** log debt as new items in `docs/backlog/`.
-   - **Cool ideas:** capture ideas and tangents in `docs/backlog/` as
-     seeds, not commitments.
+   - **Tech/design debt:** log debt in `docs/method/backlog/bad-code/`.
+   - **Cool ideas:** capture ideas in `docs/method/backlog/cool-ideas/`.
 6. **README update** — rewrite the root README to reflect reality.
-7. **Close the cycle** — update BACKLOG.md, CHANGELOG.md, and the
-   cycle's backlog file status.
+7. **Close the cycle** — update CHANGELOG.md.
 
 This loop is part of the process, not optional cleanup.
 
@@ -77,8 +76,8 @@ get a clear yes, that is the signal.
 
 **Hill partially met** — merge what is honest. The retrospective
 explains the gap (drift check). Remaining work is logged as debt in
-`docs/backlog/`. The cycle closes but the hill is marked partial. No
-pretending.
+`docs/method/backlog/`. The cycle closes but the hill is marked partial.
+No pretending.
 
 **Hill not met** — do not merge to main. The retrospective explains
 why. Two options:
@@ -95,34 +94,23 @@ why. Two options:
 
 ## Backlog
 
-### Structure
-
 Backlog items live as individual Markdown files in
-[`docs/backlog/`](backlog/).
-
-Each file is a self-contained cycle proposal with:
-
-- status (`queued`, `active`, `closed`)
-- sponsor human and sponsor agent
-- hill
-- playback questions
-- non-goals
-- scope
-
-The root [`BACKLOG.md`](../BACKLOG.md) is an index that links to
-these files and shows the current sequence.
+`docs/method/backlog/`. Priority is communicated through
+subdirectories — see [METHOD.md](../../METHOD.md) for the full
+structure.
 
 ### Lifecycle
 
-1. **Queued:** the item lives in `docs/backlog/` with `status: queued`.
-2. **Active:** when a cycle begins, update the status to `active` and
-   promote its design doc(s) into the cycle's `docs/cycles/` directory.
-   The backlog file stays as the cycle's anchor document.
-3. **Closed:** after the retrospective, update the status to `closed`.
-   The backlog file remains as a historical record.
+1. **Backlog:** the item lives in `docs/method/backlog/` under the
+   appropriate priority lane.
+2. **Active:** when a cycle begins, the item is promoted to a design
+   doc in `docs/design/<cycle>/`. The backlog file is removed.
+3. **Done:** after the retrospective, the cycle has a design doc in
+   `docs/design/<cycle>/` and a retro in `docs/method/retro/<cycle>/`.
+4. **Rejected:** if the idea is killed, move it to
+   `docs/method/graveyard/` with a note explaining why.
 
 ### Rules
 
 - Do not let roadmap thinking drift into untracked chat context.
-- Every cycle must have a backlog file before work begins.
-- The root `BACKLOG.md` index must stay current with reality.
+- Every cycle must have a design doc before work begins.

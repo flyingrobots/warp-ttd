@@ -59,7 +59,7 @@ provenance-bearing.
 - **Provenance Viewer** — select any value and trace its reverse
   causal cone through the receipt chain
 
-See [VISION.md](docs/VISION.md) for the full architecture and
+See [VISION.md](VISION.md) for the full architecture and
 design philosophy.
 
 ## Quick Start
@@ -137,15 +137,18 @@ Key concepts:
 
 ## Documents
 
-- [**VISION.md**](docs/VISION.md) — north star: what TTD is, how it
+- [**VISION.md**](VISION.md) — north star: what TTD is, how it
   thinks, where it's going
+- [**METHOD.md**](METHOD.md) — how work moves from idea to shipped code
 - [**CONTRIBUTING.md**](CONTRIBUTING.md) — quickstart, rules, and links
-  to [doctrine](docs/doctrine.md), [glossary](docs/glossary.md),
-  [cycle process](docs/cycle-process.md), and
-  [release discipline](docs/release.md)
-- [**BACKLOG.md**](BACKLOG.md) — cycle history and upcoming work
+  to [doctrine](docs/design/doctrine.md),
+  [glossary](docs/design/glossary.md),
+  [process](docs/method/process.md), and
+  [release](docs/method/release.md)
 
-Cycle design docs and retrospectives: `docs/cycles/`
+Design docs: `docs/design/`
+Retrospectives: `docs/method/retro/`
+Backlog: `docs/method/backlog/`
 Wesley schema: `schemas/warp-ttd-protocol.graphql`
 
 ## Dependencies

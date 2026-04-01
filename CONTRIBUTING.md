@@ -24,9 +24,8 @@ If those all pass, you're ready.
    structured errors.
 4. **Do not blur observation and mutation.** TTD observes. It does not
    orchestrate, simulate, or control the host.
-5. **No new lint violations.** A lint ceiling is stored in
-   `lint-ceiling.txt`. New code must not push the count above it.
-   The ceiling drops when a cycle pays lint debt.
+5. **No new lint violations.** The lint ratchet enforces zero errors.
+   New code must not introduce regressions.
 
 ## Build Order
 
@@ -66,15 +65,8 @@ Local testing policy:
 ## UX Language Rules
 
 Debugger language should stay honest without becoming gratuitously
-opaque. See [docs/glossary.md](docs/glossary.md) for the canonical
-term list.
-
-Prefer: `frame`, `worldline`, `receipt`, `conflict`, `counterfactual`,
-`fork`.
-
-Avoid: fake simplicity that lies about the substrate, host-internal
-jargon where the protocol has a clearer concept, vague labels that blur
-observation and mutation.
+opaque. See [docs/design/glossary.md](docs/design/glossary.md) for
+the canonical term list.
 
 ## Git Workflow
 
@@ -82,31 +74,21 @@ Prefer small, honest commits. Prefer additive commits over history
 surgery. Prefer merges over rebases unless there is a compelling,
 explicitly discussed reason otherwise.
 
-The point is not aesthetic Git history. The point is trustworthy
-collaboration.
-
 ## Read Before Non-Trivial Changes
 
-Before touching architecture, protocol types, or adapter boundaries:
-
-- [docs/doctrine.md](docs/doctrine.md) — project philosophy,
-  architecture, protocol guardrails
-- [docs/glossary.md](docs/glossary.md) — canonical domain terminology
-- [docs/VISION.md](docs/VISION.md) — north star and current truth
-- [BACKLOG.md](BACKLOG.md) — what's planned and sequenced
+- [VISION.md](VISION.md) — north star and current truth
+- [METHOD.md](METHOD.md) — how work moves from idea to shipped code
+- [docs/design/doctrine.md](docs/design/doctrine.md) — project
+  philosophy, architecture, protocol guardrails
+- [docs/design/glossary.md](docs/design/glossary.md) — canonical
+  domain terminology
 
 For maintainers running development cycles:
 
-- [docs/cycle-process.md](docs/cycle-process.md) — cycle design,
+- [docs/method/process.md](docs/method/process.md) — cycle design,
   playback, retrospectives, backlog lifecycle
-- [docs/release.md](docs/release.md) — release flow and tagging rules
-
-Key design docs:
-
-- [0001 — Why warp-ttd](docs/cycles/0001-bootstrap/design/0001-why-warp-ttd.md)
-- [0004 — Protocol surface](docs/cycles/0001-bootstrap/design/0004-ttd-protocol-surface.md)
-- [0008 — Protocol freeze](docs/cycles/0004-protocol-freeze/design/0008-protocol-freeze.md)
-- [0009 — Effect emission](docs/cycles/0005-effect-emission/design/0009-effect-emission-protocol.md)
+- [docs/method/release.md](docs/method/release.md) — release flow
+  and tagging rules
 
 ## Decision Rule
 
