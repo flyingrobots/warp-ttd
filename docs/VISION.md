@@ -292,6 +292,62 @@ contract.
 - Human and agent surface interpretation
 - Product-specific ontology
 
+## Core Views
+
+The debugger provides three foundational views into the substrate.
+These are the views that make TTD a real debugging instrument.
+
+### Worldline Viewer
+
+The worldline is shown like a `git log` — ticks are commits, strands
+are branches. The user can:
+
+- See the full causal history of a worldline as a scrollable list
+- See strands forking from specific ticks (like branches from commits)
+- Jump to any tick and step forward, backward, or fork
+- See which writers contributed at each tick
+- See the BTR digest (commit hash equivalent) for each tick
+
+This is the primary navigation view. Everything else is anchored to
+"what tick am I looking at?"
+
+### WARP Graph Viewer
+
+At any tick, the user can inspect the full materialized WARP graph:
+
+- **Nodes** — all graph nodes with their IDs and properties
+- **Edges** — all edges with from/to/label and edge properties
+- **Attachments plane** — content blobs attached to nodes and edges,
+  addressed by content hash. The attachments plane is a separate
+  layer from the graph topology — it carries the actual data payloads
+  (binary blobs, documents, artifacts) while the graph carries the
+  causal structure.
+
+The graph viewer shows the state as it exists at the selected tick.
+Stepping forward or backward shows how the graph evolves. Diffing
+two ticks shows what changed.
+
+### Provenance Viewer
+
+Select any value in the materialized graph and trace its complete
+reverse causal cone:
+
+- The BTR chain forms a linked structure of the rewrites that affected
+  the selected value
+- Walk backwards through time to see WHY a value is what it is
+- Unlike a traditional debugger that says `x = 5`, the provenance
+  viewer shows: `x = 5 because writer alice applied rewrite R at
+  tick 47, which set x = 2 + 3, where 2 came from writer bob at
+  tick 31 and 3 came from writer carol at tick 38`
+- At each step, see the admitted rewrite AND the rejected alternatives
+  (counterfactuals) — what would have happened if a different writer
+  had won
+
+The provenance viewer is receipt-powered. Each TickReceipt carries
+per-operation outcomes (applied, superseded, redundant) with the
+writer, the target entity, and the footprint. Following the receipt
+chain backwards reconstructs the full causal history of any value.
+
 ## Where We Are
 
 ### Implemented
