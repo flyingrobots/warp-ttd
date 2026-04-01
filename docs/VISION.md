@@ -29,7 +29,7 @@ Echo, and future WARP-based runtimes through host adapters.
   workflows or runtime policy, but it may drive explicit
   debugger/scenario controls through substrate-defined capabilities.
 - Not a UI framework. The TUI is one delivery adapter among many.
-- Not XYPH. It does not interpret domain meaning.
+- Not an application. It does not interpret domain meaning.
 
 ## The Three-Layer Invariant
 
@@ -46,7 +46,7 @@ The system obeys a strict boundary discipline:
    silently rewrites canonical history. Every continuation from the
    past is explicit, capability-gated, and provenance-bearing.
 
-3. **Application (domain act)** — XYPH and apps interpret meaning,
+3. **Application (domain act)** — applications interpret meaning,
    policy, and workflows. They consume substrate facts and debugger
    observations. warp-ttd does not own this layer.
 
@@ -285,7 +285,7 @@ contract.
 - Delivery adapters (CLI, TUI, MCP)
 - Wesley schema compilation
 
-### XYPH owns
+### Applications own
 
 - Domain meaning of effects (which effects are lawful, policy-bounded)
 - Governance and workflow semantics

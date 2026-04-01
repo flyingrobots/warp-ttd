@@ -5,14 +5,14 @@
 
 ## Context
 
-XYPH requires outbound effect emission, replay-safe delivery suppression,
-and debugger-visible output provenance. Per the cross-repo alignment doc
-(`xyph/design/effect-emission-alignment.md`):
+Applications built on WARP require outbound effect emission, replay-safe
+delivery suppression, and debugger-visible output provenance. The
+canonical split:
 
 - git-warp owns generic substrate facts for emitted effects and delivery
   observations
 - warp-ttd inspects those facts through explicit protocol envelopes
-- XYPH interprets them with domain meaning
+- Applications interpret them with domain meaning
 
 git-warp has not yet landed substrate support for effect emission or
 delivery observations. This design defines the warp-ttd protocol surface
