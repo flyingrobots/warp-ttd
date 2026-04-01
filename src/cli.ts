@@ -1,13 +1,14 @@
 import { EchoFixtureAdapter } from "./adapters/echoFixtureAdapter.ts";
+import { DebuggerSession } from "./app/debuggerSession.ts";
 import {
   UnexpectedArgumentsError,
   UnknownFlagsError,
   UnsupportedCommandError
 } from "./errors.ts";
 
-type Command = "demo" | "hello" | "catalog" | "frame" | "step" | "effects" | "deliveries" | "context";
+type Command = "demo" | "hello" | "catalog" | "frame" | "step" | "effects" | "deliveries" | "context" | "session";
 
-const VALID_COMMANDS = new Set<Command>(["demo", "hello", "catalog", "frame", "step", "effects", "deliveries", "context"]);
+const VALID_COMMANDS = new Set<Command>(["demo", "hello", "catalog", "frame", "step", "effects", "deliveries", "context", "session"]);
 
 function isValidCommand(cmd: string): cmd is Command {
   return (VALID_COMMANDS as Set<string>).has(cmd);
@@ -96,6 +97,16 @@ async function main(): Promise<void> {
 
   if (command === "context") {
     print("ExecutionContext", await adapter.executionContext());
+    return;
+  }
+
+  if (command === "session") {
+    const session = await DebuggerSession.create(adapter, headId);
+    if (json) {
+      print("SerializedSession", session.toJSON());
+    } else {
+      printSection("Session", session.toJSON());
+    }
     return;
   }
 

@@ -29,16 +29,11 @@ import { renderWaveShader } from "./shaders/bgShader.ts";
 import { renderDagShader } from "./shaders/dagShader.ts";
 import { resolveAdapter } from "../app/adapterRegistry.ts";
 import type { AdapterConfig } from "../app/adapterRegistry.ts";
-import type { TtdHostAdapter } from "../adapter.ts";
+import { DebuggerSession } from "../app/debuggerSession.ts";
+import type { SessionSnapshot } from "../app/debuggerSession.ts";
 import type {
-  DeliveryObservationSummary,
-  EffectEmissionSummary,
-  ExecutionContext,
   HostHello,
-  LaneCatalog,
-  PlaybackFrame,
-  PlaybackHeadSnapshot,
-  ReceiptSummary
+  LaneCatalog
 } from "../protocol.ts";
 
 // ---------------------------------------------------------------------------
@@ -48,32 +43,18 @@ import type {
 type Msg =
   | { type: "quit" }
   | { type: "pulse"; dt: number }
-  | { type: "select-adapter"; adapter: TtdHostAdapter; defaultHeadId: string; generation: number }
-  | { type: "adapter-ready"; hello: HostHello; catalog: LaneCatalog; head: PlaybackHeadSnapshot; frame: PlaybackFrame; receipts: ReceiptSummary[]; emissions: EffectEmissionSummary[]; observations: DeliveryObservationSummary[]; execCtx: ExecutionContext; generation: number }
-  | { type: "step-result"; head: PlaybackHeadSnapshot; frame: PlaybackFrame; receipts: ReceiptSummary[]; emissions: EffectEmissionSummary[]; observations: DeliveryObservationSummary[] }
-  | { type: "frame-result"; frame: PlaybackFrame; receipts: ReceiptSummary[]; emissions: EffectEmissionSummary[]; observations: DeliveryObservationSummary[] }
+  | { type: "session-ready"; session: DebuggerSession; hello: HostHello; catalog: LaneCatalog; generation: number }
+  | { type: "snapshot-updated"; snapshot: SessionSnapshot }
   | { type: "connect-error"; message: string; generation?: number }
   | { type: "nav-error"; message: string }
-  | { type: "disconnect" }
-  | { type: "nav"; direction: "next" | "prev" }
-  | { type: "step-forward" }
-  | { type: "go-to-frame"; frameIndex: number }
-  | { type: "input-char"; char: string }
-  | { type: "input-delete" }
-  | { type: "confirm-input" };
+  | { type: "disconnect" };
 
 interface Model {
   time: number;
-  adapter: TtdHostAdapter | null;
-  defaultHeadId: string;
+  // Session state (replaces raw adapter/head/frame/receipts/emissions/observations/execCtx)
+  session: DebuggerSession | null;
   hello: HostHello | null;
   catalog: LaneCatalog | null;
-  head: PlaybackHeadSnapshot | null;
-  frame: PlaybackFrame | null;
-  receipts: ReceiptSummary[];
-  emissions: EffectEmissionSummary[];
-  observations: DeliveryObservationSummary[];
-  execCtx: ExecutionContext | null;
   // Connection wizard state
   connectStep: "choose" | "input-path" | "input-graph";
   connectChoice: number;
@@ -81,9 +62,8 @@ interface Model {
   repoPath: string;
   error: string | null;
   connectGeneration: number;
-  // Connection lifecycle
   connecting: boolean;
-  // Jump-to-tick prompt state
+  // Jump-to-frame prompt state
   jumpInput: string | null;
 }
 
@@ -115,13 +95,14 @@ function centerBox(bg: Surface, content: Surface, title: string): Surface {
 function connectLayout(model: Model, w: number, h: number): Surface {
   const bg = renderWaveShader(w, h, model.time);
 
-  if (model.adapter) {
+  if (model.session !== null) {
     const info = vstack(
       surfaceToString(badge("CONNECTED", { variant: "success", ctx }), ctx.style),
       "",
       ` Host: ${model.hello?.hostKind ?? "unknown"}`,
       ` Protocol: ${model.hello?.protocolVersion ?? "?"}`,
       ` Lanes: ${(model.catalog?.lanes.length ?? 0).toString()}`,
+      ` Session: ${model.session.sessionId.slice(0, 8)}`,
       "",
       " Use [ / ] to switch pages.",
       " Press [d] to disconnect."
@@ -176,11 +157,12 @@ function connectLayout(model: Model, w: number, h: number): Surface {
 }
 
 function navigatorLayout(model: Model, w: number, h: number): Surface {
-  if (!model.adapter || !model.frame || !model.head) {
+  if (model.session === null) {
     const bg = renderWaveShader(w, h, model.time);
     return centerBox(bg, stringToSurface(" Connect to a host first.", 40, 1), "Navigator");
   }
 
+  const snap = model.session.snapshot;
   const final = createSurface(w, h);
   final.fill({ char: " " });
 
@@ -190,7 +172,7 @@ function navigatorLayout(model: Model, w: number, h: number): Surface {
   final.blit(dagBox, 1, 1);
 
   // Frame info
-  const lanes = model.frame.lanes
+  const lanes = snap.frame.lanes
     .map((l) => {
       const changed = l.changed ? ctx.style.styled(ctx.status("warning"), "*") : " ";
       return `  ${changed} ${l.laneId.padEnd(16)} tick ${l.coordinate.tick.toString()}`;
@@ -198,11 +180,11 @@ function navigatorLayout(model: Model, w: number, h: number): Surface {
     .join("\n");
 
   const frameInfo = vstack(
-    ` Frame ${model.frame.frameIndex.toString()} / ${model.head.label}`,
+    ` Frame ${snap.frame.frameIndex.toString()} / ${snap.head.label}`,
     "",
     lanes,
     "",
-    ` Receipts: ${model.receipts.length.toString()}`
+    ` Receipts: ${snap.receipts.length.toString()}`
   );
   const infoSurf = stringToSurface(frameInfo, w - 4, frameInfo.split("\n").length);
   const infoBox = boxSurface(infoSurf, { title: " Playback Head ", width: w - 2, ctx });
@@ -211,7 +193,7 @@ function navigatorLayout(model: Model, w: number, h: number): Surface {
   // Receipt summaries
   let receiptBox: Surface;
 
-  if (model.receipts.length > 0) {
+  if (snap.receipts.length > 0) {
     const receiptColumns: TableColumn[] = [
       { header: "Lane", width: 16 },
       { header: "Writer", width: 14 },
@@ -219,9 +201,9 @@ function navigatorLayout(model: Model, w: number, h: number): Surface {
       { header: "Rejected", width: 9 },
       { header: "CF", width: 5 }
     ];
-    const receiptRows = model.receipts.map((r) => [
+    const receiptRows = snap.receipts.map((r) => [
       r.laneId,
-      r.writerId ?? "—",
+      r.writerId ?? "\u2014",
       r.admittedRewriteCount.toString(),
       r.rejectedRewriteCount.toString(),
       r.counterfactualCount.toString()
@@ -238,7 +220,7 @@ function navigatorLayout(model: Model, w: number, h: number): Surface {
   // Effect emissions + delivery observations
   const yOffset = dagBox.height + infoBox.height + receiptBox.height + 4;
 
-  if (model.emissions.length > 0) {
+  if (snap.emissions.length > 0) {
     const columns: TableColumn[] = [
       { header: "Effect", width: 14 },
       { header: "Lane", width: 16 },
@@ -247,24 +229,35 @@ function navigatorLayout(model: Model, w: number, h: number): Surface {
     ];
 
     // Build rows from emissions, joining with observations where available
-    const rows: string[][] = model.emissions.flatMap((em) => {
-      const deliveries = model.observations.filter((o) => o.emissionId === em.emissionId);
+    const rows: string[][] = snap.emissions.flatMap((em) => {
+      const deliveries = snap.observations.filter((o) => o.emissionId === em.emissionId);
       if (deliveries.length === 0) {
         return [[em.effectKind, em.laneId, "(none)", "emitted"]];
       }
       return deliveries.map((o) => [em.effectKind, em.laneId, o.sinkId.replace("sink:", ""), o.outcome]);
     });
 
-    const modeLabel = model.execCtx !== null ? ` [${model.execCtx.mode}]` : "";
+    const modeLabel = ` [${snap.execCtx.mode}]`;
     const tableSurf = tableSurface({ columns, rows, ctx });
     const tableBox = boxSurface(tableSurf, { title: ` Effects${modeLabel} `, width: w - 2, ctx });
     final.blit(tableBox, 1, yOffset);
   }
 
+  // Pins
+  const pins = model.session.pins;
+  if (pins.length > 0) {
+    const pinLines = pins.map((p) =>
+      `  [f${p.pinnedAt.toString()}] ${p.emission.effectKind} \u2192 ${p.observation.sinkId.replace("sink:", "")}: ${p.observation.outcome}`
+    ).join("\n");
+    const pinSurf = stringToSurface(pinLines, w - 4, pinLines.split("\n").length);
+    const pinBox = boxSurface(pinSurf, { title: ` Pins (${pins.length.toString()}) `, width: w - 2, ctx });
+    final.blit(pinBox, 1, h - pinBox.height - 3);
+  }
+
   // Controls / jump prompt
   const controlText = model.jumpInput !== null
     ? ` Jump to frame: ${model.jumpInput}_  [Enter] Go  [Esc] Cancel`
-    : " [n/\u2192] Fwd  [p/\u2190] Back  [g] Jump to frame  [d] Disconnect";
+    : " [n/\u2192] Fwd  [p/\u2190] Back  [g] Jump  [P] Pin  [u] Unpin  [d] Disc";
   const controlSurf = stringToSurface(controlText, w - 2, 1);
   final.blit(controlSurf, 1, h - 2);
 
@@ -272,11 +265,12 @@ function navigatorLayout(model: Model, w: number, h: number): Surface {
 }
 
 function inspectorLayout(model: Model, w: number, h: number): Surface {
-  if (!model.adapter || !model.frame || !model.head || !model.hello) {
+  if (model.session === null || model.hello === null) {
     const bg = renderWaveShader(w, h, model.time);
     return centerBox(bg, stringToSurface(" Connect to a host first.", 40, 1), "Inspector");
   }
 
+  const snap = model.session.snapshot;
   const final = createSurface(w, h);
   final.fill({ char: " " });
 
@@ -286,7 +280,8 @@ function inspectorLayout(model: Model, w: number, h: number): Surface {
     ` Version:      ${model.hello.hostVersion}`,
     ` Protocol:     ${model.hello.protocolVersion}`,
     ` Schema:       ${model.hello.schemaId}`,
-    ` Capabilities: ${model.hello.capabilities.length.toString()}`
+    ` Capabilities: ${model.hello.capabilities.length.toString()}`,
+    ` Session:      ${model.session.sessionId.slice(0, 8)}`
   );
   const hostSurf = stringToSurface(hostInfo, w - 4, hostInfo.split("\n").length);
   final.blit(boxSurface(hostSurf, { title: " Host ", width: w - 2, ctx }), 1, 1);
@@ -304,8 +299,8 @@ function inspectorLayout(model: Model, w: number, h: number): Surface {
   final.blit(boxSurface(laneSurf, { title: " Lanes ", width: w - 2, ctx }), 1, hostSurf.height + 3);
 
   // Detailed receipts
-  if (model.receipts.length > 0) {
-    const detailLines = model.receipts.map((r) =>
+  if (snap.receipts.length > 0) {
+    const detailLines = snap.receipts.map((r) =>
       vstack(
         `  ${r.receiptId}`,
         `    Lane: ${r.laneId}  Tick: ${r.inputTick.toString()} -> ${r.outputTick.toString()}`,
@@ -325,7 +320,7 @@ function inspectorLayout(model: Model, w: number, h: number): Surface {
 }
 
 // ---------------------------------------------------------------------------
-// Connect helper — extracted to avoid duplicating async connect logic
+// Connect helper
 // ---------------------------------------------------------------------------
 
 function makeConnectCmd(
@@ -335,16 +330,10 @@ function makeConnectCmd(
   return async (emit: (msg: Msg) => void): Promise<void> => {
     try {
       const { adapter, defaultHeadId } = await resolveAdapter(config);
-      emit({ type: "select-adapter", adapter, defaultHeadId, generation: gen });
+      const session = await DebuggerSession.create(adapter, defaultHeadId);
       const hello = await adapter.hello();
       const catalog = await adapter.laneCatalog();
-      const head = await adapter.playbackHead(defaultHeadId);
-      const frame = await adapter.frame(defaultHeadId);
-      const receipts = await adapter.receipts(defaultHeadId);
-      const emissions = await adapter.effectEmissions(defaultHeadId);
-      const observations = await adapter.deliveryObservations(defaultHeadId);
-      const execCtx = await adapter.executionContext();
-      emit({ type: "adapter-ready", hello, catalog, head, frame, receipts, emissions, observations, execCtx, generation: gen });
+      emit({ type: "session-ready", session, hello, catalog, generation: gen });
     } catch (err) {
       emit({ type: "connect-error", message: err instanceof Error ? err.message : String(err), generation: gen });
     }
@@ -357,16 +346,9 @@ function makeConnectCmd(
 
 const initialModel: Model = {
   time: 0,
-  adapter: null,
-  defaultHeadId: "",
+  session: null,
   hello: null,
   catalog: null,
-  head: null,
-  frame: null,
-  receipts: [],
-  emissions: [],
-  observations: [],
-  execCtx: null,
   connectStep: "choose",
   connectChoice: 0,
   inputValue: process.cwd(),
@@ -464,15 +446,12 @@ const mainApp = {
     }
 
     // --- Disconnect ---
-    if (msg.type === "disconnect" && pm.adapter) {
+    if (msg.type === "disconnect" && pm.session !== null) {
       pm = {
         ...pm,
-        adapter: null,
+        session: null,
         hello: null,
         catalog: null,
-        head: null,
-        frame: null,
-        receipts: [],
         connectStep: "choose",
         connectChoice: 0
       };
@@ -483,54 +462,41 @@ const mainApp = {
     // --- Connect error (generation-gated when from connect flow) ---
     if (msg.type === "connect-error") {
       if (msg.generation !== undefined && msg.generation !== pm.connectGeneration) return [nextModel, fCmds];
-      pm = { ...pm, adapter: null, connecting: false, error: msg.message, connectStep: "choose" };
+      pm = { ...pm, session: null, connecting: false, error: msg.message, connectStep: "choose" };
       nextModel = { ...nextModel, pageModels: updateAllPages(pm) };
       return [nextModel, fCmds];
     }
 
-    // --- Nav error (non-destructive — keeps adapter connected) ---
+    // --- Nav error (non-destructive — keeps session connected) ---
     if (msg.type === "nav-error") {
       pm = { ...pm, error: msg.message };
       nextModel = { ...nextModel, pageModels: updateAllPages(pm) };
       return [nextModel, fCmds];
     }
 
-    // --- Adapter ready (guard against stale async results) ---
-    if (msg.type === "adapter-ready") {
+    // --- Session ready (guard against stale async results) ---
+    if (msg.type === "session-ready") {
       if (msg.generation !== pm.connectGeneration) return [nextModel, fCmds];
       pm = {
         ...pm,
         connecting: false,
-        adapter: pm.adapter,
+        session: msg.session,
         hello: msg.hello,
-        catalog: msg.catalog,
-        head: msg.head,
-        frame: msg.frame,
-        receipts: msg.receipts,
-        emissions: msg.emissions,
-        observations: msg.observations,
-        execCtx: msg.execCtx
+        catalog: msg.catalog
       };
       nextModel = { ...nextModel, activePageId: "nav", pageModels: updateAllPages(pm) };
       return [nextModel, fCmds];
     }
 
-    // --- Step result ---
-    if (msg.type === "step-result") {
-      pm = { ...pm, head: msg.head, frame: msg.frame, receipts: msg.receipts, emissions: msg.emissions, observations: msg.observations };
-      nextModel = { ...nextModel, pageModels: updateAllPages(pm) };
-      return [nextModel, fCmds];
-    }
-
-    // --- Frame result ---
-    if (msg.type === "frame-result") {
-      pm = { ...pm, frame: msg.frame, receipts: msg.receipts, emissions: msg.emissions, observations: msg.observations };
+    // --- Snapshot updated (after step/seek) ---
+    if (msg.type === "snapshot-updated") {
+      // Session has already been mutated; just trigger a re-render
       nextModel = { ...nextModel, pageModels: updateAllPages(pm) };
       return [nextModel, fCmds];
     }
 
     // --- Connection wizard keyboard handling ---
-    if (!pm.adapter && isKeyMsg(msg)) {
+    if (pm.session === null && isKeyMsg(msg)) {
       if (pm.connectStep === "choose") {
         if (msg.key === "down" || msg.key === "j") {
           pm = { ...pm, connectChoice: Math.min(pm.connectChoice + 1, CONNECT_OPTIONS.length - 1) };
@@ -592,31 +558,25 @@ const mainApp = {
     }
 
     // --- Navigator keyboard handling (blocked while connecting) ---
-    if (pm.adapter !== null && !pm.connecting && isKeyMsg(msg)) {
-      const headId = pm.defaultHeadId;
-      const currentAdapter = pm.adapter;
+    if (pm.session !== null && !pm.connecting && isKeyMsg(msg)) {
+      const currentSession = pm.session;
 
-      // Jump-to-tick mode — must be checked first so the prompt
+      // Jump-to-frame mode — must be checked first so the prompt
       // intercepts all keys (including n/p/arrows) while active
       if (pm.jumpInput !== null) {
         if (msg.key === "escape") {
           pm = { ...pm, jumpInput: null };
         } else if (msg.key === "enter") {
-          const tickIndex = parseInt(pm.jumpInput, 10);
+          const frameIndex = parseInt(pm.jumpInput, 10);
           pm = { ...pm, jumpInput: null };
-          if (!Number.isNaN(tickIndex)) {
-            const adapter = currentAdapter;
+          if (!Number.isNaN(frameIndex)) {
             nextModel = { ...nextModel, pageModels: updateAllPages(pm) };
             return [nextModel, [
               ...fCmds,
               async (emit: (msg: Msg) => void) => {
                 try {
-                  const frame = await adapter.seekToFrame(headId, tickIndex);
-                  const head = await adapter.playbackHead(headId);
-                  const receipts = await adapter.receipts(headId, frame.frameIndex);
-                  const emissions = await adapter.effectEmissions(headId, frame.frameIndex);
-                  const observations = await adapter.deliveryObservations(headId, frame.frameIndex);
-                  emit({ type: "step-result", head, frame, receipts, emissions, observations });
+                  const snapshot = await currentSession.seekToFrame(frameIndex);
+                  emit({ type: "snapshot-updated", snapshot });
                 } catch (err) {
                   emit({ type: "nav-error", message: err instanceof Error ? err.message : String(err) });
                 }
@@ -633,18 +593,12 @@ const mainApp = {
       }
 
       if (msg.key === "n" || msg.key === "right") {
-        // Step forward
-        const adapter = currentAdapter;
         return [nextModel, [
           ...fCmds,
           async (emit: (msg: Msg) => void) => {
             try {
-              const frame = await adapter.stepForward(headId);
-              const head = await adapter.playbackHead(headId);
-              const receipts = await adapter.receipts(headId, frame.frameIndex);
-              const emissions = await adapter.effectEmissions(headId, frame.frameIndex);
-              const observations = await adapter.deliveryObservations(headId, frame.frameIndex);
-              emit({ type: "step-result", head, frame, receipts, emissions, observations });
+              const snapshot = await currentSession.stepForward();
+              emit({ type: "snapshot-updated", snapshot });
             } catch (err) {
               emit({ type: "nav-error", message: err instanceof Error ? err.message : String(err) });
             }
@@ -653,18 +607,12 @@ const mainApp = {
       }
 
       if (msg.key === "p" || msg.key === "left") {
-        // Step backward
-        const adapter = currentAdapter;
         return [nextModel, [
           ...fCmds,
           async (emit: (msg: Msg) => void) => {
             try {
-              const frame = await adapter.stepBackward(headId);
-              const head = await adapter.playbackHead(headId);
-              const receipts = await adapter.receipts(headId, frame.frameIndex);
-              const emissions = await adapter.effectEmissions(headId, frame.frameIndex);
-              const observations = await adapter.deliveryObservations(headId, frame.frameIndex);
-              emit({ type: "step-result", head, frame, receipts, emissions, observations });
+              const snapshot = await currentSession.stepBackward();
+              emit({ type: "snapshot-updated", snapshot });
             } catch (err) {
               emit({ type: "nav-error", message: err instanceof Error ? err.message : String(err) });
             }
@@ -677,14 +625,26 @@ const mainApp = {
         nextModel = { ...nextModel, pageModels: updateAllPages(pm) };
         return [nextModel, fCmds];
       }
-    }
 
-    // --- select-adapter (set adapter on model after async connect) ---
-    if (msg.type === "select-adapter") {
-      if (msg.generation !== pm.connectGeneration) return [nextModel, fCmds];
-      pm = { ...pm, adapter: msg.adapter, defaultHeadId: msg.defaultHeadId };
-      nextModel = { ...nextModel, pageModels: updateAllPages(pm) };
-      return [nextModel, fCmds];
+      // Pin first observation at current frame
+      if (msg.key === "P" || msg.key === "shift+p") {
+        const obs = currentSession.snapshot.observations[0];
+        if (obs !== undefined) {
+          currentSession.pin(obs.observationId);
+          nextModel = { ...nextModel, pageModels: updateAllPages(pm) };
+        }
+        return [nextModel, fCmds];
+      }
+
+      // Unpin most recent pin
+      if (msg.key === "u") {
+        const lastPin = currentSession.pins[currentSession.pins.length - 1];
+        if (lastPin !== undefined) {
+          currentSession.unpin(lastPin.observation.observationId);
+          nextModel = { ...nextModel, pageModels: updateAllPages(pm) };
+        }
+        return [nextModel, fCmds];
+      }
     }
 
     return [nextModel, fCmds];
