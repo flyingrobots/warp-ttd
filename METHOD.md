@@ -49,6 +49,7 @@ for doing them well.
 docs/
   method/                           the workflow system
     backlog/                        work not yet started
+      inbox/                        raw ideas, from anyone, anytime
       asap/                         do this now
       up-next/                      do this soon
       cool-ideas/                   experiments, wild thoughts
@@ -78,10 +79,25 @@ The backlog is a directory of Markdown files. Each file is a
 self-contained description of work worth doing. There is no index file —
 the filesystem is the index.
 
+### Inbox
+
+The inbox (`backlog/inbox/`) is the landing zone for raw ideas. Anyone
+— human or agent — can toss something in at any time. No ceremony
+required. Write down what you can: a sentence, a paragraph, a sketch.
+It does not need a legend, a full design, or even a clear scope. The
+point is to capture the thought before it evaporates.
+
+Agents should use the inbox freely. If you notice bad code while
+working, a cool pattern worth exploring, or a feature gap — drop a
+file in `inbox/` and keep moving. Do not break flow to organize it.
+
+The inbox is processed during backlog maintenance (see below).
+
 ### Priority lanes
 
 Priority is communicated through subdirectories:
 
+- **`inbox/`** — raw ideas, unprocessed. From anyone, anytime.
 - **`asap/`** — urgent. Pull this into a cycle soon.
 - **`up-next/`** — next in line. Dependencies are clear.
 - **`cool-ideas/`** — interesting experiments, far-fetched thoughts, things
@@ -115,6 +131,45 @@ docs/method/backlog/asap/PROTO_strand-lifecycle.md
 ```
 
 The backlog file is removed. The design doc is the new home.
+
+### Commitment
+
+Once you pull something from the backlog, you are committed. You
+cannot put it back. Either:
+
+- **Finish** — the hill is met, the cycle closes normally.
+- **Pivot** — end the cycle early with a retrospective explaining why.
+  Remaining work goes back to the backlog as a new item (not the
+  original — the context has changed).
+
+This prevents half-started work from accumulating. Pulling from the
+backlog is a deliberate act with consequences.
+
+### Backlog maintenance
+
+Backlog maintenance happens at the end of a cycle, during the close
+phase. This is when you:
+
+- Process the inbox — promote items to priority lanes, add legends,
+  flesh out descriptions, or move to the graveyard.
+- Re-prioritize — shift items between lanes based on what you learned
+  during the cycle.
+- Clean up — merge duplicates, update stale items, kill dead ideas.
+
+Do not reorganize the backlog mid-cycle. During active work, just
+throw things in `inbox/` and keep moving.
+
+### Cycle types
+
+Not every cycle ships features. The same loop applies to all cycle
+types:
+
+- **Feature cycles** — the default. Design, test, build, ship.
+- **Design cycles** — pure design iteration. The deliverable is design
+  docs, not code. Useful for exploratory work or system-level
+  planning.
+- **Debt cycles** — pay down tech debt. Pull from `bad-code/`.
+  The hill is "this code no longer bothers us."
 
 ## Legends
 
@@ -214,11 +269,12 @@ The full lifecycle of a piece of work:
 
 ```
 idea
-  → docs/method/backlog/cool-ideas/  (captured)
+  → docs/method/backlog/inbox/       (captured, raw)
+  → docs/method/backlog/cool-ideas/  (sorted during backlog maintenance)
   → docs/method/backlog/up-next/     (prioritized)
   → docs/method/backlog/asap/        (urgent)
-  → docs/design/<cycle>/             (pulled into cycle, designed)
-  → implemented, tested, played back
+  → docs/design/<cycle>/             (pulled into cycle — committed)
+  → RED (failing tests), GREEN (implement), playback
   → docs/method/retro/<cycle>/       (retrospective written)
   → CHANGELOG updated, released
 
