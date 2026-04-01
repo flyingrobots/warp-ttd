@@ -4,7 +4,7 @@ This is the living design document for warp-ttd. It describes what the
 debugger IS, what it's FOR, how it thinks, and where it's going.
 
 This document evolves. Cycle-specific design docs capture decisions
-frozen at a point in time. This document captures the current truth.
+frozen at a point in time; they are not updated. This document captures the current truth.
 
 ## What warp-ttd IS
 

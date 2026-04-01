@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Activate: git config --local core.hooksPath scripts/hooks
 set -uo pipefail
 
 echo "pre-push: running tests + typecheck + lint ratchet..."
@@ -7,11 +8,10 @@ npm test --silent || { echo "pre-push: tests failed"; exit 1; }
 npx tsc --noEmit || { echo "pre-push: typecheck failed"; exit 1; }
 bash scripts/lint-check.sh || { echo "pre-push: lint ceiling exceeded"; exit 1; }
 
-# If lint-check.sh ratcheted the ceiling down, stage it
+# lint-check.sh may ratchet lint-ceiling.txt — warn but don't auto-commit
+# (auto-committing in pre-push won't affect the current push)
 if ! git diff --quiet lint-ceiling.txt 2>/dev/null; then
-  git add lint-ceiling.txt
-  git commit -m "chore: ratchet lint ceiling to $(cat lint-ceiling.txt | tr -d '[:space:]')"
-  echo "pre-push: auto-committed ratcheted lint ceiling"
+  echo "pre-push: lint ceiling was ratcheted — commit lint-ceiling.txt before your next push"
 fi
 
 echo "pre-push: all checks passed"

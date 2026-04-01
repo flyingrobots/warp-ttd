@@ -28,7 +28,7 @@ test("buildScenario returns a valid TtdHostAdapter", async () => {
 
   const hello = await adapter.hello();
   assert.equal(hello.hostKind, "git-warp");
-  assert.equal(hello.protocolVersion, "0.1.0");
+  assert.equal(hello.protocolVersion, "0.2.0");
 });
 
 test("buildScenario exposes lanes from scenario", async () => {

@@ -21,7 +21,7 @@ Like `git log` — ticks as commits, strands as branches.
 Protocol requirements:
 - `laneCatalog()` for worldline/strand tree
 - `frame()` at each tick for lane advancement
-- `receipts()` for BTR digests and writer info
+- `receipts()` for BTR digests (writer info pending — see receipt-writer-field backlog)
 - Need: full tick history enumeration (not just step-by-step)
 
 ### WARP Graph Viewer
@@ -55,6 +55,6 @@ Protocol requirements:
 
 ## Implementation Order
 
-1. Worldline viewer first (uses existing protocol surface)
+1. Worldline viewer first (mostly uses existing protocol surface; needs tick-history enumeration beyond step-by-step)
 2. Graph viewer second (needs protocol additions for graph state)
 3. Provenance viewer third (needs per-entity receipt queries)

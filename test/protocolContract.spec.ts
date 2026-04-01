@@ -23,8 +23,8 @@ test("HostHello v0.1.0 shape", async () => {
   assert.equal(typeof hello.schemaId, "string");
   assert.ok(Array.isArray(hello.capabilities));
 
-  // Protocol version is frozen
-  assert.equal(hello.protocolVersion, "0.1.0");
+  // Protocol version tracks latest implemented surface
+  assert.equal(hello.protocolVersion, "0.2.0");
 
   // No unexpected fields
   const keys = Object.keys(hello).sort();

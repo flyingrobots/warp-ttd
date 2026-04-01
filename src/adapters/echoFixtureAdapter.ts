@@ -30,7 +30,7 @@ const FIXTURE: FixtureState = {
   hello: {
     hostKind: "echo",
     hostVersion: "0.0.0-fixture",
-    protocolVersion: "0.1.0",
+    protocolVersion: "0.2.0",
     schemaId: "ttd-protocol-fixture-v1",
     capabilities: [
       "read:hello",
@@ -289,8 +289,7 @@ export class EchoFixtureAdapter implements TtdHostAdapter {
     const frame = frames[resolvedIndex];
 
     if (!frame) {
-      throw new FrameResolutionError(resolvedIndex, headId
-      );
+      throw new FrameResolutionError(resolvedIndex, headId);
     }
 
     return Promise.resolve(cloneValue(frame));

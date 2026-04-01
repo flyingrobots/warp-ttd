@@ -106,7 +106,9 @@ function buildCapabilities(hasEffects: boolean): Capability[] {
     "read:playback-head",
     "read:frame",
     "read:receipts",
-    "control:step-forward"
+    "control:step-forward",
+    "control:step-backward",
+    "control:seek"
   ];
   if (hasEffects) {
     caps.push("read:effect-emissions", "read:delivery-observations", "read:execution-context");
@@ -258,7 +260,7 @@ export function buildScenario(scenario: Scenario): TtdHostAdapter {
     adapterName: "scenario-fixture",
     hello: () => Promise.resolve({
       hostKind: scenario.hostKind, hostVersion: "0.0.0-scenario",
-      protocolVersion: "0.1.0", schemaId: "ttd-protocol-scenario-v1",
+      protocolVersion: "0.2.0", schemaId: "ttd-protocol-scenario-v1",
       capabilities: built.capabilities
     }),
     laneCatalog: () => Promise.resolve({ lanes: structuredClone(built.lanes) }),

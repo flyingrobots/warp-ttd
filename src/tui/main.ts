@@ -52,7 +52,7 @@ type Msg =
   | { type: "adapter-ready"; hello: HostHello; catalog: LaneCatalog; head: PlaybackHeadSnapshot; frame: PlaybackFrame; receipts: ReceiptSummary[]; emissions: EffectEmissionSummary[]; observations: DeliveryObservationSummary[]; execCtx: ExecutionContext; generation: number }
   | { type: "step-result"; head: PlaybackHeadSnapshot; frame: PlaybackFrame; receipts: ReceiptSummary[]; emissions: EffectEmissionSummary[]; observations: DeliveryObservationSummary[] }
   | { type: "frame-result"; frame: PlaybackFrame; receipts: ReceiptSummary[]; emissions: EffectEmissionSummary[]; observations: DeliveryObservationSummary[] }
-  | { type: "connect-error"; message: string }
+  | { type: "connect-error"; message: string; generation?: number }
   | { type: "disconnect" }
   | { type: "nav"; direction: "next" | "prev" }
   | { type: "step-forward" }
@@ -118,7 +118,7 @@ function connectLayout(model: Model, w: number, h: number): Surface {
       "",
       ` Host: ${model.hello?.hostKind ?? "unknown"}`,
       ` Protocol: ${model.hello?.protocolVersion ?? "?"}`,
-      ` Lanes: ${model.catalog?.lanes.length ?? 0}`,
+      ` Lanes: ${(model.catalog?.lanes.length ?? 0).toString()}`,
       "",
       " Use [ / ] to switch pages.",
       " Press [d] to disconnect."
@@ -190,7 +190,7 @@ function navigatorLayout(model: Model, w: number, h: number): Surface {
   const lanes = model.frame.lanes
     .map((l) => {
       const changed = l.changed ? ctx.style.styled(ctx.status("warning"), "*") : " ";
-      return `  ${changed} ${l.laneId.padEnd(16)} tick ${l.coordinate.tick}`;
+      return `  ${changed} ${l.laneId.padEnd(16)} tick ${l.coordinate.tick.toString()}`;
     })
     .join("\n");
 
@@ -233,7 +233,7 @@ function navigatorLayout(model: Model, w: number, h: number): Surface {
   // Effect emissions + delivery observations
   const yOffset = dagBox.height + infoBox.height + receiptBox.height + 4;
 
-  if (model.observations.length > 0) {
+  if (model.emissions.length > 0) {
     const columns: TableColumn[] = [
       { header: "Effect", width: 14 },
       { header: "Lane", width: 16 },
@@ -340,7 +340,7 @@ function makeConnectCmd(
       const execCtx = await adapter.executionContext();
       emit({ type: "adapter-ready", hello, catalog, head, frame, receipts, emissions, observations, execCtx, generation: gen });
     } catch (err) {
-      emit({ type: "connect-error", message: err instanceof Error ? err.message : String(err) });
+      emit({ type: "connect-error", message: err instanceof Error ? err.message : String(err), generation: gen });
     }
   };
 }
@@ -473,8 +473,9 @@ const mainApp = {
       return [nextModel, fCmds];
     }
 
-    // --- Connect error ---
+    // --- Connect error (generation-gated when from connect flow) ---
     if (msg.type === "connect-error") {
+      if (msg.generation !== undefined && msg.generation !== pm.connectGeneration) return [nextModel, fCmds];
       pm = { ...pm, adapter: null, error: msg.message, connectStep: "choose" };
       nextModel = { ...nextModel, pageModels: updateAllPages(pm) };
       return [nextModel, fCmds];

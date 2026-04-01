@@ -143,7 +143,7 @@ async function main(): Promise<void> {
     for (const r of receiptsAfter) {
       print("ReceiptSummary", r);
     }
-    // Effect/delivery data at the stepped frame
+    // Effect/delivery data at the stepped frame (JSON-only; human-readable mode omits these)
     const emissions = await adapter.effectEmissions(headId);
     for (const e of emissions) {
       print("EffectEmissionSummary", e);

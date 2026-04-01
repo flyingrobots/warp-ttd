@@ -156,7 +156,7 @@ This adds new envelope types, new capability strings, and new adapter
 methods. Per the versioning rules in design doc 0008:
 
 - New optional capabilities and envelope types = **minor bump**
-- Target: v0.2.0 when this lands
+- Protocol version bumped to v0.2.0 for adapters implementing this surface
 
 ## Prerequisite from git-warp
 

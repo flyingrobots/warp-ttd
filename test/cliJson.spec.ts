@@ -45,7 +45,7 @@ test("hello --json outputs a single HostHello JSONL line", async () => {
   const obj = parseLine(requireLine(lines, 0));
   assert.equal(obj.envelope, "HostHello");
   assert.ok(obj.data !== undefined);
-  assert.equal(obj.data["protocolVersion"], "0.1.0");
+  assert.equal(obj.data["protocolVersion"], "0.2.0");
 });
 
 test("catalog --json outputs a single LaneCatalog JSONL line", async () => {

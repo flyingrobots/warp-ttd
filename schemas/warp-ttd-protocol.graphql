@@ -37,6 +37,8 @@ enum Capability {
   READ_DELIVERY_OBSERVATIONS
   READ_EXECUTION_CONTEXT
   CONTROL_STEP_FORWARD
+  CONTROL_STEP_BACKWARD
+  CONTROL_SEEK
 }
 
 type HostHello
@@ -269,5 +271,13 @@ type Query {
 type Mutation {
   stepForward(headId: String!): PlaybackFrame!
     @wes_op(name: "stepForward", idempotent: false, readonly: false)
+    @wes_footprint(reads: ["PlaybackHeadSnapshot"], writes: ["PlaybackHeadSnapshot"])
+
+  stepBackward(headId: String!): PlaybackFrame!
+    @wes_op(name: "stepBackward", idempotent: false, readonly: false)
+    @wes_footprint(reads: ["PlaybackHeadSnapshot"], writes: ["PlaybackHeadSnapshot"])
+
+  seekToFrame(headId: String!, frameIndex: Int!): PlaybackFrame!
+    @wes_op(name: "seekToFrame", idempotent: false, readonly: false)
     @wes_footprint(reads: ["PlaybackHeadSnapshot"], writes: ["PlaybackHeadSnapshot"])
 }
