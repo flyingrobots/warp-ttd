@@ -6,10 +6,15 @@ backlog, cycles, and honest bookkeeping.
 
 ## Principles
 
-Work should be intentional. Every piece of code exists because someone
-wrote a design doc that said what it should do and why. Every shipped
-cycle ends with a retrospective that says what actually happened.
-The gap between intent and reality is where learning lives.
+Tests are the spec. Documentation drifts; tests fail loud. Every piece
+of code exists because a test demanded it, and every test exists
+because a design doc said what should be true. There is no layer of
+prose between the design and the executable specification.
+
+Design for two audiences, always: the human who uses the product and
+the agent who operates at the protocol level. Build the agent surface
+first — it operates at the low level you need anyway to make the
+human-level experience work.
 
 The filesystem is the database. Directory structure communicates
 priority. File names communicate domain. Moving a file from one
@@ -119,45 +124,53 @@ A cycle is a unit of shipped work. It has a design phase, an
 implementation phase, and a retrospective. Cycles are numbered
 sequentially (`0001`, `0002`, ...).
 
-### Design
-
-Before writing code, write a design doc. Place it in
-`docs/design/<cycle>/`:
-
-```
-docs/design/0010-strand-speculation/strand-lifecycle.md
-```
-
-A design doc should define:
-
-- **Sponsor human** — the human perspective that keeps the work honest
-- **Sponsor agent** — the agent/tool perspective
-- **Hill** — a clear statement of what success looks like
-- **Playback questions** — yes/no questions answered after implementation
-- **Non-goals** — what this cycle explicitly does not do
-
 ### Development loop
 
-1. **Design** — write or revise the design doc.
-2. **Tests as spec** — encode expected behavior as failing tests.
-3. **Implement** — make the tests pass.
-4. **Playback** — answer every playback question from both the human
-   and agent perspectives. Write the answers down. If you cannot get
-   a clear yes, that is the signal.
-5. **Retrospective** — write a retro in `docs/method/retro/<cycle>/`.
-   The retro includes a drift check (what diverged from the design),
-   new debt logged to `backlog/bad-code/`, and cool ideas captured
-   to `backlog/cool-ideas/`.
-6. **Update README** — the root README reflects reality after every
-   cycle.
-7. **Close** — update CHANGELOG, tag if releasing.
+0. **Pull from backlog** — choose a backlog item. Move it out of its
+   priority lane. This is the start of a cycle.
+
+1. **Design** — write a design doc in `docs/design/<cycle>/`. Use
+   IBM Design Thinking-inspired framing:
+
+   - **Sponsor human** — the human perspective that keeps the work honest
+   - **Sponsor agent** — the agent/tool perspective that keeps the
+     protocol and machine-readable contract honest
+   - **Hill** — a clear statement of what success looks like
+   - **Playback questions** — yes/no questions that will be answered
+     after implementation, from both perspectives. These inform the
+     specs. Write them now.
+   - **Non-goals** — what this cycle explicitly does not do
+
+2. **RED — write failing tests** — the design doc's playback questions
+   become executable specifications. Tests are the literal spec. No
+   documentation layer sits between intent and verification. Build the
+   agent-facing surface first — it operates at the low level you need
+   anyway to make the user-level experience work.
+
+3. **GREEN — implement** — write code until the tests pass. Code
+   exists because specs demanded it.
+
+4. **Playback** — answer every playback question from both perspectives.
+   The agent checks the agent playback questions. The human is prompted
+   to check the user playback questions. Write the answers down. If you
+   cannot get a clear yes, that is the signal.
+
+5. **PR → main** — open a pull request. Review loops until merge is
+   accepted.
+
+6. **Close** — merge. Write a retrospective in
+   `docs/method/retro/<cycle>/`. The retro includes a drift check
+   (what diverged from the design), new debt logged to
+   `backlog/bad-code/`, and cool ideas captured to
+   `backlog/cool-ideas/`. Update CHANGELOG, bump version, tag if
+   releasing, update README, maintain the backlog.
 
 ### Playback
 
 After implementation, before the retro, run a dual playback:
 
-1. The agent answers every playback question.
-2. Stop. The human answers every playback question.
+1. The agent answers every agent playback question.
+2. Stop. The human answers every user playback question.
 3. Both perspectives must agree the hill is met before proceeding.
 
 Outcomes:

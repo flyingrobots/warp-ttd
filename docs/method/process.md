@@ -33,24 +33,32 @@ If the answer is unclear, the work belongs in the backlog, not a cycle.
 
 Each cycle follows the same explicit loop:
 
-1. **Design docs** — write or revise design docs in
-   `docs/design/<cycle>/`. Define the playback questions that will
-   be answered after implementation.
-2. **Tests as spec** — encode behavior as executable tests.
-3. **Implementation** — build it.
-4. **Playback** — answer every playback question from the design doc,
-   from both the human and agent perspectives. Write the answers down.
-   Do not proceed to the retrospective until every playback question
-   has a clear yes/no answer.
-5. **Retrospective** — evaluate what shipped, what worked, what didn't,
-   and what was learned. Write the retro in
+0. **Pull from backlog** — choose a backlog item. Move it out of its
+   priority lane. This is the start of a cycle.
+1. **Design** — write a design doc in `docs/design/<cycle>/`. Define
+   sponsor human, sponsor agent, hill, playback questions, and
+   non-goals. Playback questions inform the specs — write them now.
+2. **RED — write failing tests** — playback questions become executable
+   specifications. Tests are the literal spec. No documentation layer
+   sits between intent and verification. Build the agent-facing surface
+   first — it operates at the low level you need anyway to make the
+   user-level experience work.
+3. **GREEN — implement** — write code until the tests pass. Code exists
+   because specs demanded it.
+4. **Playback** — answer every playback question from both perspectives.
+   The agent checks the agent playback questions. The human is prompted
+   to check the user playback questions. Write the answers down. Do not
+   proceed until every playback question has a clear yes/no answer.
+5. **PR → main** — open a pull request. Review loops until merge is
+   accepted.
+6. **Close** — merge. Write a retrospective in
    `docs/method/retro/<cycle>/`. The retro must include:
    - **Drift check:** compare what was built against the design doc.
      Call out any divergence — intentional or accidental.
    - **Tech/design debt:** log debt in `docs/method/backlog/bad-code/`.
    - **Cool ideas:** capture ideas in `docs/method/backlog/cool-ideas/`.
-6. **README update** — rewrite the root README to reflect reality.
-7. **Close the cycle** — update CHANGELOG.md.
+   Update CHANGELOG, bump version, tag if releasing, update README,
+   maintain the backlog.
 
 This loop is part of the process, not optional cleanup.
 
@@ -58,12 +66,12 @@ This loop is part of the process, not optional cleanup.
 
 After implementation, before the retro, run the dual playback:
 
-1. **Agent playback** — the coding agent answers every playback
-   question from the agent perspective. Written in the retro doc.
-2. **Stop.** The agent prompts the human to do their playback. Do not
-   proceed until the human responds.
-3. **Human playback** — the user answers every playback question from
-   the human perspective. Written alongside the agent playback.
+1. **Agent playback** — the agent answers every agent playback
+   question. Written in the retro doc.
+2. **Stop.** The agent prompts the human to check the user playback
+   questions. Do not proceed until the human responds.
+3. **Human playback** — the user answers every user playback question.
+   Written alongside the agent playback.
 4. **Gate** — both perspectives must agree the hill is met before
    proceeding to the retrospective.
 
