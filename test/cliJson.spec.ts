@@ -133,6 +133,19 @@ test("context --json outputs a single ExecutionContext line", async () => {
   assert.ok(obj.data !== undefined);
 });
 
+test("session --json outputs a single SerializedSession line", async () => {
+  const lines = await runJson("session");
+  assert.equal(lines.length, 1);
+
+  const obj = parseLine(requireLine(lines, 0));
+  assert.equal(obj.envelope, "SerializedSession");
+  assert.ok(obj.data !== undefined);
+  assert.equal(typeof obj.data["sessionId"], "string");
+  assert.equal(obj.data["activeHeadId"], "head:main");
+  assert.ok(obj.data["snapshot"] !== undefined);
+  assert.ok(Array.isArray(obj.data["pins"]));
+});
+
 test("invalid command --json writes JSON error to stderr", async () => {
   try {
     await exec("node", [...NODE_ARGS, "badcommand", "--json"]);
