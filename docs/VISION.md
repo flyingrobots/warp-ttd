@@ -8,20 +8,17 @@ frozen at a point in time. This document captures the current truth.
 
 ## What warp-ttd IS
 
-warp-ttd is a cross-host time-travel debugger and **wide-aperture
-observer** for deterministic graph systems built on WARP-like causal
+warp-ttd is a cross-host time-travel debugger and wide-aperture
+observer for deterministic graph systems built on WARP-like causal
 history.
 
 It observes substrate facts honestly and, when the host declares the
 capability, can drive explicit debugging controls: pause, step, seek,
-strand fork, speculative ticking, comparison, and braid composition.
+strand fork, speculative ticking, comparison, and multi-strand
+composition.
 
-It works across hosts. The same debugger protocol serves git-warp, Echo,
-and future WARP-based runtimes through host adapters. A practical
-consequence: an application might use git-warp for persistence and Echo
-for rapid speculative simulation of 1000 counterfactual worldlines —
-and TTD should be able to drive and inspect both through the same
-protocol.
+It works across hosts. The same debugger protocol serves git-warp,
+Echo, and future WARP-based runtimes through host adapters.
 
 ## What warp-ttd is NOT
 
@@ -200,8 +197,8 @@ the capability, TTD can drive speculative operations:
   counterfactual alternatives in parallel
 - **Independent ticking** — advance a speculative strand without
   advancing the canonical worldline
-- **Braid composition** — combine observations from multiple strands
-  into a composite view
+- **Multi-strand composition** — combine observations from multiple
+  strands into a composite view
 - **Comparison** — diff a strand against its base worldline or against
   another strand
 - **Result handles** — a DebuggerSession tracks speculative results
@@ -214,8 +211,9 @@ substrate facts with full provenance.
 A practical example: an application using git-warp for persistence and
 Echo for rapid simulation might use TTD to fork 1000 counterfactual
 strands, tick them independently through Echo's fast runtime, compare
-the outcomes, and present the results in a DebuggerSession. TTD drives
-the scenario; the substrates execute it.
+the outcomes, and present the results in a DebuggerSession. TTD
+requests, coordinates, and inspects the scenario through
+substrate-defined capabilities; the substrates execute it.
 
 ## Architecture
 
@@ -241,7 +239,9 @@ Delivery Adapters (CLI, TUI, MCP, Web)
 - **Delivery observation** — what happened to an effect at each sink
 - **Execution context** — live/replay/debug lens
 - **PlaybackHead** — substrate-facing coordination primitive
-- **DebuggerSession** — human-facing investigation object (planned)
+- **DebuggerSession** — human-facing investigation object that scopes
+  speculative state, tracks result handles, and prevents the debugger
+  from becoming a spaghetti launcher (critical next abstraction)
 
 ### Host adapter boundary
 
@@ -269,17 +269,19 @@ contract.
 - Effect emission as graph entities
 - Delivery observations and externalization policy
 - Aperture-relative reads (observer + aperture projection)
-- Strand lifecycle and braid composition
+- Strand lifecycle and multi-strand composition
 - Deterministic replay
 
 ### warp-ttd owns
 
 - Debugger protocol (envelope types, versioning, capabilities)
 - Host adapter boundary (TtdHostAdapter interface)
+- Debugger control surfaces (pause, step, seek, compare, speculative
+  requests)
+- Session-scoped speculative investigation state (DebuggerSession)
 - Receipt-centric inspection
 - Effect/delivery inspection
 - Counterfactual exploration
-- Session management (planned)
 - Delivery adapters (CLI, TUI, MCP)
 - Wesley schema compilation
 
