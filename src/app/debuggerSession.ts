@@ -74,6 +74,10 @@ export class DebuggerSession {
     return new DebuggerSession(adapter, headId, snapshot);
   }
 
+  public get adapter(): TtdHostAdapter {
+    return this.#adapter;
+  }
+
   public get activeHeadId(): string {
     return this.#activeHeadId;
   }

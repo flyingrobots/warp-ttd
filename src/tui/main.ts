@@ -20,13 +20,13 @@ import {
   stringToSurface,
   boxSurface,
   badge,
-  surfaceToString,
-  tableSurface
+  surfaceToString
 } from "@flyingrobots/bijou";
-import type { TableColumn } from "@flyingrobots/bijou";
 import type { BijouContext, Surface } from "@flyingrobots/bijou";
 import { renderWaveShader } from "./shaders/bgShader.ts";
 import { renderNavigator } from "./navigatorLayout.ts";
+import { renderWorldline, buildTickRows } from "./worldlineLayout.ts";
+import type { FrameData } from "./worldlineLayout.ts";
 import { resolveAdapter } from "../app/adapterRegistry.ts";
 import type { AdapterConfig } from "../app/adapterRegistry.ts";
 import { DebuggerSession } from "../app/debuggerSession.ts";
@@ -47,7 +47,8 @@ type Msg =
   | { type: "snapshot-updated"; snapshot: SessionSnapshot }
   | { type: "connect-error"; message: string; generation?: number }
   | { type: "nav-error"; message: string }
-  | { type: "disconnect" };
+  | { type: "disconnect" }
+  | { type: "worldline-loaded"; frames: FrameData[] };
 
 interface Model {
   time: number;
@@ -65,6 +66,9 @@ interface Model {
   connecting: boolean;
   // Jump-to-frame prompt state
   jumpInput: string | null;
+  // Worldline viewer state
+  worldlineFrames: FrameData[];
+  worldlineCursor: number;
 }
 
 const CONNECT_OPTIONS = [
@@ -174,6 +178,21 @@ function navigatorLayout(model: Model, w: number, h: number): Surface {
   });
 }
 
+function worldlinePageLayout(model: Model, w: number, h: number): Surface {
+  if (model.session === null) {
+    const bg = renderWaveShader(w, h, model.time);
+    return centerBox(bg, stringToSurface(" Connect to a host first.", 40, 1), "Worldline");
+  }
+
+  return renderWorldline({
+    frames: model.worldlineFrames,
+    catalog: model.catalog?.lanes ?? [],
+    cursor: model.worldlineCursor,
+    w, h,
+    ctx
+  });
+}
+
 function inspectorLayout(model: Model, w: number, h: number): Surface {
   if (model.session === null || model.hello === null) {
     const bg = renderWaveShader(w, h, model.time);
@@ -251,6 +270,32 @@ function makeConnectCmd(
 }
 
 // ---------------------------------------------------------------------------
+// Worldline load helper
+// ---------------------------------------------------------------------------
+
+function makeWorldlineLoadCmd(
+  session: DebuggerSession
+): (emit: (msg: Msg) => void) => Promise<void> {
+  return async (emit: (msg: Msg) => void): Promise<void> => {
+    try {
+      const adapter = session.adapter;
+      const headId = session.snapshot.head.headId;
+      const maxFrame = await adapter.seekToFrame(headId, Number.MAX_SAFE_INTEGER);
+      const maxIndex = maxFrame.frameIndex;
+      const frames: FrameData[] = [];
+      for (let i = 0; i <= maxIndex; i++) {
+        const f = await adapter.frame(headId, i);
+        const r = await adapter.receipts(headId, i);
+        frames.push({ frameIndex: f.frameIndex, lanes: f.lanes, receipts: r });
+      }
+      emit({ type: "worldline-loaded", frames });
+    } catch {
+      // Silently ignore — worldline view will show empty state
+    }
+  };
+}
+
+// ---------------------------------------------------------------------------
 // App
 // ---------------------------------------------------------------------------
 
@@ -266,7 +311,9 @@ const initialModel: Model = {
   error: null,
   connectGeneration: 0,
   connecting: false,
-  jumpInput: null
+  jumpInput: null,
+  worldlineFrames: [],
+  worldlineCursor: 0
 };
 
 const framedApp = createFramedApp<Model, Msg>({
@@ -294,6 +341,18 @@ const framedApp = createFramedApp<Model, Msg>({
         kind: "pane" as const,
         paneId: "main",
         render: (w: number, h: number) => navigatorLayout(model, w, h)
+      })
+    },
+    {
+      id: "worldline",
+      title: "Worldline",
+      init: () => [initialModel, []],
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars -- framework requires msg param
+      update: (msg: any, model: Model) => [model, []],
+      layout: (model: Model) => ({
+        kind: "pane" as const,
+        paneId: "main",
+        render: (w: number, h: number) => worldlinePageLayout(model, w, h)
       })
     },
     {
@@ -392,9 +451,19 @@ const mainApp = {
         connecting: false,
         session: msg.session,
         hello: msg.hello,
-        catalog: msg.catalog
+        catalog: msg.catalog,
+        worldlineFrames: [],
+        worldlineCursor: 0
       };
       nextModel = { ...nextModel, activePageId: "nav", pageModels: updateAllPages(pm) };
+      const loadWorldline = makeWorldlineLoadCmd(msg.session);
+      return [nextModel, [...fCmds, loadWorldline]];
+    }
+
+    // --- Worldline frames loaded ---
+    if (msg.type === "worldline-loaded") {
+      pm = { ...pm, worldlineFrames: msg.frames, worldlineCursor: 0 };
+      nextModel = { ...nextModel, pageModels: updateAllPages(pm) };
       return [nextModel, fCmds];
     }
 
@@ -533,6 +602,42 @@ const mainApp = {
 
       if (msg.key === "g") {
         pm = { ...pm, jumpInput: "" };
+        nextModel = { ...nextModel, pageModels: updateAllPages(pm) };
+        return [nextModel, fCmds];
+      }
+
+      // Worldline page cursor navigation
+      if (nextModel.activePageId === "worldline") {
+        if (msg.key === "up" || msg.key === "k") {
+          pm = { ...pm, worldlineCursor: Math.max(pm.worldlineCursor - 1, 0) };
+          nextModel = { ...nextModel, pageModels: updateAllPages(pm) };
+          return [nextModel, fCmds];
+        }
+        if (msg.key === "down" || msg.key === "j") {
+          const maxCursor = Math.max(pm.worldlineFrames.length - 1, 0);
+          pm = { ...pm, worldlineCursor: Math.min(pm.worldlineCursor + 1, maxCursor) };
+          nextModel = { ...nextModel, pageModels: updateAllPages(pm) };
+          return [nextModel, fCmds];
+        }
+        if (msg.key === "enter") {
+          // Jump navigator to the selected tick's frame index
+          const rows = buildTickRows(pm.worldlineFrames, pm.catalog?.lanes ?? []);
+          const selected = rows[pm.worldlineCursor];
+          if (selected !== undefined) {
+            nextModel = { ...nextModel, activePageId: "nav", pageModels: updateAllPages(pm) };
+            return [nextModel, [
+              ...fCmds,
+              async (emit: (msg: Msg) => void): Promise<void> => {
+                try {
+                  const snapshot = await currentSession.seekToFrame(selected.frameIndex);
+                  emit({ type: "snapshot-updated", snapshot });
+                } catch (err) {
+                  emit({ type: "nav-error", message: err instanceof Error ? err.message : String(err) });
+                }
+              }
+            ]];
+          }
+        }
         nextModel = { ...nextModel, pageModels: updateAllPages(pm) };
         return [nextModel, fCmds];
       }
