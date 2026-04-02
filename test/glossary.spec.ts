@@ -1,6 +1,6 @@
 /**
  * Glossary contract test — verifies the canonical glossary exists
- * at docs/glossary.md and contains the required domain terms.
+ * at docs/design/glossary.md and contains the required domain terms.
  *
  * This is the spec for Cycle 0006 — Design Vocabulary.
  */
@@ -10,7 +10,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 const glossary = readFileSync(
-  resolve(import.meta.dirname, "..", "docs", "glossary.md"),
+  resolve(import.meta.dirname, "..", "docs", "design", "glossary.md"),
   "utf-8"
 );
 
@@ -28,10 +28,10 @@ const REQUIRED_TERMS = [
   "execution context"
 ];
 
-test("docs/glossary.md exists and has a Glossary heading", () => {
+test("docs/design/glossary.md exists and has a Glossary heading", () => {
   assert.ok(
     glossary.includes("# Glossary"),
-    "Expected a '# Glossary' heading in docs/glossary.md"
+    "Expected a '# Glossary' heading in docs/design/glossary.md"
   );
 });
 
