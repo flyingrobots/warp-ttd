@@ -9,7 +9,7 @@
 import type { TtdHostAdapter } from "../adapter.ts";
 import { UnknownAdapterKindError } from "../errors.ts";
 
-export type ScenarioName = "live-with-effects" | "replay-with-suppression" | "multi-writer-conflicts";
+export type ScenarioName = "live-with-effects" | "replay-with-suppression" | "multi-writer-conflicts" | "complex-worldline";
 
 export type AdapterKind = "echo-fixture" | "git-warp" | "scenario";
 
@@ -60,11 +60,13 @@ export async function resolveAdapter(config: AdapterConfig): Promise<ResolvedAda
         scenarioReplayWithSuppression,
         scenarioMultiWriterWithConflicts
       } = await import("../adapters/scenarioFixtureAdapter.ts");
+      const { scenarioComplexWorldline } = await import("../adapters/scenarioComplex.ts");
 
       const scenarios: Record<ScenarioName, () => TtdHostAdapter> = {
         "live-with-effects": scenarioLiveWithEffects,
         "replay-with-suppression": scenarioReplayWithSuppression,
-        "multi-writer-conflicts": scenarioMultiWriterWithConflicts
+        "multi-writer-conflicts": scenarioMultiWriterWithConflicts,
+        "complex-worldline": scenarioComplexWorldline
       };
 
       const factory = scenarios[config.scenario];

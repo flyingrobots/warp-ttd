@@ -76,7 +76,8 @@ const CONNECT_OPTIONS = [
   "git-warp (local repository)",
   "Scenario: Live with Effects",
   "Scenario: Replay with Suppression",
-  "Scenario: Multi-Writer Conflicts"
+  "Scenario: Multi-Writer Conflicts",
+  "Scenario: Complex Worldline (200+ ticks)"
 ];
 
 
@@ -488,7 +489,8 @@ const mainApp = {
             1: "git-warp-wizard",
             2: { kind: "scenario", scenario: "live-with-effects" },
             3: { kind: "scenario", scenario: "replay-with-suppression" },
-            4: { kind: "scenario", scenario: "multi-writer-conflicts" }
+            4: { kind: "scenario", scenario: "multi-writer-conflicts" },
+            5: { kind: "scenario", scenario: "complex-worldline" }
           };
           const selected = scenarioConfigs[pm.connectChoice];
           if (selected === "git-warp-wizard") {
