@@ -1,11 +1,7 @@
 /**
  * CLI worldline --json output contract tests.
  *
- * Cycle 0010 — Worldline Viewer (RED phase).
- *
- * Pins the JSONL output format for the worldline command: one line
- * per tick in the history, with writer attribution, strand info,
- * and conflict indicators.
+ * Cycle 0010 — Worldline Viewer.
  */
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -17,10 +13,19 @@ const exec = promisify(execFile);
 const CLI = "./src/cli.ts";
 const NODE_ARGS = ["--experimental-strip-types", CLI];
 
-interface EnvelopeLine {
+interface TickData {
+  frameIndex: number;
+  laneId: string;
+  tick: number;
+  digest: string;
+  writers: string[];
+  hasConflict: boolean;
+  strandIds: string[];
+}
+
+interface WorldlineEnvelope {
   envelope: string;
-  data?: Record<string, unknown>;
-  label?: string;
+  data: TickData;
 }
 
 async function runJson(command: string): Promise<string[]> {
@@ -29,61 +34,60 @@ async function runJson(command: string): Promise<string[]> {
   return lines;
 }
 
-function parseLine(line: string): EnvelopeLine {
-  const parsed = JSON.parse(line) as EnvelopeLine;
+function parseLine(line: string): WorldlineEnvelope {
+  const parsed = JSON.parse(line) as WorldlineEnvelope;
   assert.equal(typeof parsed.envelope, "string", `Missing envelope field in: ${line}`);
   return parsed;
 }
 
 test("worldline --json outputs WorldlineTick envelopes", async () => {
-  // const lines = await runJson("worldline");
-  // assert.ok(lines.length >= 1, "Expected at least one tick");
-  // const parsed = lines.map((l) => parseLine(l));
-  // for (const entry of parsed) {
-  //   assert.equal(entry.envelope, "WorldlineTick");
-  // }
-  assert.fail("not implemented — RED");
+  const lines = await runJson("worldline");
+  assert.ok(lines.length >= 1, "Expected at least one tick");
+  const parsed = lines.map((l) => parseLine(l));
+  for (const entry of parsed) {
+    assert.equal(entry.envelope, "WorldlineTick");
+  }
 });
 
 test("worldline --json tick data includes frameIndex, laneId, and tick", async () => {
-  // const lines = await runJson("worldline");
-  // const first = parseLine(lines[0]);
-  // assert.ok(first.data !== undefined);
-  // assert.ok("frameIndex" in first.data);
-  // assert.ok("laneId" in first.data);
-  // assert.ok("tick" in first.data);
-  assert.fail("not implemented — RED");
+  const lines = await runJson("worldline");
+  const line = lines[0];
+  assert.ok(line !== undefined);
+  const first = parseLine(line);
+  assert.equal(typeof first.data.frameIndex, "number");
+  assert.equal(typeof first.data.laneId, "string");
+  assert.equal(typeof first.data.tick, "number");
 });
 
 test("worldline --json includes writer attribution per tick", async () => {
-  // const lines = await runJson("worldline");
-  // const withReceipts = lines.map((l) => parseLine(l))
-  //   .filter((p) => Array.isArray(p.data?.["writers"]) && p.data["writers"].length > 0);
-  // assert.ok(withReceipts.length > 0, "Expected at least one tick with writers");
-  assert.fail("not implemented — RED");
+  const lines = await runJson("worldline");
+  const withWriters = lines.map((l) => parseLine(l))
+    .filter((p) => p.data.writers.length > 0);
+  assert.ok(withWriters.length > 0, "Expected at least one tick with writers");
 });
 
 test("worldline --json includes btrDigest when available", async () => {
-  // const lines = await runJson("worldline");
-  // const withDigest = lines.map((l) => parseLine(l))
-  //   .filter((p) => p.data?.["btrDigest"] !== undefined);
-  // assert.ok(withDigest.length > 0, "Expected at least one tick with a digest");
-  assert.fail("not implemented — RED");
+  const lines = await runJson("worldline");
+  const withDigest = lines.map((l) => parseLine(l))
+    .filter((p) => p.data.digest !== "");
+  assert.ok(withDigest.length > 0, "Expected at least one tick with a digest");
 });
 
 test("worldline --json includes hasConflict boolean", async () => {
-  // const lines = await runJson("worldline");
-  // const first = parseLine(lines[0]);
-  // assert.ok(first.data !== undefined);
-  // assert.equal(typeof first.data["hasConflict"], "boolean");
-  assert.fail("not implemented — RED");
+  const lines = await runJson("worldline");
+  const line = lines[0];
+  assert.ok(line !== undefined);
+  const first = parseLine(line);
+  assert.equal(typeof first.data.hasConflict, "boolean");
 });
 
 test("worldline --json outputs ticks in reverse order (newest first)", async () => {
-  // const lines = await runJson("worldline");
-  // const indices = lines.map((l) => parseLine(l).data?.["frameIndex"] as number);
-  // for (let i = 1; i < indices.length; i++) {
-  //   assert.ok(indices[i] < indices[i - 1], "Expected descending frame indices");
-  // }
-  assert.fail("not implemented — RED");
+  const lines = await runJson("worldline");
+  const indices = lines.map((l) => parseLine(l).data.frameIndex);
+  for (let i = 1; i < indices.length; i++) {
+    const current = indices[i];
+    const previous = indices[i - 1];
+    assert.ok(current !== undefined && previous !== undefined);
+    assert.ok(current < previous, "Expected descending frame indices");
+  }
 });

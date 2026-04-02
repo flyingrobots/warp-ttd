@@ -1,14 +1,16 @@
 import { EchoFixtureAdapter } from "./adapters/echoFixtureAdapter.ts";
 import { DebuggerSession } from "./app/debuggerSession.ts";
+import { buildTickRows } from "./tui/worldlineLayout.ts";
+import type { FrameData } from "./tui/worldlineLayout.ts";
 import {
   UnexpectedArgumentsError,
   UnknownFlagsError,
   UnsupportedCommandError
 } from "./errors.ts";
 
-type Command = "demo" | "hello" | "catalog" | "frame" | "step" | "effects" | "deliveries" | "context" | "session";
+type Command = "demo" | "hello" | "catalog" | "frame" | "step" | "effects" | "deliveries" | "context" | "session" | "worldline";
 
-const VALID_COMMANDS = new Set<Command>(["demo", "hello", "catalog", "frame", "step", "effects", "deliveries", "context", "session"]);
+const VALID_COMMANDS = new Set<Command>(["demo", "hello", "catalog", "frame", "step", "effects", "deliveries", "context", "session", "worldline"]);
 
 function isValidCommand(cmd: string): cmd is Command {
   return (VALID_COMMANDS as Set<string>).has(cmd);
@@ -106,6 +108,38 @@ async function main(): Promise<void> {
       print("SerializedSession", session.toJSON());
     } else {
       printSection("Session", session.toJSON());
+    }
+    return;
+  }
+
+  if (command === "worldline") {
+    // Discover max frame by seeking to a high index (adapter clamps).
+    const maxFrame = await adapter.seekToFrame(headId, Number.MAX_SAFE_INTEGER);
+    const maxIndex = maxFrame.frameIndex;
+
+    // Collect all frames with their receipts.
+    const frames: FrameData[] = [];
+    for (let i = 0; i <= maxIndex; i++) {
+      const f = await adapter.frame(headId, i);
+      const r = await adapter.receipts(headId, i);
+      frames.push({ frameIndex: f.frameIndex, lanes: f.lanes, receipts: r });
+    }
+
+    const catalog = await adapter.laneCatalog();
+    const rows = buildTickRows(frames, catalog.lanes);
+
+    if (json) {
+      for (const row of rows) {
+        print("WorldlineTick", row);
+      }
+    } else {
+      for (const row of rows) {
+        const conflict = row.hasConflict ? "!" : " ";
+        const digest = row.digest.slice(0, 7).padEnd(7);
+        const writers = row.writers.length > 0 ? row.writers.join(", ") : "(genesis)";
+        const strands = row.strandIds.length > 0 ? ` [${row.strandIds.join(", ")}]` : "";
+        process.stdout.write(`${conflict} ${String(row.frameIndex).padStart(4)}  ${digest}  ${writers}${strands}\n`);
+      }
     }
     return;
   }
