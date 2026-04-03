@@ -10,10 +10,14 @@ This project will use [Semantic Versioning](https://semver.org/) starting at
 
 ### Added
 
+- **Worldline viewer** (cycle 0010, partial) — `worldlineLayout`
+  pure rendering module, `worldline --json` CLI command, TUI page
+  with scroll and jump-to-tick. 28 tests. Complex scenario fixture
+  (200 ticks, 5 lanes, 4 writers). Lane graph renderer deferred.
 - **METHOD.md** — formal specification of the cycle-based development
   system. Filesystem-native backlog with priority lanes (`asap/`,
-  `up-next/`, `cool-ideas/`, `bad-code/`), legends for named domains,
-  graveyard for rejected ideas.
+  `up-next/`, `cool-ideas/`, `bad-code/`, `inbox/`), legends for
+  named domains, graveyard for rejected ideas.
 
 ### Changed
 
