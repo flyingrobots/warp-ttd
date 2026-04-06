@@ -151,6 +151,12 @@ Retrospectives: `docs/method/retro/`
 Backlog: `docs/method/backlog/`
 Wesley schema: `schemas/warp-ttd-protocol.graphql`
 
+Protocol publication boundary:
+- authored source is `schemas/warp-ttd-protocol.graphql`
+- Wesley compiles the stable consumer artifact family from that schema
+- `src/protocol.ts` is a local mirror for app ergonomics, not a second source
+  of truth
+
 ## Dependencies
 
 - **Runtime:** `@git-stunts/git-warp` ^16.0.0, `@git-stunts/plumbing`
