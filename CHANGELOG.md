@@ -10,6 +10,10 @@ This project will use [Semantic Versioning](https://semver.org/) starting at
 
 ### Added
 
+- **Lane graph renderer** (cycle 0012, partial) — colored lane rails,
+  fork connectors, worldline/strand distinction, tick line cleanup.
+  14 tests. View model rethink deferred — global frame ordering
+  doesn't represent independent lane ticking.
 - **Protocol publication boundary** (cycle 0011) — README Protocol
   section naming the authored schema, its version, Wesley compile path,
   and local-mirror distinction. 7 boundary tests pinning
