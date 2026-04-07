@@ -20,6 +20,33 @@ wrong abstraction.
 
 ## What might be right
 
+### Directory-tree + per-lane timeline (strongest candidate)
+
+Lanes are a tree. Display them like a filesystem:
+
+```
+wl:alpha/
+  strand:long-lived/
+  strand:feature-a/
+  strand:hotfix/
+wl:beta/
+```
+
+Navigate the tree to pick a lane. When selected, the right side shows
+*that lane's* tick timeline — its own local history, receipts, writers,
+effects. No global frame ordering. Each lane ticks at its own pace.
+
+The tree solves topology (which lane forks from which) and independent
+ticking (each lane has its own timeline) in one shot. The colored rails
+from cycle 0012 could appear in the per-lane timeline to show when
+*other* lanes were also active at that lane's ticks — but the primary
+axis is the selected lane's local history.
+
+Left: tree nav (filesystem metaphor). Right: timeline (scoped to
+selected lane).
+
+### Other ideas (may complement the tree approach)
+
 1. **Per-lane tick columns** — each lane is its own column with its
    own tick count. Vertical position = that lane's local tick.
    Horizontal lines connect where lanes interact (fork, shared reads).
