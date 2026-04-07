@@ -90,12 +90,11 @@ test("renderWorldline: cursor row is visually distinct", () => {
   assert.ok(output.includes(">"));
 });
 
-test("renderWorldline: shows writer names", () => {
+test("renderWorldline: shows digest in tick lines", () => {
   const { frames, catalog } = makeHistory();
   const output = renderToString(renderWorldline({ frames, catalog, cursor: 0, w: 100, h: 30, ctx: bijouCtx }));
-  assert.ok(output.includes("alice"));
-  assert.ok(output.includes("bob"));
-  assert.ok(output.includes("carol"));
+  assert.ok(output.includes("def5678"));
+  assert.ok(output.includes("stu5678"));
 });
 
 test("renderWorldline: shows conflict indicator on conflicted ticks", () => {
@@ -104,10 +103,10 @@ test("renderWorldline: shows conflict indicator on conflicted ticks", () => {
   assert.ok(output.includes("!"));
 });
 
-test("renderWorldline: shows strand label when strand is active", () => {
+test("renderWorldline: does not show strand labels in tick lines", () => {
   const { frames, catalog } = makeHistory();
   const output = renderToString(renderWorldline({ frames, catalog, cursor: 0, w: 100, h: 30, ctx: bijouCtx }));
-  assert.ok(output.includes("strand:experiment"));
+  assert.ok(!output.includes("strand:experiment"), "Strand labels replaced by graph gutter");
 });
 
 test("renderWorldline: shows keybinding hints", () => {

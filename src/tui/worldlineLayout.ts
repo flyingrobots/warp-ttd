@@ -104,21 +104,16 @@ export function buildTickRows(
 /**
  * Render a single tick row to a string.
  */
-function formatStrands(ids: readonly string[]): string {
-  return ids.length > 0 ? ` [${ids.join(", ")}]` : "";
-}
-
 export function buildTickLine(
   row: TickRow,
   opts: { width: number; selected: boolean; gutter?: string },
 ): string {
   const marker = opts.selected ? "> " : "  ";
   const conflict = row.hasConflict ? "! " : "  ";
-  const digest = row.digest.slice(0, DIGEST_LENGTH).padEnd(DIGEST_LENGTH);
   const frame = String(row.frameIndex).padStart(4);
-  const writers = row.writers.join(", ");
+  const digest = row.digest.slice(0, DIGEST_LENGTH).padEnd(DIGEST_LENGTH);
 
-  const line = `${marker}${opts.gutter ?? ""}${conflict}${frame}  ${digest}  ${writers}${formatStrands(row.strandIds)}`;
+  const line = `${marker}${opts.gutter ?? ""}${conflict}${frame}  ${digest}`;
   return line.slice(0, opts.width);
 }
 
