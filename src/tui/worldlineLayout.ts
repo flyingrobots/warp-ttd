@@ -12,8 +12,8 @@ import {
 } from "@flyingrobots/bijou";
 import type { BijouContext, Surface } from "@flyingrobots/bijou";
 import type { LaneFrameView, LaneRef, ReceiptSummary } from "../protocol.ts";
-import { assignColumns, buildGraphGutter } from "./laneGraph.ts";
-import type { LaneActivity } from "./laneGraph.ts";
+import { assignColumns, buildGraphGutterCells, laneColor } from "./laneGraph.ts";
+import type { GutterCell, LaneActivity } from "./laneGraph.ts";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -216,15 +216,19 @@ interface GraphState {
   alive: Set<string>;
 }
 
-function rowGutter(row: TickRow, graph: GraphState): string {
+function rowGutterCells(row: TickRow, graph: GraphState): GutterCell[] {
   const activity = buildRowActivity(row, graph.columns, graph.alive);
   const forks = graph.forksByFrame.get(row.frameIndex) ?? [];
-  return buildGraphGutter({
+  return buildGraphGutterCells({
     columns: graph.columns,
     catalog: graph.catalog,
     activity,
     forks,
   });
+}
+
+function gutterWidth(cells: readonly GutterCell[]): number {
+  return cells.length > 0 ? cells.length * 2 : 0;
 }
 
 function buildGraphState(
@@ -237,6 +241,23 @@ function buildGraphState(
   return { columns, catalog, forksByFrame: detectForks(rows, catalog), alive: collectAliveLanes(rows) };
 }
 
+interface GutterBlitArgs {
+  final: Surface;
+  cells: readonly GutterCell[];
+  x: number;
+  y: number;
+}
+
+function blitGutterCells(args: GutterBlitArgs): void {
+  let cx = args.x;
+  for (const cell of args.cells) {
+    args.final.set(cx, args.y, { char: cell.char, fg: laneColor(cell.column) });
+    cx += 1;
+    args.final.set(cx, args.y, { char: " " });
+    cx += 1;
+  }
+}
+
 function blitTickRows(args: BlitTickArgs): void {
   const { final, rows, catalog, cursor, w, h, startY } = args;
   const bodyHeight = h - 4;
@@ -245,9 +266,11 @@ function blitTickRows(args: BlitTickArgs): void {
 
   let y = startY;
   for (const [i, row] of visible.entries()) {
-    const gutter = graph !== null ? rowGutter(row, graph) : undefined;
-    const line = buildTickLine(row, { width: w - 1, selected: offset + i === cursor, gutter });
-    final.blit(stringToSurface(line, w - 1, 1), 1, y);
+    const cells = graph !== null ? rowGutterCells(row, graph) : [];
+    const gw = gutterWidth(cells);
+    const line = buildTickLine(row, { width: w - 1 - gw, selected: offset + i === cursor });
+    if (cells.length > 0) blitGutterCells({ final, cells, x: 1, y });
+    final.blit(stringToSurface(line, w - 1 - gw, 1), 1 + gw, y);
     y += 1;
   }
 }
@@ -268,7 +291,7 @@ export function renderWorldline(input: WorldlineInput): Surface {
   final.blit(stringToSurface(" Worldline", w - 1, 1), 0, 0);
   final.blit(stringToSurface("\u2500".repeat(w), w, 1), 0, 1);
   blitTickRows({ final, rows: buildTickRows(frames, catalog), catalog, cursor, w, h, startY: 2 });
-  final.blit(stringToSurface(" \u2191/\u2193 scroll  Enter select  q back", w - 1, 1), 0, h - 1);
+  final.blit(stringToSurface(" \u2191/\u2193 scroll  Enter select  ! conflict  q back", w - 1, 1), 0, h - 1);
 
   return final;
 }

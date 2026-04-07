@@ -67,15 +67,27 @@ function resolveColumn(col: number, ctx: GutterLookup): string {
   return resolveGlyph(lane.kind, state, ctx.forkSet.has(laneId));
 }
 
+export interface GutterCell {
+  char: string;
+  column: number;
+}
+
+const LANE_COLORS: readonly string[] = [
+  "#4ec9b0", "#569cd6", "#c586c0", "#ce9178",
+  "#dcdcaa", "#9cdcfe", "#d7ba7d", "#b5cea8",
+];
+
+export function laneColor(column: number): string {
+  return LANE_COLORS[column % LANE_COLORS.length] ?? "#cccccc";
+}
+
 /**
- * Build a fixed-width graph gutter string for one tick row.
- *
- * Each column occupies 2 characters: the rail char + a space.
- * Total width = columnCount * 2.
+ * Build graph gutter as structured cells with column indices.
+ * Each cell carries the glyph and its column for color mapping.
  */
-export function buildGraphGutter(args: GraphGutterArgs): string {
+export function buildGraphGutterCells(args: GraphGutterArgs): GutterCell[] {
   const totalCols = args.columns.size;
-  if (totalCols === 0) return " ";
+  if (totalCols === 0) return [];
 
   const colToLane = new Map<number, string>();
   for (const [id, c] of args.columns) colToLane.set(c, id);
@@ -86,10 +98,21 @@ export function buildGraphGutter(args: GraphGutterArgs): string {
     forkSet: new Set(args.forks),
   };
 
-  const cells: string[] = [];
+  const cells: GutterCell[] = [];
   for (let c = 0; c < totalCols; c++) {
-    cells.push(resolveColumn(c, ctx));
+    cells.push({ char: resolveColumn(c, ctx), column: c });
   }
+  return cells;
+}
 
-  return cells.join(" ") + " ";
+/**
+ * Build a fixed-width graph gutter string for one tick row.
+ *
+ * Each column occupies 2 characters: the rail char + a space.
+ * Total width = columnCount * 2.
+ */
+export function buildGraphGutter(args: GraphGutterArgs): string {
+  const cells = buildGraphGutterCells(args);
+  if (cells.length === 0) return " ";
+  return cells.map((c) => c.char).join(" ") + " ";
 }
