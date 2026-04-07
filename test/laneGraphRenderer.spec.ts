@@ -102,7 +102,7 @@ test("buildGraphGutter shows pass-through for alive but inactive worldline", () 
   assert.ok(gutter.includes("│"), "Worldline pass-through should show solid vertical line");
 });
 
-test("buildGraphGutter shows fork connector for new strand", () => {
+test("buildGraphGutter shows fork connector with horizontal line", () => {
   const catalog = [
     makeLane("wl:main", "worldline"),
     makeLane("strand:feature", "strand", "wl:main"),
@@ -119,6 +119,7 @@ test("buildGraphGutter shows fork connector for new strand", () => {
     forks: ["strand:feature"],
   });
   assert.ok(gutter.includes("├"), "Fork should show branch connector");
+  assert.ok(gutter.includes("─"), "Fork should show horizontal connector to parent");
 });
 
 test("buildGraphGutter uses dashed rail for strands", () => {

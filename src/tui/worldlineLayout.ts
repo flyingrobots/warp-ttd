@@ -248,7 +248,7 @@ function blitGutterCells(args: GutterBlitArgs): void {
   for (const cell of args.cells) {
     args.final.set(cx, args.y, { char: cell.char, fg: laneColor(cell.column) });
     cx += 1;
-    args.final.set(cx, args.y, { char: " " });
+    args.final.set(cx, args.y, { char: cell.separator, fg: laneColor(cell.separatorColumn) });
     cx += 1;
   }
 }

@@ -70,6 +70,8 @@ function resolveColumn(col: number, ctx: GutterLookup): string {
 export interface GutterCell {
   char: string;
   column: number;
+  separator: string;
+  separatorColumn: number;
 }
 
 const LANE_COLORS: readonly string[] = [
@@ -81,9 +83,46 @@ export function laneColor(column: number): string {
   return LANE_COLORS[column % LANE_COLORS.length] ?? "#cccccc";
 }
 
+function resolveForkRange(
+  forkId: string,
+  laneById: Map<string, LaneRef>,
+  columns: Map<string, number>,
+): [number, number] | null {
+  const lane = laneById.get(forkId);
+  if (lane?.parentId === undefined) return null;
+  const childCol = columns.get(forkId);
+  const parentCol = columns.get(lane.parentId);
+  if (childCol === undefined || parentCol === undefined) return null;
+  return [childCol, parentCol];
+}
+
+function buildForkRanges(args: GraphGutterArgs): Map<number, number> {
+  const ranges = new Map<number, number>();
+  const laneById = new Map(args.catalog.map((l) => [l.id, l]));
+  for (const forkId of args.forks) {
+    const range = resolveForkRange(forkId, laneById, args.columns);
+    if (range !== null) ranges.set(range[0], range[1]);
+  }
+  return ranges;
+}
+
+function separatorForCol(
+  col: number,
+  forkRanges: Map<number, number>,
+): { char: string; colorCol: number } {
+  for (const [childCol, parentCol] of forkRanges) {
+    const lo = Math.min(parentCol, childCol);
+    const hi = Math.max(parentCol, childCol);
+    if (col >= lo && col < hi) {
+      return { char: "─", colorCol: childCol };
+    }
+  }
+  return { char: " ", colorCol: col };
+}
+
 /**
  * Build graph gutter as structured cells with column indices.
- * Each cell carries the glyph and its column for color mapping.
+ * Each cell carries the glyph, separator char, and color columns.
  */
 export function buildGraphGutterCells(args: GraphGutterArgs): GutterCell[] {
   const totalCols = args.columns.size;
@@ -98,9 +137,16 @@ export function buildGraphGutterCells(args: GraphGutterArgs): GutterCell[] {
     forkSet: new Set(args.forks),
   };
 
+  const forkRanges = buildForkRanges(args);
   const cells: GutterCell[] = [];
   for (let c = 0; c < totalCols; c++) {
-    cells.push({ char: resolveColumn(c, ctx), column: c });
+    const sep = separatorForCol(c, forkRanges);
+    cells.push({
+      char: resolveColumn(c, ctx),
+      column: c,
+      separator: sep.char,
+      separatorColumn: sep.colorCol,
+    });
   }
   return cells;
 }
@@ -114,5 +160,5 @@ export function buildGraphGutterCells(args: GraphGutterArgs): GutterCell[] {
 export function buildGraphGutter(args: GraphGutterArgs): string {
   const cells = buildGraphGutterCells(args);
   if (cells.length === 0) return " ";
-  return cells.map((c) => c.char).join(" ") + " ";
+  return cells.map((c) => `${c.char}${c.separator}`).join("") ;
 }
