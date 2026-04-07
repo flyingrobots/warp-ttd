@@ -13,13 +13,7 @@ import path from "node:path";
 const ROOT = path.resolve(import.meta.dirname, "..");
 const SCHEMA_PATH = path.join(ROOT, "schemas", "warp-ttd-protocol.graphql");
 const PROTOCOL_MIRROR_PATH = path.join(ROOT, "src", "protocol.ts");
-const DESIGN_DOC_PATH = path.join(
-  ROOT,
-  "docs",
-  "design",
-  "0011-protocol-publication-boundary",
-  "protocol-publication-boundary.md",
-);
+const README_PATH = path.join(ROOT, "README.md");
 
 // ─── Agent PQ 1: Can the agent identify exactly one authored protocol source?
 
@@ -40,54 +34,42 @@ test("schema file contains protocol header comment identifying it as authored so
   );
 });
 
-// ─── Agent PQ 2: Can the agent name the Wesley-generated artifact family?
+// ─── User PQ 2: Is it clear what consumers should take from this repo?
 
-test("design doc lists the Wesley-generated artifact family", () => {
-  const content = fs.readFileSync(DESIGN_DOC_PATH, "utf-8");
-
-  const expectedArtifacts = [
-    "manifest/schema.json",
-    "manifest/contracts.json",
-    "manifest/manifest.json",
-    "manifest/ttd-ir.json",
-    "typescript/types.ts",
-    "typescript/zod.ts",
-    "typescript/registry.ts",
-    "typescript/index.ts",
-  ];
-
-  for (const artifact of expectedArtifacts) {
-    assert.ok(
-      content.includes(artifact),
-      `Design doc should list Wesley artifact: ${artifact}`,
-    );
-  }
-});
-
-test("design doc names the Wesley compile path", () => {
-  const content = fs.readFileSync(DESIGN_DOC_PATH, "utf-8");
+test("README names the schema file and its version for consumers", () => {
+  const content = fs.readFileSync(README_PATH, "utf-8");
   assert.ok(
-    content.includes("compile-ttd"),
-    "Design doc should name the compile-ttd Wesley path",
+    content.includes("schemas/warp-ttd-protocol.graphql"),
+    "README should name the schema file",
   );
-});
-
-// ─── Agent PQ 3: Can the agent distinguish generated contract from local policy?
-
-test("design doc has a 'Not Peer Authorities' section listing local files", () => {
-  const content = fs.readFileSync(DESIGN_DOC_PATH, "utf-8");
   assert.match(
     content,
-    /## Not Peer Authorities/,
-    "Design doc should have a 'Not Peer Authorities' section",
+    /v\d+\.\d+\.\d+/,
+    "README should show the protocol version",
   );
+});
+
+test("README tells consumers to feed the schema to Wesley", () => {
+  const content = fs.readFileSync(README_PATH, "utf-8");
   assert.ok(
-    content.includes("src/protocol.ts"),
-    "Not-peer-authorities section should mention src/protocol.ts",
+    content.includes("compile-ttd"),
+    "README should name the Wesley compile path",
   );
-  assert.ok(
-    content.includes("src/adapters/"),
-    "Not-peer-authorities section should mention adapters",
+});
+
+// ─── User PQ 3: Is it clear which local surfaces are not shared contract?
+
+test("README distinguishes local mirror from authored schema", () => {
+  const content = fs.readFileSync(README_PATH, "utf-8");
+  assert.match(
+    content,
+    /src\/protocol\.ts.*local|local.*src\/protocol\.ts/i,
+    "README should identify src/protocol.ts as local",
+  );
+  assert.match(
+    content,
+    /follows the schema|does not own/i,
+    "README should state the mirror follows the schema",
   );
 });
 

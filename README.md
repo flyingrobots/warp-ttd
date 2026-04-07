@@ -111,6 +111,27 @@ npm test                 # fast suite (90 tests)
 npm run test:integration # git-warp integration (10 tests)
 ```
 
+## Protocol
+
+The host-neutral TTD protocol is defined as a single GraphQL schema:
+
+```
+schemas/warp-ttd-protocol.graphql   (v0.2.0)
+```
+
+If you're building a host adapter (Echo, git-warp, or your own), this
+schema is your input. Feed it to Wesley's `compile-ttd` path to generate
+typed contracts for your target language — TypeScript, Rust WASM, or
+whatever Wesley supports.
+
+`src/protocol.ts` is a local convenience mirror for this repo's
+application code. It follows the schema — it does not own it. Adapter
+code, fixture data, and TUI layout are likewise local policy, not
+shared contract.
+
+**Rule:** protocol changes start in the `.graphql` file. Everything
+else follows.
+
 ## Architecture
 
 ```text
@@ -150,12 +171,6 @@ Design docs: `docs/design/`
 Retrospectives: `docs/method/retro/`
 Backlog: `docs/method/backlog/`
 Wesley schema: `schemas/warp-ttd-protocol.graphql`
-
-Protocol publication boundary:
-- authored source is `schemas/warp-ttd-protocol.graphql`
-- Wesley compiles the stable consumer artifact family from that schema
-- `src/protocol.ts` is a local mirror for app ergonomics, not a second source
-  of truth
 
 ## Dependencies
 
