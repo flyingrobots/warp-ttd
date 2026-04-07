@@ -45,6 +45,13 @@ axis is the selected lane's local history.
 Left: tree nav (filesystem metaphor). Right: timeline (scoped to
 selected lane).
 
+### Accordion view
+
+The tree could be an accordion — expand a lane to see its tick
+timeline inline, collapse it to just the lane header. Multiple lanes
+could be expanded simultaneously for comparison. Keeps everything in
+one scrollable surface instead of a left/right split.
+
 ### Other ideas (may complement the tree approach)
 
 1. **Per-lane tick columns** — each lane is its own column with its
