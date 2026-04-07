@@ -126,3 +126,25 @@ test("renderWorldline: handles empty history", () => {
   const output = renderToString(renderWorldline({ frames: [], catalog: [], cursor: 0, w: 100, h: 30, ctx: bijouCtx }));
   assert.ok(output.length > 0);
 });
+
+// ---------------------------------------------------------------------------
+// Lane graph gutter integration (cycle 0012)
+// ---------------------------------------------------------------------------
+
+test("renderWorldline: shows graph gutter with lane rails at wide width", () => {
+  const { frames, catalog } = makeHistory();
+  const output = renderToString(renderWorldline({ frames, catalog, cursor: 0, w: 100, h: 30, ctx: bijouCtx }));
+  assert.ok(output.includes("●"), "Should show active dot in graph gutter");
+});
+
+test("renderWorldline: graph gutter omitted at narrow width", () => {
+  const { frames, catalog } = makeHistory();
+  const output = renderToString(renderWorldline({ frames, catalog, cursor: 0, w: 35, h: 20, ctx: bijouCtx }));
+  assert.ok(!output.includes("●"), "Narrow terminal should not show graph gutter");
+});
+
+test("renderWorldline: graph shows fork connector when strand appears", () => {
+  const { frames, catalog } = makeHistory();
+  const output = renderToString(renderWorldline({ frames, catalog, cursor: 0, w: 100, h: 30, ctx: bijouCtx }));
+  assert.ok(output.includes("├"), "Should show fork connector for strand");
+});

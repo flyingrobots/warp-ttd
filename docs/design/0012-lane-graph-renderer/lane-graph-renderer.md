@@ -94,8 +94,8 @@ returns a fixed-width string. `buildTickLine` calls it and prepends.
 
 ### Width budget
 
-Graph gutter width = `(columnCount * 2) + 1` characters. With 5 lanes
-that's 11 chars. The remaining width goes to the existing tick line
+Graph gutter width = `columnCount * 2` characters. With 5 lanes
+that's 10 chars. The remaining width goes to the existing tick line
 content. If terminal is too narrow (< 40 cols), the graph gutter is
 omitted.
 
