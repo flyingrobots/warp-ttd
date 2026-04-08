@@ -83,6 +83,12 @@ detail is what you see after selecting a lane.
 - The *rendering primitives* are fine; the *data model* (global frame
   list, one row per frame) is the problem
 
+## Depends on
+
+- `bijou-app-frame-migration` — the rethink should build on Bijou
+  building blocks (`dagPane`, `tree`, `accordion`, `splitPane`,
+  `browsableList`, `timeline`), not hand-rolled Surfaces
+
 ## Origin
 
 User feedback during cycle 0012. The graph renderer shipped but
