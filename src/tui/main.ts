@@ -3,6 +3,9 @@
  *
  * Thin app shell: registers pages, configures the frame, runs.
  * All page logic lives in src/tui/pages/.
+ *
+ * Cross-page session broadcast: when the connect page's sessionCtx
+ * changes, the shell propagates it to all other page models directly.
  */
 import { initDefaultContext } from "@flyingrobots/bijou-node";
 import {
@@ -17,10 +20,11 @@ import { connectPage } from "./pages/connectPage.ts";
 import { navigatorPage } from "./pages/navigatorPage.ts";
 import { worldlinePage } from "./pages/worldlinePage.ts";
 import { inspectorPage } from "./pages/inspectorPage.ts";
+import type { SessionContext } from "./pages/shared.ts";
 
 const ctx = initDefaultContext();
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- page models are heterogeneous by design
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- page models/messages are heterogeneous by design
 type AnyPage = FramePage<any, any>;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- page messages are heterogeneous by design
 type AnyMsg = any;
@@ -43,6 +47,20 @@ const framedApp: FramedApp<AnyMsg, AnyMsg> = createFramedApp<AnyMsg, AnyMsg>({
 type FModel = FrameModel<AnyMsg>;
 type FMsg = FramedAppMsg<AnyMsg>;
 
+function getSessionCtx(model: FModel): SessionContext | null {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- typed page model through generic frame
+  return (model.pageModels["connect"] as AnyMsg)?.sessionCtx ?? null;
+}
+
+function syncSession(model: FModel, sessionCtx: SessionContext | null): FModel {
+  const pages = { ...model.pageModels };
+  for (const id of ["nav", "worldline", "inspect"]) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- propagating typed sessionCtx across page models
+    pages[id] = { ...pages[id], sessionCtx };
+  }
+  return { ...model, pageModels: pages };
+}
+
 function initApp(): [FModel, Cmd<FMsg>[]] {
   const [fModel, fCmds] = framedApp.init();
   const pulseCmd = (emit: (msg: FMsg) => void): (() => void) => {
@@ -54,7 +72,17 @@ function initApp(): [FModel, Cmd<FMsg>[]] {
 
 function updateApp(msg: FMsg, model: FModel): [FModel, Cmd<FMsg>[]] {
   if ((msg as AppMsg).type === "quit") return [model, [quit() as Cmd<FMsg>]];
-  return framedApp.update(msg, model);
+
+  const prevCtx = getSessionCtx(model);
+  const [next, cmds] = framedApp.update(msg, model);
+  const nextCtx = getSessionCtx(next);
+
+  // Session state changed — sync to all pages
+  if (prevCtx !== nextCtx) {
+    return [syncSession(next, nextCtx), cmds];
+  }
+
+  return [next, cmds];
 }
 
 const mainApp: App<FModel, FMsg> = {
