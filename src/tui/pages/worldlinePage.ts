@@ -144,10 +144,9 @@ export function worldlinePage(ctx: BijouContext): FramePage<WorldlineModel, Worl
         const selected = rows[model.cursor];
         if (selected !== undefined) {
           const session = model.sessionCtx.session;
-          return [model, [async (emit): Promise<void> => {
+          return [model, [async (): Promise<void> => {
             try {
               await session.seekToFrame(selected.frameIndex);
-              // The navigator page will pick up the snapshot change
             } catch {
               // Silently ignore seek errors from worldline
             }

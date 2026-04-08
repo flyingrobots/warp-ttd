@@ -17,7 +17,7 @@ type FMsg = FramedAppMsg<AnyMsg>;
 
 export function getSessionCtx(model: FModel): SessionContext | null {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- typed page model through generic frame
-  return (model.pageModels["connect"] as AnyMsg)?.sessionCtx ?? null;
+  return (model.pageModels["connect"])?.sessionCtx ?? null;
 }
 
 export function syncSession(
@@ -83,11 +83,11 @@ export function handleWorldlineLoaded(model: FModel, frames: FrameData[]): FMode
 export function syncWorldlineCursor(model: FModel): FModel {
   const sessionCtx = getSessionCtx(model);
   if (sessionCtx === null) return model;
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- accessing worldline page model
-  const wl = model.pageModels["worldline"] as AnyMsg;
+   
+  const wl = model.pageModels["worldline"];
   if (wl?.frames === undefined) return model;
   const frameIndex = sessionCtx.session.snapshot.head.currentFrameIndex;
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- typed frames array
+   
   const cursor = cursorForFrame(wl.frames as FrameData[], sessionCtx.catalog.lanes, frameIndex);
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- checking current cursor
   if (wl.cursor === cursor) return model;

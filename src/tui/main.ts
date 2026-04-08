@@ -61,12 +61,12 @@ function initApp(): [FModel, Cmd<FMsg>[]] {
 }
 
 function updateApp(msg: FMsg, model: FModel): [FModel, Cmd<FMsg>[]] {
-  if ((msg as AppMsg).type === "quit") return [model, [quit() as Cmd<FMsg>]];
+  if ((msg as AppMsg).type === "quit") return [model, [quit()]];
 
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- checking message discriminant
-  if ((msg as AnyMsg).type === "worldline-loaded") {
+  if ((msg).type === "worldline-loaded") {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- accessing typed frames
-    return [handleWorldlineLoaded(model, (msg as AnyMsg).frames as FrameData[]), []];
+    return [handleWorldlineLoaded(model, (msg).frames as FrameData[]), []];
   }
 
   const prevCtx = getSessionCtx(model);
@@ -89,8 +89,9 @@ const mainApp: App<FModel, FMsg> = {
 
 run(mainApp).then(
   () => process.exit(0),
-  (err: Error) => {
-    process.stderr.write(`Fatal: ${err.message}\n`);
+  (err: unknown) => {
+    const message = err instanceof Error ? err.message : String(err);
+    process.stderr.write(`Fatal: ${message}\n`);
     process.exit(1);
   },
 );
