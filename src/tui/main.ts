@@ -21,6 +21,7 @@ import { navigatorPage } from "./pages/navigatorPage.ts";
 import { worldlinePage } from "./pages/worldlinePage.ts";
 import { inspectorPage } from "./pages/inspectorPage.ts";
 import type { SessionContext } from "./pages/shared.ts";
+import type { FrameData } from "./worldlineLayout.ts";
 
 const ctx = initDefaultContext();
 
@@ -52,13 +53,44 @@ function getSessionCtx(model: FModel): SessionContext | null {
   return (model.pageModels["connect"] as AnyMsg)?.sessionCtx ?? null;
 }
 
-function syncSession(model: FModel, sessionCtx: SessionContext | null): FModel {
+function syncSession(model: FModel, sessionCtx: SessionContext | null): [FModel, Cmd<FMsg>[]] {
   const pages = { ...model.pageModels };
   for (const id of ["nav", "worldline", "inspect"]) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- propagating typed sessionCtx across page models
     pages[id] = { ...pages[id], sessionCtx };
   }
-  return { ...model, pageModels: pages };
+  if (sessionCtx !== null) {
+    // Reset worldline frames and trigger load
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- typed worldline model through generic frame
+    pages["worldline"] = { ...pages["worldline"], frames: [], cursor: 0 };
+    const loadCmd = makeWorldlineLoadCmd(sessionCtx);
+    return [{ ...model, pageModels: pages }, [loadCmd as Cmd<FMsg>]];
+  }
+  return [{ ...model, pageModels: pages }, []];
+}
+
+function makeWorldlineLoadCmd(
+  sessionCtx: SessionContext,
+): (emit: (msg: FMsg) => void) => Promise<void> {
+  return async (emit): Promise<void> => {
+    try {
+      const adapter = sessionCtx.session.adapter;
+      const headId = sessionCtx.session.snapshot.head.headId;
+      const maxFrame = await adapter.seekToFrame(headId, Number.MAX_SAFE_INTEGER);
+      const maxIndex = maxFrame.frameIndex;
+      const frames: FrameData[] = [];
+      for (let i = 0; i <= maxIndex; i++) {
+        const f = await adapter.frame(headId, i);
+        const r = await adapter.receipts(headId, i);
+        frames.push({ frameIndex: f.frameIndex, lanes: f.lanes, receipts: r });
+      }
+      // Wrap as a worldline page message via the frame's page-scoped dispatch
+      // The shell update will pass this through framedApp.update which routes to the page
+      emit({ type: "worldline-loaded", frames } as FMsg);
+    } catch {
+      // Silently ignore — worldline view will show empty state
+    }
+  };
 }
 
 function initApp(): [FModel, Cmd<FMsg>[]] {
@@ -70,8 +102,22 @@ function initApp(): [FModel, Cmd<FMsg>[]] {
   return [fModel, [pulseCmd as Cmd<FMsg>, ...fCmds]];
 }
 
+function handleWorldlineLoaded(model: FModel, frames: FrameData[]): FModel {
+  const pages = { ...model.pageModels };
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- typed worldline model through generic frame
+  pages["worldline"] = { ...pages["worldline"], frames, cursor: 0 };
+  return { ...model, pageModels: pages };
+}
+
 function updateApp(msg: FMsg, model: FModel): [FModel, Cmd<FMsg>[]] {
   if ((msg as AppMsg).type === "quit") return [model, [quit() as Cmd<FMsg>]];
+
+  // Intercept worldline-loaded (from shell-initiated load cmd)
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- checking message discriminant
+  if ((msg as AnyMsg).type === "worldline-loaded") {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- accessing typed frames from message
+    return [handleWorldlineLoaded(model, (msg as AnyMsg).frames as FrameData[]), []];
+  }
 
   const prevCtx = getSessionCtx(model);
   const [next, cmds] = framedApp.update(msg, model);
@@ -79,7 +125,8 @@ function updateApp(msg: FMsg, model: FModel): [FModel, Cmd<FMsg>[]] {
 
   // Session state changed — sync to all pages
   if (prevCtx !== nextCtx) {
-    return [syncSession(next, nextCtx), cmds];
+    const [synced, syncCmds] = syncSession(next, nextCtx);
+    return [synced, [...cmds, ...syncCmds]];
   }
 
   return [next, cmds];
