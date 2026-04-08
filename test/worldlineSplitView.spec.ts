@@ -58,66 +58,27 @@ function makeReceipt(opts: {
   };
 }
 
-function makeMultiLaneHistory(): { catalog: LaneRef[]; frames: FrameData[] } {
-  const catalog = [
+function multiLaneCatalog(): LaneRef[] {
+  return [
     makeLane("wl:alpha", "worldline"),
     makeLane("strand:feature-a", "strand", "wl:alpha"),
     makeLane("strand:hotfix", "strand", "wl:alpha"),
     makeLane("wl:beta", "worldline"),
   ];
+}
 
-  return {
-    catalog,
-    frames: [
-      {
-        frameIndex: 0,
-        lanes: [makeLaneFrame("wl:alpha", 0, { btrDigest: "aaa0000" })],
-        receipts: [],
-      },
-      {
-        frameIndex: 1,
-        lanes: [
-          makeLaneFrame("wl:alpha", 1, { changed: true, btrDigest: "aaa1111" }),
-          makeLaneFrame("wl:beta", 0, { btrDigest: "bbb0000" }),
-        ],
-        receipts: [
-          makeReceipt({ laneId: "wl:alpha", writerId: "alice", frameIndex: 1 }),
-          makeReceipt({ laneId: "wl:beta", writerId: "dave", frameIndex: 1 }),
-        ],
-      },
-      {
-        frameIndex: 2,
-        lanes: [
-          makeLaneFrame("wl:alpha", 2, { changed: true, btrDigest: "aaa2222" }),
-          makeLaneFrame("strand:feature-a", 0, { btrDigest: "fea0000" }),
-        ],
-        receipts: [
-          makeReceipt({ laneId: "wl:alpha", writerId: "alice", frameIndex: 2 }),
-          makeReceipt({ laneId: "strand:feature-a", writerId: "bob", frameIndex: 2 }),
-        ],
-      },
-      {
-        frameIndex: 3,
-        lanes: [
-          makeLaneFrame("strand:feature-a", 1, { changed: true, btrDigest: "fea1111" }),
-          makeLaneFrame("strand:hotfix", 0, { btrDigest: "hot0000" }),
-        ],
-        receipts: [
-          makeReceipt({ laneId: "strand:feature-a", writerId: "bob", frameIndex: 3 }),
-          makeReceipt({ laneId: "strand:hotfix", writerId: "carol", frameIndex: 3 }),
-        ],
-      },
-      {
-        frameIndex: 4,
-        lanes: [
-          makeLaneFrame("strand:feature-a", 2, { changed: true, btrDigest: "fea2222" }),
-        ],
-        receipts: [
-          makeReceipt({ laneId: "strand:feature-a", writerId: "bob", frameIndex: 4 }),
-        ],
-      },
-    ],
-  };
+function multiLaneFrames(): FrameData[] {
+  return [
+    { frameIndex: 0, lanes: [makeLaneFrame("wl:alpha", 0, { btrDigest: "aaa0000" })], receipts: [] },
+    { frameIndex: 1, lanes: [makeLaneFrame("wl:alpha", 1, { changed: true, btrDigest: "aaa1111" }), makeLaneFrame("wl:beta", 0, { btrDigest: "bbb0000" })], receipts: [makeReceipt({ laneId: "wl:alpha", writerId: "alice", frameIndex: 1 }), makeReceipt({ laneId: "wl:beta", writerId: "dave", frameIndex: 1 })] },
+    { frameIndex: 2, lanes: [makeLaneFrame("wl:alpha", 2, { changed: true, btrDigest: "aaa2222" }), makeLaneFrame("strand:feature-a", 0, { btrDigest: "fea0000" })], receipts: [makeReceipt({ laneId: "wl:alpha", writerId: "alice", frameIndex: 2 }), makeReceipt({ laneId: "strand:feature-a", writerId: "bob", frameIndex: 2 })] },
+    { frameIndex: 3, lanes: [makeLaneFrame("strand:feature-a", 1, { changed: true, btrDigest: "fea1111" }), makeLaneFrame("strand:hotfix", 0, { btrDigest: "hot0000" })], receipts: [makeReceipt({ laneId: "strand:feature-a", writerId: "bob", frameIndex: 3 }), makeReceipt({ laneId: "strand:hotfix", writerId: "carol", frameIndex: 3 })] },
+    { frameIndex: 4, lanes: [makeLaneFrame("strand:feature-a", 2, { changed: true, btrDigest: "fea2222" })], receipts: [makeReceipt({ laneId: "strand:feature-a", writerId: "bob", frameIndex: 4 })] },
+  ];
+}
+
+function makeMultiLaneHistory(): { catalog: LaneRef[]; frames: FrameData[] } {
+  return { catalog: multiLaneCatalog(), frames: multiLaneFrames() };
 }
 
 // ---------------------------------------------------------------------------
@@ -125,8 +86,8 @@ function makeMultiLaneHistory(): { catalog: LaneRef[]; frames: FrameData[] } {
 // ---------------------------------------------------------------------------
 
 test("filterFramesToLane returns only frames where the lane participated", () => {
-  const { frames, catalog } = makeMultiLaneHistory();
-  const filtered = filterFramesToLane(frames, "strand:feature-a", catalog);
+  const { frames } = makeMultiLaneHistory();
+  const filtered = filterFramesToLane(frames, "strand:feature-a");
   // strand:feature-a appears in frames 2, 3, 4
   assert.equal(filtered.length, 3);
   assert.deepEqual(
@@ -136,8 +97,8 @@ test("filterFramesToLane returns only frames where the lane participated", () =>
 });
 
 test("filterFramesToLane keeps only that lane's receipts per frame", () => {
-  const { frames, catalog } = makeMultiLaneHistory();
-  const filtered = filterFramesToLane(frames, "strand:feature-a", catalog);
+  const { frames } = makeMultiLaneHistory();
+  const filtered = filterFramesToLane(frames, "strand:feature-a");
   for (const f of filtered) {
     for (const r of f.receipts) {
       assert.equal(r.laneId, "strand:feature-a", `Frame ${String(f.frameIndex)} should only have strand:feature-a receipts`);
@@ -146,8 +107,8 @@ test("filterFramesToLane keeps only that lane's receipts per frame", () => {
 });
 
 test("filterFramesToLane keeps only that lane's LaneFrameView per frame", () => {
-  const { frames, catalog } = makeMultiLaneHistory();
-  const filtered = filterFramesToLane(frames, "strand:feature-a", catalog);
+  const { frames } = makeMultiLaneHistory();
+  const filtered = filterFramesToLane(frames, "strand:feature-a");
   for (const f of filtered) {
     assert.equal(f.lanes.length, 1);
     assert.equal(f.lanes[0]?.laneId, "strand:feature-a");
@@ -155,14 +116,14 @@ test("filterFramesToLane keeps only that lane's LaneFrameView per frame", () => 
 });
 
 test("filterFramesToLane returns empty for a lane with no activity", () => {
-  const { frames, catalog } = makeMultiLaneHistory();
-  const filtered = filterFramesToLane(frames, "nonexistent", catalog);
+  const { frames } = makeMultiLaneHistory();
+  const filtered = filterFramesToLane(frames, "nonexistent");
   assert.equal(filtered.length, 0);
 });
 
 test("filterFramesToLane for wl:alpha includes frames 0, 1, 2 (but not 3, 4 where only strands tick)", () => {
-  const { frames, catalog } = makeMultiLaneHistory();
-  const filtered = filterFramesToLane(frames, "wl:alpha", catalog);
+  const { frames } = makeMultiLaneHistory();
+  const filtered = filterFramesToLane(frames, "wl:alpha");
   assert.deepEqual(
     filtered.map((f) => f.frameIndex),
     [0, 1, 2],
@@ -227,8 +188,10 @@ test("buildLaneTreeLines handles single worldline with no strands", () => {
   const catalog = [makeLane("wl:solo", "worldline")];
   const lines = buildLaneTreeLines(catalog);
   assert.equal(lines.length, 1);
-  assert.equal(lines[0]?.laneId, "wl:solo");
-  assert.equal(lines[0]?.depth, 0);
+  const solo = lines[0];
+  assert.ok(solo !== undefined);
+  assert.equal(solo.laneId, "wl:solo");
+  assert.equal(solo.depth, 0);
 });
 
 // ---------------------------------------------------------------------------
