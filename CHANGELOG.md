@@ -10,6 +10,12 @@ This project will use [Semantic Versioning](https://semver.org/) starting at
 
 ### Added
 
+- **Worldline view rethink** (cycle 0014) — split-view worldline page
+  with lane tree on the left and per-lane tick timeline on the right.
+  `filterFramesToLane` scopes frame data to a single lane.
+  `buildLaneTreeLines` renders lane hierarchy with tree connectors.
+  Backward compatible — legacy view preserved when no lane selected.
+  Narrow terminals collapse to single-pane timeline. 16 new tests (164 total).
 - **Bijou app frame migration** (cycle 0013) — per-page models,
   updates, and keymaps. Command palette, help viewer, quit modal
   unlocked. Cross-page session sync. Default to latest tick on
