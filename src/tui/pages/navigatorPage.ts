@@ -12,7 +12,7 @@ import type { BijouContext, Surface } from "@flyingrobots/bijou";
 import type { FramePage } from "@flyingrobots/bijou-tui";
 import { renderWaveShader } from "../shaders/bgShader.ts";
 import { renderNavigator } from "../navigatorLayout.ts";
-import type { SessionContext } from "./shared.ts";
+import { isPageMsg, type SessionContext } from "./shared.ts";
 
 // ---------------------------------------------------------------------------
 // Model
@@ -101,8 +101,21 @@ export function navigatorPage(ctx: BijouContext): FramePage<NavigatorModel, Navi
       .bind("P", "Pin observation", { type: "pin" })
       .bind("u", "Unpin", { type: "unpin" }),
 
+    modalKeyMap: (model): ReturnType<NonNullable<FramePage<NavigatorModel, NavigatorMsg>["modalKeyMap"]>> => {
+      if (model.jumpInput === null) return undefined;
+      const km = createKeyMap<NavigatorMsg>()
+        .bind("escape", "Cancel", { type: "jump-cancel" })
+        .bind("enter", "Confirm", { type: "jump-confirm" })
+        .bind("backspace", "Delete", { type: "jump-cancel" });
+      for (let d = 0; d <= 9; d++) {
+        km.bind(String(d), `Digit ${String(d)}`, { type: "jump-digit", key: String(d) });
+      }
+      return km;
+    },
+
     update: (msg, model) => {
-      const m = msg as NavigatorMsg;
+      if (!isPageMsg<NavigatorMsg>(msg)) return [model, []];
+      const m = msg;
 
       if (m.type === "pulse") return [{ ...model, time: model.time + m.dt }, []];
 

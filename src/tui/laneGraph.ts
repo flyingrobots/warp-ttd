@@ -159,6 +159,6 @@ export function buildGraphGutterCells(args: GraphGutterArgs): GutterCell[] {
  */
 export function buildGraphGutter(args: GraphGutterArgs): string {
   const cells = buildGraphGutterCells(args);
-  if (cells.length === 0) return " ";
-  return cells.map((c) => `${c.char}${c.separator}`).join("") ;
+  if (cells.length === 0) return "";
+  return cells.map((c) => `${c.char}${c.separator}`).join("");
 }

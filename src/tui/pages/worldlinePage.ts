@@ -13,7 +13,7 @@ import type { FramePage } from "@flyingrobots/bijou-tui";
 import { renderWaveShader } from "../shaders/bgShader.ts";
 import { renderWorldline, buildTickRows } from "../worldlineLayout.ts";
 import type { FrameData } from "../worldlineLayout.ts";
-import type { SessionContext } from "./shared.ts";
+import { isPageMsg, type SessionContext } from "./shared.ts";
 
 // ---------------------------------------------------------------------------
 // Model
@@ -114,7 +114,8 @@ export function worldlinePage(ctx: BijouContext): FramePage<WorldlineModel, Worl
       .bind("enter", "Jump to tick", { type: "select-tick" }),
 
     update: (msg, model) => {
-      const m = msg as WorldlineMsg;
+      if (!isPageMsg<WorldlineMsg>(msg)) return [model, []];
+      const m = msg;
 
       if (m.type === "pulse") return [{ ...model, time: model.time + m.dt }, []];
 
@@ -139,7 +140,7 @@ export function worldlinePage(ctx: BijouContext): FramePage<WorldlineModel, Worl
         return [{ ...model, cursor: Math.min(model.cursor + 1, max) }, []];
       }
 
-      if (m.type === "select-tick") {
+      {
         const rows = buildTickRows(model.frames, model.sessionCtx.catalog.lanes);
         const selected = rows[model.cursor];
         if (selected !== undefined) {

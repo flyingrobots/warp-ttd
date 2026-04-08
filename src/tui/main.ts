@@ -63,8 +63,8 @@ function initApp(): [FModel, Cmd<FMsg>[]] {
 function updateApp(msg: FMsg, model: FModel): [FModel, Cmd<FMsg>[]] {
   if ((msg as AppMsg).type === "quit") return [model, [quit()]];
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- checking message discriminant
-  if ((msg).type === "worldline-loaded") {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- checking message discriminant on union type
+  if (typeof (msg).type === "string" && (msg).type === "worldline-loaded") {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- accessing typed frames
     return [handleWorldlineLoaded(model, (msg).frames as FrameData[]), []];
   }

@@ -12,7 +12,7 @@ import {
 import type { BijouContext, Surface } from "@flyingrobots/bijou";
 import type { FramePage } from "@flyingrobots/bijou-tui";
 import { renderWaveShader } from "../shaders/bgShader.ts";
-import type { SessionContext } from "./shared.ts";
+import { isPageMsg, type SessionContext } from "./shared.ts";
 
 // ---------------------------------------------------------------------------
 // Model
@@ -113,11 +113,11 @@ export function inspectorPage(ctx: BijouContext): FramePage<InspectorModel, Insp
     init: () => [initial, []],
 
     update: (msg, model) => {
-      const m = msg as InspectorMsg;
+      if (!isPageMsg<InspectorMsg>(msg)) return [model, []];
+      const m = msg;
       if (m.type === "pulse") return [{ ...model, time: model.time + m.dt }, []];
       if (m.type === "session-ready") return [{ ...model, sessionCtx: m.ctx }, []];
-      if (m.type === "disconnect") return [{ ...initial, time: model.time }, []];
-      return [model, []];
+      return [{ ...initial, time: model.time }, []];
     },
 
     layout: (model) => ({

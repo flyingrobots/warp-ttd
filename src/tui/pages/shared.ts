@@ -14,3 +14,9 @@ export interface SessionContext {
   readonly hello: HostHello;
   readonly catalog: LaneCatalog;
 }
+
+/** Type guard: is this a page-domain message (has string `type` field)? */
+// eslint-disable-next-line @typescript-eslint/no-restricted-types -- unknown is correct for type guard input
+export function isPageMsg<T extends { type: string }>(msg: unknown): msg is T {
+  return typeof msg === "object" && msg !== null && "type" in msg && typeof (msg as T).type === "string";
+}

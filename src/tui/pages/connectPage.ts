@@ -17,7 +17,7 @@ import { renderWaveShader } from "../shaders/bgShader.ts";
 import { resolveAdapter } from "../../app/adapterRegistry.ts";
 import type { AdapterConfig } from "../../app/adapterRegistry.ts";
 import { DebuggerSession } from "../../app/debuggerSession.ts";
-import type { SessionContext } from "./shared.ts";
+import { isPageMsg, type SessionContext } from "./shared.ts";
 
 // ---------------------------------------------------------------------------
 // Model
@@ -212,7 +212,8 @@ export function connectPage(ctx: BijouContext): FramePage<ConnectModel, ConnectM
       .bind("d", "Disconnect", { type: "disconnect" }),
 
     update: (msg, model) => {
-      const m = msg as ConnectMsg;
+      if (!isPageMsg<ConnectMsg>(msg)) return [model, []];
+      const m = msg;
 
       if (m.type === "pulse") {
         return [{ ...model, time: model.time + m.dt }, []];
