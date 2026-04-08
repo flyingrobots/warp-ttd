@@ -122,14 +122,22 @@ adapter-local instead of silently redefining the shared base protocol.
 ## Current Rule
 
 1. Change shared protocol nouns in `schemas/warp-ttd-protocol.graphql`.
-2. Regenerate the Wesley artifact family from that schema.
+2. Regenerate the Wesley artifact family from that schema:
+   ```sh
+   # From the Wesley repository
+   pnpm wesley compile-ttd \
+     --schema <path-to>/warp-ttd/schemas/warp-ttd-protocol.graphql
+   ```
+   Add `--dry-run --json` to preview output without writing files.
 3. Update local mirrors such as `src/protocol.ts` only as followers of the
    schema change.
 4. Do not treat adapter code or fixture data as a second contract source.
 
 ## Non-Goals
 
-- This cycle does not vendor the generated Wesley outputs into `warp-ttd`.
-- This cycle does not replace `src/protocol.ts` with generated imports.
-- This cycle does not define Echo runtime schema ownership.
-- This cycle does not settle substrate receipt ownership for `git-warp`.
+Deferred to future work:
+
+- Vendoring the generated Wesley outputs into `warp-ttd`
+- Replacing `src/protocol.ts` with generated imports
+- Defining Echo runtime schema ownership
+- Settling substrate receipt ownership for `git-warp`

@@ -122,7 +122,15 @@ schemas/warp-ttd-protocol.graphql   (v0.2.0)
 If you're building a host adapter (Echo, git-warp, or your own), this
 schema is your input. Feed it to Wesley's `compile-ttd` path to generate
 typed contracts for your target language — TypeScript, Rust WASM, or
-whatever Wesley supports.
+whatever Wesley supports:
+
+```sh
+# From the Wesley repository
+pnpm wesley compile-ttd \
+  --schema <path-to>/warp-ttd/schemas/warp-ttd-protocol.graphql
+```
+
+Add `--dry-run --json` to preview output without writing files.
 
 `src/protocol.ts` is a local convenience mirror for this repo's
 application code. It follows the schema — it does not own it. Adapter
