@@ -7,7 +7,6 @@ import {
 } from "@flyingrobots/bijou-tui";
 import {
   stringToSurface,
-  boxSurface,
   badge,
   surfaceToString,
 } from "@flyingrobots/bijou";
@@ -17,7 +16,7 @@ import { renderWaveShader } from "../shaders/bgShader.ts";
 import { resolveAdapter } from "../../app/adapterRegistry.ts";
 import type { AdapterConfig } from "../../app/adapterRegistry.ts";
 import { DebuggerSession } from "../../app/debuggerSession.ts";
-import { isPageMsg, type SessionContext } from "./shared.ts";
+import { centerBox, isPageMsg, type SessionContext } from "./shared.ts";
 
 // ---------------------------------------------------------------------------
 // Model
@@ -94,12 +93,6 @@ function makeConnectCmd(
       emit({ type: "connect-error", message, generation: gen });
     }
   };
-}
-
-function centerBox(bg: Surface, content: Surface, title: string, ctx: BijouContext): Surface {
-  const box = boxSurface(content, { title: ` ${title} `, width: Math.min(60, bg.width - 4), ctx });
-  bg.blit(box, Math.floor((bg.width - box.width) / 2), Math.floor((bg.height - box.height) / 2));
-  return bg;
 }
 
 // ---------------------------------------------------------------------------

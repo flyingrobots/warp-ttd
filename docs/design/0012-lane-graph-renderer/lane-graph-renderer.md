@@ -28,7 +28,7 @@ strands appear, and visual distinction between worldlines and strands.
 
 ### Agent
 
-1. Does `buildGraphColumn` produce a testable lane-column assignment
+1. Does `assignColumns` produce a testable lane-column assignment
    for a given tick history?
 2. Does the column assignment handle fork, active, quiet, and
    end-of-life without column collisions?
@@ -54,7 +54,7 @@ This keeps the graph stable as you scroll.
 The column allocator is a pure function:
 `assignColumns(catalog: LaneRef[]) → Map<string, number>`
 
-Worldlines get columns 0..N. Strands get columns N+1..M.
+Worldlines get columns 0 through W-1, strands get columns W onward.
 
 ### Graph gutter characters
 
@@ -80,12 +80,12 @@ must be readable without color (accessibility, piped output).
 ### Integration point
 
 `buildTickLine` currently renders:
-```
+```text
   ! 0003  mno7890  carol
 ```
 
 After this cycle:
-```
+```text
   ● │ ┆   ! 0003  mno7890  carol
 ```
 

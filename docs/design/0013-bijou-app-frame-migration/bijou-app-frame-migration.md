@@ -81,7 +81,7 @@ Each page declares its own `keyMap` and `update`:
 
 - **Connect**: up/down/enter for wizard, escape for back, text input
 - **Navigator**: n/p for step, g for jump, P/u for pin/unpin
-- **Worldline**: up/down for scroll, enter for jump-to-navigator
+- **Worldline**: up/down for scroll, enter to seek session to selected tick
 - **Inspector**: passive (no keys needed yet)
 
 The global update disappears. `mainApp.update` becomes a thin
@@ -100,7 +100,7 @@ With proper page structure, these work automatically:
 
 ### File structure after migration
 
-```
+```text
 src/tui/
   main.ts              — app shell: createFramedApp + page registry
   pages/

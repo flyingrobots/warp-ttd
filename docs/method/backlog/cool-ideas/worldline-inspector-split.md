@@ -14,7 +14,7 @@ page. Combining them puts the topology and the detail in one view.
 
 ## What it might look like
 
-```
+```text
 ● ● ┆ ┆ ┆  ! 112  │  alice, dave
 ● ●   ┆ ┆     111  │  Receipts (3)
 ● ● ┆   ┆     110  │    wl:alpha  alice  2 admitted

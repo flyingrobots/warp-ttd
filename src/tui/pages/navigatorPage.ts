@@ -6,13 +6,12 @@ import {
 } from "@flyingrobots/bijou-tui";
 import {
   stringToSurface,
-  boxSurface,
 } from "@flyingrobots/bijou";
 import type { BijouContext, Surface } from "@flyingrobots/bijou";
 import type { FramePage } from "@flyingrobots/bijou-tui";
 import { renderWaveShader } from "../shaders/bgShader.ts";
 import { renderNavigator } from "../navigatorLayout.ts";
-import { isPageMsg, type SessionContext } from "./shared.ts";
+import { centerBox, isPageMsg, type SessionContext } from "./shared.ts";
 
 // ---------------------------------------------------------------------------
 // Model
@@ -43,16 +42,6 @@ type NavigatorMsg =
   | { type: "nav-error"; message: string }
   | { type: "session-ready"; ctx: SessionContext }
   | { type: "disconnect" };
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-function centerBox(bg: Surface, content: Surface, title: string, ctx: BijouContext): Surface {
-  const box = boxSurface(content, { title: ` ${title} `, width: Math.min(60, bg.width - 4), ctx });
-  bg.blit(box, Math.floor((bg.width - box.width) / 2), Math.floor((bg.height - box.height) / 2));
-  return bg;
-}
 
 // ---------------------------------------------------------------------------
 // Layout

@@ -6,14 +6,13 @@ import {
 } from "@flyingrobots/bijou-tui";
 import {
   stringToSurface,
-  boxSurface,
 } from "@flyingrobots/bijou";
 import type { BijouContext, Surface } from "@flyingrobots/bijou";
 import type { FramePage } from "@flyingrobots/bijou-tui";
 import { renderWaveShader } from "../shaders/bgShader.ts";
 import { renderWorldline, buildTickRows } from "../worldlineLayout.ts";
 import type { FrameData } from "../worldlineLayout.ts";
-import { isPageMsg, type SessionContext } from "./shared.ts";
+import { centerBox, isPageMsg, type SessionContext } from "./shared.ts";
 
 // ---------------------------------------------------------------------------
 // Model
@@ -37,17 +36,11 @@ type WorldlineMsg =
   | { type: "select-tick" }
   | { type: "session-ready"; ctx: SessionContext }
   | { type: "disconnect" }
-  | { type: "worldline-loaded"; frames: FrameData[] };
+  | { type: "worldline-loaded"; frames: FrameData[]; sessionId: string };
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-function centerBox(bg: Surface, content: Surface, title: string, ctx: BijouContext): Surface {
-  const box = boxSurface(content, { title: ` ${title} `, width: Math.min(60, bg.width - 4), ctx });
-  bg.blit(box, Math.floor((bg.width - box.width) / 2), Math.floor((bg.height - box.height) / 2));
-  return bg;
-}
 
 function makeWorldlineLoadCmd(
   ctx: SessionContext,
@@ -64,7 +57,7 @@ function makeWorldlineLoadCmd(
         const r = await adapter.receipts(headId, i);
         frames.push({ frameIndex: f.frameIndex, lanes: f.lanes, receipts: r });
       }
-      emit({ type: "worldline-loaded", frames });
+      emit({ type: "worldline-loaded", frames, sessionId: ctx.session.sessionId });
     } catch {
       // Silently ignore — worldline view will show empty state
     }
@@ -126,6 +119,7 @@ export function worldlinePage(ctx: BijouContext): FramePage<WorldlineModel, Worl
       if (m.type === "disconnect") return [{ ...initial, time: model.time }, []];
 
       if (m.type === "worldline-loaded") {
+        if (model.sessionCtx?.session.sessionId !== m.sessionId) return [model, []];
         return [{ ...model, frames: m.frames, cursor: 0 }, []];
       }
 

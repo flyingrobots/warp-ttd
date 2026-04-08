@@ -12,7 +12,7 @@ import {
 import type { BijouContext, Surface } from "@flyingrobots/bijou";
 import type { FramePage } from "@flyingrobots/bijou-tui";
 import { renderWaveShader } from "../shaders/bgShader.ts";
-import { isPageMsg, type SessionContext } from "./shared.ts";
+import { centerBox, isPageMsg, type SessionContext } from "./shared.ts";
 
 // ---------------------------------------------------------------------------
 // Model
@@ -31,16 +31,6 @@ type InspectorMsg =
   | { type: "pulse"; dt: number }
   | { type: "session-ready"; ctx: SessionContext }
   | { type: "disconnect" };
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-function centerBox(bg: Surface, content: Surface, title: string, ctx: BijouContext): Surface {
-  const box = boxSurface(content, { title: ` ${title} `, width: Math.min(60, bg.width - 4), ctx });
-  bg.blit(box, Math.floor((bg.width - box.width) / 2), Math.floor((bg.height - box.height) / 2));
-  return bg;
-}
 
 // ---------------------------------------------------------------------------
 // Layout

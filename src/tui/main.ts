@@ -65,8 +65,8 @@ function updateApp(msg: FMsg, model: FModel): [FModel, Cmd<FMsg>[]] {
 
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- checking message discriminant on union type
   if (typeof (msg).type === "string" && (msg).type === "worldline-loaded") {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- accessing typed frames
-    return [handleWorldlineLoaded(model, (msg).frames as FrameData[]), []];
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- accessing typed frames and sessionId
+    return [handleWorldlineLoaded(model, (msg).frames as FrameData[], (msg).sessionId as string | undefined), []];
   }
 
   const prevCtx = getSessionCtx(model);

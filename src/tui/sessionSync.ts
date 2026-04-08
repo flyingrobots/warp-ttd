@@ -52,7 +52,7 @@ function makeWorldlineLoadCmd(
         const r = await adapter.receipts(headId, i);
         frames.push({ frameIndex: f.frameIndex, lanes: f.lanes, receipts: r });
       }
-      emit({ type: "worldline-loaded", frames } as FMsg);
+      emit({ type: "worldline-loaded", frames, sessionId: sessionCtx.session.sessionId } as FMsg);
     } catch {
       // Silently ignore — worldline view will show empty state
     }
@@ -69,8 +69,9 @@ function cursorForFrame(
   return idx >= 0 ? idx : 0;
 }
 
-export function handleWorldlineLoaded(model: FModel, frames: FrameData[]): FModel {
+export function handleWorldlineLoaded(model: FModel, frames: FrameData[], sessionId: string | undefined): FModel {
   const sessionCtx = getSessionCtx(model);
+  if (sessionId !== undefined && sessionCtx?.session.sessionId !== sessionId) return model;
   const frameIndex = sessionCtx?.session.snapshot.head.currentFrameIndex ?? 0;
   const catalog = sessionCtx?.catalog.lanes ?? [];
   const cursor = cursorForFrame(frames, catalog, frameIndex);
