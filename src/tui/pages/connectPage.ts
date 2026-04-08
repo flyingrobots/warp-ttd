@@ -85,6 +85,7 @@ function makeConnectCmd(
     try {
       const { adapter, defaultHeadId } = await resolveAdapter(config);
       const session = await DebuggerSession.create(adapter, defaultHeadId);
+      await session.seekToFrame(Number.MAX_SAFE_INTEGER);
       const hello = await adapter.hello();
       const catalog = await adapter.laneCatalog();
       emit({ type: "session-ready", ctx: { session, hello, catalog }, generation: gen });
