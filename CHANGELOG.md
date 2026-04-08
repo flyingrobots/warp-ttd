@@ -10,6 +10,10 @@ This project will use [Semantic Versioning](https://semver.org/) starting at
 
 ### Added
 
+- **Protocol publication boundary** (cycle 0011) — README Protocol
+  section naming the authored schema, its version, Wesley compile path,
+  and local-mirror distinction. 7 boundary tests pinning
+  discoverability and mirror↔schema alignment.
 - **Worldline viewer** (cycle 0010, partial) — `worldlineLayout`
   pure rendering module, `worldline --json` CLI command, TUI page
   with scroll and jump-to-tick. 28 tests. Complex scenario fixture

@@ -1,8 +1,10 @@
 # warp-ttd Protocol Schema
 #
-# Source of truth for the cross-host Time Travel Debugger protocol.
-# Compiled via Wesley (compile-ttd) to produce TypeScript types,
-# manifests, and codec contracts.
+# Authored source of truth for the cross-host Time Travel Debugger protocol.
+# Wesley compiles this SDL via `compile-ttd` to produce the stable consumer
+# artifact family: manifests, TypeScript types, and codec contracts.
+# Local files such as `src/protocol.ts` are convenience mirrors, not peer
+# authorities.
 #
 # Protocol version: 0.2.0 (adds effect emission & delivery observation)
 #

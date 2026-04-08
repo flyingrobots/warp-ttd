@@ -1,3 +1,8 @@
+// Local application-facing mirror of the host-neutral protocol.
+// The authored contract lives in schemas/warp-ttd-protocol.graphql.
+// Keep this file in sync with the schema; do not treat it as peer authority.
+// TODO(cycle-0011): Replace with Wesley-generated types; sync verification deferred until vendoring.
+
 export type HostKind = "echo" | "git-warp";
 
 export type LaneKind = "worldline" | "strand";
