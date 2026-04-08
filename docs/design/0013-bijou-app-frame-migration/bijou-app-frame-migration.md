@@ -136,7 +136,7 @@ src/tui/
 
 - This cycle does not adopt `splitPane`, `browsableList`,
   `navigableTable`, or other Bijou components for page internals —
-  that's the worldline rethink cycle
+  that's the [worldline view rethink](../../method/backlog/asap/worldline-view-rethink.md)
 - This cycle does not redesign any page's visual layout
 - This cycle does not add new TUI features beyond what the framework
   gives us for free (help, palette, quit modal)
