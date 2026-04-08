@@ -52,6 +52,15 @@ timeline inline, collapse it to just the lane header. Multiple lanes
 could be expanded simultaneously for comparison. Keeps everything in
 one scrollable surface instead of a left/right split.
 
+### Bijou DAG component
+
+Use Bijou's DAG renderer to display the lane topology. Each node is a
+lane (not a tick). Edges show fork relationships. Selecting a node
+opens that lane's tick timeline. This avoids inventing a new tree
+widget — Bijou already knows how to render DAGs. We don't need to show
+every tick as a node; the DAG is just the lane-level topology. Tick
+detail is what you see after selecting a lane.
+
 ### Other ideas (may complement the tree approach)
 
 1. **Per-lane tick columns** — each lane is its own column with its
