@@ -140,44 +140,45 @@ test("buildTickRows includes BTR digest from primary lane", () => {
 test("buildTickLine shows frame index and truncated digest", () => {
   const line = buildTickLine({
     frameIndex: 3, digest: "mno7890abcdef", writers: ["carol"],
-    hasConflict: false, strandIds: [], laneId: "wl:main", tick: 3,
+    hasConflict: false, strandIds: [], laneId: "wl:main", tick: 3, activeLaneIds: ["wl:main"],
   }, { width: 80, selected: false });
   assert.ok(line.includes("3"));
   assert.ok(line.includes("mno7890"));
-  assert.ok(line.includes("carol"));
 });
 
 test("buildTickLine shows conflict indicator for frames with rejections", () => {
   const line = buildTickLine({
     frameIndex: 2, digest: "ghi9012", writers: ["alice"],
-    hasConflict: true, strandIds: [], laneId: "wl:main", tick: 2,
+    hasConflict: true, strandIds: [], laneId: "wl:main", tick: 2, activeLaneIds: ["wl:main"],
   }, { width: 80, selected: false });
   assert.ok(line.includes("!"));
 });
 
-test("buildTickLine shows strand label when strands are active", () => {
+test("buildTickLine shows frame and digest without strand labels", () => {
   const line = buildTickLine({
     frameIndex: 2, digest: "jkl3456", writers: ["bob"],
-    hasConflict: false, strandIds: ["strand:experiment"], laneId: "strand:experiment", tick: 1,
+    hasConflict: false, strandIds: ["strand:experiment"], laneId: "strand:experiment", tick: 1, activeLaneIds: ["strand:experiment"],
   }, { width: 80, selected: false });
-  assert.ok(line.includes("strand:experiment"));
+  assert.ok(line.includes("2"));
+  assert.ok(line.includes("jkl3456"));
+  assert.ok(!line.includes("strand:experiment"), "Strand labels should not appear in tick line");
 });
 
 test("buildTickLine marks selected row", () => {
   const line = buildTickLine({
     frameIndex: 1, digest: "def5678", writers: ["alice"],
-    hasConflict: false, strandIds: [], laneId: "wl:main", tick: 1,
+    hasConflict: false, strandIds: [], laneId: "wl:main", tick: 1, activeLaneIds: ["wl:main"],
   }, { width: 80, selected: true });
   assert.ok(line.includes(">"));
 });
 
-test("buildTickLine handles multiple writers", () => {
+test("buildTickLine shows conflict and digest for multi-writer frame", () => {
   const line = buildTickLine({
     frameIndex: 4, digest: "stu5678", writers: ["alice", "bob"],
-    hasConflict: true, strandIds: [], laneId: "wl:main", tick: 4,
+    hasConflict: true, strandIds: [], laneId: "wl:main", tick: 4, activeLaneIds: ["wl:main"],
   }, { width: 80, selected: false });
-  assert.ok(line.includes("alice"));
-  assert.ok(line.includes("bob"));
+  assert.ok(line.includes("!"));
+  assert.ok(line.includes("stu5678"));
 });
 
 // ---------------------------------------------------------------------------
