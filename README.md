@@ -107,7 +107,7 @@ node --experimental-strip-types ./src/cli.ts context --json
 ### Tests
 
 ```sh
-npm test                 # fast suite (139 tests)
+npm test                 # fast suite (148 tests)
 npm run test:integration # git-warp integration (10 tests)
 ```
 

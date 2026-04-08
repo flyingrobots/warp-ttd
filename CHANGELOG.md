@@ -10,6 +10,10 @@ This project will use [Semantic Versioning](https://semver.org/) starting at
 
 ### Added
 
+- **Bijou app frame migration** (cycle 0013) — per-page models,
+  updates, and keymaps. Command palette, help viewer, quit modal
+  unlocked. Cross-page session sync. Default to latest tick on
+  connect. main.ts: 690 → 96 lines. Lint ratchet: 124 → 66.
 - **Lane graph renderer** (cycle 0012, partial) — colored lane rails,
   fork connectors, worldline/strand distinction, tick line cleanup.
   14 tests. View model rethink deferred — global frame ordering
