@@ -154,9 +154,9 @@ capabilities and implements the methods.
 ### Fixture adapter provides test data
 
 The echo fixture adapter gains contrived effect/delivery data for testing.
-The git-warp adapter returns empty arrays until the git-warp substrate
-adapter provides debugger-visible effect emission and delivery
-observation records.
+The git-warp adapter omits the effect/delivery/context capabilities and
+returns empty arrays until the git-warp adapter provides debugger-visible
+effect emission and delivery observation records.
 
 ## Protocol Version Impact
 
@@ -189,8 +189,9 @@ When git-warp lands these, the GitWarpAdapter should:
    `DeliveryObservationSummary`
 3. Read the execution lens from the WarpCore session context
 
-Until then, the git-warp adapter omits the capabilities and the methods
-return empty arrays.
+Until then, the git-warp adapter omits the capabilities, returns empty
+effect/delivery arrays, and exposes a debugger-mode execution-context
+fallback rather than pretending it has live delivery state.
 
 ## CLI Integration
 

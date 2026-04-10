@@ -224,9 +224,6 @@ export class GitWarpAdapter implements TtdHostAdapter {
         "READ_PLAYBACK_HEAD",
         "READ_FRAME",
         "READ_RECEIPTS",
-        "READ_EFFECT_EMISSIONS",
-        "READ_DELIVERY_OBSERVATIONS",
-        "READ_EXECUTION_CONTEXT",
         "CONTROL_STEP_FORWARD",
         "CONTROL_STEP_BACKWARD",
         "CONTROL_SEEK"
@@ -412,7 +409,7 @@ export class GitWarpAdapter implements TtdHostAdapter {
     };
   }
 
-  // --- Effect/delivery inspection (provisional — awaiting git-warp substrate support) ---
+  // --- Effect/delivery inspection (provisional — awaiting git-warp adapter wiring) ---
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars -- interface requires frameIndex param
   public effectEmissions(headId: string, _frameIndex?: number): Promise<EffectEmissionSummary[]> {
@@ -431,6 +428,6 @@ export class GitWarpAdapter implements TtdHostAdapter {
   }
 
   public executionContext(): Promise<ExecutionContext> {
-    return Promise.resolve({ mode: "LIVE" });
+    return Promise.resolve({ mode: "DEBUG" });
   }
 }

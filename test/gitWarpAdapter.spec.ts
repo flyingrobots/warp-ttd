@@ -20,6 +20,9 @@ test("hello identifies the host as git-warp", async () => {
     assert.ok(hello.capabilities.includes("READ_FRAME"));
     assert.ok(hello.capabilities.includes("READ_RECEIPTS"));
     assert.ok(hello.capabilities.includes("CONTROL_STEP_FORWARD"));
+    assert.ok(!hello.capabilities.includes("READ_EFFECT_EMISSIONS"));
+    assert.ok(!hello.capabilities.includes("READ_DELIVERY_OBSERVATIONS"));
+    assert.ok(!hello.capabilities.includes("READ_EXECUTION_CONTEXT"));
   } finally {
     await fixture.cleanup();
   }
@@ -218,6 +221,30 @@ test("multi-writer scenario produces frames for each unique lamport tick", async
 
     const receipts2 = await adapter.receipts("head:default", 2);
     assert.equal(receipts2.length, 1, "Tick 2 has one receipt");
+  } finally {
+    await fixture.cleanup();
+  }
+});
+
+test("git-warp adapter returns empty effect and delivery data until wiring lands", async () => {
+  const fixture = await scenarioLinearHistory();
+
+  try {
+    const adapter = await GitWarpAdapter.create(fixture.graph);
+
+    assert.deepEqual(await adapter.effectEmissions("head:default", 1), []);
+    assert.deepEqual(await adapter.deliveryObservations("head:default", 1), []);
+  } finally {
+    await fixture.cleanup();
+  }
+});
+
+test("git-warp adapter execution context is debug-mode fallback", async () => {
+  const fixture = await scenarioLinearHistory();
+
+  try {
+    const adapter = await GitWarpAdapter.create(fixture.graph);
+    assert.deepEqual(await adapter.executionContext(), { mode: "DEBUG" });
   } finally {
     await fixture.cleanup();
   }
