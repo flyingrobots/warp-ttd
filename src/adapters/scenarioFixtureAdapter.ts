@@ -101,17 +101,17 @@ function buildLanes(scenarioLanes: ScenarioLane[]): LaneRef[] {
 
 function buildCapabilities(hasEffects: boolean): Capability[] {
   const caps: Capability[] = [
-    "read:hello",
-    "read:lane-catalog",
-    "read:playback-head",
-    "read:frame",
-    "read:receipts",
-    "control:step-forward",
-    "control:step-backward",
-    "control:seek"
+    "READ_HELLO",
+    "READ_LANE_CATALOG",
+    "READ_PLAYBACK_HEAD",
+    "READ_FRAME",
+    "READ_RECEIPTS",
+    "CONTROL_STEP_FORWARD",
+    "CONTROL_STEP_BACKWARD",
+    "CONTROL_SEEK"
   ];
   if (hasEffects) {
-    caps.push("read:effect-emissions", "read:delivery-observations", "read:execution-context");
+    caps.push("READ_EFFECT_EMISSIONS", "READ_DELIVERY_OBSERVATIONS", "READ_EXECUTION_CONTEXT");
   }
   return caps;
 }
@@ -304,20 +304,20 @@ export function buildScenario(scenario: Scenario): TtdHostAdapter {
 
 export function scenarioLiveWithEffects(): TtdHostAdapter {
   return buildScenario({
-    hostKind: "git-warp", executionMode: "live",
-    lanes: [{ id: "wl:live", kind: "worldline", writable: false }],
+    hostKind: "GIT_WARP", executionMode: "LIVE",
+    lanes: [{ id: "wl:live", kind: "WORLDLINE", writable: false }],
     frames: [
       { tick: 1,
         receipts: [{ laneId: "wl:live", writerId: "alice", admitted: 2, rejected: 0, counterfactual: 0 }],
         emissions: [{ effectKind: "diagnostic", laneId: "wl:live", deliveries: [
-          { sinkId: "sink:tui-log", outcome: "delivered", reason: "Live — delivered to TUI log." },
-          { sinkId: "sink:chunk-file", outcome: "delivered", reason: "Live — written to chunk file." }
+          { sinkId: "sink:tui-log", outcome: "DELIVERED", reason: "Live — delivered to TUI log." },
+          { sinkId: "sink:chunk-file", outcome: "DELIVERED", reason: "Live — written to chunk file." }
         ]}]
       },
       { tick: 2,
         receipts: [{ laneId: "wl:live", writerId: "alice", admitted: 1, rejected: 0, counterfactual: 0 }],
         emissions: [{ effectKind: "notification", laneId: "wl:live", deliveries: [
-          { sinkId: "sink:network", outcome: "delivered", reason: "Live — sent via network." }
+          { sinkId: "sink:network", outcome: "DELIVERED", reason: "Live — sent via network." }
         ]}]
       }
     ]
@@ -326,13 +326,13 @@ export function scenarioLiveWithEffects(): TtdHostAdapter {
 
 export function scenarioReplayWithSuppression(): TtdHostAdapter {
   return buildScenario({
-    hostKind: "git-warp", executionMode: "replay",
-    lanes: [{ id: "wl:live", kind: "worldline", writable: false }],
+    hostKind: "GIT_WARP", executionMode: "REPLAY",
+    lanes: [{ id: "wl:live", kind: "WORLDLINE", writable: false }],
     frames: [{ tick: 1,
       receipts: [{ laneId: "wl:live", writerId: "alice", admitted: 2, rejected: 0, counterfactual: 0 }],
       emissions: [{ effectKind: "notification", laneId: "wl:live", deliveries: [
-        { sinkId: "sink:network", outcome: "suppressed", reason: "Replay — external delivery suppressed." },
-        { sinkId: "sink:tui-log", outcome: "delivered", reason: "Replay — local sink delivers." }
+        { sinkId: "sink:network", outcome: "SUPPRESSED", reason: "Replay — external delivery suppressed." },
+        { sinkId: "sink:tui-log", outcome: "DELIVERED", reason: "Replay — local sink delivers." }
       ]}]
     }]
   });
@@ -340,10 +340,10 @@ export function scenarioReplayWithSuppression(): TtdHostAdapter {
 
 export function scenarioMultiWriterWithConflicts(): TtdHostAdapter {
   return buildScenario({
-    hostKind: "git-warp", executionMode: "live",
+    hostKind: "GIT_WARP", executionMode: "LIVE",
     lanes: [
-      { id: "wl:live", kind: "worldline", writable: false },
-      { id: "strand:experiment", kind: "strand", writable: true, parentId: "wl:live" }
+      { id: "wl:live", kind: "WORLDLINE", writable: false },
+      { id: "strand:experiment", kind: "STRAND", writable: true, parentId: "wl:live" }
     ],
     frames: [
       { tick: 1,
@@ -352,19 +352,19 @@ export function scenarioMultiWriterWithConflicts(): TtdHostAdapter {
           { laneId: "wl:live", writerId: "bob", admitted: 1, rejected: 1, counterfactual: 0 }
         ],
         emissions: [{ effectKind: "diagnostic", laneId: "wl:live", deliveries: [
-          { sinkId: "sink:tui-log", outcome: "delivered", reason: "Conflict resolution diagnostic." }
+          { sinkId: "sink:tui-log", outcome: "DELIVERED", reason: "Conflict resolution diagnostic." }
         ]}]
       },
       { tick: 2,
         receipts: [{ laneId: "wl:live", writerId: "alice", admitted: 1, rejected: 0, counterfactual: 1 }],
         emissions: [{ effectKind: "export", laneId: "wl:live", deliveries: [
-          { sinkId: "sink:export", outcome: "failed", reason: "Export adapter unavailable." }
+          { sinkId: "sink:export", outcome: "FAILED", reason: "Export adapter unavailable." }
         ]}]
       },
       { tick: 3,
         receipts: [{ laneId: "strand:experiment", writerId: "bob", admitted: 1, rejected: 0, counterfactual: 0 }],
         emissions: [{ effectKind: "bridge", laneId: "strand:experiment", deliveries: [
-          { sinkId: "sink:bridge", outcome: "skipped", reason: "Debug inspection — bridge dispatch skipped." }
+          { sinkId: "sink:bridge", outcome: "SKIPPED", reason: "Debug inspection — bridge dispatch skipped." }
         ]}]
       }
     ]

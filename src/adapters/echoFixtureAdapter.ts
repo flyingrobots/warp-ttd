@@ -28,35 +28,35 @@ interface FixtureState {
 
 const FIXTURE: FixtureState = {
   hello: {
-    hostKind: "echo",
+    hostKind: "ECHO",
     hostVersion: "0.0.0-fixture",
     protocolVersion: "0.2.0",
     schemaId: "ttd-protocol-fixture-v1",
     capabilities: [
-      "read:hello",
-      "read:lane-catalog",
-      "read:playback-head",
-      "read:frame",
-      "read:receipts",
-      "read:effect-emissions",
-      "read:delivery-observations",
-      "read:execution-context",
-      "control:step-forward",
-      "control:step-backward",
-      "control:seek"
+      "READ_HELLO",
+      "READ_LANE_CATALOG",
+      "READ_PLAYBACK_HEAD",
+      "READ_FRAME",
+      "READ_RECEIPTS",
+      "READ_EFFECT_EMISSIONS",
+      "READ_DELIVERY_OBSERVATIONS",
+      "READ_EXECUTION_CONTEXT",
+      "CONTROL_STEP_FORWARD",
+      "CONTROL_STEP_BACKWARD",
+      "CONTROL_SEEK"
     ]
   },
   catalog: {
     lanes: [
       {
         id: "wl:main",
-        kind: "worldline",
+        kind: "WORLDLINE",
         writable: false,
         description: "Canonical application worldline"
       },
       {
         id: "ws:sandbox",
-        kind: "strand",
+        kind: "STRAND",
         parentId: "wl:main",
         writable: true,
         description: "Speculative child strand at frame 1"
@@ -191,9 +191,9 @@ const FIXTURE: FixtureState = {
         headId: "head:main",
         frameIndex: 1,
         sinkId: "sink:tui-log",
-        outcome: "delivered",
+        outcome: "DELIVERED",
         reason: "Live execution — delivered to local TUI log sink.",
-        executionMode: "live",
+        executionMode: "LIVE",
         summary: "Diagnostic delivered to TUI log."
       },
       {
@@ -202,9 +202,9 @@ const FIXTURE: FixtureState = {
         headId: "head:main",
         frameIndex: 1,
         sinkId: "sink:chunk-file",
-        outcome: "delivered",
+        outcome: "DELIVERED",
         reason: "Live execution — written to rotating chunk file.",
-        executionMode: "live",
+        executionMode: "LIVE",
         summary: "Diagnostic written to chunk file."
       },
       {
@@ -213,9 +213,9 @@ const FIXTURE: FixtureState = {
         headId: "head:main",
         frameIndex: 2,
         sinkId: "sink:network",
-        outcome: "suppressed",
+        outcome: "SUPPRESSED",
         reason: "Replay-safe suppression — external delivery blocked during replay.",
-        executionMode: "replay",
+        executionMode: "REPLAY",
         summary: "Notification suppressed during replay."
       },
       {
@@ -224,9 +224,9 @@ const FIXTURE: FixtureState = {
         headId: "head:main",
         frameIndex: 2,
         sinkId: "sink:tui-log",
-        outcome: "delivered",
+        outcome: "DELIVERED",
         reason: "Local sink delivers even during replay.",
-        executionMode: "replay",
+        executionMode: "REPLAY",
         summary: "Notification delivered to TUI log (replay-safe sink)."
       }
     ]
@@ -235,7 +235,7 @@ const FIXTURE: FixtureState = {
   // This intentionally demonstrates that per-observation mode can differ from
   // session context — the fixture exercises both live and replay code paths.
   executionContext: {
-    mode: "live"
+    mode: "LIVE"
   }
 };
 

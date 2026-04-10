@@ -19,8 +19,8 @@ import {
 // Fixtures
 // ---------------------------------------------------------------------------
 
-function makeLane(id: string, kind: "worldline" | "strand", parentId?: string): LaneRef {
-  return { id, kind, ...(parentId !== undefined ? { parentId } : {}), writable: kind === "worldline", description: `${kind} ${id}` };
+function makeLane(id: string, kind: "WORLDLINE" | "STRAND", parentId?: string): LaneRef {
+  return { id, kind, ...(parentId !== undefined ? { parentId } : {}), writable: kind === "WORLDLINE", description: `${kind.toLowerCase()} ${id}` };
 }
 
 function makeLaneFrame(laneId: string, tick: number, opts?: {
@@ -60,10 +60,10 @@ function makeReceipt(opts: {
 
 function multiLaneCatalog(): LaneRef[] {
   return [
-    makeLane("wl:alpha", "worldline"),
-    makeLane("strand:feature-a", "strand", "wl:alpha"),
-    makeLane("strand:hotfix", "strand", "wl:alpha"),
-    makeLane("wl:beta", "worldline"),
+    makeLane("wl:alpha", "WORLDLINE"),
+    makeLane("strand:feature-a", "STRAND", "wl:alpha"),
+    makeLane("strand:hotfix", "STRAND", "wl:alpha"),
+    makeLane("wl:beta", "WORLDLINE"),
   ];
 }
 
@@ -185,7 +185,7 @@ test("buildLaneTreeLines handles empty catalog", () => {
 });
 
 test("buildLaneTreeLines handles single worldline with no strands", () => {
-  const catalog = [makeLane("wl:solo", "worldline")];
+  const catalog = [makeLane("wl:solo", "WORLDLINE")];
   const lines = buildLaneTreeLines(catalog);
   assert.equal(lines.length, 1);
   const solo = lines[0];

@@ -187,7 +187,7 @@ export class GitWarpAdapter implements TtdHostAdapter {
     const lanes: LaneRef[] = [
       {
         id: "wl:live",
-        kind: "worldline",
+        kind: "WORLDLINE",
         writable: false,
         description: "Live frontier worldline"
       }
@@ -198,7 +198,7 @@ export class GitWarpAdapter implements TtdHostAdapter {
     for (const strand of strands) {
       lanes.push({
         id: `ws:${strand.strandId}`,
-        kind: "strand",
+        kind: "STRAND",
         parentId: "wl:live",
         writable: strand.overlay.writable,
         description: `Strand ${strand.strandId}${strand.scope !== null && strand.scope !== "" ? ` (${strand.scope})` : ""}`
@@ -210,22 +210,22 @@ export class GitWarpAdapter implements TtdHostAdapter {
 
   public hello(): Promise<HostHello> {
     return Promise.resolve({
-      hostKind: "git-warp",
+      hostKind: "GIT_WARP",
       hostVersion: GIT_WARP_HOST_VERSION,
       protocolVersion: "0.2.0",
       schemaId: "ttd-protocol-git-warp-v1",
       capabilities: [
-        "read:hello",
-        "read:lane-catalog",
-        "read:playback-head",
-        "read:frame",
-        "read:receipts",
-        "read:effect-emissions",
-        "read:delivery-observations",
-        "read:execution-context",
-        "control:step-forward",
-        "control:step-backward",
-        "control:seek"
+        "READ_HELLO",
+        "READ_LANE_CATALOG",
+        "READ_PLAYBACK_HEAD",
+        "READ_FRAME",
+        "READ_RECEIPTS",
+        "READ_EFFECT_EMISSIONS",
+        "READ_DELIVERY_OBSERVATIONS",
+        "READ_EXECUTION_CONTEXT",
+        "CONTROL_STEP_FORWARD",
+        "CONTROL_STEP_BACKWARD",
+        "CONTROL_SEEK"
       ]
     });
   }
@@ -389,7 +389,7 @@ export class GitWarpAdapter implements TtdHostAdapter {
       headId,
       frameIndex,
       lanes: this.#lanes.map((lane) => {
-        const changed = lane.kind === "worldline" && indexed.tick !== prevTick;
+        const changed = lane.kind === "WORLDLINE" && indexed.tick !== prevTick;
         const view: LaneFrameView = {
           laneId: lane.id,
           coordinate: { laneId: lane.id, tick: indexed.tick },
@@ -424,6 +424,6 @@ export class GitWarpAdapter implements TtdHostAdapter {
   }
 
   public executionContext(): Promise<ExecutionContext> {
-    return Promise.resolve({ mode: "live" });
+    return Promise.resolve({ mode: "LIVE" });
   }
 }

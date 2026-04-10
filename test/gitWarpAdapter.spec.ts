@@ -11,15 +11,15 @@ test("hello identifies the host as git-warp", async () => {
     const adapter = await GitWarpAdapter.create(fixture.graph);
     const hello = await adapter.hello();
 
-    assert.equal(hello.hostKind, "git-warp");
+    assert.equal(hello.hostKind, "GIT_WARP");
     assert.equal(hello.protocolVersion, "0.2.0");
     assert.ok(hello.hostVersion.length > 0);
-    assert.ok(hello.capabilities.includes("read:hello"));
-    assert.ok(hello.capabilities.includes("read:lane-catalog"));
-    assert.ok(hello.capabilities.includes("read:playback-head"));
-    assert.ok(hello.capabilities.includes("read:frame"));
-    assert.ok(hello.capabilities.includes("read:receipts"));
-    assert.ok(hello.capabilities.includes("control:step-forward"));
+    assert.ok(hello.capabilities.includes("READ_HELLO"));
+    assert.ok(hello.capabilities.includes("READ_LANE_CATALOG"));
+    assert.ok(hello.capabilities.includes("READ_PLAYBACK_HEAD"));
+    assert.ok(hello.capabilities.includes("READ_FRAME"));
+    assert.ok(hello.capabilities.includes("READ_RECEIPTS"));
+    assert.ok(hello.capabilities.includes("CONTROL_STEP_FORWARD"));
   } finally {
     await fixture.cleanup();
   }
@@ -34,7 +34,7 @@ test("lane catalog exposes the live worldline", async () => {
 
     assert.ok(catalog.lanes.length >= 1);
 
-    const worldline = catalog.lanes.find((l) => l.kind === "worldline");
+    const worldline = catalog.lanes.find((l) => l.kind === "WORLDLINE");
 
     if (worldline === undefined) {
       assert.fail("Expected at least one worldline lane");
@@ -64,7 +64,7 @@ test("initial playback head is at frame zero with all receipts behind it", async
     assert.ok(head.trackedLaneIds.length >= 1);
     assert.ok(
       head.trackedLaneIds.some((id) =>
-        catalog.lanes.some((l) => l.id === id && l.kind === "worldline")
+        catalog.lanes.some((l) => l.id === id && l.kind === "WORLDLINE")
       ),
       "Head should track the worldline"
     );

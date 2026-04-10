@@ -19,8 +19,8 @@ function renderToString(surface: Surface): string {
   return surfaceToString(surface, bijouCtx.style);
 }
 
-function makeLane(id: string, kind: "worldline" | "strand", parentId?: string): LaneRef {
-  return { id, kind, ...(parentId !== undefined ? { parentId } : {}), writable: kind === "worldline", description: `${kind} ${id}` };
+function makeLane(id: string, kind: "WORLDLINE" | "STRAND", parentId?: string): LaneRef {
+  return { id, kind, ...(parentId !== undefined ? { parentId } : {}), writable: kind === "WORLDLINE", description: `${kind.toLowerCase()} ${id}` };
 }
 
 function makeLaneFrame(laneId: string, tick: number, opts?: {
@@ -62,8 +62,8 @@ function makeReceipt(opts: ReceiptOpts): ReceiptSummary {
 
 function makeHistory(): { catalog: LaneRef[]; frames: FrameData[] } {
   const catalog = [
-    makeLane("wl:main", "worldline"),
-    makeLane("strand:experiment", "strand", "wl:main"),
+    makeLane("wl:main", "WORLDLINE"),
+    makeLane("strand:experiment", "STRAND", "wl:main"),
   ];
   return {
     catalog,

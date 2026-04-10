@@ -98,7 +98,7 @@ export function buildTickRows(
   catalog: readonly LaneRef[],
 ): TickRow[] {
   const strandIds = new Set(
-    catalog.filter((l) => l.kind === "strand").map((l) => l.id),
+    catalog.filter((l) => l.kind === "STRAND").map((l) => l.id),
   );
 
   const rows: TickRow[] = [];
@@ -243,7 +243,7 @@ function detectForks(
 ): Map<number, string[]> {
   const seen = new Set<string>();
   const strands = new Set(
-    catalog.filter((l) => l.kind === "strand").map((l) => l.id),
+    catalog.filter((l) => l.kind === "STRAND").map((l) => l.id),
   );
   const result = new Map<number, string[]>();
   for (let i = rows.length - 1; i >= 0; i--) {

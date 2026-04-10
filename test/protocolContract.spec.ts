@@ -48,7 +48,7 @@ test("LaneCatalog v0.1.0 shape", async () => {
   assert.deepEqual(worldlineKeys, ["description", "id", "kind", "writable"]);
 
   // LaneRef shape — strand (has parentId)
-  const strand = catalog.lanes.find((l) => l.kind === "strand");
+  const strand = catalog.lanes.find((l) => l.kind === "STRAND");
   if (strand !== undefined) {
     const strandKeys = Object.keys(strand).sort();
     assert.deepEqual(strandKeys, ["description", "id", "kind", "parentId", "writable"]);

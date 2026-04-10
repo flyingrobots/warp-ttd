@@ -108,6 +108,29 @@ flat string that loses the worldline association.
 receipt and effect summaries. Or add a `WriterRef { writerId,
 worldlineId }` type.
 
+### 8. Explicit worldline identity outside lane naming
+
+Today TTD can usually infer worldline identity from `LaneRef.id`,
+`LaneRef.kind`, and `parentId`, but that is still inference. A lane id
+like `wl:main` or `ws:sandbox` is a local convention, not a typed
+causal identity contract. The host should provide worldline identity
+directly instead of making the debugger recover it from prefixes or
+tree shape.
+
+This matters most for:
+- strand receipts and effects that should still name their owning or
+  root worldline explicitly
+- writer/head identity, where worldline and head form a real composite
+  key in Echo
+- future cross-host comparison, where local lane labels may differ but
+  causal identity should not
+
+**Proposed change:** add an explicit `worldlineId` or
+`rootWorldlineId` field anywhere lane-local identity is not enough:
+`LaneRef`, `LaneFrameView`, `ReceiptSummary`, and
+`EffectEmissionSummary` are the likely minimum. TTD should consume that
+as host truth, not reconstruct it from `wl:` / `ws:` naming.
+
 ## How Echo's runtime works (for protocol designers)
 
 ### The tick model

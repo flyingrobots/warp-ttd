@@ -20,16 +20,16 @@ function createAdapter(): EchoFixtureAdapter {
 test("hello declares effect-emission and delivery-observation capabilities", async () => {
   const hello = await createAdapter().hello();
   assert.ok(
-    hello.capabilities.includes("read:effect-emissions"),
-    "Should declare read:effect-emissions capability"
+    hello.capabilities.includes("READ_EFFECT_EMISSIONS"),
+    "Should declare READ_EFFECT_EMISSIONS capability"
   );
   assert.ok(
-    hello.capabilities.includes("read:delivery-observations"),
-    "Should declare read:delivery-observations capability"
+    hello.capabilities.includes("READ_DELIVERY_OBSERVATIONS"),
+    "Should declare READ_DELIVERY_OBSERVATIONS capability"
   );
   assert.ok(
-    hello.capabilities.includes("read:execution-context"),
-    "Should declare read:execution-context capability"
+    hello.capabilities.includes("READ_EXECUTION_CONTEXT"),
+    "Should declare READ_EXECUTION_CONTEXT capability"
   );
 });
 
@@ -88,14 +88,14 @@ test("deliveryObservations returns observations at frame 1 with correct outcomes
   assert.equal(typeof obs.summary, "string");
 
   // Outcome must be one of the closed enum values
-  const validOutcomes = ["delivered", "suppressed", "failed", "skipped"];
+  const validOutcomes = ["DELIVERED", "SUPPRESSED", "FAILED", "SKIPPED"];
   assert.ok(
     validOutcomes.includes(obs.outcome),
     `Outcome must be one of ${validOutcomes.join(", ")}, got: ${obs.outcome}`
   );
 
   // Execution mode must be valid
-  const validModes = ["live", "replay", "debug"];
+  const validModes = ["LIVE", "REPLAY", "DEBUG"];
   assert.ok(
     validModes.includes(obs.executionMode),
     `Execution mode must be one of ${validModes.join(", ")}, got: ${obs.executionMode}`
@@ -131,8 +131,8 @@ test("same emission fans out to multiple sinks with different outcomes", async (
 
   // Both delivered in live mode
   for (const obs of forEmission1) {
-    assert.equal(obs.outcome, "delivered");
-    assert.equal(obs.executionMode, "live");
+    assert.equal(obs.outcome, "DELIVERED");
+    assert.equal(obs.executionMode, "LIVE");
   }
 });
 
@@ -148,17 +148,17 @@ test("replay suppresses network sink but delivers to local sink for same emissio
   assert.ok(network !== undefined);
   assert.ok(tuiLog !== undefined);
 
-  assert.equal(network.outcome, "suppressed");
-  assert.equal(network.executionMode, "replay");
+  assert.equal(network.outcome, "SUPPRESSED");
+  assert.equal(network.executionMode, "REPLAY");
 
-  assert.equal(tuiLog.outcome, "delivered");
-  assert.equal(tuiLog.executionMode, "replay");
+  assert.equal(tuiLog.outcome, "DELIVERED");
+  assert.equal(tuiLog.executionMode, "REPLAY");
 });
 
 test("suppressed delivery is distinguishable from absence", async () => {
   // Frame 2 should have a suppressed delivery observation in the fixture
   const observations = await createAdapter().deliveryObservations(HEAD_ID, 2);
-  const suppressed = observations.filter((o) => o.outcome === "suppressed");
+  const suppressed = observations.filter((o) => o.outcome === "SUPPRESSED");
 
   assert.ok(
     suppressed.length > 0,
@@ -167,7 +167,7 @@ test("suppressed delivery is distinguishable from absence", async () => {
 
   const s = suppressed[0];
   assert.ok(s !== undefined);
-  assert.equal(s.outcome, "suppressed");
+  assert.equal(s.outcome, "SUPPRESSED");
   assert.ok(s.reason.length > 0, "Suppression must have a reason");
 });
 
@@ -177,7 +177,7 @@ test("executionContext returns session-level metadata", async () => {
   const ctx = await createAdapter().executionContext();
 
   assert.equal(typeof ctx.mode, "string");
-  const validModes = ["live", "replay", "debug"];
+  const validModes = ["LIVE", "REPLAY", "DEBUG"];
   assert.ok(
     validModes.includes(ctx.mode),
     `Mode must be one of ${validModes.join(", ")}, got: ${ctx.mode}`

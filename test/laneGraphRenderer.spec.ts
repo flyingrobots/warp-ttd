@@ -19,15 +19,15 @@ import {
 
 function makeLane(
   id: string,
-  kind: "worldline" | "strand",
+  kind: "WORLDLINE" | "STRAND",
   parentId?: string,
 ): LaneRef {
   return {
     id,
     kind,
     ...(parentId !== undefined ? { parentId } : {}),
-    writable: kind === "strand",
-    description: `${kind} ${id}`,
+    writable: kind === "STRAND",
+    description: `${kind.toLowerCase()} ${id}`,
   };
 }
 
@@ -37,9 +37,9 @@ function makeLane(
 
 test("assignColumns gives each lane a unique column", () => {
   const catalog = [
-    makeLane("wl:alpha", "worldline"),
-    makeLane("wl:beta", "worldline"),
-    makeLane("strand:feature", "strand", "wl:alpha"),
+    makeLane("wl:alpha", "WORLDLINE"),
+    makeLane("wl:beta", "WORLDLINE"),
+    makeLane("strand:feature", "STRAND", "wl:alpha"),
   ];
   const columns = assignColumns(catalog);
   const values = [...columns.values()];
@@ -48,9 +48,9 @@ test("assignColumns gives each lane a unique column", () => {
 
 test("assignColumns puts worldlines before strands", () => {
   const catalog = [
-    makeLane("wl:alpha", "worldline"),
-    makeLane("strand:feature", "strand", "wl:alpha"),
-    makeLane("wl:beta", "worldline"),
+    makeLane("wl:alpha", "WORLDLINE"),
+    makeLane("strand:feature", "STRAND", "wl:alpha"),
+    makeLane("wl:beta", "WORLDLINE"),
   ];
   const columns = assignColumns(catalog);
   const alphaCol = columns.get("wl:alpha");
@@ -66,7 +66,7 @@ test("assignColumns puts worldlines before strands", () => {
 });
 
 test("assignColumns handles single worldline", () => {
-  const catalog = [makeLane("wl:main", "worldline")];
+  const catalog = [makeLane("wl:main", "WORLDLINE")];
   const columns = assignColumns(catalog);
   assert.equal(columns.get("wl:main"), 0);
 });
@@ -81,7 +81,7 @@ test("assignColumns handles empty catalog", () => {
 // ---------------------------------------------------------------------------
 
 test("buildGraphGutter shows active dot for lane with activity", () => {
-  const catalog = [makeLane("wl:main", "worldline")];
+  const catalog = [makeLane("wl:main", "WORLDLINE")];
   const columns = assignColumns(catalog);
   const activity: LaneActivity = new Map([["wl:main", "active"]]);
   const gutter = buildGraphGutter({ columns, catalog, activity, forks: [] });
@@ -90,8 +90,8 @@ test("buildGraphGutter shows active dot for lane with activity", () => {
 
 test("buildGraphGutter shows pass-through for alive but inactive worldline", () => {
   const catalog = [
-    makeLane("wl:alpha", "worldline"),
-    makeLane("wl:beta", "worldline"),
+    makeLane("wl:alpha", "WORLDLINE"),
+    makeLane("wl:beta", "WORLDLINE"),
   ];
   const columns = assignColumns(catalog);
   const activity: LaneActivity = new Map([
@@ -104,8 +104,8 @@ test("buildGraphGutter shows pass-through for alive but inactive worldline", () 
 
 test("buildGraphGutter shows fork connector with horizontal line", () => {
   const catalog = [
-    makeLane("wl:main", "worldline"),
-    makeLane("strand:feature", "strand", "wl:main"),
+    makeLane("wl:main", "WORLDLINE"),
+    makeLane("strand:feature", "STRAND", "wl:main"),
   ];
   const columns = assignColumns(catalog);
   const activity: LaneActivity = new Map([
@@ -124,8 +124,8 @@ test("buildGraphGutter shows fork connector with horizontal line", () => {
 
 test("buildGraphGutter uses dashed rail for strands", () => {
   const catalog = [
-    makeLane("wl:main", "worldline"),
-    makeLane("strand:feature", "strand", "wl:main"),
+    makeLane("wl:main", "WORLDLINE"),
+    makeLane("strand:feature", "STRAND", "wl:main"),
   ];
   const columns = assignColumns(catalog);
   const activity: LaneActivity = new Map([
@@ -138,8 +138,8 @@ test("buildGraphGutter uses dashed rail for strands", () => {
 
 test("buildGraphGutter shows quiet marker for alive but quiet lane", () => {
   const catalog = [
-    makeLane("wl:main", "worldline"),
-    makeLane("strand:feature", "strand", "wl:main"),
+    makeLane("wl:main", "WORLDLINE"),
+    makeLane("strand:feature", "STRAND", "wl:main"),
   ];
   const columns = assignColumns(catalog);
   const activity: LaneActivity = new Map([
@@ -152,8 +152,8 @@ test("buildGraphGutter shows quiet marker for alive but quiet lane", () => {
 
 test("buildGraphGutter empty column for unborn lane", () => {
   const catalog = [
-    makeLane("wl:main", "worldline"),
-    makeLane("strand:feature", "strand", "wl:main"),
+    makeLane("wl:main", "WORLDLINE"),
+    makeLane("strand:feature", "STRAND", "wl:main"),
   ];
   const columns = assignColumns(catalog);
   const activity: LaneActivity = new Map([["wl:main", "active"]]);
@@ -168,11 +168,11 @@ test("buildGraphGutter empty column for unborn lane", () => {
 
 test("buildGraphGutter width matches column count", () => {
   const catalog = [
-    makeLane("wl:alpha", "worldline"),
-    makeLane("wl:beta", "worldline"),
-    makeLane("strand:long-lived", "strand", "wl:alpha"),
-    makeLane("strand:feature-a", "strand", "wl:alpha"),
-    makeLane("strand:hotfix", "strand", "wl:alpha"),
+    makeLane("wl:alpha", "WORLDLINE"),
+    makeLane("wl:beta", "WORLDLINE"),
+    makeLane("strand:long-lived", "STRAND", "wl:alpha"),
+    makeLane("strand:feature-a", "STRAND", "wl:alpha"),
+    makeLane("strand:hotfix", "STRAND", "wl:alpha"),
   ];
   const columns = assignColumns(catalog);
   const activity: LaneActivity = new Map([["wl:alpha", "active"]]);

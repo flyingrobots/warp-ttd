@@ -7,21 +7,21 @@ test("hello exposes the minimal host handshake contract", async () => {
   const adapter = new EchoFixtureAdapter();
   const hello = await adapter.hello();
 
-  assert.equal(hello.hostKind, "echo");
+  assert.equal(hello.hostKind, "ECHO");
   assert.equal(hello.protocolVersion, "0.2.0");
   assert.equal(hello.schemaId, "ttd-protocol-fixture-v1");
   assert.deepEqual(hello.capabilities, [
-    "read:hello",
-    "read:lane-catalog",
-    "read:playback-head",
-    "read:frame",
-    "read:receipts",
-    "read:effect-emissions",
-    "read:delivery-observations",
-    "read:execution-context",
-    "control:step-forward",
-    "control:step-backward",
-    "control:seek"
+    "READ_HELLO",
+    "READ_LANE_CATALOG",
+    "READ_PLAYBACK_HEAD",
+    "READ_FRAME",
+    "READ_RECEIPTS",
+    "READ_EFFECT_EMISSIONS",
+    "READ_DELIVERY_OBSERVATIONS",
+    "READ_EXECUTION_CONTEXT",
+    "CONTROL_STEP_FORWARD",
+    "CONTROL_STEP_BACKWARD",
+    "CONTROL_SEEK"
   ]);
 });
 
@@ -32,13 +32,13 @@ test("lane catalog exposes one canonical worldline and one speculative strand", 
   assert.equal(catalog.lanes.length, 2);
   assert.deepEqual(catalog.lanes[0], {
     id: "wl:main",
-    kind: "worldline",
+    kind: "WORLDLINE",
     writable: false,
     description: "Canonical application worldline"
   });
   assert.deepEqual(catalog.lanes[1], {
     id: "ws:sandbox",
-    kind: "strand",
+    kind: "STRAND",
     parentId: "wl:main",
     writable: true,
     description: "Speculative child strand at frame 1"
