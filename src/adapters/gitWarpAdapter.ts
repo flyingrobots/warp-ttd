@@ -216,7 +216,7 @@ export class GitWarpAdapter implements TtdHostAdapter {
     return Promise.resolve({
       hostKind: "GIT_WARP",
       hostVersion: GIT_WARP_HOST_VERSION,
-      protocolVersion: "0.3.0",
+      protocolVersion: "0.4.0",
       schemaId: "ttd-protocol-git-warp-v1",
       capabilities: [
         "READ_HELLO",
@@ -302,7 +302,7 @@ export class GitWarpAdapter implements TtdHostAdapter {
         frameIndex: resolvedIndex,
         laneId: LIVE_WORLDLINE_ID,
         worldlineId: LIVE_WORLDLINE_ID,
-        writerId: r.writer,
+        writer: { writerId: r.writer, worldlineId: LIVE_WORLDLINE_ID },
         inputTick: resolvedIndex === 1 ? 0 : requireIndexedFrame(this.#frameIndex, resolvedIndex - 2).tick,
         outputTick: indexed.tick,
         admittedRewriteCount: admitted,

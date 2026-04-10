@@ -28,7 +28,7 @@ test("buildScenario returns a valid TtdHostAdapter", async () => {
 
   const hello = await adapter.hello();
   assert.equal(hello.hostKind, "GIT_WARP");
-  assert.equal(hello.protocolVersion, "0.3.0");
+  assert.equal(hello.protocolVersion, "0.4.0");
 });
 
 test("buildScenario exposes lanes from scenario", async () => {
@@ -93,9 +93,11 @@ test("buildScenario maps receipts into ReceiptSummary", async () => {
   assert.equal(receipts.length, 1);
   const r = receipts[0];
   assert.ok(r !== undefined);
+  assert.ok(r.writer !== undefined);
   assert.equal(r.admittedRewriteCount, 3);
   assert.equal(r.rejectedRewriteCount, 1);
-  assert.equal(r.writerId, "alice", "writerId should flow from ScenarioReceipt to ReceiptSummary");
+  assert.equal(r.writer.writerId, "alice", "writer identity should flow from ScenarioReceipt to ReceiptSummary");
+  assert.equal(r.writer.worldlineId, "wl:main", "writer identity should retain worldline context");
 });
 
 test("buildScenario maps emissions and deliveries", async () => {

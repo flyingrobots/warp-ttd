@@ -6,7 +6,7 @@
 # Local files such as `src/protocol.ts` are convenience mirrors, not peer
 # authorities.
 #
-# Protocol version: 0.3.0 (adds explicit worldline identity)
+# Protocol version: 0.4.0 (adds explicit writer references)
 #
 # Doctrine:
 #   - warp-ttd is read-mostly and receipt-centric
@@ -46,7 +46,7 @@ enum Capability {
 type HostHello
   @wes_codec(format: "cbor", canonical: true)
   @wes_registry(id: 1)
-  @wes_version(major: 0, minor: 2)
+  @wes_version(major: 0, minor: 4)
 {
   hostKind: HostKind!
   hostVersion: String!
@@ -125,17 +125,26 @@ type PlaybackFrame
 
 # ─── Receipts & Provenance ────────────────────────────────────────────────────
 
+type WriterRef
+  @wes_codec(format: "cbor", canonical: true)
+  @wes_registry(id: 23)
+  @wes_version(major: 0, minor: 4)
+{
+  writerId: String!
+  worldlineId: String!
+}
+
 type ReceiptSummary
   @wes_codec(format: "cbor", canonical: true)
   @wes_registry(id: 8)
-  @wes_version(major: 0, minor: 3)
+  @wes_version(major: 0, minor: 4)
 {
   receiptId: String!
   headId: String!
   frameIndex: Int! @wes_constraint(min: 0)
   laneId: String!
   worldlineId: String!
-  writerId: String
+  writer: WriterRef
   inputTick: Int! @wes_constraint(min: 0)
   outputTick: Int! @wes_constraint(min: 0)
   admittedRewriteCount: Int! @wes_constraint(min: 0)
@@ -171,7 +180,7 @@ enum ExecutionMode {
 type EffectEmissionSummary
   @wes_codec(format: "cbor", canonical: true)
   @wes_registry(id: 20)
-  @wes_version(major: 0, minor: 3)
+  @wes_version(major: 0, minor: 4)
 {
   emissionId: String!
   headId: String!
@@ -180,7 +189,7 @@ type EffectEmissionSummary
   worldlineId: String!
   coordinate: Coordinate!
   effectKind: String!
-  producerWriterId: String!
+  producerWriter: WriterRef!
   summary: String!
 }
 
@@ -215,7 +224,7 @@ type ExecutionContext
 # ─── Protocol Channel ─────────────────────────────────────────────────────────
 
 type TtdProtocolChannel
-  @wes_channel(name: "ttd.protocol", version: 2, ordered: true)
+  @wes_channel(name: "ttd.protocol", version: 3, ordered: true)
 {
   hostHello: HostHello!
   laneCatalog: LaneCatalog!

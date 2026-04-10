@@ -66,7 +66,11 @@ function makeLane(id: string, kind: "WORLDLINE" | "STRAND", parentId?: string): 
 function makeReceipt(laneId: string, writerId: string, frameIndex: number): ReceiptSummary {
   return {
     receiptId: `receipt:test:${laneId}:${writerId}`,
-    headId: "head:default", frameIndex, laneId, worldlineId: laneId, writerId,
+    headId: "head:default",
+    frameIndex,
+    laneId,
+    worldlineId: laneId,
+    writer: { writerId, worldlineId: laneId },
     inputTick: frameIndex - 1, outputTick: frameIndex,
     admittedRewriteCount: 2, rejectedRewriteCount: 0, counterfactualCount: 0,
     digest: "digest:test", summary: `${writerId} wrote to ${laneId}`
@@ -78,7 +82,7 @@ function makeEmission(laneId: string, kind: string, frameIndex: number): EffectE
     emissionId: `emit:test:${kind}:${laneId}`,
     headId: "head:default", frameIndex, laneId, worldlineId: laneId,
     coordinate: { laneId, worldlineId: laneId, tick: frameIndex },
-    effectKind: kind, producerWriterId: "test-writer",
+    effectKind: kind, producerWriter: { writerId: "test-writer", worldlineId: laneId },
     summary: `${kind} at ${laneId}`
   };
 }
@@ -244,10 +248,10 @@ test("buildReceiptRows: sorted by lane then writer", () => {
   const { rows } = buildReceiptRows(snap, 10);
   assert.ok(rows[0] !== undefined);
   assert.equal(rows[0][0], "wl:a");
-  assert.equal(rows[0][1], "alice");
+  assert.equal(rows[0][1], "alice@wl:a");
   assert.ok(rows[1] !== undefined);
   assert.equal(rows[1][0], "wl:a");
-  assert.equal(rows[1][1], "carol");
+  assert.equal(rows[1][1], "carol@wl:a");
   assert.ok(rows[2] !== undefined);
   assert.equal(rows[2][0], "wl:b");
 });

@@ -17,8 +17,9 @@ import {
   formatDeliveryOutcome,
   formatExecutionMode,
   formatLaneKind,
+  formatWriterRef,
 } from "../protocol.ts";
-import type { Capability, LaneRef } from "../protocol.ts";
+import type { Capability, LaneRef, WriterRef } from "../protocol.ts";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -40,6 +41,14 @@ export function hasCap(caps: readonly Capability[], cap: Capability): boolean {
 
 export function pluralize(n: number, noun: string): string {
   return n === 1 ? `${n.toString()} ${noun}` : `${n.toString()} ${noun}s`;
+}
+
+function writerSortKey(writer?: WriterRef): string {
+  if (writer === undefined) {
+    return "";
+  }
+
+  return `${writer.writerId}\u0000${writer.worldlineId}`;
 }
 
 /** Build lane tree: roots in catalog order, depth-first pre-order. */
@@ -124,12 +133,12 @@ export function buildReceiptRows(snap: SessionSnapshot, max: number): { rows: st
   const sorted = [...snap.receipts].sort((a, b) => {
     const lc = a.laneId.localeCompare(b.laneId);
     if (lc !== 0) return lc;
-    return (a.writerId ?? "").localeCompare(b.writerId ?? "");
+    return writerSortKey(a.writer).localeCompare(writerSortKey(b.writer));
   });
   const { visible, total } = truncateRows(sorted, max);
   const rows = visible.map((r) => [
     r.laneId,
-    r.writerId ?? "\u2014",
+    r.writer === undefined ? "\u2014" : formatWriterRef(r.writer),
     r.admittedRewriteCount.toString(),
     r.rejectedRewriteCount.toString(),
     r.counterfactualCount.toString()

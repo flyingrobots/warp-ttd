@@ -18,7 +18,8 @@ import type {
   LaneRef,
   PlaybackFrame,
   PlaybackHeadSnapshot,
-  ReceiptSummary
+  ReceiptSummary,
+  WriterRef
 } from "../protocol.ts";
 
 // ---------------------------------------------------------------------------
@@ -155,6 +156,10 @@ interface BuildFrameDataArgs {
   worldlineIdByLaneId: Map<string, string>;
 }
 
+function createWriterRef(writerId: string, worldlineId: string): WriterRef {
+  return { writerId, worldlineId };
+}
+
 function buildFrameData(
   args: BuildFrameDataArgs
 ): { receipts: ReceiptSummary[]; emissions: EffectEmissionSummary[]; observations: DeliveryObservationSummary[] } {
@@ -168,7 +173,11 @@ function buildFrameData(
     }
     return {
       receiptId: `receipt:scenario:${id}`,
-      headId: HEAD_ID, frameIndex, laneId: sr.laneId, worldlineId, writerId: sr.writerId,
+      headId: HEAD_ID,
+      frameIndex,
+      laneId: sr.laneId,
+      worldlineId,
+      writer: createWriterRef(sr.writerId, worldlineId),
       inputTick: prevTick, outputTick: sf.tick,
       admittedRewriteCount: sr.admitted, rejectedRewriteCount: sr.rejected,
       counterfactualCount: sr.counterfactual,
@@ -193,7 +202,10 @@ function buildFrameData(
       emissionId: emId, headId: HEAD_ID, frameIndex,
       laneId: se.laneId, worldlineId, coordinate: { laneId: se.laneId, worldlineId, tick: sf.tick },
       effectKind: se.effectKind,
-      producerWriterId: se.producerWriterId ?? sf.receipts[0]?.writerId ?? "scenario-writer",
+      producerWriter: createWriterRef(
+        se.producerWriterId ?? sf.receipts[0]?.writerId ?? "scenario-writer",
+        worldlineId
+      ),
       summary: `${se.effectKind} emitted at tick ${sf.tick.toString()}`
     });
 
@@ -311,7 +323,7 @@ export function buildScenario(scenario: Scenario): TtdHostAdapter {
     adapterName: "scenario-fixture",
     hello: () => Promise.resolve({
       hostKind: scenario.hostKind, hostVersion: "0.0.0-scenario",
-      protocolVersion: "0.3.0", schemaId: "ttd-protocol-scenario-v1",
+      protocolVersion: "0.4.0", schemaId: "ttd-protocol-scenario-v1",
       capabilities: built.capabilities
     }),
     laneCatalog: () => Promise.resolve({ lanes: structuredClone(built.lanes) }),

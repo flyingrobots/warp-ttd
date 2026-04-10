@@ -8,7 +8,7 @@ test("hello exposes the minimal host handshake contract", async () => {
   const hello = await adapter.hello();
 
   assert.equal(hello.hostKind, "ECHO");
-  assert.equal(hello.protocolVersion, "0.3.0");
+  assert.equal(hello.protocolVersion, "0.4.0");
   assert.equal(hello.schemaId, "ttd-protocol-fixture-v1");
   assert.deepEqual(hello.capabilities, [
     "READ_HELLO",
@@ -87,7 +87,7 @@ test("stepping forward advances the head and surfaces the canonical receipt", as
     frameIndex: 1,
     laneId: "wl:main",
     worldlineId: "wl:main",
-    writerId: "echo-writer",
+    writer: { writerId: "echo-writer", worldlineId: "wl:main" },
     inputTick: 0,
     outputTick: 1,
     admittedRewriteCount: 2,
@@ -122,7 +122,7 @@ test("explicit frame lookup allows receipt-bearing speculative frames to be insp
       frameIndex: 2,
       laneId: "ws:sandbox",
       worldlineId: "wl:main",
-      writerId: "sandbox-writer",
+      writer: { writerId: "sandbox-writer", worldlineId: "wl:main" },
       inputTick: 0,
       outputTick: 1,
       admittedRewriteCount: 1,

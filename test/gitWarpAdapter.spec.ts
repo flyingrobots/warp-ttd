@@ -12,7 +12,7 @@ test("hello identifies the host as git-warp", async () => {
     const hello = await adapter.hello();
 
     assert.equal(hello.hostKind, "GIT_WARP");
-    assert.equal(hello.protocolVersion, "0.3.0");
+    assert.equal(hello.protocolVersion, "0.4.0");
     assert.ok(hello.hostVersion.length > 0);
     assert.ok(hello.capabilities.includes("READ_HELLO"));
     assert.ok(hello.capabilities.includes("READ_LANE_CATALOG"));
@@ -172,8 +172,11 @@ test("receipts contain operation counts that match tick receipt data", async () 
 
     const r1 = receipts1[0];
     assert.ok(r1 !== undefined, "Expected receipt at index 0");
+    assert.ok(r1.writer !== undefined, "Expected receipt writer at index 0");
     assert.equal(r1.frameIndex, 1);
     assert.equal(r1.worldlineId, "wl:live");
+    assert.equal(r1.writer.writerId, "alice");
+    assert.equal(r1.writer.worldlineId, "wl:live");
     assert.equal(r1.admittedRewriteCount, 2, "Tick 1: NodeAdd + PropSet = 2 admitted");
     assert.equal(r1.rejectedRewriteCount, 0);
     assert.equal(r1.counterfactualCount, 0);

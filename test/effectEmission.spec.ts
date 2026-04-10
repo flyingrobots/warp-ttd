@@ -55,7 +55,8 @@ test("effectEmissions returns emission records at frame 1", async () => {
   assert.equal(typeof emission.coordinate.laneId, "string");
   assert.equal(typeof emission.coordinate.tick, "number");
   assert.equal(typeof emission.effectKind, "string");
-  assert.equal(typeof emission.producerWriterId, "string");
+  assert.equal(typeof emission.producerWriter.writerId, "string");
+  assert.equal(typeof emission.producerWriter.worldlineId, "string");
   assert.equal(typeof emission.summary, "string");
 
   assert.equal(emission.frameIndex, 1);
@@ -186,7 +187,7 @@ test("executionContext returns session-level metadata", async () => {
 
 // --- Protocol contract: envelope key sets ---
 
-test("EffectEmissionSummary v0.3.0 shape", async () => {
+test("EffectEmissionSummary v0.4.0 shape", async () => {
   const emissions = await createAdapter().effectEmissions(HEAD_ID, 1);
   const emission = emissions[0];
   assert.ok(emission !== undefined);
@@ -194,7 +195,7 @@ test("EffectEmissionSummary v0.3.0 shape", async () => {
   const keys = Object.keys(emission).sort();
   assert.deepEqual(keys, [
     "coordinate", "effectKind", "emissionId", "frameIndex",
-    "headId", "laneId", "producerWriterId", "summary", "worldlineId"
+    "headId", "laneId", "producerWriter", "summary", "worldlineId"
   ]);
 
   // Nested Coordinate shape

@@ -30,7 +30,7 @@ const FIXTURE: FixtureState = {
   hello: {
     hostKind: "ECHO",
     hostVersion: "0.0.0-fixture",
-    protocolVersion: "0.3.0",
+    protocolVersion: "0.4.0",
     schemaId: "ttd-protocol-fixture-v1",
     capabilities: [
       "READ_HELLO",
@@ -143,7 +143,7 @@ const FIXTURE: FixtureState = {
         frameIndex: 1,
         laneId: "wl:main",
         worldlineId: "wl:main",
-        writerId: "echo-writer",
+        writer: { writerId: "echo-writer", worldlineId: "wl:main" },
         inputTick: 0,
         outputTick: 1,
         admittedRewriteCount: 2,
@@ -158,7 +158,7 @@ const FIXTURE: FixtureState = {
         frameIndex: 2,
         laneId: "ws:sandbox",
         worldlineId: "wl:main",
-        writerId: "sandbox-writer",
+        writer: { writerId: "sandbox-writer", worldlineId: "wl:main" },
         inputTick: 0,
         outputTick: 1,
         admittedRewriteCount: 1,
@@ -179,7 +179,7 @@ const FIXTURE: FixtureState = {
         worldlineId: "wl:main",
         coordinate: { laneId: "wl:main", worldlineId: "wl:main", tick: 1 },
         effectKind: "diagnostic",
-        producerWriterId: "echo-writer",
+        producerWriter: { writerId: "echo-writer", worldlineId: "wl:main" },
         summary: "Diagnostic event emitted on canonical worldline advance."
       },
       {
@@ -190,7 +190,7 @@ const FIXTURE: FixtureState = {
         worldlineId: "wl:main",
         coordinate: { laneId: "ws:sandbox", worldlineId: "wl:main", tick: 1 },
         effectKind: "notification",
-        producerWriterId: "echo-writer",
+        producerWriter: { writerId: "echo-writer", worldlineId: "wl:main" },
         summary: "Notification emitted on speculative strand advance."
       }
     ]

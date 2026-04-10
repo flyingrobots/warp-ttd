@@ -1,5 +1,5 @@
 /**
- * Protocol contract tests — pin the v0.3.0 envelope shapes.
+ * Protocol contract tests — pin the v0.4.0 envelope shapes.
  *
  * These tests assert that every protocol type has exactly the expected
  * fields with the correct types. If a future change breaks one of these
@@ -24,7 +24,7 @@ test("HostHello shape", async () => {
   assert.ok(Array.isArray(hello.capabilities));
 
   // Protocol version tracks latest implemented surface
-  assert.equal(hello.protocolVersion, "0.3.0");
+  assert.equal(hello.protocolVersion, "0.4.0");
 
   // No unexpected fields
   const keys = Object.keys(hello).sort();
@@ -128,13 +128,14 @@ test("ReceiptSummary shape", async () => {
   assert.equal(typeof r.digest, "string");
   assert.equal(typeof r.summary, "string");
 
-  // writerId is optional but present in fixtures that have writer data
-  assert.equal(typeof r.writerId, "string", "writerId should be a string when present");
+  // writer is optional but present in fixtures that have writer data
+  assert.equal(typeof r.writer?.writerId, "string", "writer.writerId should be a string when present");
+  assert.equal(typeof r.writer?.worldlineId, "string", "writer.worldlineId should be a string when present");
 
   const keys = Object.keys(r).sort();
   assert.deepEqual(keys, [
     "admittedRewriteCount", "counterfactualCount", "digest",
     "frameIndex", "headId", "inputTick", "laneId", "outputTick",
-    "receiptId", "rejectedRewriteCount", "summary", "worldlineId", "writerId"
+    "receiptId", "rejectedRewriteCount", "summary", "worldlineId", "writer"
   ]);
 });

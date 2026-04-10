@@ -12,6 +12,7 @@ import {
 } from "@flyingrobots/bijou";
 import type { BijouContext, Surface } from "@flyingrobots/bijou";
 import type { LaneFrameView, LaneRef, ReceiptSummary } from "../protocol.ts";
+import { formatWriterRef } from "../protocol.ts";
 import { assignColumns, buildGraphGutterCells, laneColor } from "./laneGraph.ts";
 import type { GutterCell, LaneActivity } from "./laneGraph.ts";
 
@@ -69,7 +70,7 @@ export interface LaneTreeLine {
 function uniqueWriters(receipts: readonly ReceiptSummary[]): string[] {
   const seen = new Set<string>();
   for (const r of receipts) {
-    if (r.writerId !== undefined) seen.add(r.writerId);
+    if (r.writer !== undefined) seen.add(formatWriterRef(r.writer));
   }
   return [...seen];
 }

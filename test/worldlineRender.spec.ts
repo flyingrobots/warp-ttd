@@ -69,7 +69,7 @@ function makeReceipt(opts: ReceiptOpts): ReceiptSummary {
     frameIndex: opts.frameIndex,
     laneId: opts.laneId,
     worldlineId: opts.worldlineId ?? opts.laneId,
-    writerId: opts.writerId,
+    writer: { writerId: opts.writerId, worldlineId: opts.worldlineId ?? opts.laneId },
     inputTick: opts.frameIndex,
     outputTick: opts.frameIndex + 1,
     admittedRewriteCount: opts.admitted ?? 1,

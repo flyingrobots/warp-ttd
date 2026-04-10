@@ -62,14 +62,19 @@ interface ReceiptOpts {
   counterfactual?: number;
 }
 
+function resolveReceiptWorldlineId(opts: ReceiptOpts): string {
+  return opts.worldlineId ?? opts.laneId;
+}
+
 function makeReceipt(opts: ReceiptOpts): ReceiptSummary {
+  const worldlineId = resolveReceiptWorldlineId(opts);
   return {
     receiptId: `receipt:${opts.laneId}:${String(opts.frameIndex)}`,
     headId: "head:default",
     frameIndex: opts.frameIndex,
     laneId: opts.laneId,
-    worldlineId: opts.worldlineId ?? opts.laneId,
-    writerId: opts.writerId,
+    worldlineId,
+    writer: { writerId: opts.writerId, worldlineId },
     inputTick: opts.frameIndex,
     outputTick: opts.frameIndex + 1,
     admittedRewriteCount: opts.admitted ?? 1,
@@ -129,8 +134,8 @@ test("buildTickRows includes writer attribution from receipts", () => {
   const rows = buildTickRows(frames, catalog);
   const frame4 = rows[0];
   assert.ok(frame4 !== undefined);
-  assert.ok(frame4.writers.includes("alice"));
-  assert.ok(frame4.writers.includes("bob"));
+  assert.ok(frame4.writers.includes("alice@wl:main"));
+  assert.ok(frame4.writers.includes("bob@wl:main"));
 });
 
 test("buildTickRows marks frames with rejected rewrites as conflicted", () => {

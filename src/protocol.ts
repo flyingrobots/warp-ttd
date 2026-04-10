@@ -74,13 +74,18 @@ export interface PlaybackFrame {
   lanes: LaneFrameView[];
 }
 
+export interface WriterRef {
+  writerId: string;
+  worldlineId: string;
+}
+
 export interface ReceiptSummary {
   receiptId: string;
   headId: string;
   frameIndex: number;
   laneId: string;
   worldlineId: string;
-  writerId?: string;
+  writer?: WriterRef;
   inputTick: number;
   outputTick: number;
   admittedRewriteCount: number;
@@ -98,7 +103,7 @@ export interface EffectEmissionSummary {
   worldlineId: string;
   coordinate: Coordinate;
   effectKind: string;
-  producerWriterId: string;
+  producerWriter: WriterRef;
   summary: string;
 }
 
@@ -132,4 +137,8 @@ export function formatExecutionMode(mode: ExecutionMode): string {
 
 export function formatDeliveryOutcome(outcome: DeliveryOutcome): string {
   return outcome.toLowerCase();
+}
+
+export function formatWriterRef(writer: WriterRef): string {
+  return `${writer.writerId}@${writer.worldlineId}`;
 }

@@ -101,12 +101,12 @@ have a scheduler; it returns null or a simplified analog.
 ### 7. WriterHeadKey composite
 
 Echo uses `WriterHeadKey { worldlineId, headId }` as a composite
-key. The protocol has `writerId: String` on `ReceiptSummary` — a
-flat string that loses the worldline association.
+key.
 
-**Proposed change:** Add `worldlineId` alongside `writerId` on
-receipt and effect summaries. Or add a `WriterRef { writerId,
-worldlineId }` type.
+**Status:** landed for the minimum surface. `ReceiptSummary.writer`
+and `EffectEmissionSummary.producerWriter` now use an explicit
+`WriterRef { writerId, worldlineId }` runtime form instead of flat
+writer strings.
 
 ### 8. Explicit worldline identity outside lane naming
 
@@ -131,9 +131,11 @@ names explicit `worldlineId` on `LaneRef`, `Coordinate`,
 does not have to reconstruct worldline identity from `wl:` / `ws:`
 prefixes or parent-chain shape.
 
-**Remaining gap:** receipt/emission writer identity is still too flat.
-We still likely want either `worldlineId` alongside every writer field
-or a future `WriterRef { writerId, worldlineId }` runtime form.
+**Remaining gap:** Echo's fuller `WriterHeadKey { worldlineId, headId }`
+shape is still richer than the protocol's current writer surface. If
+TTD needs to distinguish the same writer across multiple playback heads
+in one worldline, the next honest move is a first-class head-aware
+writer identity.
 
 ## How Echo's runtime works (for protocol designers)
 
