@@ -103,10 +103,11 @@ have a scheduler; it returns null or a simplified analog.
 Echo uses `WriterHeadKey { worldlineId, headId }` as a composite
 key.
 
-**Status:** landed for the minimum surface. `ReceiptSummary.writer`
+**Status:** landed for the current protocol surface. `ReceiptSummary.writer`
 and `EffectEmissionSummary.producerWriter` now use an explicit
-`WriterRef { writerId, worldlineId }` runtime form instead of flat
-writer strings.
+`WriterRef { writerId, worldlineId, headId? }` runtime form instead of
+flat writer strings, so hosts that know the exact writer head can
+surface it without forcing hosts like git-warp to invent one.
 
 ### 8. Explicit worldline identity outside lane naming
 
@@ -131,11 +132,11 @@ names explicit `worldlineId` on `LaneRef`, `Coordinate`,
 does not have to reconstruct worldline identity from `wl:` / `ws:`
 prefixes or parent-chain shape.
 
-**Remaining gap:** Echo's fuller `WriterHeadKey { worldlineId, headId }`
-shape is still richer than the protocol's current writer surface. If
-TTD needs to distinguish the same writer across multiple playback heads
-in one worldline, the next honest move is a first-class head-aware
-writer identity.
+**Remaining gap:** Echo's exact `WriterHeadKey { worldlineId, headId }`
+is still only projected through `WriterRef.headId`, not elevated to its
+own protocol noun. If TTD grows control or routing surfaces that target
+writer heads directly, the next honest move is a first-class
+`WriterHeadKey` type in the debugger protocol itself.
 
 ## How Echo's runtime works (for protocol designers)
 

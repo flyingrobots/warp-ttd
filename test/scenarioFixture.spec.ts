@@ -7,6 +7,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
+import { NotificationEffectKind } from "../src/EffectKind.ts";
 import {
   buildScenario,
   scenarioLiveWithEffects,
@@ -28,7 +29,7 @@ test("buildScenario returns a valid TtdHostAdapter", async () => {
 
   const hello = await adapter.hello();
   assert.equal(hello.hostKind, "GIT_WARP");
-  assert.equal(hello.protocolVersion, "0.4.0");
+  assert.equal(hello.protocolVersion, "0.5.0");
 });
 
 test("buildScenario exposes lanes from scenario", async () => {
@@ -81,6 +82,7 @@ test("buildScenario maps receipts into ReceiptSummary", async () => {
       receipts: [{
         laneId: "wl:main",
         writerId: "alice",
+        headId: "head:writer:alice",
         admitted: 3,
         rejected: 1,
         counterfactual: 0
@@ -98,6 +100,7 @@ test("buildScenario maps receipts into ReceiptSummary", async () => {
   assert.equal(r.rejectedRewriteCount, 1);
   assert.equal(r.writer.writerId, "alice", "writer identity should flow from ScenarioReceipt to ReceiptSummary");
   assert.equal(r.writer.worldlineId, "wl:main", "writer identity should retain worldline context");
+  assert.equal(r.writer.headId, "head:writer:alice", "scenario receipts should preserve exact writer head identity when present");
 });
 
 test("buildScenario maps emissions and deliveries", async () => {
@@ -111,6 +114,7 @@ test("buildScenario maps emissions and deliveries", async () => {
       emissions: [{
         effectKind: "notification",
         laneId: "wl:main",
+        producerHeadId: "head:writer:notification",
         deliveries: [
           { sinkId: "sink:network", outcome: "SUPPRESSED", reason: "replay mode" },
           { sinkId: "sink:tui-log", outcome: "DELIVERED", reason: "local safe" }
@@ -121,7 +125,10 @@ test("buildScenario maps emissions and deliveries", async () => {
 
   const emissions = await adapter.effectEmissions("head:default", 1);
   assert.equal(emissions.length, 1);
-  assert.equal(emissions[0]?.effectKind, "notification");
+  const emission = emissions[0];
+  assert.ok(emission !== undefined);
+  assert.ok(emission.effectKind instanceof NotificationEffectKind);
+  assert.equal(emission.producerWriter.headId, "head:writer:notification");
 
   const observations = await adapter.deliveryObservations("head:default", 1);
   assert.equal(observations.length, 2);

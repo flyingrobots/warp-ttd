@@ -6,6 +6,7 @@
  * touching a real substrate.
  */
 import type { TtdHostAdapter } from "../adapter.ts";
+import { EffectKind } from "../EffectKind.ts";
 import { FrameOutOfRangeError, UnknownHeadError } from "../errors.ts";
 import type {
   Capability,
@@ -36,12 +37,14 @@ interface ScenarioEmission {
   effectKind: string;
   laneId: string;
   producerWriterId?: string;
+  producerHeadId?: string;
   deliveries: ScenarioDelivery[];
 }
 
 interface ScenarioReceipt {
   laneId: string;
   writerId: string;
+  headId?: string;
   admitted: number;
   rejected: number;
   counterfactual: number;
@@ -156,8 +159,16 @@ interface BuildFrameDataArgs {
   worldlineIdByLaneId: Map<string, string>;
 }
 
-function createWriterRef(writerId: string, worldlineId: string): WriterRef {
-  return { writerId, worldlineId };
+function createWriterRef(
+  writerId: string,
+  worldlineId: string,
+  headId?: string
+): WriterRef {
+  if (headId === undefined) {
+    return { writerId, worldlineId };
+  }
+
+  return { writerId, worldlineId, headId };
 }
 
 function buildFrameData(
@@ -177,7 +188,7 @@ function buildFrameData(
       frameIndex,
       laneId: sr.laneId,
       worldlineId,
-      writer: createWriterRef(sr.writerId, worldlineId),
+      writer: createWriterRef(sr.writerId, worldlineId, sr.headId),
       inputTick: prevTick, outputTick: sf.tick,
       admittedRewriteCount: sr.admitted, rejectedRewriteCount: sr.rejected,
       counterfactualCount: sr.counterfactual,
@@ -201,10 +212,11 @@ function buildFrameData(
     emissions.push({
       emissionId: emId, headId: HEAD_ID, frameIndex,
       laneId: se.laneId, worldlineId, coordinate: { laneId: se.laneId, worldlineId, tick: sf.tick },
-      effectKind: se.effectKind,
+      effectKind: EffectKind.from(se.effectKind),
       producerWriter: createWriterRef(
         se.producerWriterId ?? sf.receipts[0]?.writerId ?? "scenario-writer",
-        worldlineId
+        worldlineId,
+        se.producerHeadId
       ),
       summary: `${se.effectKind} emitted at tick ${sf.tick.toString()}`
     });
@@ -256,6 +268,15 @@ function buildAllFrameData(scenario: Scenario): BuiltScenario {
     lanes,
     worldlineIdByLaneId,
     receiptsByFrame, emissionsByFrame, observationsByFrame
+  };
+}
+
+function cloneEffectEmissionSummary(emission: EffectEmissionSummary): EffectEmissionSummary {
+  return {
+    ...structuredClone(emission),
+    coordinate: structuredClone(emission.coordinate),
+    producerWriter: structuredClone(emission.producerWriter),
+    effectKind: emission.effectKind.clone()
   };
 }
 
@@ -323,14 +344,17 @@ export function buildScenario(scenario: Scenario): TtdHostAdapter {
     adapterName: "scenario-fixture",
     hello: () => Promise.resolve({
       hostKind: scenario.hostKind, hostVersion: "0.0.0-scenario",
-      protocolVersion: "0.4.0", schemaId: "ttd-protocol-scenario-v1",
+      protocolVersion: "0.5.0", schemaId: "ttd-protocol-scenario-v1",
       capabilities: built.capabilities
     }),
     laneCatalog: () => Promise.resolve({ lanes: structuredClone(built.lanes) }),
     playbackHead: (hid) => Promise.resolve(structuredClone(requireHead(hid))),
     frame: (hid, fi) => Promise.resolve(structuredClone(buildPlaybackFrame(built.lanes, scenario, resolveFrame(hid, fi)))),
     receipts: (hid, fi) => Promise.resolve(structuredClone(built.receiptsByFrame.get(resolveFrame(hid, fi)) ?? [])),
-    effectEmissions: (hid, fi) => Promise.resolve(structuredClone(built.emissionsByFrame.get(resolveFrame(hid, fi)) ?? [])),
+    effectEmissions: (hid, fi) => Promise.resolve(
+      (built.emissionsByFrame.get(resolveFrame(hid, fi)) ?? [])
+        .map((emission) => cloneEffectEmissionSummary(emission))
+    ),
     deliveryObservations: (hid, fi) => Promise.resolve(structuredClone(built.observationsByFrame.get(resolveFrame(hid, fi)) ?? [])),
     executionContext: () => Promise.resolve({ mode: scenario.executionMode }),
     stepForward(headId: string): Promise<PlaybackFrame> {

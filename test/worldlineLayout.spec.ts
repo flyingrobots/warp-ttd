@@ -56,6 +56,7 @@ interface ReceiptOpts {
   laneId: string;
   worldlineId?: string;
   writerId: string;
+  headId?: string;
   frameIndex: number;
   admitted?: number;
   rejected?: number;
@@ -74,7 +75,9 @@ function makeReceipt(opts: ReceiptOpts): ReceiptSummary {
     frameIndex: opts.frameIndex,
     laneId: opts.laneId,
     worldlineId,
-    writer: { writerId: opts.writerId, worldlineId },
+    writer: opts.headId === undefined
+      ? { writerId: opts.writerId, worldlineId }
+      : { writerId: opts.writerId, worldlineId, headId: opts.headId },
     inputTick: opts.frameIndex,
     outputTick: opts.frameIndex + 1,
     admittedRewriteCount: opts.admitted ?? 1,
@@ -136,6 +139,19 @@ test("buildTickRows includes writer attribution from receipts", () => {
   assert.ok(frame4 !== undefined);
   assert.ok(frame4.writers.includes("alice@wl:main"));
   assert.ok(frame4.writers.includes("bob@wl:main"));
+});
+
+test("buildTickRows includes exact writer head identity when present", () => {
+  const { catalog } = makeHistory();
+  const frames: FrameData[] = [
+    {
+      frameIndex: 1,
+      lanes: [makeLaneFrame("wl:main", 1, { changed: true, btrDigest: "def5678" })],
+      receipts: [makeReceipt({ laneId: "wl:main", writerId: "alice", headId: "head:writer:alice", frameIndex: 1 })]
+    }
+  ];
+  const rows = buildTickRows(frames, catalog);
+  assert.equal(rows[0]?.writers[0], "alice@wl:main#head:writer:alice");
 });
 
 test("buildTickRows marks frames with rejected rewrites as conflicted", () => {

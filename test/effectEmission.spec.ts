@@ -7,6 +7,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
+import { DiagnosticEffectKind, NotificationEffectKind } from "../src/EffectKind.ts";
 import { EchoFixtureAdapter } from "../src/adapters/echoFixtureAdapter.ts";
 
 const HEAD_ID = "head:main";
@@ -54,9 +55,10 @@ test("effectEmissions returns emission records at frame 1", async () => {
   assert.equal(typeof emission.laneId, "string");
   assert.equal(typeof emission.coordinate.laneId, "string");
   assert.equal(typeof emission.coordinate.tick, "number");
-  assert.equal(typeof emission.effectKind, "string");
+  assert.ok(emission.effectKind instanceof DiagnosticEffectKind);
   assert.equal(typeof emission.producerWriter.writerId, "string");
   assert.equal(typeof emission.producerWriter.worldlineId, "string");
+  assert.equal(typeof emission.producerWriter.headId, "string");
   assert.equal(typeof emission.summary, "string");
 
   assert.equal(emission.frameIndex, 1);
@@ -187,7 +189,7 @@ test("executionContext returns session-level metadata", async () => {
 
 // --- Protocol contract: envelope key sets ---
 
-test("EffectEmissionSummary v0.4.0 shape", async () => {
+test("EffectEmissionSummary v0.5.0 shape", async () => {
   const emissions = await createAdapter().effectEmissions(HEAD_ID, 1);
   const emission = emissions[0];
   assert.ok(emission !== undefined);
@@ -200,6 +202,14 @@ test("EffectEmissionSummary v0.4.0 shape", async () => {
 
   // Nested Coordinate shape
   assert.deepEqual(Object.keys(emission.coordinate).sort(), ["laneId", "tick", "worldlineId"]);
+  assert.deepEqual(Object.keys(emission.producerWriter).sort(), ["headId", "worldlineId", "writerId"]);
+});
+
+test("effectEmissions preserves runtime effect kind classes after adapter cloning", async () => {
+  const emissions = await createAdapter().effectEmissions(HEAD_ID, 2);
+  const emission = emissions[0];
+  assert.ok(emission !== undefined);
+  assert.ok(emission.effectKind instanceof NotificationEffectKind);
 });
 
 test("DeliveryObservationSummary shape", async () => {

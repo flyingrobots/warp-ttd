@@ -1,5 +1,5 @@
 /**
- * Protocol contract tests — pin the v0.4.0 envelope shapes.
+ * Protocol contract tests — pin the v0.5.0 envelope shapes.
  *
  * These tests assert that every protocol type has exactly the expected
  * fields with the correct types. If a future change breaks one of these
@@ -8,6 +8,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
+import { DiagnosticEffectKind } from "../src/EffectKind.ts";
 import { EchoFixtureAdapter } from "../src/adapters/echoFixtureAdapter.ts";
 
 const adapter = new EchoFixtureAdapter();
@@ -24,7 +25,7 @@ test("HostHello shape", async () => {
   assert.ok(Array.isArray(hello.capabilities));
 
   // Protocol version tracks latest implemented surface
-  assert.equal(hello.protocolVersion, "0.4.0");
+  assert.equal(hello.protocolVersion, "0.5.0");
 
   // No unexpected fields
   const keys = Object.keys(hello).sort();
@@ -131,11 +132,34 @@ test("ReceiptSummary shape", async () => {
   // writer is optional but present in fixtures that have writer data
   assert.equal(typeof r.writer?.writerId, "string", "writer.writerId should be a string when present");
   assert.equal(typeof r.writer?.worldlineId, "string", "writer.worldlineId should be a string when present");
+  assert.equal(typeof r.writer?.headId, "string", "writer.headId should be a string when present");
+  assert.deepEqual(Object.keys(r.writer ?? {}).sort(), ["headId", "worldlineId", "writerId"]);
 
   const keys = Object.keys(r).sort();
   assert.deepEqual(keys, [
     "admittedRewriteCount", "counterfactualCount", "digest",
     "frameIndex", "headId", "inputTick", "laneId", "outputTick",
     "receiptId", "rejectedRewriteCount", "summary", "worldlineId", "writer"
+  ]);
+});
+
+test("EffectEmissionSummary shape", async () => {
+  const emissions = await adapter.effectEmissions(HEAD_ID, 1);
+  assert.ok(emissions.length > 0, "Expected emissions at frame 1");
+
+  const emission = emissions[0];
+  assert.ok(emission !== undefined);
+  assert.equal(typeof emission.emissionId, "string");
+  assert.equal(typeof emission.headId, "string");
+  assert.equal(typeof emission.frameIndex, "number");
+  assert.equal(typeof emission.laneId, "string");
+  assert.equal(typeof emission.worldlineId, "string");
+  assert.ok(emission.effectKind instanceof DiagnosticEffectKind);
+  assert.deepEqual(Object.keys(emission.producerWriter).sort(), ["headId", "worldlineId", "writerId"]);
+
+  const keys = Object.keys(emission).sort();
+  assert.deepEqual(keys, [
+    "coordinate", "effectKind", "emissionId", "frameIndex",
+    "headId", "laneId", "producerWriter", "summary", "worldlineId"
   ]);
 });

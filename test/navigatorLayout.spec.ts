@@ -8,6 +8,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { initDefaultContext } from "@flyingrobots/bijou-node";
 import { surfaceToString } from "@flyingrobots/bijou";
+import { EffectKind } from "../src/EffectKind.ts";
 import {
   buildLaneTree,
   buildPositionBar,
@@ -63,17 +64,26 @@ function makeLane(id: string, kind: "WORLDLINE" | "STRAND", parentId?: string): 
   return ref;
 }
 
-function makeReceipt(laneId: string, writerId: string, frameIndex: number): ReceiptSummary {
+interface ReceiptArgs {
+  laneId: string;
+  writerId: string;
+  frameIndex: number;
+  headId?: string;
+}
+
+function makeReceipt(args: ReceiptArgs): ReceiptSummary {
   return {
-    receiptId: `receipt:test:${laneId}:${writerId}`,
+    receiptId: `receipt:test:${args.laneId}:${args.writerId}`,
     headId: "head:default",
-    frameIndex,
-    laneId,
-    worldlineId: laneId,
-    writer: { writerId, worldlineId: laneId },
-    inputTick: frameIndex - 1, outputTick: frameIndex,
+    frameIndex: args.frameIndex,
+    laneId: args.laneId,
+    worldlineId: args.laneId,
+    writer: args.headId === undefined
+      ? { writerId: args.writerId, worldlineId: args.laneId }
+      : { writerId: args.writerId, worldlineId: args.laneId, headId: args.headId },
+    inputTick: args.frameIndex - 1, outputTick: args.frameIndex,
     admittedRewriteCount: 2, rejectedRewriteCount: 0, counterfactualCount: 0,
-    digest: "digest:test", summary: `${writerId} wrote to ${laneId}`
+    digest: "digest:test", summary: `${args.writerId} wrote to ${args.laneId}`
   };
 }
 
@@ -82,7 +92,7 @@ function makeEmission(laneId: string, kind: string, frameIndex: number): EffectE
     emissionId: `emit:test:${kind}:${laneId}`,
     headId: "head:default", frameIndex, laneId, worldlineId: laneId,
     coordinate: { laneId, worldlineId: laneId, tick: frameIndex },
-    effectKind: kind, producerWriter: { writerId: "test-writer", worldlineId: laneId },
+    effectKind: EffectKind.from(kind), producerWriter: { writerId: "test-writer", worldlineId: laneId, headId: "head:writer:test" },
     summary: `${kind} at ${laneId}`
   };
 }
@@ -101,7 +111,7 @@ function makeSnap(overrides: Partial<SessionSnapshot> = {}): SessionSnapshot {
   return {
     head: { headId: "head:default", label: "Test Head", currentFrameIndex: 1, trackedLaneIds: ["wl:main"], writableLaneIds: [], paused: true },
     frame: { headId: "head:default", frameIndex: 1, lanes: [{ laneId: "wl:main", worldlineId: "wl:main", coordinate: { laneId: "wl:main", worldlineId: "wl:main", tick: 1 }, changed: true }] },
-    receipts: [makeReceipt("wl:main", "alice", 1)],
+    receipts: [makeReceipt({ laneId: "wl:main", writerId: "alice", frameIndex: 1 })],
     emissions: [makeEmission("wl:main", "diagnostic", 1)],
     observations: [makeObservation({ emissionId: "emit:test:diagnostic:wl:main", sinkId: "sink:tui-log", outcome: "DELIVERED", frameIndex: 1 })],
     execCtx: { mode: "LIVE" },
@@ -240,20 +250,24 @@ test("buildLaneLines: truncation with overflow message", () => {
 test("buildReceiptRows: sorted by lane then writer", () => {
   const snap = makeSnap({
     receipts: [
-      makeReceipt("wl:b", "bob", 1),
-      makeReceipt("wl:a", "alice", 1),
-      makeReceipt("wl:a", "carol", 1)
+      makeReceipt({ laneId: "wl:b", writerId: "bob", frameIndex: 1 }),
+      makeReceipt({ laneId: "wl:a", writerId: "alice", frameIndex: 1, headId: "head:writer:2" }),
+      makeReceipt({ laneId: "wl:a", writerId: "alice", frameIndex: 1, headId: "head:writer:1" }),
+      makeReceipt({ laneId: "wl:a", writerId: "carol", frameIndex: 1 })
     ]
   });
   const { rows } = buildReceiptRows(snap, 10);
   assert.ok(rows[0] !== undefined);
   assert.equal(rows[0][0], "wl:a");
-  assert.equal(rows[0][1], "alice@wl:a");
+  assert.equal(rows[0][1], "alice@wl:a#head:writer:1");
   assert.ok(rows[1] !== undefined);
   assert.equal(rows[1][0], "wl:a");
-  assert.equal(rows[1][1], "carol@wl:a");
+  assert.equal(rows[1][1], "alice@wl:a#head:writer:2");
   assert.ok(rows[2] !== undefined);
-  assert.equal(rows[2][0], "wl:b");
+  assert.equal(rows[2][0], "wl:a");
+  assert.equal(rows[2][1], "carol@wl:a");
+  assert.ok(rows[3] !== undefined);
+  assert.equal(rows[3][0], "wl:b");
 });
 
 test("buildEffectRows: delivery unsupported shows placeholder", () => {

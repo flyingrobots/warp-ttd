@@ -8,6 +8,7 @@
  */
 import { randomUUID } from "node:crypto";
 import type { TtdHostAdapter } from "../adapter.ts";
+import type { EffectKind } from "../EffectKind.ts";
 import type {
   DeliveryObservationSummary,
   EffectEmissionSummary,
@@ -36,11 +37,73 @@ export interface PinnedObservation {
   emission: EffectEmissionSummary;
 }
 
+export interface SerializedEffectEmissionSummary
+  extends Omit<EffectEmissionSummary, "effectKind"> {
+  effectKind: string;
+}
+
+export interface SerializedSessionSnapshot
+  extends Omit<SessionSnapshot, "emissions"> {
+  emissions: SerializedEffectEmissionSummary[];
+}
+
+export interface SerializedPinnedObservation
+  extends Omit<PinnedObservation, "emission"> {
+  emission: SerializedEffectEmissionSummary;
+}
+
 export interface SerializedSession {
   sessionId: string;
   activeHeadId: string;
-  snapshot: SessionSnapshot;
-  pins: PinnedObservation[];
+  snapshot: SerializedSessionSnapshot;
+  pins: SerializedPinnedObservation[];
+}
+
+function cloneEffectKind(kind: EffectKind): EffectKind {
+  return kind.clone();
+}
+
+function cloneEffectEmissionSummary(emission: EffectEmissionSummary): EffectEmissionSummary {
+  return {
+    ...structuredClone(emission),
+    coordinate: structuredClone(emission.coordinate),
+    producerWriter: structuredClone(emission.producerWriter),
+    effectKind: cloneEffectKind(emission.effectKind)
+  };
+}
+
+function serializeEffectEmissionSummary(
+  emission: EffectEmissionSummary
+): SerializedEffectEmissionSummary {
+  return {
+    ...structuredClone(emission),
+    coordinate: structuredClone(emission.coordinate),
+    producerWriter: structuredClone(emission.producerWriter),
+    effectKind: emission.effectKind.toString()
+  };
+}
+
+function serializeSnapshot(
+  snapshot: SessionSnapshot
+): SerializedSessionSnapshot {
+  return {
+    head: structuredClone(snapshot.head),
+    frame: structuredClone(snapshot.frame),
+    receipts: structuredClone(snapshot.receipts),
+    emissions: snapshot.emissions.map((emission) => serializeEffectEmissionSummary(emission)),
+    observations: structuredClone(snapshot.observations),
+    execCtx: structuredClone(snapshot.execCtx)
+  };
+}
+
+function serializePinnedObservation(
+  pin: PinnedObservation
+): SerializedPinnedObservation {
+  return {
+    pinnedAt: pin.pinnedAt,
+    observation: structuredClone(pin.observation),
+    emission: serializeEffectEmissionSummary(pin.emission)
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -128,7 +191,7 @@ export class DebuggerSession {
     const pinned: PinnedObservation = {
       pinnedAt: this.#snapshot.frame.frameIndex,
       observation: structuredClone(obs),
-      emission: structuredClone(emission)
+      emission: cloneEffectEmissionSummary(emission)
     };
     this.#pins.push(pinned);
     return pinned;
@@ -147,8 +210,8 @@ export class DebuggerSession {
     return {
       sessionId: this.sessionId,
       activeHeadId: this.#activeHeadId,
-      snapshot: structuredClone(this.#snapshot),
-      pins: structuredClone(this.#pins)
+      snapshot: serializeSnapshot(this.#snapshot),
+      pins: this.#pins.map((pin) => serializePinnedObservation(pin))
     };
   }
 }

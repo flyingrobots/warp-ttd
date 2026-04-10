@@ -2,6 +2,7 @@
 // The authored contract lives in schemas/warp-ttd-protocol.graphql.
 // Keep this file in sync with the schema; do not treat it as peer authority.
 // TODO(cycle-0011): Replace with Wesley-generated types; sync verification deferred until vendoring.
+import type { EffectKind } from "./EffectKind.ts";
 
 export type HostKind = "ECHO" | "GIT_WARP";
 
@@ -77,6 +78,7 @@ export interface PlaybackFrame {
 export interface WriterRef {
   writerId: string;
   worldlineId: string;
+  headId?: string;
 }
 
 export interface ReceiptSummary {
@@ -102,7 +104,7 @@ export interface EffectEmissionSummary {
   laneId: string;
   worldlineId: string;
   coordinate: Coordinate;
-  effectKind: string;
+  effectKind: EffectKind;
   producerWriter: WriterRef;
   summary: string;
 }
@@ -140,5 +142,11 @@ export function formatDeliveryOutcome(outcome: DeliveryOutcome): string {
 }
 
 export function formatWriterRef(writer: WriterRef): string {
-  return `${writer.writerId}@${writer.worldlineId}`;
+  const identity = `${writer.writerId}@${writer.worldlineId}`;
+
+  if (writer.headId === undefined) {
+    return identity;
+  }
+
+  return `${identity}#${writer.headId}`;
 }

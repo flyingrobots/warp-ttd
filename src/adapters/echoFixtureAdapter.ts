@@ -1,5 +1,9 @@
 import type { TtdHostAdapter } from "../adapter.ts";
 import {
+  DiagnosticEffectKind,
+  NotificationEffectKind,
+} from "../EffectKind.ts";
+import {
   FrameResolutionError,
   NoFramesConfiguredError,
   UnknownHeadError
@@ -30,7 +34,7 @@ const FIXTURE: FixtureState = {
   hello: {
     hostKind: "ECHO",
     hostVersion: "0.0.0-fixture",
-    protocolVersion: "0.4.0",
+    protocolVersion: "0.5.0",
     schemaId: "ttd-protocol-fixture-v1",
     capabilities: [
       "READ_HELLO",
@@ -143,7 +147,7 @@ const FIXTURE: FixtureState = {
         frameIndex: 1,
         laneId: "wl:main",
         worldlineId: "wl:main",
-        writer: { writerId: "echo-writer", worldlineId: "wl:main" },
+        writer: { writerId: "echo-writer", worldlineId: "wl:main", headId: "head:writer:main" },
         inputTick: 0,
         outputTick: 1,
         admittedRewriteCount: 2,
@@ -158,7 +162,7 @@ const FIXTURE: FixtureState = {
         frameIndex: 2,
         laneId: "ws:sandbox",
         worldlineId: "wl:main",
-        writer: { writerId: "sandbox-writer", worldlineId: "wl:main" },
+        writer: { writerId: "sandbox-writer", worldlineId: "wl:main", headId: "head:writer:sandbox" },
         inputTick: 0,
         outputTick: 1,
         admittedRewriteCount: 1,
@@ -178,8 +182,8 @@ const FIXTURE: FixtureState = {
         laneId: "wl:main",
         worldlineId: "wl:main",
         coordinate: { laneId: "wl:main", worldlineId: "wl:main", tick: 1 },
-        effectKind: "diagnostic",
-        producerWriter: { writerId: "echo-writer", worldlineId: "wl:main" },
+        effectKind: new DiagnosticEffectKind(),
+        producerWriter: { writerId: "echo-writer", worldlineId: "wl:main", headId: "head:writer:main" },
         summary: "Diagnostic event emitted on canonical worldline advance."
       },
       {
@@ -189,8 +193,8 @@ const FIXTURE: FixtureState = {
         laneId: "ws:sandbox",
         worldlineId: "wl:main",
         coordinate: { laneId: "ws:sandbox", worldlineId: "wl:main", tick: 1 },
-        effectKind: "notification",
-        producerWriter: { writerId: "echo-writer", worldlineId: "wl:main" },
+        effectKind: new NotificationEffectKind(),
+        producerWriter: { writerId: "echo-writer", worldlineId: "wl:main", headId: "head:writer:main" },
         summary: "Notification emitted on speculative strand advance."
       }
     ]
@@ -253,6 +257,15 @@ const FIXTURE: FixtureState = {
 
 function cloneValue<T>(value: T): T {
   return structuredClone(value);
+}
+
+function cloneEffectEmission(emission: EffectEmissionSummary): EffectEmissionSummary {
+  return {
+    ...cloneValue(emission),
+    coordinate: cloneValue(emission.coordinate),
+    producerWriter: cloneValue(emission.producerWriter),
+    effectKind: emission.effectKind.clone()
+  };
 }
 
 function requireHeadState(
@@ -385,9 +398,11 @@ export class EchoFixtureAdapter implements TtdHostAdapter {
     const resolvedIndex = frameIndex ?? head.currentFrameIndex;
     const emissions = FIXTURE.effectEmissions[headId] ?? [];
 
-    return Promise.resolve(cloneValue(
-      emissions.filter((e) => e.frameIndex === resolvedIndex)
-    ));
+    return Promise.resolve(
+      emissions
+        .filter((e) => e.frameIndex === resolvedIndex)
+        .map((emission) => cloneEffectEmission(emission))
+    );
   }
 
   public deliveryObservations(headId: string, frameIndex?: number): Promise<DeliveryObservationSummary[]> {

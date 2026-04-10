@@ -13,6 +13,7 @@ import {
 import type { TableColumn } from "@flyingrobots/bijou";
 import type { BijouContext, Surface } from "@flyingrobots/bijou";
 import type { SessionSnapshot, PinnedObservation } from "../app/debuggerSession.ts";
+import { formatEffectKind } from "../EffectKind.ts";
 import {
   formatDeliveryOutcome,
   formatExecutionMode,
@@ -48,7 +49,7 @@ function writerSortKey(writer?: WriterRef): string {
     return "";
   }
 
-  return `${writer.writerId}\u0000${writer.worldlineId}`;
+  return `${writer.writerId}\u0000${writer.worldlineId}\u0000${writer.headId ?? ""}`;
 }
 
 /** Build lane tree: roots in catalog order, depth-first pre-order. */
@@ -154,14 +155,14 @@ export function buildEffectRows(
   const hasDeliveries = hasCap(caps, "READ_DELIVERY_OBSERVATIONS");
   const allRows: string[][] = snap.emissions.flatMap((em) => {
     if (!hasDeliveries) {
-      return [[em.effectKind, em.laneId, "\u2014", "(delivery unsupported)"]];
+      return [[formatEffectKind(em.effectKind), em.laneId, "\u2014", "(delivery unsupported)"]];
     }
     const deliveries = snap.observations.filter((o) => o.emissionId === em.emissionId);
     if (deliveries.length === 0) {
-      return [[em.effectKind, em.laneId, "(none)", "emitted"]];
+      return [[formatEffectKind(em.effectKind), em.laneId, "(none)", "emitted"]];
     }
     return deliveries.map((o) => [
-      em.effectKind,
+      formatEffectKind(em.effectKind),
       em.laneId,
       o.sinkId.replace("sink:", ""),
       formatDeliveryOutcome(o.outcome),
@@ -174,7 +175,7 @@ export function buildEffectRows(
 export function buildPinLines(pins: readonly PinnedObservation[]): { lines: string[]; total: number } {
   const { visible, total } = truncateRows(pins, MAX_PINS);
   const lines = visible.map((p) =>
-    `  [f${p.pinnedAt.toString()}] ${p.emission.effectKind} \u2192 ${p.observation.sinkId.replace("sink:", "")}: ${p.observation.outcome}`
+    `  [f${p.pinnedAt.toString()}] ${formatEffectKind(p.emission.effectKind)} \u2192 ${p.observation.sinkId.replace("sink:", "")}: ${p.observation.outcome}`
   );
   if (total > MAX_PINS) {
     lines.push(`  +${(total - MAX_PINS).toString()} older pins`);

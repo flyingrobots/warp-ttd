@@ -9,15 +9,16 @@ Applications built on WARP require outbound effect emission, replay-safe
 delivery suppression, and debugger-visible output provenance. The
 canonical split:
 
-- git-warp owns generic substrate facts for emitted effects and delivery
-  observations
+- git-warp owns generic substrate facts for emitted effects and the
+  host-side delivery pipeline around them
 - warp-ttd inspects those facts through explicit protocol envelopes
 - Applications interpret them with domain meaning
 
-git-warp has not yet landed substrate support for effect emission or
-delivery observations. This design defines the warp-ttd protocol surface
-so it is ready when git-warp provides the data. Until then, adapters
-declare capabilities honestly and fixture adapters provide test data.
+git-warp already has substrate-side effect entities and host-domain
+effect/delivery runtime types. What it has not yet landed is a complete
+warp-ttd adapter path that maps those facts into debugger protocol
+records. Until then, adapters declare capabilities honestly and fixture
+adapters provide test data.
 
 ## Three Distinct Layers
 
@@ -29,8 +30,10 @@ The protocol must not collapse these into one thing:
 
 An effect emission record captures the fact that something was emitted —
 a diagnostic event, UI notification, export artifact, network call, or
-bridge dispatch. It is substrate truth, independent of what happened to
-the effect afterward.
+bridge dispatch. In git-warp terms, the substrate truth is the
+`@warp/effect:*` graph entity written during the tick. The debugger
+protocol surface is the host/runtime summary of that outbound candidate,
+not the later delivery result and not an observer trace.
 
 ### 2. Delivery observation
 
@@ -53,18 +56,21 @@ This is not per-effect — it is session-level metadata.
 ### New types
 
 ```typescript
-type DeliveryOutcome = "delivered" | "suppressed" | "failed" | "skipped";
+type DeliveryOutcome = "DELIVERED" | "SUPPRESSED" | "FAILED" | "SKIPPED";
 
-type ExecutionMode = "live" | "replay" | "debug";
+type ExecutionMode = "LIVE" | "REPLAY" | "DEBUG";
+
+type EffectKind = string; // wire-encoded as string, hydrated locally as a runtime-backed kind
 
 interface EffectEmissionSummary {
   emissionId: string;
   headId: string;
   frameIndex: number;
   laneId: string;
+  worldlineId: string;
   coordinate: Coordinate;
-  effectKind: string;           // e.g., "diagnostic", "notification", "export"
-  producerWriterId: string;
+  effectKind: EffectKind;
+  producerWriter: WriterRef;
   summary: string;
 }
 
@@ -94,9 +100,9 @@ interface ExecutionContext {
 ```typescript
 type Capability =
   | ... existing ...
-  | "read:effect-emissions"
-  | "read:delivery-observations"
-  | "read:execution-context";
+  | "READ_EFFECT_EMISSIONS"
+  | "READ_DELIVERY_OBSERVATIONS"
+  | "READ_EXECUTION_CONTEXT";
 ```
 
 ### New adapter methods
@@ -140,15 +146,17 @@ mode was active at the time of the delivery attempt.
 ### Capabilities gate the new methods
 
 This preserves backward compatibility. Existing adapters that have not
-yet added substrate support for effect/delivery data do not need to
-declare the new capabilities. When git-warp adds substrate support, its
-adapter declares the capabilities and implements the methods.
+yet added debugger-facing effect/delivery data do not need to declare
+the new capabilities. When git-warp's adapter grows the mapping from
+effect entities and delivery traces into the protocol, it declares the
+capabilities and implements the methods.
 
 ### Fixture adapter provides test data
 
 The echo fixture adapter gains contrived effect/delivery data for testing.
 The git-warp adapter returns empty arrays until the git-warp substrate
-provides effect emission and delivery observation records.
+adapter provides debugger-visible effect emission and delivery
+observation records.
 
 ## Protocol Version Impact
 
@@ -156,15 +164,23 @@ This adds new envelope types, new capability strings, and new adapter
 methods. Per the versioning rules in design doc 0008:
 
 - New optional capabilities and envelope types = **minor bump**
-- Protocol version bumped to v0.2.0 for adapters implementing this surface
+- Protocol version bumped to v0.5.0 for adapters implementing the
+  current head-aware writer and runtime-backed effect-kind surface
 
 ## Prerequisite from git-warp
 
-git-warp does not yet provide:
+git-warp already provides:
 
-- effect emission records in materialized state or receipts
-- delivery observation records
-- execution/delivery lens metadata
+- effect graph entities via `PatchBuilder.emitEffect()`
+- host-domain `EffectEmission` / `DeliveryObservation` types for the
+  effect pipeline
+- execution/delivery lens metadata in the host-domain effect pipeline
+
+What git-warp does not yet provide to warp-ttd is:
+
+- adapter mapping from effect graph truth into `EffectEmissionSummary`
+- adapter mapping from delivery traces into `DeliveryObservationSummary`
+- session wiring that exposes execution context through the debugger host
 
 When git-warp lands these, the GitWarpAdapter should:
 
@@ -211,13 +227,15 @@ interface ScenarioFrame {
   receipts: Array<{
     laneId: string;
     writerId: string;
+    headId?: string;
     admitted: number;
     rejected: number;
     counterfactual: number;
   }>;
   emissions: Array<{
-    effectKind: string;
+    effectKind: EffectKind;
     laneId: string;
+    producerHeadId?: string;
     deliveries: Array<{
       sinkId: string;
       outcome: DeliveryOutcome;
