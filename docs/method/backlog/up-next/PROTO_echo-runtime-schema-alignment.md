@@ -125,11 +125,15 @@ This matters most for:
 - future cross-host comparison, where local lane labels may differ but
   causal identity should not
 
-**Proposed change:** add an explicit `worldlineId` or
-`rootWorldlineId` field anywhere lane-local identity is not enough:
-`LaneRef`, `LaneFrameView`, `ReceiptSummary`, and
-`EffectEmissionSummary` are the likely minimum. TTD should consume that
-as host truth, not reconstruct it from `wl:` / `ws:` naming.
+**Status:** landed for the current minimum surface. The protocol now
+names explicit `worldlineId` on `LaneRef`, `Coordinate`,
+`LaneFrameView`, `ReceiptSummary`, and `EffectEmissionSummary`, so TTD
+does not have to reconstruct worldline identity from `wl:` / `ws:`
+prefixes or parent-chain shape.
+
+**Remaining gap:** receipt/emission writer identity is still too flat.
+We still likely want either `worldlineId` alongside every writer field
+or a future `WriterRef { writerId, worldlineId }` runtime form.
 
 ## How Echo's runtime works (for protocol designers)
 

@@ -12,7 +12,7 @@ test("hello identifies the host as git-warp", async () => {
     const hello = await adapter.hello();
 
     assert.equal(hello.hostKind, "GIT_WARP");
-    assert.equal(hello.protocolVersion, "0.2.0");
+    assert.equal(hello.protocolVersion, "0.3.0");
     assert.ok(hello.hostVersion.length > 0);
     assert.ok(hello.capabilities.includes("READ_HELLO"));
     assert.ok(hello.capabilities.includes("READ_LANE_CATALOG"));
@@ -41,6 +41,7 @@ test("lane catalog exposes the live worldline", async () => {
     }
 
     assert.equal(worldline.writable, false, "Live worldline is read-only for TTD");
+    assert.equal(worldline.worldlineId, worldline.id, "Worldline lane should name itself as its worldline");
     assert.ok(worldline.id.startsWith("wl:"), "Worldline ID should be prefixed with wl:");
   } finally {
     await fixture.cleanup();
@@ -86,6 +87,7 @@ test("frame zero represents the empty initial state", async () => {
     // At frame 0, all lanes are at tick 0 with no changes
     for (const lane of frame.lanes) {
       assert.equal(lane.coordinate.tick, 0);
+      assert.equal(lane.coordinate.worldlineId, lane.worldlineId);
       assert.equal(lane.changed, false);
     }
 
@@ -171,6 +173,7 @@ test("receipts contain operation counts that match tick receipt data", async () 
     const r1 = receipts1[0];
     assert.ok(r1 !== undefined, "Expected receipt at index 0");
     assert.equal(r1.frameIndex, 1);
+    assert.equal(r1.worldlineId, "wl:live");
     assert.equal(r1.admittedRewriteCount, 2, "Tick 1: NodeAdd + PropSet = 2 admitted");
     assert.equal(r1.rejectedRewriteCount, 0);
     assert.equal(r1.counterfactualCount, 0);

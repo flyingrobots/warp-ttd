@@ -50,7 +50,13 @@ function capsWithout(...exclude: Capability[]): Capability[] {
 
 function makeLane(id: string, kind: "WORLDLINE" | "STRAND", parentId?: string): LaneRef {
   const displayKind = kind.toLowerCase();
-  const ref: LaneRef = { id, kind, writable: kind === "STRAND", description: `${displayKind} ${id}` };
+  const ref: LaneRef = {
+    id,
+    kind,
+    worldlineId: kind === "WORLDLINE" ? id : (parentId ?? "wl:main"),
+    writable: kind === "STRAND",
+    description: `${displayKind} ${id}`
+  };
   if (parentId !== undefined) {
     ref.parentId = parentId;
   }
@@ -60,7 +66,7 @@ function makeLane(id: string, kind: "WORLDLINE" | "STRAND", parentId?: string): 
 function makeReceipt(laneId: string, writerId: string, frameIndex: number): ReceiptSummary {
   return {
     receiptId: `receipt:test:${laneId}:${writerId}`,
-    headId: "head:default", frameIndex, laneId, writerId,
+    headId: "head:default", frameIndex, laneId, worldlineId: laneId, writerId,
     inputTick: frameIndex - 1, outputTick: frameIndex,
     admittedRewriteCount: 2, rejectedRewriteCount: 0, counterfactualCount: 0,
     digest: "digest:test", summary: `${writerId} wrote to ${laneId}`
@@ -70,8 +76,8 @@ function makeReceipt(laneId: string, writerId: string, frameIndex: number): Rece
 function makeEmission(laneId: string, kind: string, frameIndex: number): EffectEmissionSummary {
   return {
     emissionId: `emit:test:${kind}:${laneId}`,
-    headId: "head:default", frameIndex, laneId,
-    coordinate: { laneId, tick: frameIndex },
+    headId: "head:default", frameIndex, laneId, worldlineId: laneId,
+    coordinate: { laneId, worldlineId: laneId, tick: frameIndex },
     effectKind: kind, producerWriterId: "test-writer",
     summary: `${kind} at ${laneId}`
   };
@@ -90,7 +96,7 @@ function makeObservation(args: ObsArgs): DeliveryObservationSummary {
 function makeSnap(overrides: Partial<SessionSnapshot> = {}): SessionSnapshot {
   return {
     head: { headId: "head:default", label: "Test Head", currentFrameIndex: 1, trackedLaneIds: ["wl:main"], writableLaneIds: [], paused: true },
-    frame: { headId: "head:default", frameIndex: 1, lanes: [{ laneId: "wl:main", coordinate: { laneId: "wl:main", tick: 1 }, changed: true }] },
+    frame: { headId: "head:default", frameIndex: 1, lanes: [{ laneId: "wl:main", worldlineId: "wl:main", coordinate: { laneId: "wl:main", worldlineId: "wl:main", tick: 1 }, changed: true }] },
     receipts: [makeReceipt("wl:main", "alice", 1)],
     emissions: [makeEmission("wl:main", "diagnostic", 1)],
     observations: [makeObservation({ emissionId: "emit:test:diagnostic:wl:main", sinkId: "sink:tui-log", outcome: "DELIVERED", frameIndex: 1 })],
@@ -325,7 +331,7 @@ test("renderNavigator: narrow terminal renders compact counts", () => {
 test("renderNavigator: frame 0 shows no activity", () => {
   const snap = makeSnap({
     head: { headId: "head:default", label: "Test", currentFrameIndex: 0, trackedLaneIds: ["wl:main"], writableLaneIds: [], paused: true },
-    frame: { headId: "head:default", frameIndex: 0, lanes: [{ laneId: "wl:main", coordinate: { laneId: "wl:main", tick: 0 }, changed: false }] },
+    frame: { headId: "head:default", frameIndex: 0, lanes: [{ laneId: "wl:main", worldlineId: "wl:main", coordinate: { laneId: "wl:main", worldlineId: "wl:main", tick: 0 }, changed: false }] },
     receipts: [], emissions: [], observations: []
   });
   const output = renderToString(renderNavigator({

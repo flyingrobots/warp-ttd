@@ -116,7 +116,7 @@ npm run test:integration # git-warp integration (10 tests)
 The host-neutral TTD protocol is defined as a single GraphQL schema:
 
 ```text
-schemas/warp-ttd-protocol.graphql   (v0.2.0)
+schemas/warp-ttd-protocol.graphql   (v0.3.0)
 ```
 
 If you're building a host adapter (Echo, git-warp, or your own), this

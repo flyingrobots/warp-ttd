@@ -1,5 +1,5 @@
 /**
- * Protocol contract tests — pin the v0.2.0 envelope shapes.
+ * Protocol contract tests — pin the v0.3.0 envelope shapes.
  *
  * These tests assert that every protocol type has exactly the expected
  * fields with the correct types. If a future change breaks one of these
@@ -13,7 +13,7 @@ import { EchoFixtureAdapter } from "../src/adapters/echoFixtureAdapter.ts";
 const adapter = new EchoFixtureAdapter();
 const HEAD_ID = "head:main";
 
-test("HostHello v0.1.0 shape", async () => {
+test("HostHello shape", async () => {
   const hello = await adapter.hello();
 
   // Required fields
@@ -24,14 +24,14 @@ test("HostHello v0.1.0 shape", async () => {
   assert.ok(Array.isArray(hello.capabilities));
 
   // Protocol version tracks latest implemented surface
-  assert.equal(hello.protocolVersion, "0.2.0");
+  assert.equal(hello.protocolVersion, "0.3.0");
 
   // No unexpected fields
   const keys = Object.keys(hello).sort();
   assert.deepEqual(keys, ["capabilities", "hostKind", "hostVersion", "protocolVersion", "schemaId"]);
 });
 
-test("LaneCatalog v0.1.0 shape", async () => {
+test("LaneCatalog shape", async () => {
   const catalog = await adapter.laneCatalog();
 
   assert.ok(Array.isArray(catalog.lanes));
@@ -45,18 +45,20 @@ test("LaneCatalog v0.1.0 shape", async () => {
   assert.equal(typeof worldline.writable, "boolean");
   assert.equal(typeof worldline.description, "string");
   const worldlineKeys = Object.keys(worldline).sort();
-  assert.deepEqual(worldlineKeys, ["description", "id", "kind", "writable"]);
+  assert.deepEqual(worldlineKeys, ["description", "id", "kind", "worldlineId", "writable"]);
+  assert.equal(worldline.worldlineId, worldline.id);
 
   // LaneRef shape — strand (has parentId)
   const strand = catalog.lanes.find((l) => l.kind === "STRAND");
   if (strand !== undefined) {
     const strandKeys = Object.keys(strand).sort();
-    assert.deepEqual(strandKeys, ["description", "id", "kind", "parentId", "writable"]);
+    assert.deepEqual(strandKeys, ["description", "id", "kind", "parentId", "worldlineId", "writable"]);
     assert.equal(typeof strand.parentId, "string");
+    assert.equal(typeof strand.worldlineId, "string");
   }
 });
 
-test("PlaybackHeadSnapshot v0.1.0 shape", async () => {
+test("PlaybackHeadSnapshot shape", async () => {
   const head = await adapter.playbackHead(HEAD_ID);
 
   assert.equal(typeof head.headId, "string");
@@ -73,7 +75,7 @@ test("PlaybackHeadSnapshot v0.1.0 shape", async () => {
   ]);
 });
 
-test("PlaybackFrame v0.1.0 shape", async () => {
+test("PlaybackFrame shape", async () => {
   const frame = await adapter.frame(HEAD_ID, 1);
 
   assert.equal(typeof frame.headId, "string");
@@ -85,12 +87,14 @@ test("PlaybackFrame v0.1.0 shape", async () => {
   const laneView = frame.lanes[0];
   assert.ok(laneView !== undefined, "Expected at least one lane view");
   assert.equal(typeof laneView.laneId, "string");
+  assert.equal(typeof laneView.worldlineId, "string");
   assert.equal(typeof laneView.changed, "boolean");
 
   // Coordinate shape (nested)
   assert.equal(typeof laneView.coordinate.laneId, "string");
+  assert.equal(typeof laneView.coordinate.worldlineId, "string");
   assert.equal(typeof laneView.coordinate.tick, "number");
-  assert.deepEqual(Object.keys(laneView.coordinate).sort(), ["laneId", "tick"]);
+  assert.deepEqual(Object.keys(laneView.coordinate).sort(), ["laneId", "tick", "worldlineId"]);
 
   // LaneFrameView keys (changed lane has btrDigest)
   const changedLane = frame.lanes.find((l) => l.changed);
@@ -105,7 +109,7 @@ test("PlaybackFrame v0.1.0 shape", async () => {
   }
 });
 
-test("ReceiptSummary v0.1.0 shape", async () => {
+test("ReceiptSummary shape", async () => {
   const receipts = await adapter.receipts(HEAD_ID, 1);
   assert.ok(receipts.length > 0, "Expected receipts at frame 1");
 
@@ -115,6 +119,7 @@ test("ReceiptSummary v0.1.0 shape", async () => {
   assert.equal(typeof r.headId, "string");
   assert.equal(typeof r.frameIndex, "number");
   assert.equal(typeof r.laneId, "string");
+  assert.equal(typeof r.worldlineId, "string");
   assert.equal(typeof r.inputTick, "number");
   assert.equal(typeof r.outputTick, "number");
   assert.equal(typeof r.admittedRewriteCount, "number");
@@ -130,6 +135,6 @@ test("ReceiptSummary v0.1.0 shape", async () => {
   assert.deepEqual(keys, [
     "admittedRewriteCount", "counterfactualCount", "digest",
     "frameIndex", "headId", "inputTick", "laneId", "outputTick",
-    "receiptId", "rejectedRewriteCount", "summary", "writerId"
+    "receiptId", "rejectedRewriteCount", "summary", "worldlineId", "writerId"
   ]);
 });

@@ -73,6 +73,7 @@ interface Scenario {
 interface BuiltScenario {
   capabilities: Capability[];
   lanes: LaneRef[];
+  worldlineIdByLaneId: Map<string, string>;
   receiptsByFrame: Map<number, ReceiptSummary[]>;
   emissionsByFrame: Map<number, EffectEmissionSummary[]>;
   observationsByFrame: Map<number, DeliveryObservationSummary[]>;
@@ -84,11 +85,34 @@ interface BuiltScenario {
 
 const HEAD_ID = "head:default";
 
+function resolveScenarioWorldlineId(
+  lane: ScenarioLane,
+  lanesById: Map<string, ScenarioLane>
+): string {
+  if (lane.kind === "WORLDLINE") {
+    return lane.id;
+  }
+
+  if (lane.parentId === undefined) {
+    throw new TypeError(`Strand lane ${lane.id} is missing parentId`);
+  }
+
+  const parent = lanesById.get(lane.parentId);
+
+  if (parent === undefined) {
+    throw new TypeError(`Lane ${lane.id} points at unknown parent ${lane.parentId}`);
+  }
+
+  return resolveScenarioWorldlineId(parent, lanesById);
+}
+
 function buildLanes(scenarioLanes: ScenarioLane[]): LaneRef[] {
+  const lanesById = new Map(scenarioLanes.map((lane) => [lane.id, lane]));
   return scenarioLanes.map((l) => {
     const ref: LaneRef = {
       id: l.id,
       kind: l.kind,
+      worldlineId: resolveScenarioWorldlineId(l, lanesById),
       writable: l.writable,
       description: `${l.kind} ${l.id}`
     };
@@ -128,18 +152,23 @@ interface BuildFrameDataArgs {
   prevTick: number;
   mode: ExecutionMode;
   counters: Counters;
+  worldlineIdByLaneId: Map<string, string>;
 }
 
 function buildFrameData(
   args: BuildFrameDataArgs
 ): { receipts: ReceiptSummary[]; emissions: EffectEmissionSummary[]; observations: DeliveryObservationSummary[] } {
-  const { sf, frameIndex, prevTick, mode, counters } = args;
+  const { sf, frameIndex, prevTick, mode, counters, worldlineIdByLaneId } = args;
   const receipts = sf.receipts.map((sr) => {
     counters.receipt++;
     const id = counters.receipt.toString().padStart(4, "0");
+    const worldlineId = worldlineIdByLaneId.get(sr.laneId);
+    if (worldlineId === undefined) {
+      throw new TypeError(`Receipt lane ${sr.laneId} is not declared in the scenario catalog`);
+    }
     return {
       receiptId: `receipt:scenario:${id}`,
-      headId: HEAD_ID, frameIndex, laneId: sr.laneId, writerId: sr.writerId,
+      headId: HEAD_ID, frameIndex, laneId: sr.laneId, worldlineId, writerId: sr.writerId,
       inputTick: prevTick, outputTick: sf.tick,
       admittedRewriteCount: sr.admitted, rejectedRewriteCount: sr.rejected,
       counterfactualCount: sr.counterfactual,
@@ -154,10 +183,15 @@ function buildFrameData(
   for (const se of sf.emissions) {
     counters.emission++;
     const emId = `emit:scenario:${counters.emission.toString().padStart(4, "0")}`;
+    const worldlineId = worldlineIdByLaneId.get(se.laneId);
+
+    if (worldlineId === undefined) {
+      throw new TypeError(`Emission lane ${se.laneId} is not declared in the scenario catalog`);
+    }
 
     emissions.push({
       emissionId: emId, headId: HEAD_ID, frameIndex,
-      laneId: se.laneId, coordinate: { laneId: se.laneId, tick: sf.tick },
+      laneId: se.laneId, worldlineId, coordinate: { laneId: se.laneId, worldlineId, tick: sf.tick },
       effectKind: se.effectKind,
       producerWriterId: se.producerWriterId ?? sf.receipts[0]?.writerId ?? "scenario-writer",
       summary: `${se.effectKind} emitted at tick ${sf.tick.toString()}`
@@ -180,6 +214,8 @@ function buildFrameData(
 
 function buildAllFrameData(scenario: Scenario): BuiltScenario {
   const counters: Counters = { emission: 0, observation: 0, receipt: 0 };
+  const lanes = buildLanes(scenario.lanes);
+  const worldlineIdByLaneId = new Map(lanes.map((lane) => [lane.id, lane.worldlineId]));
   const receiptsByFrame = new Map<number, ReceiptSummary[]>();
   const emissionsByFrame = new Map<number, EffectEmissionSummary[]>();
   const observationsByFrame = new Map<number, DeliveryObservationSummary[]>();
@@ -188,7 +224,14 @@ function buildAllFrameData(scenario: Scenario): BuiltScenario {
     const sf = scenario.frames[fi];
     if (sf === undefined) continue;
     const prevTick = fi > 0 ? (scenario.frames[fi - 1]?.tick ?? 0) : 0;
-    const data = buildFrameData({ sf, frameIndex: fi + 1, prevTick, mode: scenario.executionMode, counters });
+    const data = buildFrameData({
+      sf,
+      frameIndex: fi + 1,
+      prevTick,
+      mode: scenario.executionMode,
+      counters,
+      worldlineIdByLaneId
+    });
     receiptsByFrame.set(fi + 1, data.receipts);
     emissionsByFrame.set(fi + 1, data.emissions);
     observationsByFrame.set(fi + 1, data.observations);
@@ -198,7 +241,8 @@ function buildAllFrameData(scenario: Scenario): BuiltScenario {
 
   return {
     capabilities: buildCapabilities(hasEffects),
-    lanes: buildLanes(scenario.lanes),
+    lanes,
+    worldlineIdByLaneId,
     receiptsByFrame, emissionsByFrame, observationsByFrame
   };
 }
@@ -212,7 +256,10 @@ function buildPlaybackFrame(
     return {
       headId: HEAD_ID, frameIndex: 0,
       lanes: lanes.map((lane) => ({
-        laneId: lane.id, coordinate: { laneId: lane.id, tick: 0 }, changed: false
+        laneId: lane.id,
+        worldlineId: lane.worldlineId,
+        coordinate: { laneId: lane.id, worldlineId: lane.worldlineId, tick: 0 },
+        changed: false
       }))
     };
   }
@@ -224,7 +271,9 @@ function buildPlaybackFrame(
   return {
     headId: HEAD_ID, frameIndex,
     lanes: lanes.map((lane) => ({
-      laneId: lane.id, coordinate: { laneId: lane.id, tick: sf.tick },
+      laneId: lane.id,
+      worldlineId: lane.worldlineId,
+      coordinate: { laneId: lane.id, worldlineId: lane.worldlineId, tick: sf.tick },
       changed: changedLanes.has(lane.id)
     }))
   };
@@ -262,7 +311,7 @@ export function buildScenario(scenario: Scenario): TtdHostAdapter {
     adapterName: "scenario-fixture",
     hello: () => Promise.resolve({
       hostKind: scenario.hostKind, hostVersion: "0.0.0-scenario",
-      protocolVersion: "0.2.0", schemaId: "ttd-protocol-scenario-v1",
+      protocolVersion: "0.3.0", schemaId: "ttd-protocol-scenario-v1",
       capabilities: built.capabilities
     }),
     laneCatalog: () => Promise.resolve({ lanes: structuredClone(built.lanes) }),

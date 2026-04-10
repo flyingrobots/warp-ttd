@@ -10,6 +10,7 @@ export type LaneKind = "WORLDLINE" | "STRAND";
 export interface LaneRef {
   id: string;
   kind: LaneKind;
+  worldlineId: string;
   parentId?: string;
   writable: boolean;
   description: string;
@@ -17,6 +18,7 @@ export interface LaneRef {
 
 export interface Coordinate {
   laneId: string;
+  worldlineId: string;
   tick: number;
 }
 
@@ -60,6 +62,7 @@ export interface PlaybackHeadSnapshot {
 
 export interface LaneFrameView {
   laneId: string;
+  worldlineId: string;
   coordinate: Coordinate;
   changed: boolean;
   btrDigest?: string;
@@ -76,6 +79,7 @@ export interface ReceiptSummary {
   headId: string;
   frameIndex: number;
   laneId: string;
+  worldlineId: string;
   writerId?: string;
   inputTick: number;
   outputTick: number;
@@ -91,6 +95,7 @@ export interface EffectEmissionSummary {
   headId: string;
   frameIndex: number;
   laneId: string;
+  worldlineId: string;
   coordinate: Coordinate;
   effectKind: string;
   producerWriterId: string;

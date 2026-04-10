@@ -19,23 +19,42 @@ import type { FrameData } from "../src/tui/worldlineLayout.ts";
 // ---------------------------------------------------------------------------
 
 function makeLane(id: string, kind: "WORLDLINE" | "STRAND", parentId?: string): LaneRef {
-  return { id, kind, ...(parentId !== undefined ? { parentId } : {}), writable: kind === "WORLDLINE", description: `${kind.toLowerCase()} ${id}` };
+  return {
+    id,
+    kind,
+    worldlineId: kind === "WORLDLINE" ? id : (parentId ?? "wl:main"),
+    ...(parentId !== undefined ? { parentId } : {}),
+    writable: kind === "WORLDLINE",
+    description: `${kind.toLowerCase()} ${id}`
+  };
+}
+
+function withDigest(laneFrame: LaneFrameView, btrDigest?: string): LaneFrameView {
+  if (btrDigest === undefined) {
+    return laneFrame;
+  }
+
+  return { ...laneFrame, btrDigest };
 }
 
 function makeLaneFrame(laneId: string, tick: number, opts?: {
   changed?: boolean;
   btrDigest?: string;
+  worldlineId?: string;
 }): LaneFrameView {
-  return {
+  const worldlineId = opts?.worldlineId ?? laneId;
+
+  return withDigest({
     laneId,
-    coordinate: { laneId, tick },
-    changed: opts?.changed ?? false,
-    ...(opts?.btrDigest !== undefined ? { btrDigest: opts.btrDigest } : {}),
-  };
+    worldlineId,
+    coordinate: { laneId, worldlineId, tick },
+    changed: opts?.changed === true,
+  }, opts?.btrDigest);
 }
 
 interface ReceiptOpts {
   laneId: string;
+  worldlineId?: string;
   writerId: string;
   frameIndex: number;
   admitted?: number;
@@ -49,6 +68,7 @@ function makeReceipt(opts: ReceiptOpts): ReceiptSummary {
     headId: "head:default",
     frameIndex: opts.frameIndex,
     laneId: opts.laneId,
+    worldlineId: opts.worldlineId ?? opts.laneId,
     writerId: opts.writerId,
     inputTick: opts.frameIndex,
     outputTick: opts.frameIndex + 1,
@@ -73,8 +93,14 @@ function makeHistory(): { catalog: LaneRef[]; frames: FrameData[] } {
       { frameIndex: 1, lanes: [makeLaneFrame("wl:main", 1, { changed: true, btrDigest: "def5678" })], receipts: [makeReceipt({ laneId: "wl:main", writerId: "alice", frameIndex: 1 })] },
       {
         frameIndex: 2,
-        lanes: [makeLaneFrame("wl:main", 2, { changed: true, btrDigest: "ghi9012" }), makeLaneFrame("strand:experiment", 1, { changed: true, btrDigest: "jkl3456" })],
-        receipts: [makeReceipt({ laneId: "wl:main", writerId: "alice", frameIndex: 2, admitted: 2, rejected: 1 }), makeReceipt({ laneId: "strand:experiment", writerId: "bob", frameIndex: 2 })],
+        lanes: [
+          makeLaneFrame("wl:main", 2, { changed: true, btrDigest: "ghi9012" }),
+          makeLaneFrame("strand:experiment", 1, { changed: true, btrDigest: "jkl3456", worldlineId: "wl:main" })
+        ],
+        receipts: [
+          makeReceipt({ laneId: "wl:main", writerId: "alice", frameIndex: 2, admitted: 2, rejected: 1 }),
+          makeReceipt({ laneId: "strand:experiment", worldlineId: "wl:main", writerId: "bob", frameIndex: 2 })
+        ],
       },
       { frameIndex: 3, lanes: [makeLaneFrame("wl:main", 3, { changed: true, btrDigest: "mno7890" })], receipts: [makeReceipt({ laneId: "wl:main", writerId: "carol", frameIndex: 3 })] },
       {

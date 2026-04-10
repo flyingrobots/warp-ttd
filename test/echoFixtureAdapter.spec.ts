@@ -8,7 +8,7 @@ test("hello exposes the minimal host handshake contract", async () => {
   const hello = await adapter.hello();
 
   assert.equal(hello.hostKind, "ECHO");
-  assert.equal(hello.protocolVersion, "0.2.0");
+  assert.equal(hello.protocolVersion, "0.3.0");
   assert.equal(hello.schemaId, "ttd-protocol-fixture-v1");
   assert.deepEqual(hello.capabilities, [
     "READ_HELLO",
@@ -33,12 +33,14 @@ test("lane catalog exposes one canonical worldline and one speculative strand", 
   assert.deepEqual(catalog.lanes[0], {
     id: "wl:main",
     kind: "WORLDLINE",
+    worldlineId: "wl:main",
     writable: false,
     description: "Canonical application worldline"
   });
   assert.deepEqual(catalog.lanes[1], {
     id: "ws:sandbox",
     kind: "STRAND",
+    worldlineId: "wl:main",
     parentId: "wl:main",
     writable: true,
     description: "Speculative child strand at frame 1"
@@ -84,6 +86,7 @@ test("stepping forward advances the head and surfaces the canonical receipt", as
     headId: "head:main",
     frameIndex: 1,
     laneId: "wl:main",
+    worldlineId: "wl:main",
     writerId: "echo-writer",
     inputTick: 0,
     outputTick: 1,
@@ -118,6 +121,7 @@ test("explicit frame lookup allows receipt-bearing speculative frames to be insp
       headId: "head:main",
       frameIndex: 2,
       laneId: "ws:sandbox",
+      worldlineId: "wl:main",
       writerId: "sandbox-writer",
       inputTick: 0,
       outputTick: 1,

@@ -71,6 +71,8 @@ interface IndexedFrame {
   readonly receipts: TickReceipt[];
 }
 
+const LIVE_WORLDLINE_ID = "wl:live";
+
 // Read the actual installed git-warp version at import time.
 // createRequire is needed because package.json isn't an ES module.
 import { createRequire } from "node:module";
@@ -186,8 +188,9 @@ export class GitWarpAdapter implements TtdHostAdapter {
     // Build lanes: live worldline + any strands
     const lanes: LaneRef[] = [
       {
-        id: "wl:live",
+        id: LIVE_WORLDLINE_ID,
         kind: "WORLDLINE",
+        worldlineId: LIVE_WORLDLINE_ID,
         writable: false,
         description: "Live frontier worldline"
       }
@@ -199,7 +202,8 @@ export class GitWarpAdapter implements TtdHostAdapter {
       lanes.push({
         id: `ws:${strand.strandId}`,
         kind: "STRAND",
-        parentId: "wl:live",
+        worldlineId: LIVE_WORLDLINE_ID,
+        parentId: LIVE_WORLDLINE_ID,
         writable: strand.overlay.writable,
         description: `Strand ${strand.strandId}${strand.scope !== null && strand.scope !== "" ? ` (${strand.scope})` : ""}`
       });
@@ -212,7 +216,7 @@ export class GitWarpAdapter implements TtdHostAdapter {
     return Promise.resolve({
       hostKind: "GIT_WARP",
       hostVersion: GIT_WARP_HOST_VERSION,
-      protocolVersion: "0.2.0",
+      protocolVersion: "0.3.0",
       schemaId: "ttd-protocol-git-warp-v1",
       capabilities: [
         "READ_HELLO",
@@ -296,7 +300,8 @@ export class GitWarpAdapter implements TtdHostAdapter {
         receiptId: `receipt:gw:${r.patchSha.slice(0, 8)}`,
         headId,
         frameIndex: resolvedIndex,
-        laneId: "wl:live",
+        laneId: LIVE_WORLDLINE_ID,
+        worldlineId: LIVE_WORLDLINE_ID,
         writerId: r.writer,
         inputTick: resolvedIndex === 1 ? 0 : requireIndexedFrame(this.#frameIndex, resolvedIndex - 2).tick,
         outputTick: indexed.tick,
@@ -374,7 +379,8 @@ export class GitWarpAdapter implements TtdHostAdapter {
         frameIndex: 0,
         lanes: this.#lanes.map((lane) => ({
           laneId: lane.id,
-          coordinate: { laneId: lane.id, tick: 0 },
+          worldlineId: lane.worldlineId,
+          coordinate: { laneId: lane.id, worldlineId: lane.worldlineId, tick: 0 },
           changed: false
         }))
       };
@@ -392,7 +398,8 @@ export class GitWarpAdapter implements TtdHostAdapter {
         const changed = lane.kind === "WORLDLINE" && indexed.tick !== prevTick;
         const view: LaneFrameView = {
           laneId: lane.id,
-          coordinate: { laneId: lane.id, tick: indexed.tick },
+          worldlineId: lane.worldlineId,
+          coordinate: { laneId: lane.id, worldlineId: lane.worldlineId, tick: indexed.tick },
           changed
         };
 

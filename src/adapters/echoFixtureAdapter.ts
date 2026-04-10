@@ -30,7 +30,7 @@ const FIXTURE: FixtureState = {
   hello: {
     hostKind: "ECHO",
     hostVersion: "0.0.0-fixture",
-    protocolVersion: "0.2.0",
+    protocolVersion: "0.3.0",
     schemaId: "ttd-protocol-fixture-v1",
     capabilities: [
       "READ_HELLO",
@@ -51,12 +51,14 @@ const FIXTURE: FixtureState = {
       {
         id: "wl:main",
         kind: "WORLDLINE",
+        worldlineId: "wl:main",
         writable: false,
         description: "Canonical application worldline"
       },
       {
         id: "ws:sandbox",
         kind: "STRAND",
+        worldlineId: "wl:main",
         parentId: "wl:main",
         writable: true,
         description: "Speculative child strand at frame 1"
@@ -81,12 +83,14 @@ const FIXTURE: FixtureState = {
         lanes: [
           {
             laneId: "wl:main",
-            coordinate: { laneId: "wl:main", tick: 0 },
+            worldlineId: "wl:main",
+            coordinate: { laneId: "wl:main", worldlineId: "wl:main", tick: 0 },
             changed: false
           },
           {
             laneId: "ws:sandbox",
-            coordinate: { laneId: "ws:sandbox", tick: 0 },
+            worldlineId: "wl:main",
+            coordinate: { laneId: "ws:sandbox", worldlineId: "wl:main", tick: 0 },
             changed: false
           }
         ]
@@ -97,13 +101,15 @@ const FIXTURE: FixtureState = {
         lanes: [
           {
             laneId: "wl:main",
-            coordinate: { laneId: "wl:main", tick: 1 },
+            worldlineId: "wl:main",
+            coordinate: { laneId: "wl:main", worldlineId: "wl:main", tick: 1 },
             changed: true,
             btrDigest: "btr:echo:main:0001"
           },
           {
             laneId: "ws:sandbox",
-            coordinate: { laneId: "ws:sandbox", tick: 0 },
+            worldlineId: "wl:main",
+            coordinate: { laneId: "ws:sandbox", worldlineId: "wl:main", tick: 0 },
             changed: false
           }
         ]
@@ -114,12 +120,14 @@ const FIXTURE: FixtureState = {
         lanes: [
           {
             laneId: "wl:main",
-            coordinate: { laneId: "wl:main", tick: 1 },
+            worldlineId: "wl:main",
+            coordinate: { laneId: "wl:main", worldlineId: "wl:main", tick: 1 },
             changed: false
           },
           {
             laneId: "ws:sandbox",
-            coordinate: { laneId: "ws:sandbox", tick: 1 },
+            worldlineId: "wl:main",
+            coordinate: { laneId: "ws:sandbox", worldlineId: "wl:main", tick: 1 },
             changed: true,
             btrDigest: "btr:echo:sandbox:0001"
           }
@@ -134,6 +142,7 @@ const FIXTURE: FixtureState = {
         headId: "head:main",
         frameIndex: 1,
         laneId: "wl:main",
+        worldlineId: "wl:main",
         writerId: "echo-writer",
         inputTick: 0,
         outputTick: 1,
@@ -148,6 +157,7 @@ const FIXTURE: FixtureState = {
         headId: "head:main",
         frameIndex: 2,
         laneId: "ws:sandbox",
+        worldlineId: "wl:main",
         writerId: "sandbox-writer",
         inputTick: 0,
         outputTick: 1,
@@ -166,7 +176,8 @@ const FIXTURE: FixtureState = {
         headId: "head:main",
         frameIndex: 1,
         laneId: "wl:main",
-        coordinate: { laneId: "wl:main", tick: 1 },
+        worldlineId: "wl:main",
+        coordinate: { laneId: "wl:main", worldlineId: "wl:main", tick: 1 },
         effectKind: "diagnostic",
         producerWriterId: "echo-writer",
         summary: "Diagnostic event emitted on canonical worldline advance."
@@ -176,7 +187,8 @@ const FIXTURE: FixtureState = {
         headId: "head:main",
         frameIndex: 2,
         laneId: "ws:sandbox",
-        coordinate: { laneId: "ws:sandbox", tick: 1 },
+        worldlineId: "wl:main",
+        coordinate: { laneId: "ws:sandbox", worldlineId: "wl:main", tick: 1 },
         effectKind: "notification",
         producerWriterId: "echo-writer",
         summary: "Notification emitted on speculative strand advance."

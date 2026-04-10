@@ -6,7 +6,7 @@
 # Local files such as `src/protocol.ts` are convenience mirrors, not peer
 # authorities.
 #
-# Protocol version: 0.2.0 (adds effect emission & delivery observation)
+# Protocol version: 0.3.0 (adds explicit worldline identity)
 #
 # Doctrine:
 #   - warp-ttd is read-mostly and receipt-centric
@@ -60,9 +60,11 @@ type HostHello
 type LaneRef
   @wes_codec(format: "cbor", canonical: true)
   @wes_registry(id: 2)
+  @wes_version(major: 0, minor: 3)
 {
   id: String!
   kind: LaneKind!
+  worldlineId: String!
   parentId: String
   writable: Boolean!
   description: String!
@@ -80,8 +82,10 @@ type LaneCatalog
 type Coordinate
   @wes_codec(format: "cbor", canonical: true)
   @wes_registry(id: 4)
+  @wes_version(major: 0, minor: 3)
 {
   laneId: String!
+  worldlineId: String!
   tick: Int! @wes_constraint(min: 0)
 }
 
@@ -101,8 +105,10 @@ type PlaybackHeadSnapshot
 type LaneFrameView
   @wes_codec(format: "cbor", canonical: true)
   @wes_registry(id: 6)
+  @wes_version(major: 0, minor: 3)
 {
   laneId: String!
+  worldlineId: String!
   coordinate: Coordinate!
   changed: Boolean!
   btrDigest: String
@@ -122,12 +128,13 @@ type PlaybackFrame
 type ReceiptSummary
   @wes_codec(format: "cbor", canonical: true)
   @wes_registry(id: 8)
-  @wes_version(major: 0, minor: 2)
+  @wes_version(major: 0, minor: 3)
 {
   receiptId: String!
   headId: String!
   frameIndex: Int! @wes_constraint(min: 0)
   laneId: String!
+  worldlineId: String!
   writerId: String
   inputTick: Int! @wes_constraint(min: 0)
   outputTick: Int! @wes_constraint(min: 0)
@@ -164,12 +171,13 @@ enum ExecutionMode {
 type EffectEmissionSummary
   @wes_codec(format: "cbor", canonical: true)
   @wes_registry(id: 20)
-  @wes_version(major: 0, minor: 2)
+  @wes_version(major: 0, minor: 3)
 {
   emissionId: String!
   headId: String!
   frameIndex: Int! @wes_constraint(min: 0)
   laneId: String!
+  worldlineId: String!
   coordinate: Coordinate!
   effectKind: String!
   producerWriterId: String!

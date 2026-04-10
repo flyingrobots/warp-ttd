@@ -25,6 +25,7 @@ function makeLane(
   return {
     id,
     kind,
+    worldlineId: kind === "WORLDLINE" ? id : (parentId ?? "wl:main"),
     ...(parentId !== undefined ? { parentId } : {}),
     writable: kind === "STRAND",
     description: `${kind.toLowerCase()} ${id}`,

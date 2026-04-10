@@ -186,7 +186,7 @@ test("executionContext returns session-level metadata", async () => {
 
 // --- Protocol contract: envelope key sets ---
 
-test("EffectEmissionSummary v0.2.0 shape", async () => {
+test("EffectEmissionSummary v0.3.0 shape", async () => {
   const emissions = await createAdapter().effectEmissions(HEAD_ID, 1);
   const emission = emissions[0];
   assert.ok(emission !== undefined);
@@ -194,14 +194,14 @@ test("EffectEmissionSummary v0.2.0 shape", async () => {
   const keys = Object.keys(emission).sort();
   assert.deepEqual(keys, [
     "coordinate", "effectKind", "emissionId", "frameIndex",
-    "headId", "laneId", "producerWriterId", "summary"
+    "headId", "laneId", "producerWriterId", "summary", "worldlineId"
   ]);
 
   // Nested Coordinate shape
-  assert.deepEqual(Object.keys(emission.coordinate).sort(), ["laneId", "tick"]);
+  assert.deepEqual(Object.keys(emission.coordinate).sort(), ["laneId", "tick", "worldlineId"]);
 });
 
-test("DeliveryObservationSummary v0.2.0 shape", async () => {
+test("DeliveryObservationSummary shape", async () => {
   const observations = await createAdapter().deliveryObservations(HEAD_ID, 1);
   const obs = observations[0];
   assert.ok(obs !== undefined);
