@@ -15,10 +15,11 @@ canonical split:
 - Applications interpret them with domain meaning
 
 git-warp already has substrate-side effect entities and host-domain
-effect/delivery runtime types. What it has not yet landed is a complete
-warp-ttd adapter path that maps those facts into debugger protocol
-records. Until then, adapters declare capabilities honestly and fixture
-adapters provide test data.
+effect/delivery runtime types. The warp-ttd adapter now maps substrate
+effect entities into debugger-visible `EffectEmissionSummary` records.
+What it has not yet landed is delivery-observation wiring or a real
+session-lens export. Adapters still declare capabilities honestly and
+fixture adapters provide the wider test matrix.
 
 ## Three Distinct Layers
 
@@ -147,16 +148,17 @@ mode was active at the time of the delivery attempt.
 
 This preserves backward compatibility. Existing adapters that have not
 yet added debugger-facing effect/delivery data do not need to declare
-the new capabilities. When git-warp's adapter grows the mapping from
-effect entities and delivery traces into the protocol, it declares the
-capabilities and implements the methods.
+the new capabilities. Adapters declare exactly the slices they can back
+with real host truth.
 
 ### Fixture adapter provides test data
 
 The echo fixture adapter gains contrived effect/delivery data for testing.
-The git-warp adapter omits the effect/delivery/context capabilities and
-returns empty arrays until the git-warp adapter provides debugger-visible
-effect emission and delivery observation records.
+The git-warp adapter now declares `READ_EFFECT_EMISSIONS` and maps
+historical `@warp/effect:*` graph entities into effect summaries by
+materializing at the requested frame ceiling. It still omits the
+delivery/context capabilities and returns empty delivery arrays until
+delivery-observation wiring exists.
 
 ## Protocol Version Impact
 
@@ -178,20 +180,20 @@ git-warp already provides:
 
 What git-warp does not yet provide to warp-ttd is:
 
-- adapter mapping from effect graph truth into `EffectEmissionSummary`
 - adapter mapping from delivery traces into `DeliveryObservationSummary`
 - session wiring that exposes execution context through the debugger host
 
 When git-warp lands these, the GitWarpAdapter should:
 
-1. Declare the new capabilities in `HostHello`
-2. Map git-warp's substrate facts into `EffectEmissionSummary` and
+1. Declare the delivery/context capabilities in `HostHello`
+2. Map git-warp's host-domain delivery facts into
    `DeliveryObservationSummary`
 3. Read the execution lens from the WarpCore session context
 
-Until then, the git-warp adapter omits the capabilities, returns empty
-effect/delivery arrays, and exposes a debugger-mode execution-context
-fallback rather than pretending it has live delivery state.
+Until then, the git-warp adapter declares effect-emission support,
+returns empty delivery arrays, and exposes a debugger-mode
+execution-context fallback rather than pretending it has live delivery
+state.
 
 ## CLI Integration
 
