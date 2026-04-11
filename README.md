@@ -172,6 +172,8 @@ Key concepts:
 
 - [**VISION.md**](VISION.md) — north star: what TTD is, how it
   thinks, where it's going
+- [**docs/BEARING.md**](docs/BEARING.md) — current hill and near-term
+  direction
 - [**docs/CLI.md**](docs/CLI.md) — explicit CLI contract and current
   agent-facing surface
 - [**docs/MCP.md**](docs/MCP.md) — MCP status and planned tool surface
