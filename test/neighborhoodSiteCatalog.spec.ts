@@ -82,6 +82,15 @@ test("selectedLaneId returns the lane identity for the chosen site", () => {
   assert.equal(catalog.selectedLaneId(catalog.sites[1]?.siteId ?? null), "ws:sandbox");
 });
 
+test("siteIdForLaneId prefers the current matching site and otherwise finds the lane site", () => {
+  const catalog = NeighborhoodSiteCatalog.fromCore(makeCore());
+  const alternativeSiteId = catalog.sites[1]?.siteId ?? null;
+
+  assert.equal(catalog.siteIdForLaneId("ws:sandbox", null), alternativeSiteId);
+  assert.equal(catalog.siteIdForLaneId("ws:sandbox", alternativeSiteId), alternativeSiteId);
+  assert.equal(catalog.siteIdForLaneId("missing", alternativeSiteId), catalog.activeSiteId);
+});
+
 test("toJSON returns stable plain data", () => {
   const catalog = NeighborhoodSiteCatalog.fromCore(makeCore());
   const json = catalog.toJSON();

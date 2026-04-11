@@ -140,6 +140,13 @@ function siteIndexById(
   return sites.findIndex((site) => site.siteId === siteId);
 }
 
+function siteIndexByLaneId(
+  sites: readonly NeighborhoodSiteSummary[],
+  laneId: string
+): number {
+  return sites.findIndex((site) => site.laneId === laneId);
+}
+
 function requireSiteAt(
   sites: readonly NeighborhoodSiteSummary[],
   index: number
@@ -253,6 +260,24 @@ export class NeighborhoodSiteCatalog {
 
   public selectedLaneId(siteId: string | null): string | null {
     return this.selectedSite(siteId).laneId ?? null;
+  }
+
+  public siteIdForLaneId(laneId: string | null, currentSiteId: string | null): string {
+    if (laneId === null) {
+      return this.normalizeSelection(currentSiteId);
+    }
+
+    const currentSite = this.selectedSite(currentSiteId);
+    if (currentSite.laneId === laneId) {
+      return currentSite.siteId;
+    }
+
+    const index = siteIndexByLaneId(this.sites, laneId);
+    if (index === -1) {
+      return this.activeSiteId;
+    }
+
+    return requireSiteAt(this.sites, index).siteId;
   }
 
   public moveSelection(siteId: string | null, delta: number): string {

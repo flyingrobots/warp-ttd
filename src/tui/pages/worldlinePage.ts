@@ -11,7 +11,7 @@ import type { BijouContext, Surface } from "@flyingrobots/bijou";
 import type { FramePage } from "@flyingrobots/bijou-tui";
 import { renderWaveShader } from "../shaders/bgShader.ts";
 import { renderWorldline, buildTickRows } from "../worldlineLayout.ts";
-import { buildLaneTreeLines, type FrameData } from "../worldlineLayout.ts";
+import { buildLaneTreeLines, filterFramesToLane, type FrameData } from "../worldlineLayout.ts";
 import { centerBox, isPageMsg, type SessionContext } from "./shared.ts";
 import type { LaneRef } from "../../protocol.ts";
 import type { NeighborhoodCoreSummary } from "../../app/NeighborhoodCoreSummary.ts";
@@ -41,6 +41,8 @@ type WorldlineMsg =
   | { type: "pulse"; dt: number }
   | { type: "cursor-up" }
   | { type: "cursor-down" }
+  | { type: "lane-left" }
+  | { type: "lane-right" }
   | { type: "select-tick" }
   | { type: "session-ready"; ctx: SessionContext }
   | { type: "disconnect" }
@@ -156,10 +158,55 @@ export function laneCursorForLaneId(
   return index >= 0 ? index : 0;
 }
 
+export function selectedLaneIdForLaneCursor(
+  catalog: readonly LaneRef[],
+  laneCursor: number
+): string | null {
+  const lines = buildLaneTreeLines(catalog);
+  const safeCursor = Math.max(0, Math.min(laneCursor, lines.length - 1));
+  const line = lines[safeCursor];
+  return line?.laneId ?? null;
+}
+
+function selectedFrames(model: WorldlineModel): FrameData[] {
+  if (model.selectedLaneId === null) {
+    return model.frames;
+  }
+
+  return filterFramesToLane(model.frames, model.selectedLaneId);
+}
+
+function tickCursorForFrames(frames: readonly FrameData[], cursor: number): number {
+  const max = Math.max(frames.length - 1, 0);
+  return Math.max(0, Math.min(cursor, max));
+}
+
 function moveWorldlineCursor(model: WorldlineModel, delta: number): WorldlineUpdateResult {
-  const max = Math.max(model.frames.length - 1, 0);
+  const frames = selectedFrames(model);
+  const max = Math.max(frames.length - 1, 0);
   const nextCursor = Math.max(0, Math.min(model.cursor + delta, max));
   return [{ ...model, cursor: nextCursor }, []];
+}
+
+function moveLaneSelection(model: WorldlineModel, delta: number): WorldlineUpdateResult {
+  const catalog = worldlineCatalog(model);
+  if (catalog.length === 0) {
+    return [model, []];
+  }
+
+  const treeLines = buildLaneTreeLines(catalog);
+  const maxCursor = Math.max(treeLines.length - 1, 0);
+  const nextLaneCursor = Math.max(0, Math.min(model.laneCursor + delta, maxCursor));
+  const nextLaneId = selectedLaneIdForLaneCursor(catalog, nextLaneCursor);
+  const nextFrames = nextLaneId === null ? model.frames : filterFramesToLane(model.frames, nextLaneId);
+  const nextCursor = tickCursorForFrames(nextFrames, model.cursor);
+
+  return [{
+    ...model,
+    selectedLaneId: nextLaneId,
+    laneCursor: nextLaneCursor,
+    cursor: nextCursor
+  }, []];
 }
 
 function handleSessionReady(model: WorldlineModel, ctx: SessionContext): WorldlineUpdateResult {
@@ -190,7 +237,7 @@ function buildSeekCommand(model: WorldlineModel): WorldlineCmd[] {
     return [];
   }
 
-  const rows = buildTickRows(model.frames, model.sessionCtx.catalog.lanes);
+  const rows = buildTickRows(selectedFrames(model), model.sessionCtx.catalog.lanes);
   const selected = rows[model.cursor];
 
   if (selected === undefined) {
@@ -234,6 +281,14 @@ function navigationWorldlineUpdate(
   msg: WorldlineMsg,
   model: WorldlineModel
 ): WorldlineUpdateResult {
+  if (msg.type === "lane-left") {
+    return moveLaneSelection(model, -1);
+  }
+
+  if (msg.type === "lane-right") {
+    return moveLaneSelection(model, 1);
+  }
+
   if (msg.type === "cursor-up") {
     return moveWorldlineCursor(model, -1);
   }
@@ -258,6 +313,19 @@ function updateWorldlineModel(
   return navigationWorldlineUpdate(msg, model);
 }
 
+function worldlineKeyMap(): ReturnType<typeof createKeyMap<WorldlineMsg>> {
+  return createKeyMap<WorldlineMsg>()
+    .bind("up", "Scroll up", { type: "cursor-up" })
+    .bind("k", "Scroll up", { type: "cursor-up" })
+    .bind("down", "Scroll down", { type: "cursor-down" })
+    .bind("j", "Scroll down", { type: "cursor-down" })
+    .bind("left", "Previous lane", { type: "lane-left" })
+    .bind("h", "Previous lane", { type: "lane-left" })
+    .bind("right", "Next lane", { type: "lane-right" })
+    .bind("l", "Next lane", { type: "lane-right" })
+    .bind("enter", "Jump to tick", { type: "select-tick" });
+}
+
 function buildWorldlinePageDefinition(
   ctx: BijouContext
 ): FramePage<WorldlineModel, WorldlineMsg> {
@@ -265,12 +333,7 @@ function buildWorldlinePageDefinition(
     id: "worldline",
     title: "Worldline",
     init: () => [initialWorldlineModel(), []],
-    keyMap: createKeyMap<WorldlineMsg>()
-      .bind("up", "Scroll up", { type: "cursor-up" })
-      .bind("k", "Scroll up", { type: "cursor-up" })
-      .bind("down", "Scroll down", { type: "cursor-down" })
-      .bind("j", "Scroll down", { type: "cursor-down" })
-      .bind("enter", "Jump to tick", { type: "select-tick" }),
+    keyMap: worldlineKeyMap(),
     update: (msg, model): WorldlineUpdateResult => {
       if (!isPageMsg<WorldlineMsg>(msg)) {
         return [model, []];

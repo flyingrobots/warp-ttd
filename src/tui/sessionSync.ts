@@ -7,7 +7,7 @@
  */
 import type { FrameModel, Cmd, FramedAppMsg } from "@flyingrobots/bijou-tui";
 import type { SessionContext } from "./pages/shared.ts";
-import { buildTickRows } from "./worldlineLayout.ts";
+import { buildTickRows, filterFramesToLane } from "./worldlineLayout.ts";
 import { laneCursorForLaneId } from "./pages/worldlinePage.ts";
 import type { FrameData } from "./worldlineLayout.ts";
 
@@ -196,10 +196,25 @@ function cursorForFrame(
   return idx >= 0 ? idx : 0;
 }
 
-function worldlineCursorForSession(sessionCtx: SessionContext | null, frames: FrameData[]): number {
+function selectedFrames(
+  frames: FrameData[],
+  selectedLaneId: string | null
+): FrameData[] {
+  if (selectedLaneId === null) {
+    return frames;
+  }
+
+  return filterFramesToLane(frames, selectedLaneId);
+}
+
+function worldlineCursorForSession(
+  sessionCtx: SessionContext | null,
+  frames: FrameData[],
+  selectedLaneId: string | null
+): number {
   const frameIndex = sessionCtx?.session.snapshot.head.currentFrameIndex ?? 0;
   const catalog = sessionCtx?.catalog.lanes ?? [];
-  return cursorForFrame(frames, catalog, frameIndex);
+  return cursorForFrame(selectedFrames(frames, selectedLaneId), catalog, frameIndex);
 }
 
 export function handleWorldlineLoaded(model: FModel, frames: FrameData[], sessionId: string | undefined): FModel {
@@ -211,7 +226,7 @@ export function handleWorldlineLoaded(model: FModel, frames: FrameData[], sessio
   if (worldline === null) {
     return model;
   }
-  const cursor = worldlineCursorForSession(sessionCtx, frames);
+  const cursor = worldlineCursorForSession(sessionCtx, frames, worldline.selectedLaneId);
   return withUpdatedPageModel(model, "worldline", { ...worldline, frames, cursor });
 }
 
@@ -225,8 +240,11 @@ export function syncWorldlineCursor(model: FModel): FModel {
   if (sessionCtx === null || worldline === null) {
     return model;
   }
-  const frameIndex = sessionCtx.session.snapshot.head.currentFrameIndex;
-  const cursor = cursorForFrame(worldline.frames, sessionCtx.catalog.lanes, frameIndex);
+  const cursor = worldlineCursorForSession(
+    sessionCtx,
+    worldline.frames,
+    worldline.selectedLaneId
+  );
   if (worldline.cursor === cursor) {
     return model;
   }
@@ -250,6 +268,26 @@ function computeWorldlineSelection(model: FModel, sessionCtx: SessionContext): {
     selectedLaneId,
     laneCursor: laneCursorForLaneId(scopedCatalog, selectedLaneId ?? undefined)
   };
+}
+
+export function syncNeighborhoodSelection(model: FModel): FModel {
+  const sessionCtx = getSessionCtx(model);
+  const worldline = getWorldlineModel(model);
+  const inspector = getInspectorModel(model);
+  if (sessionCtx === null || worldline === null || inspector === null) {
+    return model;
+  }
+
+  const selectedSiteId = sessionCtx.session.snapshot.neighborhoodSites.siteIdForLaneId(
+    worldline.selectedLaneId,
+    inspector.selectedSiteId
+  );
+
+  if (inspector.selectedSiteId === selectedSiteId) {
+    return model;
+  }
+
+  return withUpdatedPageModel(model, "inspect", { ...inspector, selectedSiteId });
 }
 
 export function syncWorldlineSelection(model: FModel): FModel {

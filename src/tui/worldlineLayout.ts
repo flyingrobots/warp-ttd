@@ -431,7 +431,7 @@ function renderSplitView(input: WorldlineInput): Surface {
 
   blitTimelinePane({ final, frames, catalog, selectedLaneId: selectedLaneId ?? "", cursor, x: treeW + 1, w: timelineW, h });
 
-  final.blit(stringToSurface(" j/k nav  Enter select  Tab switch  q back", w - 1, 1), 0, h - 1);
+  final.blit(stringToSurface(" h/l lanes  j/k ticks  Enter select  Tab switch  q back", w - 1, 1), 0, h - 1);
 
   return final;
 }
@@ -441,7 +441,7 @@ function renderNarrowSplit(input: WorldlineInput): Surface {
   const final = createSurface(w, h);
   final.fill({ char: " " });
   blitTimelinePane({ final, frames, catalog, selectedLaneId: selectedLaneId ?? "", cursor, x: 0, w, h });
-  final.blit(stringToSurface(" \u2191/\u2193 scroll  q back", w - 1, 1), 0, h - 1);
+  final.blit(stringToSurface(" h/l lanes  \u2191/\u2193 ticks  q back", w - 1, 1), 0, h - 1);
   return final;
 }
 
