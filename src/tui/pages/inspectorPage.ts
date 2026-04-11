@@ -13,6 +13,7 @@ import type { BijouContext, Surface } from "@flyingrobots/bijou";
 import type { FramePage } from "@flyingrobots/bijou-tui";
 import { renderWaveShader } from "../shaders/bgShader.ts";
 import { centerBox, isPageMsg, type SessionContext } from "./shared.ts";
+import type { NeighborhoodCoreSummary } from "../../app/NeighborhoodCoreSummary.ts";
 import type { ReintegrationDetailSummary } from "../../app/ReintegrationDetailSummary.ts";
 import type { ReceiptShellSummary } from "../../app/ReceiptShellSummary.ts";
 
@@ -33,6 +34,36 @@ type InspectorMsg =
   | { type: "pulse"; dt: number }
   | { type: "session-ready"; ctx: SessionContext }
   | { type: "disconnect" };
+
+export function buildNeighborhoodCoreLines(core: NeighborhoodCoreSummary): string {
+  const lines = [
+    ` Site: ${core.siteId}`,
+    ` Summary: ${core.summary}`,
+    ` Outcome: ${core.outcome}`,
+    ` Coordinate: ${core.coordinate.laneId}@${core.coordinate.tick.toString()}`,
+    ` Primary Lane: ${core.primaryLaneId}`,
+    ` Primary Worldline: ${core.primaryWorldlineId}`,
+    ` Participating Lanes: ${core.participatingLaneIds.length.toString()}`
+  ];
+
+  for (const laneId of core.participatingLaneIds) {
+    lines.push(` Lane: ${laneId}`);
+  }
+
+  if (core.alternatives.length === 0) {
+    lines.push(" Alternatives: none");
+  } else {
+    lines.push(` Alternatives: ${core.alternatives.length.toString()}`);
+  }
+
+  for (const alternative of core.alternatives) {
+    lines.push(
+      ` Alternative: ${alternative.kind} [${alternative.outcome}] ${alternative.summary}`
+    );
+  }
+
+  return lines.join("\n");
+}
 
 export function buildReintegrationLines(detail: ReintegrationDetailSummary): string {
   const lines = [
@@ -109,29 +140,20 @@ interface InspectorOverviewBlitArgs {
 function disconnectedInspectorSurface(args: InspectorRenderArgs): Surface {
   const { model, size, ctx } = args;
   const bg = renderWaveShader(size.w, size.h, model.time);
-  return centerBox(bg, stringToSurface(" Connect to a host first.", 40, 1), "Inspector", ctx);
+  return centerBox(bg, stringToSurface(" Connect to a host first.", 40, 1), "Neighborhood", ctx);
 }
 
-function hostInfoLines(sessionCtx: SessionContext): string {
+function contextInfoLines(sessionCtx: SessionContext): string {
   const { session, hello } = sessionCtx;
   return vstack(
     ` Host Kind:    ${hello.hostKind}`,
     ` Version:      ${hello.hostVersion}`,
     ` Protocol:     ${hello.protocolVersion}`,
-    ` Schema:       ${hello.schemaId}`,
+    ` Session Mode: ${session.snapshot.execCtx.mode}`,
     ` Capabilities: ${hello.capabilities.length.toString()}`,
+    ` Catalog Lanes: ${sessionCtx.catalog.lanes.length.toString()}`,
     ` Session:      ${session.sessionId.slice(0, 8)}`,
   );
-}
-
-function laneInfoLines(sessionCtx: SessionContext): string {
-  return sessionCtx.catalog.lanes
-    .map((l) => {
-      const rw = l.writable ? "rw" : "ro";
-      const parent = l.parentId !== undefined ? ` < ${l.parentId}` : "";
-      return `  [${rw}] ${l.id.padEnd(16)} ${l.kind}${parent}`;
-    })
-    .join("\n");
 }
 
 function blitBox(args: BoxBlitArgs): number {
@@ -171,24 +193,24 @@ function blitInspectorDetails(args: InspectorDetailBlitArgs): void {
 }
 
 function blitInspectorOverview(args: InspectorOverviewBlitArgs): number {
-  const hostHeight = blitBox({
+  const coreHeight = blitBox({
     final: args.final,
-    content: hostInfoLines(args.sessionCtx),
-    title: " Host ",
+    content: buildNeighborhoodCoreLines(args.sessionCtx.session.snapshot.neighborhoodCore),
+    title: " Neighborhood Core ",
     width: args.width,
     y: 1,
     ctx: args.ctx
   });
-  const laneHeight = blitBox({
+  const contextHeight = blitBox({
     final: args.final,
-    content: laneInfoLines(args.sessionCtx),
-    title: " Lanes ",
+    content: contextInfoLines(args.sessionCtx),
+    title: " Context ",
     width: args.width,
-    y: hostHeight + 3,
+    y: coreHeight + 3,
     ctx: args.ctx
   });
 
-  return hostHeight + laneHeight + 5;
+  return coreHeight + contextHeight + 5;
 }
 
 function connectedInspectorSurface(args: InspectorRenderArgs): Surface {
@@ -244,7 +266,7 @@ export function inspectorPage(ctx: BijouContext): FramePage<InspectorModel, Insp
 
   return {
     id: "inspect",
-    title: "Inspector",
+    title: "Neighborhood",
     init: () => [initial, []],
 
     update: (msg, model): [InspectorModel, []] => {
