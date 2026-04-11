@@ -24,6 +24,7 @@ import {
   HORIZONTAL_THRESHOLD
 } from "../src/tui/navigatorLayout.ts";
 import type { SessionSnapshot } from "../src/app/debuggerSession.ts";
+import { NeighborhoodCoreSummary } from "../src/app/NeighborhoodCoreSummary.ts";
 import type {
   Capability,
   DeliveryObservationSummary,
@@ -115,6 +116,18 @@ function makeSnap(overrides: Partial<SessionSnapshot> = {}): SessionSnapshot {
     emissions: [makeEmission("wl:main", "diagnostic", 1)],
     observations: [makeObservation({ emissionId: "emit:test:diagnostic:wl:main", sinkId: "sink:tui-log", outcome: "DELIVERED", frameIndex: 1 })],
     execCtx: { mode: "LIVE" },
+    neighborhoodCore: new NeighborhoodCoreSummary({
+      siteId: "site:head:default:1:wl:main",
+      headId: "head:default",
+      frameIndex: 1,
+      coordinate: { laneId: "wl:main", worldlineId: "wl:main", tick: 1 },
+      primaryLaneId: "wl:main",
+      primaryWorldlineId: "wl:main",
+      participatingLaneIds: ["wl:main"],
+      outcome: "LAWFUL",
+      alternatives: [],
+      summary: "1 lane(s), 0 alternative(s), lawful"
+    }),
     ...overrides
   };
 }

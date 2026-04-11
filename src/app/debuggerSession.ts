@@ -9,6 +9,10 @@
 import { randomUUID } from "node:crypto";
 import type { TtdHostAdapter } from "../adapter.ts";
 import type { EffectKind } from "../EffectKind.ts";
+import {
+  NeighborhoodCoreSummary,
+  type SerializedNeighborhoodCoreSummary
+} from "./NeighborhoodCoreSummary.ts";
 import type {
   DeliveryObservationSummary,
   EffectEmissionSummary,
@@ -29,6 +33,7 @@ export interface SessionSnapshot {
   emissions: EffectEmissionSummary[];
   observations: DeliveryObservationSummary[];
   execCtx: ExecutionContext;
+  neighborhoodCore: NeighborhoodCoreSummary;
 }
 
 export interface PinnedObservation {
@@ -42,9 +47,14 @@ export interface SerializedEffectEmissionSummary
   effectKind: string;
 }
 
-export interface SerializedSessionSnapshot
-  extends Omit<SessionSnapshot, "emissions"> {
+export interface SerializedSessionSnapshot {
+  head: PlaybackHeadSnapshot;
+  frame: PlaybackFrame;
+  receipts: ReceiptSummary[];
   emissions: SerializedEffectEmissionSummary[];
+  observations: DeliveryObservationSummary[];
+  execCtx: ExecutionContext;
+  neighborhoodCore: SerializedNeighborhoodCoreSummary;
 }
 
 export interface SerializedPinnedObservation
@@ -92,7 +102,8 @@ function serializeSnapshot(
     receipts: structuredClone(snapshot.receipts),
     emissions: snapshot.emissions.map((emission) => serializeEffectEmissionSummary(emission)),
     observations: structuredClone(snapshot.observations),
-    execCtx: structuredClone(snapshot.execCtx)
+    execCtx: structuredClone(snapshot.execCtx),
+    neighborhoodCore: snapshot.neighborhoodCore.toJSON()
   };
 }
 
@@ -230,5 +241,6 @@ async function fetchSnapshot(
   const emissions = await adapter.effectEmissions(headId);
   const observations = await adapter.deliveryObservations(headId);
   const execCtx = await adapter.executionContext();
-  return { head, frame, receipts, emissions, observations, execCtx };
+  const neighborhoodCore = NeighborhoodCoreSummary.fromFrame(frame, receipts, emissions);
+  return { head, frame, receipts, emissions, observations, execCtx, neighborhoodCore };
 }

@@ -13,6 +13,9 @@ import { renderWaveShader } from "../shaders/bgShader.ts";
 import { renderWorldline, buildTickRows } from "../worldlineLayout.ts";
 import type { FrameData } from "../worldlineLayout.ts";
 import { centerBox, isPageMsg, type SessionContext } from "./shared.ts";
+import type { LaneRef } from "../../protocol.ts";
+import type { NeighborhoodCoreSummary } from "../../app/NeighborhoodCoreSummary.ts";
+import type { Cmd } from "@flyingrobots/bijou-tui";
 
 // ---------------------------------------------------------------------------
 // Model
@@ -24,6 +27,9 @@ interface WorldlineModel {
   frames: FrameData[];
   cursor: number;
 }
+
+type WorldlineUpdateResult = [WorldlineModel, WorldlineCmd[]];
+type WorldlineCmd = Cmd<WorldlineMsg>;
 
 // ---------------------------------------------------------------------------
 // Messages
@@ -64,22 +70,191 @@ function makeWorldlineLoadCmd(
   };
 }
 
+function initialWorldlineModel(): WorldlineModel {
+  return {
+    time: 0,
+    sessionCtx: null,
+    frames: [],
+    cursor: 0,
+  };
+}
+
+interface WorldlineRenderArgs {
+  model: WorldlineModel;
+  size: { w: number; h: number };
+  ctx: BijouContext;
+}
+
+function disconnectedWorldlineSurface(args: WorldlineRenderArgs): Surface {
+  const { model, size, ctx } = args;
+  const bg = renderWaveShader(size.w, size.h, model.time);
+  return centerBox(bg, stringToSurface(" Connect to a host first.", 40, 1), "Worldline", ctx);
+}
+
+function worldlineCatalog(model: WorldlineModel): LaneRef[] {
+  if (model.sessionCtx === null) {
+    return [];
+  }
+
+  return scopeCatalogToNeighborhood(
+    model.sessionCtx.catalog.lanes,
+    model.sessionCtx.session.snapshot.neighborhoodCore
+  );
+}
+
+function renderConnectedWorldline(args: WorldlineRenderArgs): Surface {
+  const { model, size, ctx } = args;
+  return renderWorldline({
+    frames: model.frames,
+    catalog: worldlineCatalog(model),
+    cursor: model.cursor,
+    w: size.w,
+    h: size.h,
+    ctx,
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Layout
 // ---------------------------------------------------------------------------
 
-function renderWorldlinePage(model: WorldlineModel, w: number, h: number, ctx: BijouContext): Surface {
+function renderWorldlinePage(args: WorldlineRenderArgs): Surface {
+  const { model } = args;
   if (model.sessionCtx === null) {
-    const bg = renderWaveShader(w, h, model.time);
-    return centerBox(bg, stringToSurface(" Connect to a host first.", 40, 1), "Worldline", ctx);
+    return disconnectedWorldlineSurface(args);
   }
 
-  return renderWorldline({
-    frames: model.frames,
-    catalog: model.sessionCtx.catalog.lanes,
-    cursor: model.cursor,
-    w, h, ctx,
-  });
+  return renderConnectedWorldline(args);
+}
+
+export function scopeCatalogToNeighborhood(
+  catalog: readonly LaneRef[],
+  neighborhoodCore: NeighborhoodCoreSummary
+): LaneRef[] {
+  return neighborhoodCore.buildDisplayCatalog(catalog);
+}
+
+function moveWorldlineCursor(model: WorldlineModel, delta: number): WorldlineUpdateResult {
+  const max = Math.max(model.frames.length - 1, 0);
+  const nextCursor = Math.max(0, Math.min(model.cursor + delta, max));
+  return [{ ...model, cursor: nextCursor }, []];
+}
+
+function handleSessionReady(model: WorldlineModel, ctx: SessionContext): WorldlineUpdateResult {
+  return [{ ...model, sessionCtx: ctx, frames: [], cursor: 0 }, [makeWorldlineLoadCmd(ctx)]];
+}
+
+function handleDisconnect(model: WorldlineModel): WorldlineUpdateResult {
+  return [{ ...initialWorldlineModel(), time: model.time }, []];
+}
+
+function handleWorldlineLoaded(model: WorldlineModel, msg: Extract<WorldlineMsg, { type: "worldline-loaded" }>): WorldlineUpdateResult {
+  if (model.sessionCtx?.session.sessionId !== msg.sessionId) {
+    return [model, []];
+  }
+
+  return [{ ...model, frames: msg.frames, cursor: 0 }, []];
+}
+
+function buildSeekCommand(model: WorldlineModel): WorldlineCmd[] {
+  if (model.sessionCtx === null) {
+    return [];
+  }
+
+  const rows = buildTickRows(model.frames, model.sessionCtx.catalog.lanes);
+  const selected = rows[model.cursor];
+
+  if (selected === undefined) {
+    return [];
+  }
+
+  const session = model.sessionCtx.session;
+  return [async (): Promise<void> => {
+    try {
+      await session.seekToFrame(selected.frameIndex);
+    } catch {
+      // Silently ignore seek errors from worldline
+    }
+  }];
+}
+
+function simpleWorldlineUpdate(
+  msg: WorldlineMsg,
+  model: WorldlineModel
+): WorldlineUpdateResult | null {
+  if (msg.type === "pulse") {
+    return [{ ...model, time: model.time + msg.dt }, []];
+  }
+
+  if (msg.type === "session-ready") {
+    return handleSessionReady(model, msg.ctx);
+  }
+
+  if (msg.type === "disconnect") {
+    return handleDisconnect(model);
+  }
+
+  if (msg.type === "worldline-loaded") {
+    return handleWorldlineLoaded(model, msg);
+  }
+
+  return null;
+}
+
+function navigationWorldlineUpdate(
+  msg: WorldlineMsg,
+  model: WorldlineModel
+): WorldlineUpdateResult {
+  if (msg.type === "cursor-up") {
+    return moveWorldlineCursor(model, -1);
+  }
+
+  if (msg.type === "cursor-down") {
+    return moveWorldlineCursor(model, 1);
+  }
+
+  return [model, buildSeekCommand(model)];
+}
+
+function updateWorldlineModel(
+  msg: WorldlineMsg,
+  model: WorldlineModel
+): WorldlineUpdateResult {
+  const simpleUpdate = simpleWorldlineUpdate(msg, model);
+
+  if (simpleUpdate !== null) {
+    return simpleUpdate;
+  }
+
+  return navigationWorldlineUpdate(msg, model);
+}
+
+function buildWorldlinePageDefinition(
+  ctx: BijouContext
+): FramePage<WorldlineModel, WorldlineMsg> {
+  return {
+    id: "worldline",
+    title: "Worldline",
+    init: () => [initialWorldlineModel(), []],
+    keyMap: createKeyMap<WorldlineMsg>()
+      .bind("up", "Scroll up", { type: "cursor-up" })
+      .bind("k", "Scroll up", { type: "cursor-up" })
+      .bind("down", "Scroll down", { type: "cursor-down" })
+      .bind("j", "Scroll down", { type: "cursor-down" })
+      .bind("enter", "Jump to tick", { type: "select-tick" }),
+    update: (msg, model): WorldlineUpdateResult => {
+      if (!isPageMsg<WorldlineMsg>(msg)) {
+        return [model, []];
+      }
+
+      return updateWorldlineModel(msg, model);
+    },
+    layout: (model) => ({
+      kind: "pane" as const,
+      paneId: "main",
+      render: (w: number, h: number) => renderWorldlinePage({ model, size: { w, h }, ctx }),
+    }),
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -87,75 +262,5 @@ function renderWorldlinePage(model: WorldlineModel, w: number, h: number, ctx: B
 // ---------------------------------------------------------------------------
 
 export function worldlinePage(ctx: BijouContext): FramePage<WorldlineModel, WorldlineMsg> {
-  const initial: WorldlineModel = {
-    time: 0,
-    sessionCtx: null,
-    frames: [],
-    cursor: 0,
-  };
-
-  return {
-    id: "worldline",
-    title: "Worldline",
-    init: () => [initial, []],
-
-    keyMap: createKeyMap<WorldlineMsg>()
-      .bind("up", "Scroll up", { type: "cursor-up" })
-      .bind("k", "Scroll up", { type: "cursor-up" })
-      .bind("down", "Scroll down", { type: "cursor-down" })
-      .bind("j", "Scroll down", { type: "cursor-down" })
-      .bind("enter", "Jump to tick", { type: "select-tick" }),
-
-    update: (msg, model) => {
-      if (!isPageMsg<WorldlineMsg>(msg)) return [model, []];
-      const m = msg;
-
-      if (m.type === "pulse") return [{ ...model, time: model.time + m.dt }, []];
-
-      if (m.type === "session-ready") {
-        return [{ ...model, sessionCtx: m.ctx, frames: [], cursor: 0 }, [makeWorldlineLoadCmd(m.ctx)]];
-      }
-
-      if (m.type === "disconnect") return [{ ...initial, time: model.time }, []];
-
-      if (m.type === "worldline-loaded") {
-        if (model.sessionCtx?.session.sessionId !== m.sessionId) return [model, []];
-        return [{ ...model, frames: m.frames, cursor: 0 }, []];
-      }
-
-      if (model.sessionCtx === null) return [model, []];
-
-      if (m.type === "cursor-up") {
-        return [{ ...model, cursor: Math.max(model.cursor - 1, 0) }, []];
-      }
-
-      if (m.type === "cursor-down") {
-        const max = Math.max(model.frames.length - 1, 0);
-        return [{ ...model, cursor: Math.min(model.cursor + 1, max) }, []];
-      }
-
-      {
-        const rows = buildTickRows(model.frames, model.sessionCtx.catalog.lanes);
-        const selected = rows[model.cursor];
-        if (selected !== undefined) {
-          const session = model.sessionCtx.session;
-          return [model, [async (): Promise<void> => {
-            try {
-              await session.seekToFrame(selected.frameIndex);
-            } catch {
-              // Silently ignore seek errors from worldline
-            }
-          }]];
-        }
-      }
-
-      return [model, []];
-    },
-
-    layout: (model) => ({
-      kind: "pane" as const,
-      paneId: "main",
-      render: (w: number, h: number) => renderWorldlinePage(model, w, h, ctx),
-    }),
-  };
+  return buildWorldlinePageDefinition(ctx);
 }
