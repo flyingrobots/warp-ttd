@@ -22,9 +22,8 @@ import type { FrameData } from "./worldlineLayout.ts";
 import {
   getSessionCtx,
   syncNeighborhoodSelection,
-  syncWorldlineSelection,
+  syncSiteDrivenWorldlineFocus,
   syncSession,
-  syncWorldlineCursor,
   handleWorldlineLoaded,
 } from "./sessionSync.ts";
 
@@ -118,14 +117,14 @@ function updateApp(msg: FMsg, model: FModel): [FModel, Cmd<FMsg>[]] {
 
   if (prevCtx !== nextCtx) {
     const [synced, syncCmds] = syncSession(next, nextCtx);
-    return [syncWorldlineSelection(syncWorldlineCursor(synced)), [...cmds, ...syncCmds]];
+    return [syncSiteDrivenWorldlineFocus(synced), [...cmds, ...syncCmds]];
   }
 
   if (isLaneSelectionMessage(msg)) {
-    return [syncNeighborhoodSelection(syncWorldlineCursor(next)), cmds];
+    return [syncNeighborhoodSelection(next), cmds];
   }
 
-  return [syncWorldlineSelection(syncWorldlineCursor(next)), cmds];
+  return [syncSiteDrivenWorldlineFocus(next), cmds];
 }
 
 const mainApp: App<FModel, FMsg> = {

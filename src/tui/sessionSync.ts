@@ -10,6 +10,8 @@ import type { SessionContext } from "./pages/shared.ts";
 import { buildTickRows, filterFramesToLane } from "./worldlineLayout.ts";
 import { laneCursorForLaneId } from "./pages/worldlinePage.ts";
 import type { FrameData } from "./worldlineLayout.ts";
+import type { LaneRef } from "../protocol.ts";
+import type { NeighborhoodSiteCatalog } from "../app/NeighborhoodSiteCatalog.ts";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- page messages are heterogeneous by design
 type AnyMsg = any;
@@ -207,31 +209,91 @@ function selectedFrames(
   return filterFramesToLane(frames, selectedLaneId);
 }
 
-function worldlineCursorForSession(
-  sessionCtx: SessionContext | null,
-  frames: FrameData[],
-  selectedLaneId: string | null
-): number {
-  const frameIndex = sessionCtx?.session.snapshot.head.currentFrameIndex ?? 0;
-  const catalog = sessionCtx?.catalog.lanes ?? [];
-  return cursorForFrame(selectedFrames(frames, selectedLaneId), catalog, frameIndex);
+interface WorldlineCursorArgs {
+  readonly catalog: readonly LaneRef[];
+  readonly frames: FrameData[];
+  readonly selectedLaneId: string | null;
+  readonly frameIndex: number;
+}
+
+function worldlineCursorForFrame(args: WorldlineCursorArgs): number {
+  return cursorForFrame(selectedFrames(args.frames, args.selectedLaneId), args.catalog, args.frameIndex);
+}
+
+export interface SiteDrivenWorldlineFocus {
+  readonly selectedLaneId: string | null;
+  readonly laneCursor: number;
+  readonly cursor: number;
+}
+
+interface SiteDrivenWorldlineFocusArgs {
+  readonly catalog: readonly LaneRef[];
+  readonly displayCatalog: readonly LaneRef[];
+  readonly neighborhoodSites: NeighborhoodSiteCatalog;
+  readonly selectedSiteId: string | null;
+  readonly frames: FrameData[];
+  readonly currentFrameIndex: number;
+}
+
+export function siteDrivenWorldlineFocus(args: SiteDrivenWorldlineFocusArgs): SiteDrivenWorldlineFocus {
+  const selectedLaneId = args.neighborhoodSites.selectedLaneId(args.selectedSiteId);
+  return {
+    selectedLaneId,
+    laneCursor: laneCursorForLaneId(args.displayCatalog, selectedLaneId ?? undefined),
+    cursor: worldlineCursorForFrame({
+      catalog: args.catalog,
+      frames: args.frames,
+      selectedLaneId,
+      frameIndex: args.currentFrameIndex
+    })
+  };
 }
 
 export function handleWorldlineLoaded(model: FModel, frames: FrameData[], sessionId: string | undefined): FModel {
-  const sessionCtx = getSessionCtx(model);
-  if (sessionChanged(sessionCtx, sessionId)) {
+  const loaded = loadedWorldlineState(model, sessionId);
+  if (loaded === null) {
     return model;
   }
-  const worldline = getWorldlineModel(model);
-  if (worldline === null) {
-    return model;
-  }
-  const cursor = worldlineCursorForSession(sessionCtx, frames, worldline.selectedLaneId);
-  return withUpdatedPageModel(model, "worldline", { ...worldline, frames, cursor });
+  return applyLoadedWorldline(model, loaded, frames);
 }
 
 function sessionChanged(sessionCtx: SessionContext | null, sessionId: string | undefined): boolean {
   return sessionId !== undefined && sessionCtx?.session.sessionId !== sessionId;
+}
+
+interface LoadedWorldlineState {
+  readonly sessionCtx: SessionContext | null;
+  readonly worldline: WorldlinePageModel;
+}
+
+function loadedWorldlineState(
+  model: FModel,
+  sessionId: string | undefined
+): LoadedWorldlineState | null {
+  const sessionCtx = getSessionCtx(model);
+  const worldline = getWorldlineModel(model);
+  if (sessionChanged(sessionCtx, sessionId) || worldline === null) {
+    return null;
+  }
+  return { sessionCtx, worldline };
+}
+
+function applyLoadedWorldline(
+  model: FModel,
+  loaded: LoadedWorldlineState,
+  frames: FrameData[]
+): FModel {
+  const cursor = worldlineCursorForFrame({
+    catalog: loaded.sessionCtx?.catalog.lanes ?? [],
+    frames,
+    selectedLaneId: loaded.worldline.selectedLaneId,
+    frameIndex: loaded.sessionCtx?.session.snapshot.head.currentFrameIndex ?? 0
+  });
+  return withUpdatedPageModel(model, "worldline", {
+    ...loaded.worldline,
+    frames,
+    cursor
+  });
 }
 
 export function syncWorldlineCursor(model: FModel): FModel {
@@ -240,11 +302,12 @@ export function syncWorldlineCursor(model: FModel): FModel {
   if (sessionCtx === null || worldline === null) {
     return model;
   }
-  const cursor = worldlineCursorForSession(
-    sessionCtx,
-    worldline.frames,
-    worldline.selectedLaneId
-  );
+  const cursor = worldlineCursorForFrame({
+    catalog: sessionCtx.catalog.lanes,
+    frames: worldline.frames,
+    selectedLaneId: worldline.selectedLaneId,
+    frameIndex: sessionCtx.session.snapshot.head.currentFrameIndex
+  });
   if (worldline.cursor === cursor) {
     return model;
   }
@@ -288,6 +351,50 @@ export function syncNeighborhoodSelection(model: FModel): FModel {
   }
 
   return withUpdatedPageModel(model, "inspect", { ...inspector, selectedSiteId });
+}
+
+export function syncSiteDrivenWorldlineFocus(model: FModel): FModel {
+  const sessionCtx = getSessionCtx(model);
+  const worldline = getWorldlineModel(model);
+  if (sessionCtx === null || worldline === null) {
+    return model;
+  }
+  const focus = siteDrivenWorldlineFocusForModel(model, sessionCtx, worldline);
+  if (sameWorldlineFocus(worldline, focus)) {
+    return model;
+  }
+  return withUpdatedPageModel(model, "worldline", {
+    ...worldline,
+    selectedLaneId: focus.selectedLaneId,
+    laneCursor: focus.laneCursor,
+    cursor: focus.cursor
+  });
+}
+
+function siteDrivenWorldlineFocusForModel(
+  model: FModel,
+  sessionCtx: SessionContext,
+  worldline: WorldlinePageModel
+): SiteDrivenWorldlineFocus {
+  return siteDrivenWorldlineFocus({
+    catalog: sessionCtx.catalog.lanes,
+    displayCatalog: sessionCtx.session.snapshot.neighborhoodCore.buildDisplayCatalog(
+      sessionCtx.catalog.lanes
+    ),
+    neighborhoodSites: sessionCtx.session.snapshot.neighborhoodSites,
+    selectedSiteId: getSelectedSiteId(model),
+    frames: worldline.frames,
+    currentFrameIndex: sessionCtx.session.snapshot.head.currentFrameIndex
+  });
+}
+
+function sameWorldlineFocus(
+  worldline: WorldlinePageModel,
+  focus: SiteDrivenWorldlineFocus
+): boolean {
+  return worldline.selectedLaneId === focus.selectedLaneId &&
+    worldline.laneCursor === focus.laneCursor &&
+    worldline.cursor === focus.cursor;
 }
 
 export function syncWorldlineSelection(model: FModel): FModel {
