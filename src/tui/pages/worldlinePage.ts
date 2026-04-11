@@ -15,6 +15,7 @@ import { buildLaneTreeLines, filterFramesToLane, type FrameData } from "../world
 import { centerBox, isPageMsg, type SessionContext } from "./shared.ts";
 import type { LaneRef } from "../../protocol.ts";
 import type { NeighborhoodCoreSummary } from "../../app/NeighborhoodCoreSummary.ts";
+import type { NeighborhoodFocusSummary } from "../../app/NeighborhoodFocusSummary.ts";
 import type { Cmd } from "@flyingrobots/bijou-tui";
 
 // ---------------------------------------------------------------------------
@@ -28,6 +29,7 @@ interface WorldlineModel {
   cursor: number;
   selectedLaneId: string | null;
   laneCursor: number;
+  focus: NeighborhoodFocusSummary | null;
 }
 
 type WorldlineUpdateResult = [WorldlineModel, WorldlineCmd[]];
@@ -82,6 +84,7 @@ function initialWorldlineModel(): WorldlineModel {
     cursor: 0,
     selectedLaneId: null,
     laneCursor: 0,
+    focus: null,
   };
 }
 
@@ -110,6 +113,7 @@ function worldlineCatalog(model: WorldlineModel): LaneRef[] {
 
 function renderConnectedWorldline(args: WorldlineRenderArgs): Surface {
   const { model, size, ctx } = args;
+  const selectedLaneId = model.focus?.selectedLaneId ?? model.selectedLaneId;
   const input = {
     frames: model.frames,
     catalog: worldlineCatalog(model),
@@ -119,10 +123,10 @@ function renderConnectedWorldline(args: WorldlineRenderArgs): Surface {
     ctx,
     laneCursor: model.laneCursor,
   };
-  if (model.selectedLaneId === null) {
+  if (selectedLaneId === null) {
     return renderWorldline(input);
   }
-  return renderWorldline({ ...input, selectedLaneId: model.selectedLaneId });
+  return renderWorldline({ ...input, selectedLaneId });
 }
 
 // ---------------------------------------------------------------------------
@@ -169,11 +173,13 @@ export function selectedLaneIdForLaneCursor(
 }
 
 function selectedFrames(model: WorldlineModel): FrameData[] {
-  if (model.selectedLaneId === null) {
+  const selectedLaneId = model.focus?.selectedLaneId ?? model.selectedLaneId;
+
+  if (selectedLaneId === null) {
     return model.frames;
   }
 
-  return filterFramesToLane(model.frames, model.selectedLaneId);
+  return filterFramesToLane(model.frames, selectedLaneId);
 }
 
 function tickCursorForFrames(frames: readonly FrameData[], cursor: number): number {
@@ -216,7 +222,8 @@ function handleSessionReady(model: WorldlineModel, ctx: SessionContext): Worldli
     frames: [],
     cursor: 0,
     selectedLaneId: null,
-    laneCursor: 0
+    laneCursor: 0,
+    focus: null
   }, [makeWorldlineLoadCmd(ctx)]];
 }
 

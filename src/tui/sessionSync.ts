@@ -11,6 +11,7 @@ import { buildTickRows, filterFramesToLane } from "./worldlineLayout.ts";
 import { laneCursorForLaneId } from "./pages/worldlinePage.ts";
 import type { FrameData } from "./worldlineLayout.ts";
 import type { LaneRef } from "../protocol.ts";
+import { NeighborhoodFocusSummary } from "../app/NeighborhoodFocusSummary.ts";
 import type { NeighborhoodSiteCatalog } from "../app/NeighborhoodSiteCatalog.ts";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- page messages are heterogeneous by design
@@ -31,6 +32,7 @@ interface NavigatorPageModel {
 interface InspectorPageModel {
   sessionCtx: SessionContext | null;
   selectedSiteId: string | null;
+  focus: NeighborhoodFocusSummary | null;
 }
 
 interface WorldlinePageModel {
@@ -39,6 +41,7 @@ interface WorldlinePageModel {
   cursor: number;
   selectedLaneId: string | null;
   laneCursor: number;
+  focus: NeighborhoodFocusSummary | null;
 }
 
 export function getSessionCtx(model: FModel): SessionContext | null {
@@ -319,6 +322,17 @@ function selectedLaneIdForModel(model: FModel, sessionCtx: SessionContext): stri
   return sessionCtx.session.snapshot.neighborhoodSites.selectedLaneId(selectedSiteId);
 }
 
+function selectedSiteIdForFocus(model: FModel, sessionCtx: SessionContext): string {
+  return sessionCtx.session.snapshot.neighborhoodSites.normalizeSelection(getSelectedSiteId(model));
+}
+
+interface NeighborhoodFocusState {
+  readonly inspector: InspectorPageModel;
+  readonly worldline: WorldlinePageModel;
+  readonly selectedSiteId: string;
+  readonly focus: NeighborhoodFocusSummary;
+}
+
 function computeWorldlineSelection(model: FModel, sessionCtx: SessionContext): {
   selectedLaneId: string | null;
   laneCursor: number;
@@ -351,6 +365,60 @@ export function syncNeighborhoodSelection(model: FModel): FModel {
   }
 
   return withUpdatedPageModel(model, "inspect", { ...inspector, selectedSiteId });
+}
+
+export function syncNeighborhoodFocus(model: FModel): FModel {
+  const state = neighborhoodFocusState(model);
+  if (state === null) {
+    return model;
+  }
+
+  if (sameNeighborhoodFocusState(state)) {
+    return model;
+  }
+
+  return {
+    ...model,
+    pageModels: {
+      ...model.pageModels,
+      inspect: {
+        ...state.inspector,
+        selectedSiteId: state.selectedSiteId,
+        focus: state.focus
+      },
+      worldline: {
+        ...state.worldline,
+        focus: state.focus
+      }
+    }
+  };
+}
+
+function neighborhoodFocusState(model: FModel): NeighborhoodFocusState | null {
+  const sessionCtx = getSessionCtx(model);
+  const worldline = getWorldlineModel(model);
+  const inspector = getInspectorModel(model);
+  if (sessionCtx === null || worldline === null || inspector === null) {
+    return null;
+  }
+
+  const selectedSiteId = selectedSiteIdForFocus(model, sessionCtx);
+  return {
+    inspector,
+    worldline,
+    selectedSiteId,
+    focus: NeighborhoodFocusSummary.fromSelection(
+      sessionCtx.session.snapshot.neighborhoodCore,
+      sessionCtx.session.snapshot.neighborhoodSites,
+      selectedSiteId
+    )
+  };
+}
+
+function sameNeighborhoodFocusState(state: NeighborhoodFocusState): boolean {
+  return sameNeighborhoodFocus(state.inspector.focus, state.focus) &&
+    sameNeighborhoodFocus(state.worldline.focus, state.focus) &&
+    state.inspector.selectedSiteId === state.selectedSiteId;
 }
 
 export function syncSiteDrivenWorldlineFocus(model: FModel): FModel {
@@ -395,6 +463,17 @@ function sameWorldlineFocus(
   return worldline.selectedLaneId === focus.selectedLaneId &&
     worldline.laneCursor === focus.laneCursor &&
     worldline.cursor === focus.cursor;
+}
+
+function sameNeighborhoodFocus(
+  left: NeighborhoodFocusSummary | null,
+  right: NeighborhoodFocusSummary
+): boolean {
+  if (left === null) {
+    return false;
+  }
+
+  return JSON.stringify(left.toJSON()) === JSON.stringify(right.toJSON());
 }
 
 export function syncWorldlineSelection(model: FModel): FModel {

@@ -33,6 +33,7 @@ interface InspectorModel {
   time: number;
   sessionCtx: SessionContext | null;
   selectedSiteId: string | null;
+  focus: NeighborhoodFocusSummary | null;
 }
 
 type InspectorMsg =
@@ -53,6 +54,7 @@ interface InspectorRenderArgs {
 
 interface InspectorSurfaceBuildArgs {
   sessionCtx: SessionContext;
+  focus: NeighborhoodFocusSummary;
   selectedSiteId: string | null;
   width: number;
   ctx: BijouContext;
@@ -179,7 +181,8 @@ function initialInspectorModel(): InspectorModel {
   return {
     time: 0,
     sessionCtx: null,
-    selectedSiteId: null
+    selectedSiteId: null,
+    focus: null
   };
 }
 
@@ -237,13 +240,7 @@ function buildSiteRailSurface(args: InspectorSurfaceBuildArgs): Surface {
 
 function buildFocusSurface(args: InspectorSurfaceBuildArgs): Surface {
   return boxFromLines({
-    lines: buildNeighborhoodFocusLines(
-      NeighborhoodFocusSummary.fromSelection(
-        args.sessionCtx.session.snapshot.neighborhoodCore,
-        args.sessionCtx.session.snapshot.neighborhoodSites,
-        args.selectedSiteId
-      )
-    ),
+    lines: buildNeighborhoodFocusLines(args.focus),
     title: " Neighborhood Focus ",
     width: args.width,
     ctx: args.ctx
@@ -333,14 +330,16 @@ function buildDetailSurfaces(
 
 function buildNeighborhoodSurface(args: InspectorRenderArgs): Surface {
   const sessionCtx = args.model.sessionCtx;
+  const focus = args.model.focus;
 
-  if (sessionCtx === null) {
+  if (sessionCtx === null || focus === null) {
     throw new TypeError("buildNeighborhoodSurface requires a session context");
   }
 
   const content = vstackSurface(
     buildTopRowSurface({
       sessionCtx,
+      focus,
       selectedSiteId: args.model.selectedSiteId,
       width: args.size.w,
       ctx: args.ctx
@@ -382,13 +381,14 @@ function handleSessionReady(
   model: InspectorModel,
   ctx: SessionContext
 ): InspectorUpdateResult {
-  return [{
-    ...model,
-    sessionCtx: ctx,
-    selectedSiteId: ctx.session.snapshot.neighborhoodSites.normalizeSelection(
-      model.selectedSiteId
-    )
-  }, []];
+    return [{
+      ...model,
+      sessionCtx: ctx,
+      selectedSiteId: ctx.session.snapshot.neighborhoodSites.normalizeSelection(
+        model.selectedSiteId
+      ),
+      focus: null
+    }, []];
 }
 
 function navigationUpdate(msg: InspectorMsg, model: InspectorModel): InspectorUpdateResult | null {
