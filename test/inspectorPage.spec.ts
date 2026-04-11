@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { NeighborhoodCoreSummary } from "../src/app/NeighborhoodCoreSummary.ts";
+import { NeighborhoodFocusSummary } from "../src/app/NeighborhoodFocusSummary.ts";
 import { NeighborhoodSiteCatalog } from "../src/app/NeighborhoodSiteCatalog.ts";
 import { ReintegrationDetailSummary } from "../src/app/ReintegrationDetailSummary.ts";
 import { ReceiptShellSummary } from "../src/app/ReceiptShellSummary.ts";
@@ -96,15 +97,14 @@ test("buildNeighborhoodCoreLines renders site, participating lanes, and alternat
 });
 
 test("buildNeighborhoodFocusLines renders alternative-specific focus details", () => {
-  const catalog = makeCatalog();
-  const alternative = catalog.sites[1];
-
-  assert.ok(alternative !== undefined);
-
-  const lines = buildNeighborhoodFocusLines(makeCore(), alternative);
+  const lines = buildNeighborhoodFocusLines(
+    NeighborhoodFocusSummary.fromSelection(makeCore(), makeCatalog(), "site:head:test:2:wl:main:alt:receipt:test:1")
+  );
 
   assert.match(lines, /Kind: ALTERNATIVE/);
   assert.match(lines, /Parent Site: site:head:test:2:wl:main/);
+  assert.match(lines, /Selected Lane: ws:sandbox/);
+  assert.match(lines, /Selected Worldline: wl:main/);
   assert.match(lines, /Summary: 2 counterfactual\(s\) on ws:sandbox/);
 });
 

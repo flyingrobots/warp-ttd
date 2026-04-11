@@ -24,7 +24,8 @@ import type { BijouContext, Surface } from "@flyingrobots/bijou";
 import { renderWaveShader } from "../shaders/bgShader.ts";
 import { centerBox, isPageMsg, type SessionContext } from "./shared.ts";
 import type { NeighborhoodCoreSummary } from "../../app/NeighborhoodCoreSummary.ts";
-import type { NeighborhoodSiteCatalog, NeighborhoodSiteSummary } from "../../app/NeighborhoodSiteCatalog.ts";
+import type { NeighborhoodSiteCatalog } from "../../app/NeighborhoodSiteCatalog.ts";
+import { NeighborhoodFocusSummary } from "../../app/NeighborhoodFocusSummary.ts";
 import type { ReintegrationDetailSummary } from "../../app/ReintegrationDetailSummary.ts";
 import type { ReceiptShellSummary } from "../../app/ReceiptShellSummary.ts";
 
@@ -95,24 +96,31 @@ export function buildNeighborhoodCoreLines(core: NeighborhoodCoreSummary): strin
 }
 
 export function buildNeighborhoodFocusLines(
-  core: NeighborhoodCoreSummary,
-  site: NeighborhoodSiteSummary
+  focus: NeighborhoodFocusSummary
 ): string {
-  if (site.kind === "PRIMARY") {
-    return buildNeighborhoodCoreLines(core);
+  const lines = [
+    ` Site: ${focus.siteId}`,
+    ` Kind: ${focus.kind}`,
+    ` Outcome: ${focus.outcome}`,
+    ` Label: ${focus.label}`,
+    ` Summary: ${focus.summary}`,
+    ` Coordinate: ${focus.coordinate.laneId}@${focus.coordinate.tick.toString()}`,
+    ` Selected Lane: ${focus.selectedLaneId}`,
+    ` Selected Worldline: ${focus.selectedWorldlineId}`,
+    ` Primary Lane: ${focus.primaryLaneId}`,
+    ` Primary Worldline: ${focus.primaryWorldlineId}`,
+    ` Participating Lanes: ${focus.participatingLaneIds.length.toString()}`
+  ];
+
+  if (focus.parentSiteId !== undefined) {
+    lines.splice(1, 0, ` Parent Site: ${focus.parentSiteId}`);
   }
 
-  return [
-    ` Site: ${site.siteId}`,
-    ` Parent Site: ${site.parentSiteId ?? core.siteId}`,
-    ` Kind: ${site.kind}`,
-    ` Outcome: ${site.outcome}`,
-    ` Label: ${site.label}`,
-    ` Summary: ${site.summary}`,
-    ` Coordinate: ${core.coordinate.laneId}@${core.coordinate.tick.toString()}`,
-    ` Primary Lane: ${core.primaryLaneId}`,
-    ` Participating Lanes: ${core.participatingLaneIds.length.toString()}`
-  ].join("\n");
+  for (const laneId of focus.participatingLaneIds) {
+    lines.push(` Lane: ${laneId}`);
+  }
+
+  return lines.join("\n");
 }
 
 export function buildNeighborhoodSiteItems(
@@ -194,13 +202,6 @@ function contextInfoLines(sessionCtx: SessionContext): string {
   );
 }
 
-function selectedSite(
-  sessionCtx: SessionContext,
-  selectedSiteId: string | null
-): NeighborhoodSiteSummary {
-  return sessionCtx.session.snapshot.neighborhoodSites.selectedSite(selectedSiteId);
-}
-
 function siteListHeight(siteCount: number): number {
   return Math.max(1, Math.min(8, siteCount));
 }
@@ -237,8 +238,11 @@ function buildSiteRailSurface(args: InspectorSurfaceBuildArgs): Surface {
 function buildFocusSurface(args: InspectorSurfaceBuildArgs): Surface {
   return boxFromLines({
     lines: buildNeighborhoodFocusLines(
-      args.sessionCtx.session.snapshot.neighborhoodCore,
-      selectedSite(args.sessionCtx, args.selectedSiteId)
+      NeighborhoodFocusSummary.fromSelection(
+        args.sessionCtx.session.snapshot.neighborhoodCore,
+        args.sessionCtx.session.snapshot.neighborhoodSites,
+        args.selectedSiteId
+      )
     ),
     title: " Neighborhood Focus ",
     width: args.width,
