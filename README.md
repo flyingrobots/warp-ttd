@@ -28,6 +28,10 @@ ticking, comparison, and multi-strand composition.
 It works across hosts. The same debugger protocol serves git-warp,
 Echo, and future WARP-based runtimes through host adapters.
 
+The CLI `--json` surface is the current canonical agent-facing
+interface. MCP is planned as a tool-native delivery adapter over the
+same application core.
+
 **The invariant:** canonical history is never silently rewritten.
 Every continuation from the past is explicit, capability-gated, and
 provenance-bearing.
@@ -107,7 +111,7 @@ node --experimental-strip-types ./src/cli.ts context --json
 ### Tests
 
 ```sh
-npm test                 # fast suite (148 tests)
+npm test                 # fast suite (164 tests)
 npm run test:integration # git-warp integration (10 tests)
 ```
 
@@ -116,7 +120,7 @@ npm run test:integration # git-warp integration (10 tests)
 The host-neutral TTD protocol is defined as a single GraphQL schema:
 
 ```text
-schemas/warp-ttd-protocol.graphql   (v0.2.0)
+schemas/warp-ttd-protocol.graphql   (v0.5.0)
 ```
 
 If you're building a host adapter (Echo, git-warp, or your own), this
@@ -168,6 +172,11 @@ Key concepts:
 
 - [**VISION.md**](VISION.md) — north star: what TTD is, how it
   thinks, where it's going
+- [**docs/BEARING.md**](docs/BEARING.md) — current hill and near-term
+  direction
+- [**docs/CLI.md**](docs/CLI.md) — explicit CLI contract and current
+  agent-facing surface
+- [**docs/MCP.md**](docs/MCP.md) — MCP status and planned tool surface
 - [**METHOD.md**](METHOD.md) — how work moves from idea to shipped code
 - [**CONTRIBUTING.md**](CONTRIBUTING.md) — quickstart, rules, and links
   to [doctrine](docs/design/doctrine.md),

@@ -5,12 +5,14 @@
  * protocol shape: frames indexed by Lamport tick, receipts
  * derived from TickReceipts, lanes from worldlines and strands.
  */
+import type { WarpCore } from "@git-stunts/git-warp";
 import type { TtdHostAdapter } from "../adapter.ts";
 import {
   FrameOutOfRangeError,
   InternalIndexError,
   UnknownHeadError
 } from "../errors.ts";
+import { extractGitWarpEffectEmissions } from "./gitWarpEffectEmissionExtractor.ts";
 import type {
   DeliveryObservationSummary,
   EffectEmissionSummary,
@@ -41,25 +43,21 @@ interface TickReceipt {
   }[];
 }
 
-interface StrandDescriptor {
-  readonly strandId: string;
-  readonly owner: string | null;
-  readonly scope: string | null;
-  readonly overlay: {
-    readonly writable: boolean;
-  };
-}
+type WarpCoreSharedSurface = Pick<
+  WarpCore,
+  "discoverWriters" | "listStrands" | "getNodes" | "getEdges"
+>;
 
-interface WarpCoreLike {
+type GitWarpNodeProps = NonNullable<Awaited<ReturnType<WarpCore["getNodeProps"]>>>;
+
+interface WarpCoreLike<TMaterializedState, TNodeProps extends GitWarpNodeProps>
+  extends WarpCoreSharedSurface {
   materialize(options: { receipts: true; ceiling?: number | null }): Promise<{
-    state: unknown;
+    state: TMaterializedState;
     receipts: TickReceipt[];
   }>;
-  materialize(options?: { receipts?: false; ceiling?: number | null }): Promise<unknown>;
-  discoverWriters(): Promise<string[]>;
-  listStrands(): Promise<StrandDescriptor[]>;
-  getNodes(): Promise<string[]>;
-  getEdges(): Promise<{ from: string; to: string; label: string }[]>;
+  materialize(options?: { receipts?: false; ceiling?: number | null }): Promise<TMaterializedState>;
+  getNodeProps(nodeId: string): Promise<TNodeProps | null>;
 }
 
 /**
@@ -70,6 +68,10 @@ interface IndexedFrame {
   readonly tick: number;
   readonly receipts: TickReceipt[];
 }
+
+type StrandCatalogEntry = Awaited<ReturnType<WarpCoreSharedSurface["listStrands"]>>[number];
+
+const LIVE_WORLDLINE_ID = "wl:live";
 
 // Read the actual installed git-warp version at import time.
 // createRequire is needed because package.json isn't an ES module.
@@ -108,6 +110,41 @@ function buildFrameIndex(receipts: TickReceipt[]): IndexedFrame[] {
   }));
 }
 
+function buildLiveWorldlineLane(): LaneRef {
+  return {
+    id: LIVE_WORLDLINE_ID,
+    kind: "WORLDLINE",
+    worldlineId: LIVE_WORLDLINE_ID,
+    writable: false,
+    description: "Live frontier worldline"
+  };
+}
+
+function describeStrandScope(strand: StrandCatalogEntry): string {
+  return strand.scope !== null && strand.scope !== ""
+    ? ` (${strand.scope})`
+    : "";
+}
+
+function toStrandLane(strand: StrandCatalogEntry): LaneRef {
+  return {
+    id: `ws:${strand.strandId}`,
+    kind: "STRAND",
+    worldlineId: LIVE_WORLDLINE_ID,
+    parentId: LIVE_WORLDLINE_ID,
+    writable: strand.overlay.writable,
+    description: `Strand ${strand.strandId}${describeStrandScope(strand)}`
+  };
+}
+
+async function buildLaneCatalog(
+  graph: Pick<WarpCoreSharedSurface, "listStrands">
+): Promise<LaneRef[]> {
+  const strands = await graph.listStrands();
+
+  return [buildLiveWorldlineLane(), ...strands.map(toStrandLane)];
+}
+
 function requireIndexedFrame(
   frameIndex: IndexedFrame[],
   index: number
@@ -141,17 +178,122 @@ function countOps(
   return { admitted, rejected, counterfactual };
 }
 
-export class GitWarpAdapter implements TtdHostAdapter {
+function requireHead(
+  headStates: ReadonlyMap<string, PlaybackHeadSnapshot>,
+  headId: string
+): PlaybackHeadSnapshot {
+  const head = headStates.get(headId);
+
+  if (!head) {
+    throw new UnknownHeadError(headId);
+  }
+
+  return head;
+}
+
+function resolveRequestedFrameIndex(
+  head: PlaybackHeadSnapshot,
+  frameIndex?: number
+): number {
+  return frameIndex ?? head.currentFrameIndex;
+}
+
+function resolveIndexedFrameForResolvedIndex(
+  frameIndex: IndexedFrame[],
+  resolvedIndex: number
+): IndexedFrame {
+  const maxFrame = frameIndex.length;
+
+  if (resolvedIndex < 0 || resolvedIndex > maxFrame) {
+    throw new FrameOutOfRangeError(resolvedIndex, maxFrame);
+  }
+
+  return requireIndexedFrame(frameIndex, resolvedIndex - 1);
+}
+
+function resolveInputTick(
+  frameIndex: IndexedFrame[],
+  resolvedIndex: number
+): number {
+  if (resolvedIndex === 1) {
+    return 0;
+  }
+
+  return requireIndexedFrame(frameIndex, resolvedIndex - 2).tick;
+}
+
+interface ReceiptSummaryArgs {
+  readonly headId: string;
+  readonly frameIndex: number;
+  readonly outputTick: number;
+  readonly inputTick: number;
+  readonly receipt: TickReceipt;
+}
+
+function toReceiptSummary(args: ReceiptSummaryArgs): ReceiptSummary {
+  const { headId, frameIndex, outputTick, inputTick, receipt } = args;
+  const { admitted, rejected, counterfactual } = countOps(receipt);
+
+  return {
+    receiptId: `receipt:gw:${receipt.patchSha.slice(0, 8)}`,
+    headId,
+    frameIndex,
+    laneId: LIVE_WORLDLINE_ID,
+    worldlineId: LIVE_WORLDLINE_ID,
+    writer: { writerId: receipt.writer, worldlineId: LIVE_WORLDLINE_ID },
+    inputTick,
+    outputTick,
+    admittedRewriteCount: admitted,
+    rejectedRewriteCount: rejected,
+    counterfactualCount: counterfactual,
+    digest: receipt.patchSha,
+    summary: `Writer ${receipt.writer} at lamport ${receipt.lamport.toString()}: ${admitted.toString()} applied, ${rejected.toString()} superseded, ${counterfactual.toString()} redundant`
+  };
+}
+
+function buildGenesisFrame(headId: string, lanes: readonly LaneRef[]): PlaybackFrame {
+  return {
+    headId,
+    frameIndex: 0,
+    lanes: lanes.map((lane) => ({
+      laneId: lane.id,
+      worldlineId: lane.worldlineId,
+      coordinate: { laneId: lane.id, worldlineId: lane.worldlineId, tick: 0 },
+      changed: false
+    }))
+  };
+}
+
+function toLaneFrameView(
+  lane: LaneRef,
+  indexed: IndexedFrame,
+  previousTick: number
+): LaneFrameView {
+  const changed = lane.kind === "WORLDLINE" && indexed.tick !== previousTick;
+  const view: LaneFrameView = {
+    laneId: lane.id,
+    worldlineId: lane.worldlineId,
+    coordinate: { laneId: lane.id, worldlineId: lane.worldlineId, tick: indexed.tick },
+    changed
+  };
+
+  if (changed && indexed.receipts[0]) {
+    view.btrDigest = indexed.receipts[0].patchSha;
+  }
+
+  return view;
+}
+
+export class GitWarpAdapter<TMaterializedState, TNodeProps extends GitWarpNodeProps> implements TtdHostAdapter {
   public readonly adapterName = "git-warp";
 
-  // eslint-disable-next-line no-unused-private-class-members -- retained for future strand operations & live refresh
-  readonly #graph: WarpCoreLike;
+  readonly #graph: WarpCoreLike<TMaterializedState, TNodeProps>;
   readonly #frameIndex: IndexedFrame[];
   readonly #lanes: LaneRef[];
   readonly #headStates = new Map<string, PlaybackHeadSnapshot>();
 
   private constructor(
-    graph: WarpCoreLike,
+    graph: WarpCoreLike<TMaterializedState, TNodeProps>,
     frameIndex: IndexedFrame[],
     lanes: LaneRef[]
   ) {
@@ -179,53 +321,32 @@ export class GitWarpAdapter implements TtdHostAdapter {
    * The frame index is built once from the full materialized receipts.
    * This is a snapshot — it does not auto-refresh on new patches.
    */
-  public static async create(graph: WarpCoreLike): Promise<GitWarpAdapter> {
+  public static async create<TMaterializedState, TNodeProps extends GitWarpNodeProps>(
+    graph: WarpCoreLike<TMaterializedState, TNodeProps>
+  ): Promise<GitWarpAdapter<TMaterializedState, TNodeProps>> {
     const { receipts } = await graph.materialize({ receipts: true });
     const frameIndex = buildFrameIndex(receipts);
-
-    // Build lanes: live worldline + any strands
-    const lanes: LaneRef[] = [
-      {
-        id: "wl:live",
-        kind: "worldline",
-        writable: false,
-        description: "Live frontier worldline"
-      }
-    ];
-
-    const strands = await graph.listStrands();
-
-    for (const strand of strands) {
-      lanes.push({
-        id: `ws:${strand.strandId}`,
-        kind: "strand",
-        parentId: "wl:live",
-        writable: strand.overlay.writable,
-        description: `Strand ${strand.strandId}${strand.scope !== null && strand.scope !== "" ? ` (${strand.scope})` : ""}`
-      });
-    }
+    const lanes = await buildLaneCatalog(graph);
 
     return new GitWarpAdapter(graph, frameIndex, lanes);
   }
 
   public hello(): Promise<HostHello> {
     return Promise.resolve({
-      hostKind: "git-warp",
+      hostKind: "GIT_WARP",
       hostVersion: GIT_WARP_HOST_VERSION,
-      protocolVersion: "0.2.0",
+      protocolVersion: "0.5.0",
       schemaId: "ttd-protocol-git-warp-v1",
       capabilities: [
-        "read:hello",
-        "read:lane-catalog",
-        "read:playback-head",
-        "read:frame",
-        "read:receipts",
-        "read:effect-emissions",
-        "read:delivery-observations",
-        "read:execution-context",
-        "control:step-forward",
-        "control:step-backward",
-        "control:seek"
+        "READ_HELLO",
+        "READ_LANE_CATALOG",
+        "READ_PLAYBACK_HEAD",
+        "READ_FRAME",
+        "READ_RECEIPTS",
+        "READ_EFFECT_EMISSIONS",
+        "CONTROL_STEP_FORWARD",
+        "CONTROL_STEP_BACKWARD",
+        "CONTROL_SEEK"
       ]
     });
   }
@@ -235,86 +356,51 @@ export class GitWarpAdapter implements TtdHostAdapter {
   }
 
   public playbackHead(headId: string): Promise<PlaybackHeadSnapshot> {
-    const head = this.#headStates.get(headId);
-
-    if (!head) {
-      throw new UnknownHeadError(headId);
-    }
-
-    return Promise.resolve({ ...head });
+    return Promise.resolve({ ...requireHead(this.#headStates, headId) });
   }
 
   public frame(headId: string, frameIndex?: number): Promise<PlaybackFrame> {
-    const head = this.#headStates.get(headId);
+    const resolvedIndex = resolveRequestedFrameIndex(
+      requireHead(this.#headStates, headId),
+      frameIndex
+    );
 
-    if (!head) {
-      throw new UnknownHeadError(headId);
-    }
-
-    const resolvedIndex = frameIndex ?? head.currentFrameIndex;
-
-    // Total frames: frame 0 (empty) + one per indexed tick
-    const maxFrame = this.#frameIndex.length;
-
-    if (resolvedIndex < 0 || resolvedIndex > maxFrame) {
-      throw new FrameOutOfRangeError(resolvedIndex, maxFrame);
+    if (resolvedIndex !== 0) {
+      resolveIndexedFrameForResolvedIndex(this.#frameIndex, resolvedIndex);
     }
 
     return Promise.resolve(this.#buildFrame(headId, resolvedIndex));
   }
 
   public receipts(headId: string, frameIndex?: number): Promise<ReceiptSummary[]> {
-    const head = this.#headStates.get(headId);
-
-    if (!head) {
-      throw new UnknownHeadError(headId);
-    }
-
-    const resolvedIndex = frameIndex ?? head.currentFrameIndex;
+    const resolvedIndex = resolveRequestedFrameIndex(
+      requireHead(this.#headStates, headId),
+      frameIndex
+    );
 
     // Frame 0 has no receipts
     if (resolvedIndex === 0) {
       return Promise.resolve([]);
     }
 
-    const maxFrame = this.#frameIndex.length;
+    const indexed = resolveIndexedFrameForResolvedIndex(this.#frameIndex, resolvedIndex);
+    const inputTick = resolveInputTick(this.#frameIndex, resolvedIndex);
 
-    if (resolvedIndex < 0 || resolvedIndex > maxFrame) {
-      throw new FrameOutOfRangeError(resolvedIndex, maxFrame);
-    }
-
-    const indexed = this.#frameIndex[resolvedIndex - 1];
-
-    if (!indexed) {
-      return Promise.resolve([]);
-    }
-
-    return Promise.resolve(indexed.receipts.map((r) => {
-      const { admitted, rejected, counterfactual } = countOps(r);
-
-      return {
-        receiptId: `receipt:gw:${r.patchSha.slice(0, 8)}`,
-        headId,
-        frameIndex: resolvedIndex,
-        laneId: "wl:live",
-        writerId: r.writer,
-        inputTick: resolvedIndex === 1 ? 0 : requireIndexedFrame(this.#frameIndex, resolvedIndex - 2).tick,
-        outputTick: indexed.tick,
-        admittedRewriteCount: admitted,
-        rejectedRewriteCount: rejected,
-        counterfactualCount: counterfactual,
-        digest: r.patchSha,
-        summary: `Writer ${r.writer} at lamport ${r.lamport.toString()}: ${admitted.toString()} applied, ${rejected.toString()} superseded, ${counterfactual.toString()} redundant`
-      };
-    }));
+    return Promise.resolve(
+      indexed.receipts.map((receipt) =>
+        toReceiptSummary({
+          headId,
+          frameIndex: resolvedIndex,
+          outputTick: indexed.tick,
+          inputTick,
+          receipt
+        })
+      )
+    );
   }
 
   public stepForward(headId: string): Promise<PlaybackFrame> {
-    const head = this.#headStates.get(headId);
-
-    if (!head) {
-      throw new UnknownHeadError(headId);
-    }
+    const head = requireHead(this.#headStates, headId);
 
     const maxFrame = this.#frameIndex.length;
     const nextIndex = Math.min(head.currentFrameIndex + 1, maxFrame);
@@ -329,11 +415,7 @@ export class GitWarpAdapter implements TtdHostAdapter {
   }
 
   public stepBackward(headId: string): Promise<PlaybackFrame> {
-    const head = this.#headStates.get(headId);
-
-    if (!head) {
-      throw new UnknownHeadError(headId);
-    }
+    const head = requireHead(this.#headStates, headId);
 
     const prevIndex = Math.max(head.currentFrameIndex - 1, 0);
 
@@ -347,11 +429,7 @@ export class GitWarpAdapter implements TtdHostAdapter {
   }
 
   public seekToFrame(headId: string, frameIndex: number): Promise<PlaybackFrame> {
-    const head = this.#headStates.get(headId);
-
-    if (!head) {
-      throw new UnknownHeadError(headId);
-    }
+    const head = requireHead(this.#headStates, headId);
 
     // maxFrame = #frameIndex.length because frame 0 is synthetic (empty)
     // and real frames are 1-indexed into #frameIndex
@@ -369,61 +447,50 @@ export class GitWarpAdapter implements TtdHostAdapter {
 
   #buildFrame(headId: string, frameIndex: number): PlaybackFrame {
     if (frameIndex === 0) {
-      return {
-        headId,
-        frameIndex: 0,
-        lanes: this.#lanes.map((lane) => ({
-          laneId: lane.id,
-          coordinate: { laneId: lane.id, tick: 0 },
-          changed: false
-        }))
-      };
+      return buildGenesisFrame(headId, this.#lanes);
     }
 
-    const indexed = requireIndexedFrame(this.#frameIndex, frameIndex - 1);
-
-    // Determine previous tick for change detection
-    const prevTick = frameIndex >= 2 ? requireIndexedFrame(this.#frameIndex, frameIndex - 2).tick : 0;
+    const indexed = resolveIndexedFrameForResolvedIndex(this.#frameIndex, frameIndex);
+    const previousTick = resolveInputTick(this.#frameIndex, frameIndex);
 
     return {
       headId,
       frameIndex,
-      lanes: this.#lanes.map((lane) => {
-        const changed = lane.kind === "worldline" && indexed.tick !== prevTick;
-        const view: LaneFrameView = {
-          laneId: lane.id,
-          coordinate: { laneId: lane.id, tick: indexed.tick },
-          changed
-        };
-
-        if (changed && indexed.receipts[0]) {
-          view.btrDigest = indexed.receipts[0].patchSha;
-        }
-
-        return view;
-      })
+      lanes: this.#lanes.map((lane) => toLaneFrameView(lane, indexed, previousTick))
     };
   }
 
-  // --- Effect/delivery inspection (provisional — awaiting git-warp substrate support) ---
+  // --- Effect/delivery inspection ---
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- interface requires frameIndex param
-  public effectEmissions(headId: string, _frameIndex?: number): Promise<EffectEmissionSummary[]> {
-    if (!this.#headStates.has(headId)) {
-      throw new UnknownHeadError(headId);
+  public effectEmissions(headId: string, frameIndex?: number): Promise<EffectEmissionSummary[]> {
+    const resolvedIndex = resolveRequestedFrameIndex(
+      requireHead(this.#headStates, headId),
+      frameIndex
+    );
+
+    if (resolvedIndex === 0) {
+      return Promise.resolve([]);
     }
-    return Promise.resolve([]);
+
+    const indexed = resolveIndexedFrameForResolvedIndex(this.#frameIndex, resolvedIndex);
+
+    return extractGitWarpEffectEmissions({
+      graph: this.#graph,
+      headId,
+      frameIndex: resolvedIndex,
+      indexedFrame: indexed,
+      laneId: LIVE_WORLDLINE_ID,
+      worldlineId: LIVE_WORLDLINE_ID
+    });
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars -- interface requires frameIndex param
   public deliveryObservations(headId: string, _frameIndex?: number): Promise<DeliveryObservationSummary[]> {
-    if (!this.#headStates.has(headId)) {
-      throw new UnknownHeadError(headId);
-    }
+    requireHead(this.#headStates, headId);
     return Promise.resolve([]);
   }
 
   public executionContext(): Promise<ExecutionContext> {
-    return Promise.resolve({ mode: "live" });
+    return Promise.resolve({ mode: "DEBUG" });
   }
 }

@@ -101,12 +101,42 @@ have a scheduler; it returns null or a simplified analog.
 ### 7. WriterHeadKey composite
 
 Echo uses `WriterHeadKey { worldlineId, headId }` as a composite
-key. The protocol has `writerId: String` on `ReceiptSummary` — a
-flat string that loses the worldline association.
+key.
 
-**Proposed change:** Add `worldlineId` alongside `writerId` on
-receipt and effect summaries. Or add a `WriterRef { writerId,
-worldlineId }` type.
+**Status:** landed for the current protocol surface. `ReceiptSummary.writer`
+and `EffectEmissionSummary.producerWriter` now use an explicit
+`WriterRef { writerId, worldlineId, headId? }` runtime form instead of
+flat writer strings, so hosts that know the exact writer head can
+surface it without forcing hosts like git-warp to invent one.
+
+### 8. Explicit worldline identity outside lane naming
+
+Today TTD can usually infer worldline identity from `LaneRef.id`,
+`LaneRef.kind`, and `parentId`, but that is still inference. A lane id
+like `wl:main` or `ws:sandbox` is a local convention, not a typed
+causal identity contract. The host should provide worldline identity
+directly instead of making the debugger recover it from prefixes or
+tree shape.
+
+This matters most for:
+- strand receipts and effects that should still name their owning or
+  root worldline explicitly
+- writer/head identity, where worldline and head form a real composite
+  key in Echo
+- future cross-host comparison, where local lane labels may differ but
+  causal identity should not
+
+**Status:** landed for the current minimum surface. The protocol now
+names explicit `worldlineId` on `LaneRef`, `Coordinate`,
+`LaneFrameView`, `ReceiptSummary`, and `EffectEmissionSummary`, so TTD
+does not have to reconstruct worldline identity from `wl:` / `ws:`
+prefixes or parent-chain shape.
+
+**Remaining gap:** Echo's exact `WriterHeadKey { worldlineId, headId }`
+is still only projected through `WriterRef.headId`, not elevated to its
+own protocol noun. If TTD grows control or routing surfaces that target
+writer heads directly, the next honest move is a first-class
+`WriterHeadKey` type in the debugger protocol itself.
 
 ## How Echo's runtime works (for protocol designers)
 

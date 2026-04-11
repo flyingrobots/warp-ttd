@@ -18,38 +18,66 @@ import type { FrameData } from "../src/tui/worldlineLayout.ts";
 // Fixtures
 // ---------------------------------------------------------------------------
 
-function makeLane(id: string, kind: "worldline" | "strand", parentId?: string): LaneRef {
-  return { id, kind, ...(parentId !== undefined ? { parentId } : {}), writable: kind === "worldline", description: `${kind} ${id}` };
+function makeLane(id: string, kind: "WORLDLINE" | "STRAND", parentId?: string): LaneRef {
+  return {
+    id,
+    kind,
+    worldlineId: kind === "WORLDLINE" ? id : (parentId ?? "wl:main"),
+    ...(parentId !== undefined ? { parentId } : {}),
+    writable: kind === "WORLDLINE",
+    description: `${kind.toLowerCase()} ${id}`
+  };
+}
+
+function withDigest(laneFrame: LaneFrameView, btrDigest?: string): LaneFrameView {
+  if (btrDigest === undefined) {
+    return laneFrame;
+  }
+
+  return { ...laneFrame, btrDigest };
 }
 
 function makeLaneFrame(laneId: string, tick: number, opts?: {
   changed?: boolean;
   btrDigest?: string;
+  worldlineId?: string;
 }): LaneFrameView {
-  return {
+  const worldlineId = opts?.worldlineId ?? laneId;
+
+  return withDigest({
     laneId,
-    coordinate: { laneId, tick },
-    changed: opts?.changed ?? false,
-    ...(opts?.btrDigest !== undefined ? { btrDigest: opts.btrDigest } : {}),
-  };
+    worldlineId,
+    coordinate: { laneId, worldlineId, tick },
+    changed: opts?.changed === true,
+  }, opts?.btrDigest);
 }
 
 interface ReceiptOpts {
   laneId: string;
+  worldlineId?: string;
   writerId: string;
+  headId?: string;
   frameIndex: number;
   admitted?: number;
   rejected?: number;
   counterfactual?: number;
 }
 
+function resolveReceiptWorldlineId(opts: ReceiptOpts): string {
+  return opts.worldlineId ?? opts.laneId;
+}
+
 function makeReceipt(opts: ReceiptOpts): ReceiptSummary {
+  const worldlineId = resolveReceiptWorldlineId(opts);
   return {
     receiptId: `receipt:${opts.laneId}:${String(opts.frameIndex)}`,
     headId: "head:default",
     frameIndex: opts.frameIndex,
     laneId: opts.laneId,
-    writerId: opts.writerId,
+    worldlineId,
+    writer: opts.headId === undefined
+      ? { writerId: opts.writerId, worldlineId }
+      : { writerId: opts.writerId, worldlineId, headId: opts.headId },
     inputTick: opts.frameIndex,
     outputTick: opts.frameIndex + 1,
     admittedRewriteCount: opts.admitted ?? 1,
@@ -62,8 +90,8 @@ function makeReceipt(opts: ReceiptOpts): ReceiptSummary {
 
 function makeHistory(): { catalog: LaneRef[]; frames: FrameData[] } {
   const catalog = [
-    makeLane("wl:main", "worldline"),
-    makeLane("strand:experiment", "strand", "wl:main"),
+    makeLane("wl:main", "WORLDLINE"),
+    makeLane("strand:experiment", "STRAND", "wl:main"),
   ];
 
   return {
@@ -73,8 +101,14 @@ function makeHistory(): { catalog: LaneRef[]; frames: FrameData[] } {
       { frameIndex: 1, lanes: [makeLaneFrame("wl:main", 1, { changed: true, btrDigest: "def5678" })], receipts: [makeReceipt({ laneId: "wl:main", writerId: "alice", frameIndex: 1 })] },
       {
         frameIndex: 2,
-        lanes: [makeLaneFrame("wl:main", 2, { changed: true, btrDigest: "ghi9012" }), makeLaneFrame("strand:experiment", 1, { changed: true, btrDigest: "jkl3456" })],
-        receipts: [makeReceipt({ laneId: "wl:main", writerId: "alice", frameIndex: 2, admitted: 2, rejected: 1 }), makeReceipt({ laneId: "strand:experiment", writerId: "bob", frameIndex: 2 })],
+        lanes: [
+          makeLaneFrame("wl:main", 2, { changed: true, btrDigest: "ghi9012" }),
+          makeLaneFrame("strand:experiment", 1, { changed: true, btrDigest: "jkl3456", worldlineId: "wl:main" })
+        ],
+        receipts: [
+          makeReceipt({ laneId: "wl:main", writerId: "alice", frameIndex: 2, admitted: 2, rejected: 1 }),
+          makeReceipt({ laneId: "strand:experiment", worldlineId: "wl:main", writerId: "bob", frameIndex: 2 })
+        ],
       },
       { frameIndex: 3, lanes: [makeLaneFrame("wl:main", 3, { changed: true, btrDigest: "mno7890" })], receipts: [makeReceipt({ laneId: "wl:main", writerId: "carol", frameIndex: 3 })] },
       {
@@ -103,8 +137,21 @@ test("buildTickRows includes writer attribution from receipts", () => {
   const rows = buildTickRows(frames, catalog);
   const frame4 = rows[0];
   assert.ok(frame4 !== undefined);
-  assert.ok(frame4.writers.includes("alice"));
-  assert.ok(frame4.writers.includes("bob"));
+  assert.ok(frame4.writers.includes("alice@wl:main"));
+  assert.ok(frame4.writers.includes("bob@wl:main"));
+});
+
+test("buildTickRows includes exact writer head identity when present", () => {
+  const { catalog } = makeHistory();
+  const frames: FrameData[] = [
+    {
+      frameIndex: 1,
+      lanes: [makeLaneFrame("wl:main", 1, { changed: true, btrDigest: "def5678" })],
+      receipts: [makeReceipt({ laneId: "wl:main", writerId: "alice", headId: "head:writer:alice", frameIndex: 1 })]
+    }
+  ];
+  const rows = buildTickRows(frames, catalog);
+  assert.equal(rows[0]?.writers[0], "alice@wl:main#head:writer:alice");
 });
 
 test("buildTickRows marks frames with rejected rewrites as conflicted", () => {

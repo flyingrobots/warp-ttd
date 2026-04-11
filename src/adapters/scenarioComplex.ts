@@ -32,7 +32,7 @@ interface Receipt {
 interface Emission {
   effectKind: string;
   laneId: string;
-  deliveries: { sinkId: string; outcome: "delivered" | "suppressed" | "failed" | "skipped"; reason: string }[];
+  deliveries: { sinkId: string; outcome: "DELIVERED" | "SUPPRESSED" | "FAILED" | "SKIPPED"; reason: string }[];
 }
 
 interface FrameSpec {
@@ -90,9 +90,9 @@ function hotfixReceipts(tick: number): Receipt[] {
 function tickEmissions(tick: number): Emission[] {
   if (tick % 25 !== 0) return [];
   const kind = tick % 50 === 0 ? "checkpoint" : "diagnostic";
-  const deliveries: Emission["deliveries"] = [{ sinkId: "sink:log", outcome: "delivered", reason: "Periodic diagnostic." }];
+  const deliveries: Emission["deliveries"] = [{ sinkId: "sink:log", outcome: "DELIVERED", reason: "Periodic diagnostic." }];
   if (tick % 50 === 0) {
-    deliveries.push({ sinkId: "sink:storage", outcome: "delivered", reason: "Checkpoint persisted." });
+    deliveries.push({ sinkId: "sink:storage", outcome: "DELIVERED", reason: "Checkpoint persisted." });
   }
   return [{ effectKind: kind, laneId: "wl:alpha", deliveries }];
 }
@@ -117,14 +117,14 @@ function buildFrames(): FrameSpec[] {
 
 export function scenarioComplexWorldline(): TtdHostAdapter {
   return buildScenario({
-    hostKind: "git-warp",
-    executionMode: "live",
+    hostKind: "GIT_WARP",
+    executionMode: "LIVE",
     lanes: [
-      { id: "wl:alpha", kind: "worldline", writable: false },
-      { id: "wl:beta", kind: "worldline", writable: false },
-      { id: "strand:long-lived", kind: "strand", writable: true, parentId: "wl:alpha" },
-      { id: "strand:feature-a", kind: "strand", writable: true, parentId: "wl:alpha" },
-      { id: "strand:hotfix", kind: "strand", writable: true, parentId: "wl:alpha" },
+      { id: "wl:alpha", kind: "WORLDLINE", writable: false },
+      { id: "wl:beta", kind: "WORLDLINE", writable: false },
+      { id: "strand:long-lived", kind: "STRAND", writable: true, parentId: "wl:alpha" },
+      { id: "strand:feature-a", kind: "STRAND", writable: true, parentId: "wl:alpha" },
+      { id: "strand:hotfix", kind: "STRAND", writable: true, parentId: "wl:alpha" },
     ],
     frames: buildFrames(),
   });

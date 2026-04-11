@@ -8,6 +8,23 @@
  */
 import { randomUUID } from "node:crypto";
 import type { TtdHostAdapter } from "../adapter.ts";
+import type { EffectKind } from "../EffectKind.ts";
+import {
+  NeighborhoodCoreSummary,
+  type SerializedNeighborhoodCoreSummary
+} from "./NeighborhoodCoreSummary.ts";
+import {
+  NeighborhoodSiteCatalog,
+  type SerializedNeighborhoodSiteCatalog
+} from "./NeighborhoodSiteCatalog.ts";
+import {
+  ReintegrationDetailSummary,
+  type SerializedReintegrationDetailSummary
+} from "./ReintegrationDetailSummary.ts";
+import {
+  ReceiptShellSummary,
+  type SerializedReceiptShellSummary
+} from "./ReceiptShellSummary.ts";
 import type {
   DeliveryObservationSummary,
   EffectEmissionSummary,
@@ -28,6 +45,10 @@ export interface SessionSnapshot {
   emissions: EffectEmissionSummary[];
   observations: DeliveryObservationSummary[];
   execCtx: ExecutionContext;
+  neighborhoodCore: NeighborhoodCoreSummary;
+  neighborhoodSites: NeighborhoodSiteCatalog;
+  reintegrationDetail: ReintegrationDetailSummary;
+  receiptShell: ReceiptShellSummary;
 }
 
 export interface PinnedObservation {
@@ -36,11 +57,85 @@ export interface PinnedObservation {
   emission: EffectEmissionSummary;
 }
 
+export interface SerializedEffectEmissionSummary
+  extends Omit<EffectEmissionSummary, "effectKind"> {
+  effectKind: string;
+}
+
+export interface SerializedSessionSnapshot {
+  head: PlaybackHeadSnapshot;
+  frame: PlaybackFrame;
+  receipts: ReceiptSummary[];
+  emissions: SerializedEffectEmissionSummary[];
+  observations: DeliveryObservationSummary[];
+  execCtx: ExecutionContext;
+  neighborhoodCore: SerializedNeighborhoodCoreSummary;
+  neighborhoodSites: SerializedNeighborhoodSiteCatalog;
+  reintegrationDetail: SerializedReintegrationDetailSummary;
+  receiptShell: SerializedReceiptShellSummary;
+}
+
+export interface SerializedPinnedObservation
+  extends Omit<PinnedObservation, "emission"> {
+  emission: SerializedEffectEmissionSummary;
+}
+
 export interface SerializedSession {
   sessionId: string;
   activeHeadId: string;
-  snapshot: SessionSnapshot;
-  pins: PinnedObservation[];
+  snapshot: SerializedSessionSnapshot;
+  pins: SerializedPinnedObservation[];
+}
+
+function cloneEffectKind(kind: EffectKind): EffectKind {
+  return kind.clone();
+}
+
+function cloneEffectEmissionSummary(emission: EffectEmissionSummary): EffectEmissionSummary {
+  return {
+    ...structuredClone(emission),
+    coordinate: structuredClone(emission.coordinate),
+    producerWriter: structuredClone(emission.producerWriter),
+    effectKind: cloneEffectKind(emission.effectKind)
+  };
+}
+
+function serializeEffectEmissionSummary(
+  emission: EffectEmissionSummary
+): SerializedEffectEmissionSummary {
+  return {
+    ...structuredClone(emission),
+    coordinate: structuredClone(emission.coordinate),
+    producerWriter: structuredClone(emission.producerWriter),
+    effectKind: emission.effectKind.toString()
+  };
+}
+
+function serializeSnapshot(
+  snapshot: SessionSnapshot
+): SerializedSessionSnapshot {
+  return {
+    head: structuredClone(snapshot.head),
+    frame: structuredClone(snapshot.frame),
+    receipts: structuredClone(snapshot.receipts),
+    emissions: snapshot.emissions.map((emission) => serializeEffectEmissionSummary(emission)),
+    observations: structuredClone(snapshot.observations),
+    execCtx: structuredClone(snapshot.execCtx),
+    neighborhoodCore: snapshot.neighborhoodCore.toJSON(),
+    neighborhoodSites: snapshot.neighborhoodSites.toJSON(),
+    reintegrationDetail: snapshot.reintegrationDetail.toJSON(),
+    receiptShell: snapshot.receiptShell.toJSON()
+  };
+}
+
+function serializePinnedObservation(
+  pin: PinnedObservation
+): SerializedPinnedObservation {
+  return {
+    pinnedAt: pin.pinnedAt,
+    observation: structuredClone(pin.observation),
+    emission: serializeEffectEmissionSummary(pin.emission)
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -128,7 +223,7 @@ export class DebuggerSession {
     const pinned: PinnedObservation = {
       pinnedAt: this.#snapshot.frame.frameIndex,
       observation: structuredClone(obs),
-      emission: structuredClone(emission)
+      emission: cloneEffectEmissionSummary(emission)
     };
     this.#pins.push(pinned);
     return pinned;
@@ -147,8 +242,8 @@ export class DebuggerSession {
     return {
       sessionId: this.sessionId,
       activeHeadId: this.#activeHeadId,
-      snapshot: structuredClone(this.#snapshot),
-      pins: structuredClone(this.#pins)
+      snapshot: serializeSnapshot(this.#snapshot),
+      pins: this.#pins.map((pin) => serializePinnedObservation(pin))
     };
   }
 }
@@ -156,6 +251,28 @@ export class DebuggerSession {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
+
+function buildNeighborhoodState(
+  frame: PlaybackFrame,
+  receipts: readonly ReceiptSummary[],
+  emissions: readonly EffectEmissionSummary[]
+): Pick<
+  SessionSnapshot,
+  "neighborhoodCore" | "neighborhoodSites" | "reintegrationDetail" | "receiptShell"
+> {
+  const neighborhoodCore = NeighborhoodCoreSummary.fromFrame(frame, receipts, emissions);
+
+  return {
+    neighborhoodCore,
+    neighborhoodSites: NeighborhoodSiteCatalog.fromCore(neighborhoodCore),
+    reintegrationDetail: ReintegrationDetailSummary.fromSnapshot(
+      frame,
+      neighborhoodCore,
+      receipts
+    ),
+    receiptShell: ReceiptShellSummary.fromReceipts(neighborhoodCore, receipts)
+  };
+}
 
 async function fetchSnapshot(
   adapter: TtdHostAdapter,
@@ -167,5 +284,15 @@ async function fetchSnapshot(
   const emissions = await adapter.effectEmissions(headId);
   const observations = await adapter.deliveryObservations(headId);
   const execCtx = await adapter.executionContext();
-  return { head, frame, receipts, emissions, observations, execCtx };
+  const neighborhoodState = buildNeighborhoodState(frame, receipts, emissions);
+
+  return {
+    head,
+    frame,
+    receipts,
+    emissions,
+    observations,
+    execCtx,
+    ...neighborhoodState
+  };
 }

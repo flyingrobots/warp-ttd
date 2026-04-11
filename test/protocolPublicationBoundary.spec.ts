@@ -15,6 +15,21 @@ const SCHEMA_PATH = path.join(ROOT, "schemas", "warp-ttd-protocol.graphql");
 const PROTOCOL_MIRROR_PATH = path.join(ROOT, "src", "protocol.ts");
 const README_PATH = path.join(ROOT, "README.md");
 
+function extractSchemaEnumValues(schemaContent: string, enumName: string): string[] {
+  const match = new RegExp(`enum\\s+${enumName}\\s*\\{([\\s\\S]*?)\\}`, "m").exec(schemaContent);
+  assert.ok(match?.[1] !== undefined, `Schema enum ${enumName} should exist`);
+  return match[1]
+    .split("\n")
+    .map((line) => line.replace(/#.*/, "").trim())
+    .filter((line) => line.length > 0);
+}
+
+function extractMirrorUnionValues(mirrorContent: string, typeName: string): string[] {
+  const match = new RegExp(`export\\s+type\\s+${typeName}\\s*=([\\s\\S]*?);`, "m").exec(mirrorContent);
+  assert.ok(match?.[1] !== undefined, `Mirror type ${typeName} should exist`);
+  return [...match[1].matchAll(/"([A-Z_]+)"/g)].map((item) => item[1] ?? "");
+}
+
 // ─── Agent PQ 1: Can the agent identify exactly one authored protocol source?
 
 test("exactly one authored protocol schema exists", () => {
@@ -108,6 +123,27 @@ test("every exported interface in protocol mirror has a matching type in the sch
       schemaContent,
       new RegExp(`(?:type|enum)\\s+${typeName}\\b`),
       `Mirror exports '${typeName}' but schema has no matching type or enum`,
+    );
+  }
+});
+
+test("protocol mirror enum unions match the authored schema literals", () => {
+  const mirrorContent = fs.readFileSync(PROTOCOL_MIRROR_PATH, "utf-8");
+  const schemaContent = fs.readFileSync(SCHEMA_PATH, "utf-8");
+
+  const enumNames = [
+    "HostKind",
+    "LaneKind",
+    "Capability",
+    "DeliveryOutcome",
+    "ExecutionMode",
+  ];
+
+  for (const enumName of enumNames) {
+    assert.deepEqual(
+      extractMirrorUnionValues(mirrorContent, enumName),
+      extractSchemaEnumValues(schemaContent, enumName),
+      `Mirror enum ${enumName} should follow the authored schema literals exactly`,
     );
   }
 });

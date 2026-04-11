@@ -8,6 +8,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { initDefaultContext } from "@flyingrobots/bijou-node";
 import { surfaceToString } from "@flyingrobots/bijou";
+import { EffectKind } from "../src/EffectKind.ts";
 import {
   buildLaneTree,
   buildPositionBar,
@@ -23,6 +24,10 @@ import {
   HORIZONTAL_THRESHOLD
 } from "../src/tui/navigatorLayout.ts";
 import type { SessionSnapshot } from "../src/app/debuggerSession.ts";
+import { NeighborhoodCoreSummary } from "../src/app/NeighborhoodCoreSummary.ts";
+import { NeighborhoodSiteCatalog } from "../src/app/NeighborhoodSiteCatalog.ts";
+import { ReintegrationDetailSummary } from "../src/app/ReintegrationDetailSummary.ts";
+import { ReceiptShellSummary } from "../src/app/ReceiptShellSummary.ts";
 import type {
   Capability,
   DeliveryObservationSummary,
@@ -38,64 +43,145 @@ const bijouCtx = initDefaultContext();
 // ---------------------------------------------------------------------------
 
 const ALL_CAPS: Capability[] = [
-  "read:hello", "read:lane-catalog", "read:playback-head",
-  "read:frame", "read:receipts", "read:effect-emissions",
-  "read:delivery-observations", "read:execution-context",
-  "control:step-forward", "control:step-backward", "control:seek"
+  "READ_HELLO", "READ_LANE_CATALOG", "READ_PLAYBACK_HEAD",
+  "READ_FRAME", "READ_RECEIPTS", "READ_EFFECT_EMISSIONS",
+  "READ_DELIVERY_OBSERVATIONS", "READ_EXECUTION_CONTEXT",
+  "CONTROL_STEP_FORWARD", "CONTROL_STEP_BACKWARD", "CONTROL_SEEK"
 ];
 
 function capsWithout(...exclude: Capability[]): Capability[] {
   return ALL_CAPS.filter((c) => !exclude.includes(c));
 }
 
-function makeLane(id: string, kind: "worldline" | "strand", parentId?: string): LaneRef {
-  const ref: LaneRef = { id, kind, writable: kind === "strand", description: `${kind} ${id}` };
+function makeLane(id: string, kind: "WORLDLINE" | "STRAND", parentId?: string): LaneRef {
+  const displayKind = kind.toLowerCase();
+  const ref: LaneRef = {
+    id,
+    kind,
+    worldlineId: kind === "WORLDLINE" ? id : (parentId ?? "wl:main"),
+    writable: kind === "STRAND",
+    description: `${displayKind} ${id}`
+  };
   if (parentId !== undefined) {
     ref.parentId = parentId;
   }
   return ref;
 }
 
-function makeReceipt(laneId: string, writerId: string, frameIndex: number): ReceiptSummary {
+interface ReceiptArgs {
+  laneId: string;
+  writerId: string;
+  frameIndex: number;
+  headId?: string;
+}
+
+function makeReceipt(args: ReceiptArgs): ReceiptSummary {
   return {
-    receiptId: `receipt:test:${laneId}:${writerId}`,
-    headId: "head:default", frameIndex, laneId, writerId,
-    inputTick: frameIndex - 1, outputTick: frameIndex,
+    receiptId: `receipt:test:${args.laneId}:${args.writerId}`,
+    headId: "head:default",
+    frameIndex: args.frameIndex,
+    laneId: args.laneId,
+    worldlineId: args.laneId,
+    writer: args.headId === undefined
+      ? { writerId: args.writerId, worldlineId: args.laneId }
+      : { writerId: args.writerId, worldlineId: args.laneId, headId: args.headId },
+    inputTick: args.frameIndex - 1, outputTick: args.frameIndex,
     admittedRewriteCount: 2, rejectedRewriteCount: 0, counterfactualCount: 0,
-    digest: "digest:test", summary: `${writerId} wrote to ${laneId}`
+    digest: "digest:test", summary: `${args.writerId} wrote to ${args.laneId}`
   };
 }
 
 function makeEmission(laneId: string, kind: string, frameIndex: number): EffectEmissionSummary {
   return {
     emissionId: `emit:test:${kind}:${laneId}`,
-    headId: "head:default", frameIndex, laneId,
-    coordinate: { laneId, tick: frameIndex },
-    effectKind: kind, producerWriterId: "test-writer",
+    headId: "head:default", frameIndex, laneId, worldlineId: laneId,
+    coordinate: { laneId, worldlineId: laneId, tick: frameIndex },
+    effectKind: EffectKind.from(kind), producerWriter: { writerId: "test-writer", worldlineId: laneId, headId: "head:writer:test" },
     summary: `${kind} at ${laneId}`
   };
 }
 
-interface ObsArgs { emissionId: string; sinkId: string; outcome: "delivered" | "suppressed"; frameIndex: number }
+interface ObsArgs { emissionId: string; sinkId: string; outcome: "DELIVERED" | "SUPPRESSED"; frameIndex: number }
 function makeObservation(args: ObsArgs): DeliveryObservationSummary {
   return {
     observationId: `obs:test:${args.sinkId}`,
     emissionId: args.emissionId, headId: "head:default", frameIndex: args.frameIndex,
-    sinkId: args.sinkId, outcome: args.outcome, reason: "test", executionMode: "live",
-    summary: `${args.outcome} to ${args.sinkId}`
+    sinkId: args.sinkId, outcome: args.outcome, reason: "test", executionMode: "LIVE",
+    summary: `${args.outcome.toLowerCase()} to ${args.sinkId}`
   };
 }
 
 function makeSnap(overrides: Partial<SessionSnapshot> = {}): SessionSnapshot {
+  const neighborhoodCore = makeNeighborhoodCore();
+  const neighborhoodSites = NeighborhoodSiteCatalog.fromCore(neighborhoodCore);
+  const reintegrationDetail = makeReintegrationDetail(neighborhoodCore.siteId);
+  const receiptShell = makeReceiptShell(neighborhoodCore.siteId);
+
   return {
     head: { headId: "head:default", label: "Test Head", currentFrameIndex: 1, trackedLaneIds: ["wl:main"], writableLaneIds: [], paused: true },
-    frame: { headId: "head:default", frameIndex: 1, lanes: [{ laneId: "wl:main", coordinate: { laneId: "wl:main", tick: 1 }, changed: true }] },
-    receipts: [makeReceipt("wl:main", "alice", 1)],
+    frame: { headId: "head:default", frameIndex: 1, lanes: [{ laneId: "wl:main", worldlineId: "wl:main", coordinate: { laneId: "wl:main", worldlineId: "wl:main", tick: 1 }, changed: true }] },
+    receipts: [makeReceipt({ laneId: "wl:main", writerId: "alice", frameIndex: 1 })],
     emissions: [makeEmission("wl:main", "diagnostic", 1)],
-    observations: [makeObservation({ emissionId: "emit:test:diagnostic:wl:main", sinkId: "sink:tui-log", outcome: "delivered", frameIndex: 1 })],
-    execCtx: { mode: "live" },
+    observations: [makeObservation({ emissionId: "emit:test:diagnostic:wl:main", sinkId: "sink:tui-log", outcome: "DELIVERED", frameIndex: 1 })],
+    execCtx: { mode: "LIVE" },
+    neighborhoodCore,
+    neighborhoodSites,
+    reintegrationDetail,
+    receiptShell,
     ...overrides
   };
+}
+
+function makeNeighborhoodCore(): NeighborhoodCoreSummary {
+  return new NeighborhoodCoreSummary({
+    siteId: "site:head:default:1:wl:main",
+    headId: "head:default",
+    frameIndex: 1,
+    coordinate: { laneId: "wl:main", worldlineId: "wl:main", tick: 1 },
+    primaryLaneId: "wl:main",
+    primaryWorldlineId: "wl:main",
+    participatingLaneIds: ["wl:main"],
+    outcome: "LAWFUL",
+    alternatives: [],
+    summary: "1 lane(s), 0 alternative(s), lawful"
+  });
+}
+
+function makeReintegrationDetail(siteId: string): ReintegrationDetailSummary {
+  return new ReintegrationDetailSummary({
+    siteId,
+    anchors: [{
+      anchorId: "anchor:wl:main:primary",
+      kind: "PRIMARY_LANE",
+      laneId: "wl:main",
+      worldlineId: "wl:main",
+      summary: "Primary lane wl:main"
+    }],
+    obligations: [{
+      obligationId: "obligation:receipt:test:wl:main:alice:admission",
+      kind: "REWRITE_ADMISSION",
+      status: "SATISFIED",
+      summary: "wl:main rewrite admission satisfied"
+    }],
+    evidence: [{
+      evidenceId: "evidence:receipt:test:wl:main:alice",
+      obligationId: "obligation:receipt:test:wl:main:alice:admission",
+      visibility: "RECEIPT_DIGEST",
+      summary: "receipt:test:wl:main:alice (digest:test)"
+    }],
+    summary: "1 anchor(s), 1 obligation(s), 1 evidence handle(s)"
+  });
+}
+
+function makeReceiptShell(siteId: string): ReceiptShellSummary {
+  return new ReceiptShellSummary({
+    siteId,
+    receiptIds: ["receipt:test:wl:main:alice"],
+    candidateCount: 2,
+    rejectedCount: 0,
+    hasBlockingRelation: false,
+    summary: "2 candidate(s), 0 rejected, non-blocking"
+  });
 }
 
 function renderToString(surface: ReturnType<typeof renderNavigator>): string {
@@ -107,11 +193,11 @@ function renderToString(surface: ReturnType<typeof renderNavigator>): string {
 // ---------------------------------------------------------------------------
 
 test("hasCap returns true for present capability", () => {
-  assert.equal(hasCap(ALL_CAPS, "read:receipts"), true);
+  assert.equal(hasCap(ALL_CAPS, "READ_RECEIPTS"), true);
 });
 
 test("hasCap returns false for absent capability", () => {
-  assert.equal(hasCap(capsWithout("read:receipts"), "read:receipts"), false);
+  assert.equal(hasCap(capsWithout("READ_RECEIPTS"), "READ_RECEIPTS"), false);
 });
 
 test("pluralize: singular and plural", () => {
@@ -138,11 +224,11 @@ test("truncateRows: over budget", () => {
 
 test("buildLaneTree: depth-first pre-order with strands under parents", () => {
   const catalog = [
-    makeLane("wl:main", "worldline"),
-    makeLane("ws:alpha", "strand", "wl:main"),
-    makeLane("wl:secondary", "worldline"),
-    makeLane("ws:beta", "strand", "wl:main"),
-    makeLane("ws:gamma", "strand", "ws:alpha")
+    makeLane("wl:main", "WORLDLINE"),
+    makeLane("ws:alpha", "STRAND", "wl:main"),
+    makeLane("wl:secondary", "WORLDLINE"),
+    makeLane("ws:beta", "STRAND", "wl:main"),
+    makeLane("ws:gamma", "STRAND", "ws:alpha")
   ];
   const tree = buildLaneTree(catalog);
   const ids = tree.map((l) => l.id);
@@ -150,7 +236,7 @@ test("buildLaneTree: depth-first pre-order with strands under parents", () => {
 });
 
 test("buildLaneTree: roots only (no strands)", () => {
-  const catalog = [makeLane("wl:a", "worldline"), makeLane("wl:b", "worldline")];
+  const catalog = [makeLane("wl:a", "WORLDLINE"), makeLane("wl:b", "WORLDLINE")];
   const tree = buildLaneTree(catalog);
   assert.deepEqual(tree.map((l) => l.id), ["wl:a", "wl:b"]);
 });
@@ -160,7 +246,7 @@ test("buildLaneTree: roots only (no strands)", () => {
 // ---------------------------------------------------------------------------
 
 test("position bar: wide format with all capabilities", () => {
-  const bar = buildPositionBar({ snap: makeSnap(), caps: ALL_CAPS, catalog: [makeLane("wl:main", "worldline")], wide: true });
+  const bar = buildPositionBar({ snap: makeSnap(), caps: ALL_CAPS, catalog: [makeLane("wl:main", "WORLDLINE")], wide: true });
   assert.ok(bar.includes("Frame 1"));
   assert.ok(bar.includes("wl:main"));
   assert.ok(bar.includes("live"));
@@ -169,18 +255,18 @@ test("position bar: wide format with all capabilities", () => {
 });
 
 test("position bar: narrow format", () => {
-  const bar = buildPositionBar({ snap: makeSnap(), caps: ALL_CAPS, catalog: [makeLane("wl:main", "worldline")], wide: false });
+  const bar = buildPositionBar({ snap: makeSnap(), caps: ALL_CAPS, catalog: [makeLane("wl:main", "WORLDLINE")], wide: false });
   assert.ok(bar.includes("1r"));
   assert.ok(bar.includes("1e"));
 });
 
 test("position bar: receipts unsupported", () => {
-  const bar = buildPositionBar({ snap: makeSnap(), caps: capsWithout("read:receipts"), catalog: [makeLane("wl:main", "worldline")], wide: true });
+  const bar = buildPositionBar({ snap: makeSnap(), caps: capsWithout("READ_RECEIPTS"), catalog: [makeLane("wl:main", "WORLDLINE")], wide: true });
   assert.ok(bar.includes("receipts: unsupported"));
 });
 
 test("position bar: effects unsupported", () => {
-  const bar = buildPositionBar({ snap: makeSnap(), caps: capsWithout("read:effect-emissions"), catalog: [makeLane("wl:main", "worldline")], wide: true });
+  const bar = buildPositionBar({ snap: makeSnap(), caps: capsWithout("READ_EFFECT_EMISSIONS"), catalog: [makeLane("wl:main", "WORLDLINE")], wide: true });
   assert.ok(bar.includes("effects: unsupported"));
 });
 
@@ -189,7 +275,7 @@ test("position bar: effects unsupported", () => {
 // ---------------------------------------------------------------------------
 
 test("buildLaneLines: shows changed marker from receipts", () => {
-  const catalog = [makeLane("wl:main", "worldline"), makeLane("wl:other", "worldline")];
+  const catalog = [makeLane("wl:main", "WORLDLINE"), makeLane("wl:other", "WORLDLINE")];
   const snap = makeSnap();
   const { lines } = buildLaneLines(catalog, snap, true);
   const mainLine = lines.find((l) => l.includes("wl:main"));
@@ -201,13 +287,13 @@ test("buildLaneLines: shows changed marker from receipts", () => {
 });
 
 test("buildLaneLines: omits Chg column when receipts unsupported", () => {
-  const catalog = [makeLane("wl:main", "worldline")];
+  const catalog = [makeLane("wl:main", "WORLDLINE")];
   const { header } = buildLaneLines(catalog, makeSnap(), false);
   assert.ok(!header.includes("Chg"));
 });
 
 test("buildLaneLines: shows tree connectors for strands", () => {
-  const catalog = [makeLane("wl:main", "worldline"), makeLane("ws:child", "strand", "wl:main")];
+  const catalog = [makeLane("wl:main", "WORLDLINE"), makeLane("ws:child", "STRAND", "wl:main")];
   const { lines } = buildLaneLines(catalog, makeSnap(), true);
   const childLine = lines.find((l) => l.includes("ws:child"));
   assert.ok(childLine !== undefined);
@@ -215,7 +301,7 @@ test("buildLaneLines: shows tree connectors for strands", () => {
 });
 
 test("buildLaneLines: truncation with overflow message", () => {
-  const catalog = Array.from({ length: 12 }, (...[, i]) => makeLane(`wl:lane${i.toString()}`, "worldline"));
+  const catalog = Array.from({ length: 12 }, (...[, i]) => makeLane(`wl:lane${i.toString()}`, "WORLDLINE"));
   const { lines, total } = buildLaneLines(catalog, makeSnap(), true);
   assert.equal(total, 12);
   assert.ok(lines.length <= 9); // 8 visible + overflow message
@@ -229,24 +315,28 @@ test("buildLaneLines: truncation with overflow message", () => {
 test("buildReceiptRows: sorted by lane then writer", () => {
   const snap = makeSnap({
     receipts: [
-      makeReceipt("wl:b", "bob", 1),
-      makeReceipt("wl:a", "alice", 1),
-      makeReceipt("wl:a", "carol", 1)
+      makeReceipt({ laneId: "wl:b", writerId: "bob", frameIndex: 1 }),
+      makeReceipt({ laneId: "wl:a", writerId: "alice", frameIndex: 1, headId: "head:writer:2" }),
+      makeReceipt({ laneId: "wl:a", writerId: "alice", frameIndex: 1, headId: "head:writer:1" }),
+      makeReceipt({ laneId: "wl:a", writerId: "carol", frameIndex: 1 })
     ]
   });
   const { rows } = buildReceiptRows(snap, 10);
   assert.ok(rows[0] !== undefined);
   assert.equal(rows[0][0], "wl:a");
-  assert.equal(rows[0][1], "alice");
+  assert.equal(rows[0][1], "alice@wl:a#head:writer:1");
   assert.ok(rows[1] !== undefined);
   assert.equal(rows[1][0], "wl:a");
-  assert.equal(rows[1][1], "carol");
+  assert.equal(rows[1][1], "alice@wl:a#head:writer:2");
   assert.ok(rows[2] !== undefined);
-  assert.equal(rows[2][0], "wl:b");
+  assert.equal(rows[2][0], "wl:a");
+  assert.equal(rows[2][1], "carol@wl:a");
+  assert.ok(rows[3] !== undefined);
+  assert.equal(rows[3][0], "wl:b");
 });
 
 test("buildEffectRows: delivery unsupported shows placeholder", () => {
-  const caps = capsWithout("read:delivery-observations");
+  const caps = capsWithout("READ_DELIVERY_OBSERVATIONS");
   const snap = makeSnap();
   const { rows } = buildEffectRows(snap, caps, 10);
   assert.equal(rows.length, 1);
@@ -275,8 +365,8 @@ test("buildEffectRows: truncation", () => {
 
 test("buildPinLines: within budget", () => {
   const pins = [
-    { pinnedAt: 1, observation: makeObservation({ emissionId: "e1", sinkId: "sink:a", outcome: "delivered", frameIndex: 1 }), emission: makeEmission("wl:main", "diag", 1) },
-    { pinnedAt: 2, observation: makeObservation({ emissionId: "e2", sinkId: "sink:b", outcome: "suppressed", frameIndex: 2 }), emission: makeEmission("wl:main", "notif", 2) }
+    { pinnedAt: 1, observation: makeObservation({ emissionId: "e1", sinkId: "sink:a", outcome: "DELIVERED", frameIndex: 1 }), emission: makeEmission("wl:main", "diag", 1) },
+    { pinnedAt: 2, observation: makeObservation({ emissionId: "e2", sinkId: "sink:b", outcome: "SUPPRESSED", frameIndex: 2 }), emission: makeEmission("wl:main", "notif", 2) }
   ];
   const { lines, total } = buildPinLines(pins);
   assert.equal(total, 2);
@@ -286,7 +376,7 @@ test("buildPinLines: within budget", () => {
 test("buildPinLines: over budget shows overflow", () => {
   const pins = Array.from({ length: 5 }, (...[, i]) => ({
     pinnedAt: i,
-    observation: makeObservation({ emissionId: `e${i.toString()}`, sinkId: `sink:${i.toString()}`, outcome: "delivered", frameIndex: i }),
+    observation: makeObservation({ emissionId: `e${i.toString()}`, sinkId: `sink:${i.toString()}`, outcome: "DELIVERED", frameIndex: i }),
     emission: makeEmission("wl:main", "diag", i)
   }));
   const { lines, total } = buildPinLines(pins);
@@ -301,7 +391,7 @@ test("buildPinLines: over budget shows overflow", () => {
 test("renderNavigator: wide terminal renders position bar with full counts", () => {
   const output = renderToString(renderNavigator({
     snap: makeSnap(), caps: ALL_CAPS,
-    catalog: [makeLane("wl:main", "worldline")],
+    catalog: [makeLane("wl:main", "WORLDLINE")],
     pins: [], error: null, jumpInput: null,
     w: 120, h: 40, ctx: bijouCtx
   }));
@@ -313,7 +403,7 @@ test("renderNavigator: wide terminal renders position bar with full counts", () 
 test("renderNavigator: narrow terminal renders compact counts", () => {
   const output = renderToString(renderNavigator({
     snap: makeSnap(), caps: ALL_CAPS,
-    catalog: [makeLane("wl:main", "worldline")],
+    catalog: [makeLane("wl:main", "WORLDLINE")],
     pins: [], error: null, jumpInput: null,
     w: 80, h: 40, ctx: bijouCtx
   }));
@@ -324,12 +414,12 @@ test("renderNavigator: narrow terminal renders compact counts", () => {
 test("renderNavigator: frame 0 shows no activity", () => {
   const snap = makeSnap({
     head: { headId: "head:default", label: "Test", currentFrameIndex: 0, trackedLaneIds: ["wl:main"], writableLaneIds: [], paused: true },
-    frame: { headId: "head:default", frameIndex: 0, lanes: [{ laneId: "wl:main", coordinate: { laneId: "wl:main", tick: 0 }, changed: false }] },
+    frame: { headId: "head:default", frameIndex: 0, lanes: [{ laneId: "wl:main", worldlineId: "wl:main", coordinate: { laneId: "wl:main", worldlineId: "wl:main", tick: 0 }, changed: false }] },
     receipts: [], emissions: [], observations: []
   });
   const output = renderToString(renderNavigator({
     snap, caps: ALL_CAPS,
-    catalog: [makeLane("wl:main", "worldline")],
+    catalog: [makeLane("wl:main", "WORLDLINE")],
     pins: [], error: null, jumpInput: null,
     w: 100, h: 40, ctx: bijouCtx
   }));
@@ -338,10 +428,10 @@ test("renderNavigator: frame 0 shows no activity", () => {
 });
 
 test("renderNavigator: no receipts capability omits receipt section", () => {
-  const caps = capsWithout("read:receipts");
+  const caps = capsWithout("READ_RECEIPTS");
   const output = renderToString(renderNavigator({
     snap: makeSnap(), caps,
-    catalog: [makeLane("wl:main", "worldline")],
+    catalog: [makeLane("wl:main", "WORLDLINE")],
     pins: [], error: null, jumpInput: null,
     w: 100, h: 40, ctx: bijouCtx
   }));
@@ -350,10 +440,10 @@ test("renderNavigator: no receipts capability omits receipt section", () => {
 });
 
 test("renderNavigator: no effects capability omits effects section", () => {
-  const caps = capsWithout("read:effect-emissions");
+  const caps = capsWithout("READ_EFFECT_EMISSIONS");
   const output = renderToString(renderNavigator({
     snap: makeSnap(), caps,
-    catalog: [makeLane("wl:main", "worldline")],
+    catalog: [makeLane("wl:main", "WORLDLINE")],
     pins: [], error: null, jumpInput: null,
     w: 100, h: 40, ctx: bijouCtx
   }));
@@ -363,9 +453,9 @@ test("renderNavigator: no effects capability omits effects section", () => {
 
 test("renderNavigator: multi-strand tree shows connectors", () => {
   const catalog = [
-    makeLane("wl:main", "worldline"),
-    makeLane("ws:alpha", "strand", "wl:main"),
-    makeLane("ws:beta", "strand", "wl:main")
+    makeLane("wl:main", "WORLDLINE"),
+    makeLane("ws:alpha", "STRAND", "wl:main"),
+    makeLane("ws:beta", "STRAND", "wl:main")
   ];
   const output = renderToString(renderNavigator({
     snap: makeSnap(), caps: ALL_CAPS, catalog,
@@ -378,7 +468,7 @@ test("renderNavigator: multi-strand tree shows connectors", () => {
 test("renderNavigator: keybinding hints always visible", () => {
   const output = renderToString(renderNavigator({
     snap: makeSnap(), caps: ALL_CAPS,
-    catalog: [makeLane("wl:main", "worldline")],
+    catalog: [makeLane("wl:main", "WORLDLINE")],
     pins: [], error: null, jumpInput: null,
     w: 100, h: 40, ctx: bijouCtx
   }));
@@ -390,7 +480,7 @@ test("renderNavigator: keybinding hints always visible", () => {
 test("renderNavigator: jump prompt replaces keybinding hints", () => {
   const output = renderToString(renderNavigator({
     snap: makeSnap(), caps: ALL_CAPS,
-    catalog: [makeLane("wl:main", "worldline")],
+    catalog: [makeLane("wl:main", "WORLDLINE")],
     pins: [], error: null, jumpInput: "42",
     w: 100, h: 40, ctx: bijouCtx
   }));

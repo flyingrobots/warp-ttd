@@ -2,14 +2,16 @@
 // The authored contract lives in schemas/warp-ttd-protocol.graphql.
 // Keep this file in sync with the schema; do not treat it as peer authority.
 // TODO(cycle-0011): Replace with Wesley-generated types; sync verification deferred until vendoring.
+import type { EffectKind } from "./EffectKind.ts";
 
-export type HostKind = "echo" | "git-warp";
+export type HostKind = "ECHO" | "GIT_WARP";
 
-export type LaneKind = "worldline" | "strand";
+export type LaneKind = "WORLDLINE" | "STRAND";
 
 export interface LaneRef {
   id: string;
   kind: LaneKind;
+  worldlineId: string;
   parentId?: string;
   writable: boolean;
   description: string;
@@ -17,25 +19,26 @@ export interface LaneRef {
 
 export interface Coordinate {
   laneId: string;
+  worldlineId: string;
   tick: number;
 }
 
-export type DeliveryOutcome = "delivered" | "suppressed" | "failed" | "skipped";
+export type DeliveryOutcome = "DELIVERED" | "SUPPRESSED" | "FAILED" | "SKIPPED";
 
-export type ExecutionMode = "live" | "replay" | "debug";
+export type ExecutionMode = "LIVE" | "REPLAY" | "DEBUG";
 
 export type Capability =
-  | "read:hello"
-  | "read:lane-catalog"
-  | "read:playback-head"
-  | "read:frame"
-  | "read:receipts"
-  | "read:effect-emissions"
-  | "read:delivery-observations"
-  | "read:execution-context"
-  | "control:step-forward"
-  | "control:step-backward"
-  | "control:seek";
+  | "READ_HELLO"
+  | "READ_LANE_CATALOG"
+  | "READ_PLAYBACK_HEAD"
+  | "READ_FRAME"
+  | "READ_RECEIPTS"
+  | "READ_EFFECT_EMISSIONS"
+  | "READ_DELIVERY_OBSERVATIONS"
+  | "READ_EXECUTION_CONTEXT"
+  | "CONTROL_STEP_FORWARD"
+  | "CONTROL_STEP_BACKWARD"
+  | "CONTROL_SEEK";
 
 export interface HostHello {
   hostKind: HostKind;
@@ -60,6 +63,7 @@ export interface PlaybackHeadSnapshot {
 
 export interface LaneFrameView {
   laneId: string;
+  worldlineId: string;
   coordinate: Coordinate;
   changed: boolean;
   btrDigest?: string;
@@ -71,12 +75,19 @@ export interface PlaybackFrame {
   lanes: LaneFrameView[];
 }
 
+export interface WriterRef {
+  writerId: string;
+  worldlineId: string;
+  headId?: string;
+}
+
 export interface ReceiptSummary {
   receiptId: string;
   headId: string;
   frameIndex: number;
   laneId: string;
-  writerId?: string;
+  worldlineId: string;
+  writer?: WriterRef;
   inputTick: number;
   outputTick: number;
   admittedRewriteCount: number;
@@ -91,9 +102,10 @@ export interface EffectEmissionSummary {
   headId: string;
   frameIndex: number;
   laneId: string;
+  worldlineId: string;
   coordinate: Coordinate;
-  effectKind: string;
-  producerWriterId: string;
+  effectKind: EffectKind;
+  producerWriter: WriterRef;
   summary: string;
 }
 
@@ -115,4 +127,26 @@ export interface ExecutionContext {
   sessionId?: string;
   observerId?: string;
   apertureId?: string;
+}
+
+export function formatLaneKind(kind: LaneKind): string {
+  return kind === "WORLDLINE" ? "worldline" : "strand";
+}
+
+export function formatExecutionMode(mode: ExecutionMode): string {
+  return mode.toLowerCase();
+}
+
+export function formatDeliveryOutcome(outcome: DeliveryOutcome): string {
+  return outcome.toLowerCase();
+}
+
+export function formatWriterRef(writer: WriterRef): string {
+  const identity = `${writer.writerId}@${writer.worldlineId}`;
+
+  if (writer.headId === undefined) {
+    return identity;
+  }
+
+  return `${identity}#${writer.headId}`;
 }

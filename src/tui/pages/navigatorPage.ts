@@ -9,6 +9,7 @@ import {
 } from "@flyingrobots/bijou";
 import type { BijouContext, Surface } from "@flyingrobots/bijou";
 import type { FramePage } from "@flyingrobots/bijou-tui";
+import { formatEffectKind } from "../../EffectKind.ts";
 import { renderWaveShader } from "../shaders/bgShader.ts";
 import { renderNavigator } from "../navigatorLayout.ts";
 import { centerBox, isPageMsg, type SessionContext } from "./shared.ts";
@@ -164,7 +165,7 @@ export function navigatorPage(ctx: BijouContext): FramePage<NavigatorModel, Navi
         const obs = session.snapshot.observations[0];
         if (obs !== undefined) {
           const pinned = session.pin(obs.observationId);
-          const label = pinned !== null ? pinned.emission.effectKind : "observation";
+          const label = pinned !== null ? formatEffectKind(pinned.emission.effectKind) : "observation";
           return [{ ...model, error: `Pinned: ${label} at frame ${session.snapshot.frame.frameIndex.toString()}` }, []];
         }
         return [{ ...model, error: "Nothing to pin — no observations at this frame" }, []];
@@ -174,7 +175,7 @@ export function navigatorPage(ctx: BijouContext): FramePage<NavigatorModel, Navi
         const lastPin = session.pins[session.pins.length - 1];
         if (lastPin !== undefined) {
           session.unpin(lastPin.observation.observationId);
-          return [{ ...model, error: `Unpinned: ${lastPin.emission.effectKind} from frame ${lastPin.pinnedAt.toString()}` }, []];
+          return [{ ...model, error: `Unpinned: ${formatEffectKind(lastPin.emission.effectKind)} from frame ${lastPin.pinnedAt.toString()}` }, []];
         }
         return [{ ...model, error: "No pins to remove" }, []];
       }
