@@ -13,6 +13,8 @@ import type { BijouContext, Surface } from "@flyingrobots/bijou";
 import type { FramePage } from "@flyingrobots/bijou-tui";
 import { renderWaveShader } from "../shaders/bgShader.ts";
 import { centerBox, isPageMsg, type SessionContext } from "./shared.ts";
+import type { ReintegrationDetailSummary } from "../../app/ReintegrationDetailSummary.ts";
+import type { ReceiptShellSummary } from "../../app/ReceiptShellSummary.ts";
 
 // ---------------------------------------------------------------------------
 // Model
@@ -32,22 +34,87 @@ type InspectorMsg =
   | { type: "session-ready"; ctx: SessionContext }
   | { type: "disconnect" };
 
-// ---------------------------------------------------------------------------
-// Layout
-// ---------------------------------------------------------------------------
+export function buildReintegrationLines(detail: ReintegrationDetailSummary): string {
+  const lines = [
+    ` Site: ${detail.siteId}`,
+    ` Summary: ${detail.summary}`,
+  ];
 
-function renderInspector(model: InspectorModel, w: number, h: number, ctx: BijouContext): Surface {
-  if (model.sessionCtx === null) {
-    const bg = renderWaveShader(w, h, model.time);
-    return centerBox(bg, stringToSurface(" Connect to a host first.", 40, 1), "Inspector", ctx);
+  for (const anchor of detail.anchors) {
+    lines.push(` Anchor: ${anchor.kind} ${anchor.laneId ?? anchor.anchorId}`);
   }
 
-  const { session, hello, catalog } = model.sessionCtx;
-  const snap = session.snapshot;
-  const final = createSurface(w, h);
-  final.fill({ char: " " });
+  for (const obligation of detail.obligations) {
+    lines.push(` Obligation: ${obligation.kind} [${obligation.status}]`);
+  }
 
-  const hostInfo = vstack(
+  for (const evidence of detail.evidence) {
+    lines.push(` Evidence: ${evidence.visibility} ${evidence.evidenceId}`);
+  }
+
+  return lines.join("\n");
+}
+
+export function buildReceiptShellLines(shell: ReceiptShellSummary): string {
+  const lines = [
+    ` Site: ${shell.siteId}`,
+    ` Summary: ${shell.summary}`,
+    ` Receipts: ${shell.receiptIds.length.toString()}`,
+    ` Candidates: ${shell.candidateCount.toString()}`,
+    ` Rejected: ${shell.rejectedCount.toString()}`,
+    ` Blocking: ${shell.hasBlockingRelation ? "yes" : "no"}`
+  ];
+
+  for (const receiptId of shell.receiptIds) {
+    lines.push(` Receipt: ${receiptId}`);
+  }
+
+  return lines.join("\n");
+}
+
+function hasReintegrationContent(detail: ReintegrationDetailSummary): boolean {
+  return detail.anchors.length > 0 || detail.obligations.length > 0;
+}
+
+interface InspectorRenderArgs {
+  model: InspectorModel;
+  size: { w: number; h: number };
+  ctx: BijouContext;
+}
+
+interface BoxBlitArgs {
+  final: Surface;
+  content: string;
+  title: string;
+  width: number;
+  y: number;
+  ctx: BijouContext;
+}
+
+interface InspectorDetailBlitArgs {
+  final: Surface;
+  sessionCtx: SessionContext;
+  width: number;
+  startY: number;
+  ctx: BijouContext;
+}
+
+interface InspectorOverviewBlitArgs {
+  final: Surface;
+  sessionCtx: SessionContext;
+  width: number;
+  ctx: BijouContext;
+}
+
+function disconnectedInspectorSurface(args: InspectorRenderArgs): Surface {
+  const { model, size, ctx } = args;
+  const bg = renderWaveShader(size.w, size.h, model.time);
+  return centerBox(bg, stringToSurface(" Connect to a host first.", 40, 1), "Inspector", ctx);
+}
+
+function hostInfoLines(sessionCtx: SessionContext): string {
+  const { session, hello } = sessionCtx;
+  return vstack(
     ` Host Kind:    ${hello.hostKind}`,
     ` Version:      ${hello.hostVersion}`,
     ` Protocol:     ${hello.protocolVersion}`,
@@ -55,36 +122,114 @@ function renderInspector(model: InspectorModel, w: number, h: number, ctx: Bijou
     ` Capabilities: ${hello.capabilities.length.toString()}`,
     ` Session:      ${session.sessionId.slice(0, 8)}`,
   );
-  const hostSurf = stringToSurface(hostInfo, w - 4, hostInfo.split("\n").length);
-  final.blit(boxSurface(hostSurf, { title: " Host ", width: w - 2, ctx }), 1, 1);
+}
 
-  const laneLines = catalog.lanes
+function laneInfoLines(sessionCtx: SessionContext): string {
+  return sessionCtx.catalog.lanes
     .map((l) => {
       const rw = l.writable ? "rw" : "ro";
       const parent = l.parentId !== undefined ? ` < ${l.parentId}` : "";
       return `  [${rw}] ${l.id.padEnd(16)} ${l.kind}${parent}`;
     })
     .join("\n");
-  const laneSurf = stringToSurface(laneLines, w - 4, laneLines.split("\n").length);
-  final.blit(boxSurface(laneSurf, { title: " Lanes ", width: w - 2, ctx }), 1, hostSurf.height + 3);
+}
 
-  if (snap.receipts.length > 0) {
-    const detailLines = snap.receipts.map((r) =>
-      vstack(
-        `  ${r.receiptId}`,
-        `    Lane: ${r.laneId}  Tick: ${r.inputTick.toString()} -> ${r.outputTick.toString()}`,
-        `    Admitted: ${r.admittedRewriteCount.toString()}  Rejected: ${r.rejectedRewriteCount.toString()}  Counterfactual: ${r.counterfactualCount.toString()}`,
-        `    ${r.summary}`,
-      ),
-    ).join("\n");
-    const detailSurf = stringToSurface(detailLines, w - 4, detailLines.split("\n").length);
-    final.blit(
-      boxSurface(detailSurf, { title: " Receipt Detail ", width: w - 2, ctx }),
-      1, hostSurf.height + laneSurf.height + 5,
-    );
+function blitBox(args: BoxBlitArgs): number {
+  const surface = stringToSurface(args.content, args.width - 2, args.content.split("\n").length);
+  const boxed = boxSurface(surface, { title: args.title, width: args.width, ctx: args.ctx });
+  args.final.blit(boxed, 1, args.y);
+  return boxed.height;
+}
+
+function blitInspectorDetails(args: InspectorDetailBlitArgs): void {
+  const { snapshot } = args.sessionCtx.session;
+  const detailLines = buildReintegrationLines(snapshot.reintegrationDetail);
+  const detailVisible = hasReintegrationContent(snapshot.reintegrationDetail);
+  let y = args.startY;
+
+  if (detailVisible) {
+    y += blitBox({
+      final: args.final,
+      content: detailLines,
+      title: " Reintegration Detail ",
+      width: args.width,
+      y,
+      ctx: args.ctx
+    }) + 1;
   }
 
+  if (snapshot.receiptShell.receiptIds.length > 0) {
+    blitBox({
+      final: args.final,
+      content: buildReceiptShellLines(snapshot.receiptShell),
+      title: " Receipt Shell ",
+      width: args.width,
+      y,
+      ctx: args.ctx
+    });
+  }
+}
+
+function blitInspectorOverview(args: InspectorOverviewBlitArgs): number {
+  const hostHeight = blitBox({
+    final: args.final,
+    content: hostInfoLines(args.sessionCtx),
+    title: " Host ",
+    width: args.width,
+    y: 1,
+    ctx: args.ctx
+  });
+  const laneHeight = blitBox({
+    final: args.final,
+    content: laneInfoLines(args.sessionCtx),
+    title: " Lanes ",
+    width: args.width,
+    y: hostHeight + 3,
+    ctx: args.ctx
+  });
+
+  return hostHeight + laneHeight + 5;
+}
+
+function connectedInspectorSurface(args: InspectorRenderArgs): Surface {
+  const { model, size, ctx } = args;
+  const final = createSurface(size.w, size.h);
+  const sessionCtx = model.sessionCtx;
+
+  if (sessionCtx === null) {
+    throw new TypeError("connectedInspectorSurface requires a session context");
+  }
+
+  final.fill({ char: " " });
+
+  const boxWidth = size.w - 2;
+  const detailStartY = blitInspectorOverview({
+    final,
+    sessionCtx,
+    width: boxWidth,
+    ctx
+  });
+  blitInspectorDetails({
+    final,
+    sessionCtx,
+    width: boxWidth,
+    startY: detailStartY,
+    ctx
+  });
+
   return final;
+}
+
+// ---------------------------------------------------------------------------
+// Layout
+// ---------------------------------------------------------------------------
+
+function renderInspector(args: InspectorRenderArgs): Surface {
+  if (args.model.sessionCtx === null) {
+    return disconnectedInspectorSurface(args);
+  }
+
+  return connectedInspectorSurface(args);
 }
 
 // ---------------------------------------------------------------------------
@@ -102,7 +247,7 @@ export function inspectorPage(ctx: BijouContext): FramePage<InspectorModel, Insp
     title: "Inspector",
     init: () => [initial, []],
 
-    update: (msg, model) => {
+    update: (msg, model): [InspectorModel, []] => {
       if (!isPageMsg<InspectorMsg>(msg)) return [model, []];
       const m = msg;
       if (m.type === "pulse") return [{ ...model, time: model.time + m.dt }, []];
@@ -113,7 +258,7 @@ export function inspectorPage(ctx: BijouContext): FramePage<InspectorModel, Insp
     layout: (model) => ({
       kind: "pane" as const,
       paneId: "main",
-      render: (w: number, h: number) => renderInspector(model, w, h, ctx),
+      render: (w: number, h: number) => renderInspector({ model, size: { w, h }, ctx }),
     }),
   };
 }

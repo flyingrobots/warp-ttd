@@ -25,6 +25,8 @@ import {
 } from "../src/tui/navigatorLayout.ts";
 import type { SessionSnapshot } from "../src/app/debuggerSession.ts";
 import { NeighborhoodCoreSummary } from "../src/app/NeighborhoodCoreSummary.ts";
+import { ReintegrationDetailSummary } from "../src/app/ReintegrationDetailSummary.ts";
+import { ReceiptShellSummary } from "../src/app/ReceiptShellSummary.ts";
 import type {
   Capability,
   DeliveryObservationSummary,
@@ -109,6 +111,10 @@ function makeObservation(args: ObsArgs): DeliveryObservationSummary {
 }
 
 function makeSnap(overrides: Partial<SessionSnapshot> = {}): SessionSnapshot {
+  const neighborhoodCore = makeNeighborhoodCore();
+  const reintegrationDetail = makeReintegrationDetail(neighborhoodCore.siteId);
+  const receiptShell = makeReceiptShell(neighborhoodCore.siteId);
+
   return {
     head: { headId: "head:default", label: "Test Head", currentFrameIndex: 1, trackedLaneIds: ["wl:main"], writableLaneIds: [], paused: true },
     frame: { headId: "head:default", frameIndex: 1, lanes: [{ laneId: "wl:main", worldlineId: "wl:main", coordinate: { laneId: "wl:main", worldlineId: "wl:main", tick: 1 }, changed: true }] },
@@ -116,20 +122,63 @@ function makeSnap(overrides: Partial<SessionSnapshot> = {}): SessionSnapshot {
     emissions: [makeEmission("wl:main", "diagnostic", 1)],
     observations: [makeObservation({ emissionId: "emit:test:diagnostic:wl:main", sinkId: "sink:tui-log", outcome: "DELIVERED", frameIndex: 1 })],
     execCtx: { mode: "LIVE" },
-    neighborhoodCore: new NeighborhoodCoreSummary({
-      siteId: "site:head:default:1:wl:main",
-      headId: "head:default",
-      frameIndex: 1,
-      coordinate: { laneId: "wl:main", worldlineId: "wl:main", tick: 1 },
-      primaryLaneId: "wl:main",
-      primaryWorldlineId: "wl:main",
-      participatingLaneIds: ["wl:main"],
-      outcome: "LAWFUL",
-      alternatives: [],
-      summary: "1 lane(s), 0 alternative(s), lawful"
-    }),
+    neighborhoodCore,
+    reintegrationDetail,
+    receiptShell,
     ...overrides
   };
+}
+
+function makeNeighborhoodCore(): NeighborhoodCoreSummary {
+  return new NeighborhoodCoreSummary({
+    siteId: "site:head:default:1:wl:main",
+    headId: "head:default",
+    frameIndex: 1,
+    coordinate: { laneId: "wl:main", worldlineId: "wl:main", tick: 1 },
+    primaryLaneId: "wl:main",
+    primaryWorldlineId: "wl:main",
+    participatingLaneIds: ["wl:main"],
+    outcome: "LAWFUL",
+    alternatives: [],
+    summary: "1 lane(s), 0 alternative(s), lawful"
+  });
+}
+
+function makeReintegrationDetail(siteId: string): ReintegrationDetailSummary {
+  return new ReintegrationDetailSummary({
+    siteId,
+    anchors: [{
+      anchorId: "anchor:wl:main:primary",
+      kind: "PRIMARY_LANE",
+      laneId: "wl:main",
+      worldlineId: "wl:main",
+      summary: "Primary lane wl:main"
+    }],
+    obligations: [{
+      obligationId: "obligation:receipt:test:wl:main:alice:admission",
+      kind: "REWRITE_ADMISSION",
+      status: "SATISFIED",
+      summary: "wl:main rewrite admission satisfied"
+    }],
+    evidence: [{
+      evidenceId: "evidence:receipt:test:wl:main:alice",
+      obligationId: "obligation:receipt:test:wl:main:alice:admission",
+      visibility: "RECEIPT_DIGEST",
+      summary: "receipt:test:wl:main:alice (digest:test)"
+    }],
+    summary: "1 anchor(s), 1 obligation(s), 1 evidence handle(s)"
+  });
+}
+
+function makeReceiptShell(siteId: string): ReceiptShellSummary {
+  return new ReceiptShellSummary({
+    siteId,
+    receiptIds: ["receipt:test:wl:main:alice"],
+    candidateCount: 2,
+    rejectedCount: 0,
+    hasBlockingRelation: false,
+    summary: "2 candidate(s), 0 rejected, non-blocking"
+  });
 }
 
 function renderToString(surface: ReturnType<typeof renderNavigator>): string {

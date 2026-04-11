@@ -36,6 +36,8 @@ test("create() produces a valid initial snapshot at frame 0", async () => {
   assert.equal(snap.neighborhoodCore.headId, HEAD_ID);
   assert.equal(snap.neighborhoodCore.frameIndex, 0);
   assert.deepEqual(snap.neighborhoodCore.participatingLaneIds, ["wl:main"]);
+  assert.equal(snap.reintegrationDetail.siteId, snap.neighborhoodCore.siteId);
+  assert.equal(snap.receiptShell.siteId, snap.neighborhoodCore.siteId);
 });
 
 test("create() starts with no pins", async () => {
@@ -84,6 +86,8 @@ test("navigation fetches receipts and emissions for the new frame", async () => 
   assert.ok(snap.emissions.length > 0);
   assert.deepEqual(snap.neighborhoodCore.participatingLaneIds, ["wl:main"]);
   assert.equal(snap.neighborhoodCore.outcome, "LAWFUL");
+  assert.equal(snap.reintegrationDetail.obligations.length, 1);
+  assert.equal(snap.receiptShell.rejectedCount, 0);
 });
 
 test("neighborhood core tracks obstruction and alternatives at the active frame", async () => {
@@ -93,6 +97,8 @@ test("neighborhood core tracks obstruction and alternatives at the active frame"
   assert.deepEqual(session.snapshot.neighborhoodCore.participatingLaneIds, ["ws:sandbox"]);
   assert.equal(session.snapshot.neighborhoodCore.outcome, "OBSTRUCTED");
   assert.equal(session.snapshot.neighborhoodCore.alternatives.length, 1);
+  assert.equal(session.snapshot.reintegrationDetail.obligations.length, 2);
+  assert.equal(session.snapshot.receiptShell.hasBlockingRelation, true);
   assert.equal(
     session.snapshot.neighborhoodCore.buildDisplayCatalog(await createAdapter().laneCatalog().then((catalog) => catalog.lanes)).map((lane) => lane.id).join(","),
     "wl:main,ws:sandbox"
@@ -174,6 +180,8 @@ test("toJSON() returns a serializable representation", async () => {
   assert.equal(json.pins.length, 1);
   assert.equal(json.snapshot.neighborhoodCore.headId, HEAD_ID);
   assert.equal(typeof json.snapshot.neighborhoodCore.summary, "string");
+  assert.equal(typeof json.snapshot.reintegrationDetail.summary, "string");
+  assert.equal(typeof json.snapshot.receiptShell.summary, "string");
 
   // Must be JSON-serializable (no circular refs, no class instances)
   assert.doesNotThrow(() => JSON.stringify(json));

@@ -13,6 +13,14 @@ import {
   NeighborhoodCoreSummary,
   type SerializedNeighborhoodCoreSummary
 } from "./NeighborhoodCoreSummary.ts";
+import {
+  ReintegrationDetailSummary,
+  type SerializedReintegrationDetailSummary
+} from "./ReintegrationDetailSummary.ts";
+import {
+  ReceiptShellSummary,
+  type SerializedReceiptShellSummary
+} from "./ReceiptShellSummary.ts";
 import type {
   DeliveryObservationSummary,
   EffectEmissionSummary,
@@ -34,6 +42,8 @@ export interface SessionSnapshot {
   observations: DeliveryObservationSummary[];
   execCtx: ExecutionContext;
   neighborhoodCore: NeighborhoodCoreSummary;
+  reintegrationDetail: ReintegrationDetailSummary;
+  receiptShell: ReceiptShellSummary;
 }
 
 export interface PinnedObservation {
@@ -55,6 +65,8 @@ export interface SerializedSessionSnapshot {
   observations: DeliveryObservationSummary[];
   execCtx: ExecutionContext;
   neighborhoodCore: SerializedNeighborhoodCoreSummary;
+  reintegrationDetail: SerializedReintegrationDetailSummary;
+  receiptShell: SerializedReceiptShellSummary;
 }
 
 export interface SerializedPinnedObservation
@@ -103,7 +115,9 @@ function serializeSnapshot(
     emissions: snapshot.emissions.map((emission) => serializeEffectEmissionSummary(emission)),
     observations: structuredClone(snapshot.observations),
     execCtx: structuredClone(snapshot.execCtx),
-    neighborhoodCore: snapshot.neighborhoodCore.toJSON()
+    neighborhoodCore: snapshot.neighborhoodCore.toJSON(),
+    reintegrationDetail: snapshot.reintegrationDetail.toJSON(),
+    receiptShell: snapshot.receiptShell.toJSON()
   };
 }
 
@@ -242,5 +256,21 @@ async function fetchSnapshot(
   const observations = await adapter.deliveryObservations(headId);
   const execCtx = await adapter.executionContext();
   const neighborhoodCore = NeighborhoodCoreSummary.fromFrame(frame, receipts, emissions);
-  return { head, frame, receipts, emissions, observations, execCtx, neighborhoodCore };
+  const reintegrationDetail = ReintegrationDetailSummary.fromSnapshot(
+    frame,
+    neighborhoodCore,
+    receipts
+  );
+  const receiptShell = ReceiptShellSummary.fromReceipts(neighborhoodCore, receipts);
+  return {
+    head,
+    frame,
+    receipts,
+    emissions,
+    observations,
+    execCtx,
+    neighborhoodCore,
+    reintegrationDetail,
+    receiptShell
+  };
 }
