@@ -107,6 +107,10 @@ test("fromFrame derives participating lanes from changed lanes, receipts, and em
   assert.deepEqual(core.participatingLaneIds, ["ws:sandbox"]);
   assert.equal(core.outcome, "OBSTRUCTED");
   assert.equal(core.alternatives.length, 1);
+  const firstAlternative = core.alternatives[0];
+  assert.ok(firstAlternative);
+  assert.equal(firstAlternative.laneId, "ws:sandbox");
+  assert.equal(firstAlternative.worldlineId, "wl:main");
   assert.match(core.summary, /1 lane\(s\), 1 alternative\(s\), obstructed/);
 });
 

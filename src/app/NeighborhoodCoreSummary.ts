@@ -5,6 +5,8 @@ export type NeighborhoodOutcome = "LAWFUL" | "OBSTRUCTED" | "PENDING";
 export interface NeighborhoodAlternativeSummary {
   alternativeId: string;
   kind: string;
+  laneId: string;
+  worldlineId: string;
   outcome: NeighborhoodOutcome;
   summary: string;
 }
@@ -101,6 +103,8 @@ function deriveAlternatives(
     .map((receipt) => ({
       alternativeId: `alt:${receipt.receiptId}`,
       kind: "COUNTERFACTUAL",
+      laneId: receipt.laneId,
+      worldlineId: receipt.worldlineId,
       outcome: "PENDING" as const,
       summary: `${receipt.counterfactualCount.toString()} counterfactual(s) on ${receipt.laneId}`
     }));
@@ -129,6 +133,19 @@ function buildSummary(
   return `${participatingLaneIds.length.toString()} lane(s), ${alternatives.length.toString()} alternative(s), ${outcome.toLowerCase()}`;
 }
 
+function normalizeAlternative(
+  alternative: NeighborhoodAlternativeSummary
+): NeighborhoodAlternativeSummary {
+  return {
+    ...alternative,
+    alternativeId: requireNonEmpty(alternative.alternativeId, "alternatives.alternativeId"),
+    kind: requireNonEmpty(alternative.kind, "alternatives.kind"),
+    laneId: requireNonEmpty(alternative.laneId, "alternatives.laneId"),
+    worldlineId: requireNonEmpty(alternative.worldlineId, "alternatives.worldlineId"),
+    summary: requireNonEmpty(alternative.summary, "alternatives.summary")
+  };
+}
+
 function normalizeArgs(
   args: SerializedNeighborhoodCoreSummary
 ): SerializedNeighborhoodCoreSummary {
@@ -152,6 +169,7 @@ function normalizeArgs(
       tick: args.coordinate.tick
     },
     participatingLaneIds: uniqueStrings(args.participatingLaneIds),
+    alternatives: args.alternatives.map(normalizeAlternative),
     summary: requireNonEmpty(args.summary, "summary")
   };
 }

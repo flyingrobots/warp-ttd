@@ -12,6 +12,8 @@ export interface SerializedNeighborhoodSiteSummary {
   outcome: NeighborhoodOutcome;
   label: string;
   summary: string;
+  laneId?: string;
+  worldlineId?: string;
   parentSiteId?: string;
 }
 
@@ -59,7 +61,9 @@ function createPrimarySite(core: NeighborhoodCoreSummary): SerializedNeighborhoo
     kind: "PRIMARY",
     outcome: core.outcome,
     label: primarySiteLabel(core),
-    summary: core.summary
+    summary: core.summary,
+    laneId: core.primaryLaneId,
+    worldlineId: core.primaryWorldlineId
   };
 }
 
@@ -73,6 +77,8 @@ function createAlternativeSite(
     outcome: alternative.outcome,
     label: alternativeSiteLabel(alternative),
     summary: alternative.summary,
+    laneId: alternative.laneId,
+    worldlineId: alternative.worldlineId,
     parentSiteId: core.siteId
   };
 }
@@ -90,6 +96,14 @@ function normalizeSite(
 
   if (site.parentSiteId !== undefined) {
     normalized.parentSiteId = requireNonEmpty(site.parentSiteId, "parentSiteId");
+  }
+
+  if (site.laneId !== undefined) {
+    normalized.laneId = requireNonEmpty(site.laneId, "laneId");
+  }
+
+  if (site.worldlineId !== undefined) {
+    normalized.worldlineId = requireNonEmpty(site.worldlineId, "worldlineId");
   }
 
   return normalized;
@@ -145,6 +159,8 @@ export class NeighborhoodSiteSummary {
   public readonly outcome: NeighborhoodOutcome;
   public readonly label: string;
   public readonly summary: string;
+  public readonly laneId: string | undefined;
+  public readonly worldlineId: string | undefined;
   public readonly parentSiteId: string | undefined;
 
   public constructor(args: SerializedNeighborhoodSiteSummary) {
@@ -155,6 +171,8 @@ export class NeighborhoodSiteSummary {
     this.outcome = normalized.outcome;
     this.label = normalized.label;
     this.summary = normalized.summary;
+    this.laneId = normalized.laneId;
+    this.worldlineId = normalized.worldlineId;
     this.parentSiteId = normalized.parentSiteId;
     Object.freeze(this);
   }
@@ -167,6 +185,14 @@ export class NeighborhoodSiteSummary {
       label: this.label,
       summary: this.summary
     };
+
+    if (this.laneId !== undefined) {
+      json.laneId = this.laneId;
+    }
+
+    if (this.worldlineId !== undefined) {
+      json.worldlineId = this.worldlineId;
+    }
 
     if (this.parentSiteId !== undefined) {
       json.parentSiteId = this.parentSiteId;
@@ -223,6 +249,10 @@ export class NeighborhoodSiteCatalog {
     const normalizedSiteId = this.normalizeSelection(siteId);
     const index = siteIndexById(this.sites, normalizedSiteId);
     return requireSiteAt(this.sites, index);
+  }
+
+  public selectedLaneId(siteId: string | null): string | null {
+    return this.selectedSite(siteId).laneId ?? null;
   }
 
   public moveSelection(siteId: string | null, delta: number): string {

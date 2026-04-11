@@ -21,6 +21,7 @@ import { inspectorPage } from "./pages/inspectorPage.ts";
 import type { FrameData } from "./worldlineLayout.ts";
 import {
   getSessionCtx,
+  syncWorldlineSelection,
   syncSession,
   syncWorldlineCursor,
   handleWorldlineLoaded,
@@ -75,10 +76,10 @@ function updateApp(msg: FMsg, model: FModel): [FModel, Cmd<FMsg>[]] {
 
   if (prevCtx !== nextCtx) {
     const [synced, syncCmds] = syncSession(next, nextCtx);
-    return [syncWorldlineCursor(synced), [...cmds, ...syncCmds]];
+    return [syncWorldlineSelection(syncWorldlineCursor(synced)), [...cmds, ...syncCmds]];
   }
 
-  return [syncWorldlineCursor(next), cmds];
+  return [syncWorldlineSelection(syncWorldlineCursor(next)), cmds];
 }
 
 const mainApp: App<FModel, FMsg> = {
@@ -87,11 +88,24 @@ const mainApp: App<FModel, FMsg> = {
   view: (model: FModel) => framedApp.view(model),
 };
 
+type FatalInput =
+  | Error
+  | { toString(): string }
+  | string
+  | number
+  | boolean
+  | bigint
+  | symbol
+  | null
+  | undefined;
+
+function onFatal(err: FatalInput): never {
+  const message = err instanceof Error ? err.message : String(err);
+  process.stderr.write(`Fatal: ${message}\n`);
+  process.exit(1);
+}
+
 run(mainApp).then(
   () => process.exit(0),
-  (err: unknown) => {
-    const message = err instanceof Error ? err.message : String(err);
-    process.stderr.write(`Fatal: ${message}\n`);
-    process.exit(1);
-  },
+  onFatal,
 );

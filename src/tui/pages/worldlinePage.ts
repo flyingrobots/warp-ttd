@@ -11,7 +11,7 @@ import type { BijouContext, Surface } from "@flyingrobots/bijou";
 import type { FramePage } from "@flyingrobots/bijou-tui";
 import { renderWaveShader } from "../shaders/bgShader.ts";
 import { renderWorldline, buildTickRows } from "../worldlineLayout.ts";
-import type { FrameData } from "../worldlineLayout.ts";
+import { buildLaneTreeLines, type FrameData } from "../worldlineLayout.ts";
 import { centerBox, isPageMsg, type SessionContext } from "./shared.ts";
 import type { LaneRef } from "../../protocol.ts";
 import type { NeighborhoodCoreSummary } from "../../app/NeighborhoodCoreSummary.ts";
@@ -26,6 +26,8 @@ interface WorldlineModel {
   sessionCtx: SessionContext | null;
   frames: FrameData[];
   cursor: number;
+  selectedLaneId: string | null;
+  laneCursor: number;
 }
 
 type WorldlineUpdateResult = [WorldlineModel, WorldlineCmd[]];
@@ -76,6 +78,8 @@ function initialWorldlineModel(): WorldlineModel {
     sessionCtx: null,
     frames: [],
     cursor: 0,
+    selectedLaneId: null,
+    laneCursor: 0,
   };
 }
 
@@ -104,14 +108,19 @@ function worldlineCatalog(model: WorldlineModel): LaneRef[] {
 
 function renderConnectedWorldline(args: WorldlineRenderArgs): Surface {
   const { model, size, ctx } = args;
-  return renderWorldline({
+  const input = {
     frames: model.frames,
     catalog: worldlineCatalog(model),
     cursor: model.cursor,
     w: size.w,
     h: size.h,
     ctx,
-  });
+    laneCursor: model.laneCursor,
+  };
+  if (model.selectedLaneId === null) {
+    return renderWorldline(input);
+  }
+  return renderWorldline({ ...input, selectedLaneId: model.selectedLaneId });
 }
 
 // ---------------------------------------------------------------------------
@@ -134,6 +143,19 @@ export function scopeCatalogToNeighborhood(
   return neighborhoodCore.buildDisplayCatalog(catalog);
 }
 
+export function laneCursorForLaneId(
+  catalog: readonly LaneRef[],
+  selectedLaneId: string | undefined
+): number {
+  if (selectedLaneId === undefined) {
+    return 0;
+  }
+
+  const lines = buildLaneTreeLines(catalog);
+  const index = lines.findIndex((line) => line.laneId === selectedLaneId);
+  return index >= 0 ? index : 0;
+}
+
 function moveWorldlineCursor(model: WorldlineModel, delta: number): WorldlineUpdateResult {
   const max = Math.max(model.frames.length - 1, 0);
   const nextCursor = Math.max(0, Math.min(model.cursor + delta, max));
@@ -141,7 +163,14 @@ function moveWorldlineCursor(model: WorldlineModel, delta: number): WorldlineUpd
 }
 
 function handleSessionReady(model: WorldlineModel, ctx: SessionContext): WorldlineUpdateResult {
-  return [{ ...model, sessionCtx: ctx, frames: [], cursor: 0 }, [makeWorldlineLoadCmd(ctx)]];
+  return [{
+    ...model,
+    sessionCtx: ctx,
+    frames: [],
+    cursor: 0,
+    selectedLaneId: null,
+    laneCursor: 0
+  }, [makeWorldlineLoadCmd(ctx)]];
 }
 
 function handleDisconnect(model: WorldlineModel): WorldlineUpdateResult {

@@ -26,6 +26,8 @@ function makeCore(): NeighborhoodCoreSummary {
     alternatives: [{
       alternativeId: "alt:receipt:test:1",
       kind: "COUNTERFACTUAL",
+      laneId: "ws:sandbox",
+      worldlineId: "wl:main",
       outcome: "PENDING",
       summary: "2 counterfactual(s) on ws:sandbox"
     }],

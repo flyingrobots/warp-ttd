@@ -20,6 +20,8 @@ function makeCore(): NeighborhoodCoreSummary {
     alternatives: [{
       alternativeId: "alt:receipt:test:1",
       kind: "COUNTERFACTUAL",
+      laneId: "ws:sandbox",
+      worldlineId: "wl:main",
       outcome: "PENDING",
       summary: "2 counterfactual(s) on ws:sandbox"
     }],
@@ -35,8 +37,14 @@ test("fromCore creates one primary site plus nearby alternatives", () => {
     catalog.sites.map((site) => site.kind),
     ["PRIMARY", "ALTERNATIVE"]
   );
-  assert.equal(catalog.sites[0]?.label, "wl:main@2");
-  assert.equal(catalog.sites[1]?.parentSiteId, "site:head:test:2:wl:main");
+  const primarySite = catalog.sites[0];
+  const alternativeSite = catalog.sites[1];
+  assert.ok(primarySite);
+  assert.ok(alternativeSite);
+  assert.equal(primarySite.label, "wl:main@2");
+  assert.equal(primarySite.laneId, "wl:main");
+  assert.equal(alternativeSite.laneId, "ws:sandbox");
+  assert.equal(alternativeSite.parentSiteId, "site:head:test:2:wl:main");
 });
 
 test("normalizeSelection falls back to the active site for stale ids", () => {
@@ -65,6 +73,13 @@ test("selectedSite returns the normalized active item", () => {
 
   assert.ok(site instanceof NeighborhoodSiteSummary);
   assert.equal(site.siteId, catalog.activeSiteId);
+});
+
+test("selectedLaneId returns the lane identity for the chosen site", () => {
+  const catalog = NeighborhoodSiteCatalog.fromCore(makeCore());
+
+  assert.equal(catalog.selectedLaneId(null), "wl:main");
+  assert.equal(catalog.selectedLaneId(catalog.sites[1]?.siteId ?? null), "ws:sandbox");
 });
 
 test("toJSON returns stable plain data", () => {
