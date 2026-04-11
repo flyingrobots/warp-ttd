@@ -2,10 +2,13 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { NeighborhoodCoreSummary } from "../src/app/NeighborhoodCoreSummary.ts";
+import { NeighborhoodSiteCatalog } from "../src/app/NeighborhoodSiteCatalog.ts";
 import { ReintegrationDetailSummary } from "../src/app/ReintegrationDetailSummary.ts";
 import { ReceiptShellSummary } from "../src/app/ReceiptShellSummary.ts";
 import {
+  buildNeighborhoodSiteItems,
   buildNeighborhoodCoreLines,
+  buildNeighborhoodFocusLines,
   buildReintegrationLines,
   buildReceiptShellLines
 } from "../src/tui/pages/inspectorPage.ts";
@@ -28,6 +31,10 @@ function makeCore(): NeighborhoodCoreSummary {
     }],
     summary: "2 lane(s), 1 alternative(s), pending"
   });
+}
+
+function makeCatalog(): NeighborhoodSiteCatalog {
+  return NeighborhoodSiteCatalog.fromCore(makeCore());
 }
 
 function makeDetail(): ReintegrationDetailSummary {
@@ -84,6 +91,33 @@ test("buildNeighborhoodCoreLines renders site, participating lanes, and alternat
   assert.match(lines, /Lane: wl:main/);
   assert.match(lines, /Lane: ws:sandbox/);
   assert.match(lines, /Alternative: COUNTERFACTUAL \[PENDING\] 2 counterfactual\(s\) on ws:sandbox/);
+});
+
+test("buildNeighborhoodFocusLines renders alternative-specific focus details", () => {
+  const catalog = makeCatalog();
+  const alternative = catalog.sites[1];
+
+  assert.ok(alternative !== undefined);
+
+  const lines = buildNeighborhoodFocusLines(makeCore(), alternative);
+
+  assert.match(lines, /Kind: ALTERNATIVE/);
+  assert.match(lines, /Parent Site: site:head:test:2:wl:main/);
+  assert.match(lines, /Summary: 2 counterfactual\(s\) on ws:sandbox/);
+});
+
+test("buildNeighborhoodSiteItems exposes site labels and outcomes for the rail", () => {
+  const catalog = makeCatalog();
+  const items = buildNeighborhoodSiteItems(catalog);
+
+  assert.deepEqual(
+    items.map((item) => item.label),
+    ["wl:main@2", "counterfactual"]
+  );
+  assert.deepEqual(
+    items.map((item) => item.description),
+    ["PENDING", "PENDING"]
+  );
 });
 
 test("buildReceiptShellLines renders shell counters and receipt ids", () => {

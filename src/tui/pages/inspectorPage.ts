@@ -1,39 +1,68 @@
 /**
- * Inspector page — detailed frame and receipt breakdown.
+ * Neighborhood page — local site browser with core, seam, and shell layers.
  */
 import {
+  browsableListSurface,
+  createBrowsableListState,
+  createKeyMap,
+  hstackSurface,
+  placeSurface,
   vstack,
+  vstackSurface
+} from "@flyingrobots/bijou-tui";
+import type {
+  BrowsableListItem,
+  BrowsableListState,
+  Cmd,
+  FramePage
 } from "@flyingrobots/bijou-tui";
 import {
-  createSurface,
-  stringToSurface,
   boxSurface,
+  stringToSurface,
 } from "@flyingrobots/bijou";
 import type { BijouContext, Surface } from "@flyingrobots/bijou";
-import type { FramePage } from "@flyingrobots/bijou-tui";
 import { renderWaveShader } from "../shaders/bgShader.ts";
 import { centerBox, isPageMsg, type SessionContext } from "./shared.ts";
 import type { NeighborhoodCoreSummary } from "../../app/NeighborhoodCoreSummary.ts";
+import type { NeighborhoodSiteCatalog, NeighborhoodSiteSummary } from "../../app/NeighborhoodSiteCatalog.ts";
 import type { ReintegrationDetailSummary } from "../../app/ReintegrationDetailSummary.ts";
 import type { ReceiptShellSummary } from "../../app/ReceiptShellSummary.ts";
-
-// ---------------------------------------------------------------------------
-// Model
-// ---------------------------------------------------------------------------
 
 interface InspectorModel {
   time: number;
   sessionCtx: SessionContext | null;
+  selectedSiteId: string | null;
 }
-
-// ---------------------------------------------------------------------------
-// Messages
-// ---------------------------------------------------------------------------
 
 type InspectorMsg =
   | { type: "pulse"; dt: number }
   | { type: "session-ready"; ctx: SessionContext }
+  | { type: "site-up" }
+  | { type: "site-down" }
   | { type: "disconnect" };
+
+type InspectorUpdateResult = [InspectorModel, InspectorCmd[]];
+type InspectorCmd = Cmd<InspectorMsg>;
+
+interface InspectorRenderArgs {
+  model: InspectorModel;
+  size: { w: number; h: number };
+  ctx: BijouContext;
+}
+
+interface InspectorSurfaceBuildArgs {
+  sessionCtx: SessionContext;
+  selectedSiteId: string | null;
+  width: number;
+  ctx: BijouContext;
+}
+
+interface BoxFromLinesArgs {
+  lines: string;
+  title: string;
+  width: number;
+  ctx: BijouContext;
+}
 
 export function buildNeighborhoodCoreLines(core: NeighborhoodCoreSummary): string {
   const lines = [
@@ -63,6 +92,37 @@ export function buildNeighborhoodCoreLines(core: NeighborhoodCoreSummary): strin
   }
 
   return lines.join("\n");
+}
+
+export function buildNeighborhoodFocusLines(
+  core: NeighborhoodCoreSummary,
+  site: NeighborhoodSiteSummary
+): string {
+  if (site.kind === "PRIMARY") {
+    return buildNeighborhoodCoreLines(core);
+  }
+
+  return [
+    ` Site: ${site.siteId}`,
+    ` Parent Site: ${site.parentSiteId ?? core.siteId}`,
+    ` Kind: ${site.kind}`,
+    ` Outcome: ${site.outcome}`,
+    ` Label: ${site.label}`,
+    ` Summary: ${site.summary}`,
+    ` Coordinate: ${core.coordinate.laneId}@${core.coordinate.tick.toString()}`,
+    ` Primary Lane: ${core.primaryLaneId}`,
+    ` Participating Lanes: ${core.participatingLaneIds.length.toString()}`
+  ].join("\n");
+}
+
+export function buildNeighborhoodSiteItems(
+  catalog: NeighborhoodSiteCatalog
+): BrowsableListItem[] {
+  return catalog.sites.map((site) => ({
+    label: site.label,
+    value: site.siteId,
+    description: site.outcome
+  }));
 }
 
 export function buildReintegrationLines(detail: ReintegrationDetailSummary): string {
@@ -107,34 +167,12 @@ function hasReintegrationContent(detail: ReintegrationDetailSummary): boolean {
   return detail.anchors.length > 0 || detail.obligations.length > 0;
 }
 
-interface InspectorRenderArgs {
-  model: InspectorModel;
-  size: { w: number; h: number };
-  ctx: BijouContext;
-}
-
-interface BoxBlitArgs {
-  final: Surface;
-  content: string;
-  title: string;
-  width: number;
-  y: number;
-  ctx: BijouContext;
-}
-
-interface InspectorDetailBlitArgs {
-  final: Surface;
-  sessionCtx: SessionContext;
-  width: number;
-  startY: number;
-  ctx: BijouContext;
-}
-
-interface InspectorOverviewBlitArgs {
-  final: Surface;
-  sessionCtx: SessionContext;
-  width: number;
-  ctx: BijouContext;
+function initialInspectorModel(): InspectorModel {
+  return {
+    time: 0,
+    sessionCtx: null,
+    selectedSiteId: null
+  };
 }
 
 function disconnectedInspectorSurface(args: InspectorRenderArgs): Surface {
@@ -152,131 +190,261 @@ function contextInfoLines(sessionCtx: SessionContext): string {
     ` Session Mode: ${session.snapshot.execCtx.mode}`,
     ` Capabilities: ${hello.capabilities.length.toString()}`,
     ` Catalog Lanes: ${sessionCtx.catalog.lanes.length.toString()}`,
-    ` Session:      ${session.sessionId.slice(0, 8)}`,
+    ` Session:      ${session.sessionId.slice(0, 8)}`
   );
 }
 
-function blitBox(args: BoxBlitArgs): number {
-  const surface = stringToSurface(args.content, args.width - 2, args.content.split("\n").length);
-  const boxed = boxSurface(surface, { title: args.title, width: args.width, ctx: args.ctx });
-  args.final.blit(boxed, 1, args.y);
-  return boxed.height;
+function selectedSite(
+  sessionCtx: SessionContext,
+  selectedSiteId: string | null
+): NeighborhoodSiteSummary {
+  return sessionCtx.session.snapshot.neighborhoodSites.selectedSite(selectedSiteId);
 }
 
-function blitInspectorDetails(args: InspectorDetailBlitArgs): void {
-  const { snapshot } = args.sessionCtx.session;
-  const detailLines = buildReintegrationLines(snapshot.reintegrationDetail);
-  const detailVisible = hasReintegrationContent(snapshot.reintegrationDetail);
-  let y = args.startY;
-
-  if (detailVisible) {
-    y += blitBox({
-      final: args.final,
-      content: detailLines,
-      title: " Reintegration Detail ",
-      width: args.width,
-      y,
-      ctx: args.ctx
-    }) + 1;
-  }
-
-  if (snapshot.receiptShell.receiptIds.length > 0) {
-    blitBox({
-      final: args.final,
-      content: buildReceiptShellLines(snapshot.receiptShell),
-      title: " Receipt Shell ",
-      width: args.width,
-      y,
-      ctx: args.ctx
-    });
-  }
+function siteListHeight(siteCount: number): number {
+  return Math.max(1, Math.min(8, siteCount));
 }
 
-function blitInspectorOverview(args: InspectorOverviewBlitArgs): number {
-  const coreHeight = blitBox({
-    final: args.final,
-    content: buildNeighborhoodCoreLines(args.sessionCtx.session.snapshot.neighborhoodCore),
-    title: " Neighborhood Core ",
+function buildSiteListState(
+  catalog: NeighborhoodSiteCatalog,
+  selectedSiteId: string | null
+): BrowsableListState {
+  const items = buildNeighborhoodSiteItems(catalog);
+  const height = siteListHeight(items.length);
+  const base = createBrowsableListState({ items, height });
+  const activeSiteId = catalog.normalizeSelection(selectedSiteId);
+  const focusIndex = Math.max(0, items.findIndex((item) => item.value === activeSiteId));
+  const maxScroll = Math.max(0, items.length - height);
+
+  return {
+    ...base,
+    focusIndex,
+    scrollY: Math.max(0, Math.min(focusIndex, maxScroll))
+  };
+}
+
+function boxFromLines(args: BoxFromLinesArgs): Surface {
+  const content = stringToSurface(args.lines, args.width - 2, args.lines.split("\n").length);
+  return boxSurface(content, { title: args.title, width: args.width, ctx: args.ctx });
+}
+
+function buildSiteRailSurface(args: InspectorSurfaceBuildArgs): Surface {
+  const state = buildSiteListState(args.sessionCtx.session.snapshot.neighborhoodSites, args.selectedSiteId);
+  const list = browsableListSurface(state, { width: args.width - 2, ctx: args.ctx });
+  return boxSurface(list, { title: " Sites ", width: args.width, ctx: args.ctx });
+}
+
+function buildFocusSurface(args: InspectorSurfaceBuildArgs): Surface {
+  return boxFromLines({
+    lines: buildNeighborhoodFocusLines(
+      args.sessionCtx.session.snapshot.neighborhoodCore,
+      selectedSite(args.sessionCtx, args.selectedSiteId)
+    ),
+    title: " Neighborhood Focus ",
     width: args.width,
-    y: 1,
     ctx: args.ctx
   });
-  const contextHeight = blitBox({
-    final: args.final,
-    content: contextInfoLines(args.sessionCtx),
+}
+
+function buildContextSurface(
+  sessionCtx: SessionContext,
+  width: number,
+  ctx: BijouContext
+): Surface {
+  return boxFromLines({
+    lines: contextInfoLines(sessionCtx),
     title: " Context ",
-    width: args.width,
-    y: coreHeight + 3,
-    ctx: args.ctx
+    width,
+    ctx
   });
-
-  return coreHeight + contextHeight + 5;
 }
 
-function connectedInspectorSurface(args: InspectorRenderArgs): Surface {
-  const { model, size, ctx } = args;
-  const final = createSurface(size.w, size.h);
-  const sessionCtx = model.sessionCtx;
+function buildTopRowSurface(args: InspectorSurfaceBuildArgs): Surface {
+  if (args.width < 72) {
+    return vstackSurface(buildSiteRailSurface(args), buildFocusSurface(args));
+  }
+
+  const railWidth = Math.max(24, Math.min(32, Math.floor(args.width * 0.32)));
+
+  return hstackSurface(
+    1,
+    buildSiteRailSurface({ ...args, width: railWidth }),
+    buildFocusSurface({ ...args, width: args.width - railWidth - 1 })
+  );
+}
+
+function buildReintegrationSurface(
+  sessionCtx: SessionContext,
+  width: number,
+  ctx: BijouContext
+): Surface | null {
+  if (!hasReintegrationContent(sessionCtx.session.snapshot.reintegrationDetail)) {
+    return null;
+  }
+
+  return boxFromLines({
+    lines: buildReintegrationLines(sessionCtx.session.snapshot.reintegrationDetail),
+    title: " Reintegration Detail ",
+    width,
+    ctx
+  });
+}
+
+function buildReceiptShellSurface(
+  sessionCtx: SessionContext,
+  width: number,
+  ctx: BijouContext
+): Surface | null {
+  if (sessionCtx.session.snapshot.receiptShell.receiptIds.length === 0) {
+    return null;
+  }
+
+  return boxFromLines({
+    lines: buildReceiptShellLines(sessionCtx.session.snapshot.receiptShell),
+    title: " Receipt Shell ",
+    width,
+    ctx
+  });
+}
+
+function buildDetailSurfaces(
+  sessionCtx: SessionContext,
+  width: number,
+  ctx: BijouContext
+): Surface[] {
+  const surfaces = [buildContextSurface(sessionCtx, width, ctx)];
+  const reintegrationSurface = buildReintegrationSurface(sessionCtx, width, ctx);
+  const receiptShellSurface = buildReceiptShellSurface(sessionCtx, width, ctx);
+
+  if (reintegrationSurface !== null) {
+    surfaces.push(reintegrationSurface);
+  }
+
+  if (receiptShellSurface !== null) {
+    surfaces.push(receiptShellSurface);
+  }
+
+  return surfaces;
+}
+
+function buildNeighborhoodSurface(args: InspectorRenderArgs): Surface {
+  const sessionCtx = args.model.sessionCtx;
 
   if (sessionCtx === null) {
-    throw new TypeError("connectedInspectorSurface requires a session context");
+    throw new TypeError("buildNeighborhoodSurface requires a session context");
   }
 
-  final.fill({ char: " " });
+  const content = vstackSurface(
+    buildTopRowSurface({
+      sessionCtx,
+      selectedSiteId: args.model.selectedSiteId,
+      width: args.size.w,
+      ctx: args.ctx
+    }),
+    ...buildDetailSurfaces(sessionCtx, args.size.w, args.ctx)
+  );
 
-  const boxWidth = size.w - 2;
-  const detailStartY = blitInspectorOverview({
-    final,
-    sessionCtx,
-    width: boxWidth,
-    ctx
+  return placeSurface(content, {
+    width: args.size.w,
+    height: args.size.h,
+    hAlign: "left",
+    vAlign: "top"
   });
-  blitInspectorDetails({
-    final,
-    sessionCtx,
-    width: boxWidth,
-    startY: detailStartY,
-    ctx
-  });
-
-  return final;
 }
-
-// ---------------------------------------------------------------------------
-// Layout
-// ---------------------------------------------------------------------------
 
 function renderInspector(args: InspectorRenderArgs): Surface {
   if (args.model.sessionCtx === null) {
     return disconnectedInspectorSurface(args);
   }
 
-  return connectedInspectorSurface(args);
+  return buildNeighborhoodSurface(args);
 }
 
-// ---------------------------------------------------------------------------
-// Page definition
-// ---------------------------------------------------------------------------
+function moveSelectedSite(model: InspectorModel, delta: number): InspectorUpdateResult {
+  if (model.sessionCtx === null) {
+    return [model, []];
+  }
+
+  return [{
+    ...model,
+    selectedSiteId: model.sessionCtx.session.snapshot.neighborhoodSites.moveSelection(
+      model.selectedSiteId,
+      delta
+    )
+  }, []];
+}
+
+function handleSessionReady(
+  model: InspectorModel,
+  ctx: SessionContext
+): InspectorUpdateResult {
+  return [{
+    ...model,
+    sessionCtx: ctx,
+    selectedSiteId: ctx.session.snapshot.neighborhoodSites.normalizeSelection(
+      model.selectedSiteId
+    )
+  }, []];
+}
+
+function navigationUpdate(msg: InspectorMsg, model: InspectorModel): InspectorUpdateResult | null {
+  if (msg.type === "site-up") {
+    return moveSelectedSite(model, -1);
+  }
+
+  if (msg.type === "site-down") {
+    return moveSelectedSite(model, 1);
+  }
+
+  return null;
+}
+
+function simpleUpdate(msg: InspectorMsg, model: InspectorModel): InspectorUpdateResult | null {
+  if (msg.type === "pulse") {
+    return [{ ...model, time: model.time + msg.dt }, []];
+  }
+
+  if (msg.type === "session-ready") {
+    return handleSessionReady(model, msg.ctx);
+  }
+
+  if (msg.type === "disconnect") {
+    return [{ ...initialInspectorModel(), time: model.time }, []];
+  }
+
+  return null;
+}
+
+function updateInspectorModel(
+  msg: InspectorMsg,
+  model: InspectorModel
+): InspectorUpdateResult {
+  const simple = simpleUpdate(msg, model);
+
+  if (simple !== null) {
+    return simple;
+  }
+
+  return navigationUpdate(msg, model) ?? [model, []];
+}
 
 export function inspectorPage(ctx: BijouContext): FramePage<InspectorModel, InspectorMsg> {
-  const initial: InspectorModel = {
-    time: 0,
-    sessionCtx: null,
-  };
-
   return {
     id: "inspect",
     title: "Neighborhood",
-    init: () => [initial, []],
+    init: () => [initialInspectorModel(), []],
+    keyMap: createKeyMap<InspectorMsg>()
+      .bind("up", "Previous site", { type: "site-up" })
+      .bind("k", "Previous site", { type: "site-up" })
+      .bind("down", "Next site", { type: "site-down" })
+      .bind("j", "Next site", { type: "site-down" }),
+    update: (msg, model): InspectorUpdateResult => {
+      if (!isPageMsg<InspectorMsg>(msg)) {
+        return [model, []];
+      }
 
-    update: (msg, model): [InspectorModel, []] => {
-      if (!isPageMsg<InspectorMsg>(msg)) return [model, []];
-      const m = msg;
-      if (m.type === "pulse") return [{ ...model, time: model.time + m.dt }, []];
-      if (m.type === "session-ready") return [{ ...model, sessionCtx: m.ctx }, []];
-      return [{ ...initial, time: model.time }, []];
+      return updateInspectorModel(msg, model);
     },
-
     layout: (model) => ({
       kind: "pane" as const,
       paneId: "main",

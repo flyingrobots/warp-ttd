@@ -14,6 +14,10 @@ import {
   type SerializedNeighborhoodCoreSummary
 } from "./NeighborhoodCoreSummary.ts";
 import {
+  NeighborhoodSiteCatalog,
+  type SerializedNeighborhoodSiteCatalog
+} from "./NeighborhoodSiteCatalog.ts";
+import {
   ReintegrationDetailSummary,
   type SerializedReintegrationDetailSummary
 } from "./ReintegrationDetailSummary.ts";
@@ -42,6 +46,7 @@ export interface SessionSnapshot {
   observations: DeliveryObservationSummary[];
   execCtx: ExecutionContext;
   neighborhoodCore: NeighborhoodCoreSummary;
+  neighborhoodSites: NeighborhoodSiteCatalog;
   reintegrationDetail: ReintegrationDetailSummary;
   receiptShell: ReceiptShellSummary;
 }
@@ -65,6 +70,7 @@ export interface SerializedSessionSnapshot {
   observations: DeliveryObservationSummary[];
   execCtx: ExecutionContext;
   neighborhoodCore: SerializedNeighborhoodCoreSummary;
+  neighborhoodSites: SerializedNeighborhoodSiteCatalog;
   reintegrationDetail: SerializedReintegrationDetailSummary;
   receiptShell: SerializedReceiptShellSummary;
 }
@@ -116,6 +122,7 @@ function serializeSnapshot(
     observations: structuredClone(snapshot.observations),
     execCtx: structuredClone(snapshot.execCtx),
     neighborhoodCore: snapshot.neighborhoodCore.toJSON(),
+    neighborhoodSites: snapshot.neighborhoodSites.toJSON(),
     reintegrationDetail: snapshot.reintegrationDetail.toJSON(),
     receiptShell: snapshot.receiptShell.toJSON()
   };
@@ -245,6 +252,28 @@ export class DebuggerSession {
 // Helpers
 // ---------------------------------------------------------------------------
 
+function buildNeighborhoodState(
+  frame: PlaybackFrame,
+  receipts: readonly ReceiptSummary[],
+  emissions: readonly EffectEmissionSummary[]
+): Pick<
+  SessionSnapshot,
+  "neighborhoodCore" | "neighborhoodSites" | "reintegrationDetail" | "receiptShell"
+> {
+  const neighborhoodCore = NeighborhoodCoreSummary.fromFrame(frame, receipts, emissions);
+
+  return {
+    neighborhoodCore,
+    neighborhoodSites: NeighborhoodSiteCatalog.fromCore(neighborhoodCore),
+    reintegrationDetail: ReintegrationDetailSummary.fromSnapshot(
+      frame,
+      neighborhoodCore,
+      receipts
+    ),
+    receiptShell: ReceiptShellSummary.fromReceipts(neighborhoodCore, receipts)
+  };
+}
+
 async function fetchSnapshot(
   adapter: TtdHostAdapter,
   headId: string
@@ -255,13 +284,8 @@ async function fetchSnapshot(
   const emissions = await adapter.effectEmissions(headId);
   const observations = await adapter.deliveryObservations(headId);
   const execCtx = await adapter.executionContext();
-  const neighborhoodCore = NeighborhoodCoreSummary.fromFrame(frame, receipts, emissions);
-  const reintegrationDetail = ReintegrationDetailSummary.fromSnapshot(
-    frame,
-    neighborhoodCore,
-    receipts
-  );
-  const receiptShell = ReceiptShellSummary.fromReceipts(neighborhoodCore, receipts);
+  const neighborhoodState = buildNeighborhoodState(frame, receipts, emissions);
+
   return {
     head,
     frame,
@@ -269,8 +293,6 @@ async function fetchSnapshot(
     emissions,
     observations,
     execCtx,
-    neighborhoodCore,
-    reintegrationDetail,
-    receiptShell
+    ...neighborhoodState
   };
 }

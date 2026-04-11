@@ -36,6 +36,8 @@ test("create() produces a valid initial snapshot at frame 0", async () => {
   assert.equal(snap.neighborhoodCore.headId, HEAD_ID);
   assert.equal(snap.neighborhoodCore.frameIndex, 0);
   assert.deepEqual(snap.neighborhoodCore.participatingLaneIds, ["wl:main"]);
+  assert.equal(snap.neighborhoodSites.activeSiteId, snap.neighborhoodCore.siteId);
+  assert.equal(snap.neighborhoodSites.sites.length, 1);
   assert.equal(snap.reintegrationDetail.siteId, snap.neighborhoodCore.siteId);
   assert.equal(snap.receiptShell.siteId, snap.neighborhoodCore.siteId);
 });
@@ -97,6 +99,7 @@ test("neighborhood core tracks obstruction and alternatives at the active frame"
   assert.deepEqual(session.snapshot.neighborhoodCore.participatingLaneIds, ["ws:sandbox"]);
   assert.equal(session.snapshot.neighborhoodCore.outcome, "OBSTRUCTED");
   assert.equal(session.snapshot.neighborhoodCore.alternatives.length, 1);
+  assert.equal(session.snapshot.neighborhoodSites.sites.length, 2);
   assert.equal(session.snapshot.reintegrationDetail.obligations.length, 2);
   assert.equal(session.snapshot.receiptShell.hasBlockingRelation, true);
   assert.equal(
@@ -180,6 +183,8 @@ test("toJSON() returns a serializable representation", async () => {
   assert.equal(json.pins.length, 1);
   assert.equal(json.snapshot.neighborhoodCore.headId, HEAD_ID);
   assert.equal(typeof json.snapshot.neighborhoodCore.summary, "string");
+  assert.equal(typeof json.snapshot.neighborhoodSites.activeSiteId, "string");
+  assert.equal(Array.isArray(json.snapshot.neighborhoodSites.sites), true);
   assert.equal(typeof json.snapshot.reintegrationDetail.summary, "string");
   assert.equal(typeof json.snapshot.receiptShell.summary, "string");
 

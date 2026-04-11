@@ -25,6 +25,7 @@ import {
 } from "../src/tui/navigatorLayout.ts";
 import type { SessionSnapshot } from "../src/app/debuggerSession.ts";
 import { NeighborhoodCoreSummary } from "../src/app/NeighborhoodCoreSummary.ts";
+import { NeighborhoodSiteCatalog } from "../src/app/NeighborhoodSiteCatalog.ts";
 import { ReintegrationDetailSummary } from "../src/app/ReintegrationDetailSummary.ts";
 import { ReceiptShellSummary } from "../src/app/ReceiptShellSummary.ts";
 import type {
@@ -112,6 +113,7 @@ function makeObservation(args: ObsArgs): DeliveryObservationSummary {
 
 function makeSnap(overrides: Partial<SessionSnapshot> = {}): SessionSnapshot {
   const neighborhoodCore = makeNeighborhoodCore();
+  const neighborhoodSites = NeighborhoodSiteCatalog.fromCore(neighborhoodCore);
   const reintegrationDetail = makeReintegrationDetail(neighborhoodCore.siteId);
   const receiptShell = makeReceiptShell(neighborhoodCore.siteId);
 
@@ -123,6 +125,7 @@ function makeSnap(overrides: Partial<SessionSnapshot> = {}): SessionSnapshot {
     observations: [makeObservation({ emissionId: "emit:test:diagnostic:wl:main", sinkId: "sink:tui-log", outcome: "DELIVERED", frameIndex: 1 })],
     execCtx: { mode: "LIVE" },
     neighborhoodCore,
+    neighborhoodSites,
     reintegrationDetail,
     receiptShell,
     ...overrides
