@@ -1,44 +1,36 @@
 # BEARING
 
-## Current Hill
+Current direction and active tensions. Historical ship data is in `CHANGELOG.md`.
 
-Make `warp-ttd` agent-surface-first in practice, not just in rhetoric.
+```mermaid
+timeline
+    Phase 1 : Protocol v0.1.0 : git-warp Adapter : Scenario Fixtures
+    Phase 2 : TUI Cockpit : Navigator View : JSONL CLI
+    Phase 3 : Agent-First Surface : MCP Integration : Browser-TTD Migration
+    Phase 4 : DebuggerSession : Speculative Investigation : Worldline Viewer
+```
 
-Right now that means:
+## Active Gravity
 
-- treating CLI `--json` as the current canonical agent-facing surface
-- promoting MCP from "cool idea" to explicit delivery-adapter work
-- making TUI capabilities follow explicit CLI/MCP/session nouns instead
-  of inventing debugger behavior ad hoc
-- continuing the neighborhood-browser cut only where it sharpens shared
-  structured surfaces
+### 1. Agent-First Sovereignty
+- Treating CLI `--json` as the canonical agent-facing surface.
+- Promoting MCP from speculative experiment to an explicit delivery adapter.
+- Ensuring TUI capabilities follow explicit CLI/MCP/session nouns rather than inventing ad-hoc behavior.
 
-## Current Direction
+### 2. Neighborhood & Site Catalog
+- Refinement of the `NeighborhoodFocusSummary` to share focus across disparate debugger pages.
+- Hardening site-driven worldline cursor recomputation for consistent navigation.
 
-The repo is moving toward one debugger ontology with multiple delivery
-adapters:
+### 3. DebuggerSession Maturity
+- Implementation of the `DebuggerSession` investigation object to track speculative result handles and investigator context.
+- Scaling the window-based read model to handle high-density causal worldlines.
 
-- CLI now
-- MCP next
-- TUI and browser following the same application/session core
+## Tensions
 
-The TUI is still valuable, but it is no longer the leading edge for
-what the debugger can mean. The agent surface defines the inspectable
-contract first.
+- **TUI-Lead Inertia**: Breaking the habit of implementing new inspection features in the TUI before the structured CLI/MCP surface.
+- **Protocol Drift**: Keeping the Wesley-compiled schema perfectly synchronized with local host-adapter implementation details.
+- **Speculative Complexity**: Managing the investigator's cognitive load when branching and braiding multiple counterfactual strands.
 
-## Recent Truth
+## Next Target
 
-Recent work tightened the neighborhood/browser stack:
-
-- `8c7cd0e` fixed site-driven worldline cursor recomputation
-- `ffaed03` introduced a runtime-backed `NeighborhoodFocusSummary`
-- `a948fb7` shared neighborhood focus across pages
-- `48162ce` made CLI and MCP surfaces explicit in repo truth
-
-## Not This Hill
-
-- not a TUI-only debugger
-- not a browser-only debugger fork
-- not a second protocol next to the authored schema
-- not an MCP story built directly on host adapters without the
-  application/session core
+The immediate focus is the **MCP Delivery Adapter** to ensure WARP TTD is a tool-native participant in the agentic workstation.

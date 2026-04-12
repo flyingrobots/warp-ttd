@@ -1,204 +1,48 @@
-![WARP-TTD-ember](https://github.com/user-attachments/assets/5b0558ff-9d5a-4d0f-a3b4-b33c1df6f186)
+# WARP TTD
 
-![WARP-TTD-matrix](https://github.com/user-attachments/assets/2504ff8b-68e5-430b-90e1-9879d5a3de7e)
+A **time-travel debugger** and **wide-aperture observer** for deterministic graph systems. WARP TTD observes *causal truth*—worldlines, receipts, and provenance—to provide a high-fidelity window into the evolution of **WARP-based runtimes**.
 
-![WARP-TTD-ocean](https://github.com/user-attachments/assets/1cf52af7-9209-4542-920b-6cb864937f6f)
-
-![WARP-TTD-pastel](https://github.com/user-attachments/assets/d1660d6e-394a-497a-8c7d-e320a15c22a1)
-
-![WARP-TTD-rainbow](https://github.com/user-attachments/assets/485d9621-089d-4190-8d03-89424fce7046)
-
-![WARP-TTD-sunset](https://github.com/user-attachments/assets/de82942f-6e0c-4a6d-ab5d-3582b64a6a26)
+WARP TTD is designed for the systems engineer who demands geometric lawfulness in their debugging. It scales from simple protocol walkthroughs to multi-strand speculative investigation across heterogeneous hosts (git-warp, Echo).
 
 ![WARP-TTD](https://github.com/user-attachments/assets/ab986977-e298-43ec-8f37-57eaae488864)
 
+## Why WARP TTD?
 
-# WARP TTD
+Unlike traditional debuggers that inspect transient state, WARP TTD inspects the causal history that produced that state.
 
-Cross-host time-travel debugger and wide-aperture observer for
-deterministic graph systems built on WARP.
-
-## What It Is
-
-TTD observes substrate facts honestly — worldlines, receipts, effects,
-provenance — and, when the host declares the capability, drives
-explicit debugging controls: pause, step, seek, fork, speculative
-ticking, comparison, and multi-strand composition.
-
-It works across hosts. The same debugger protocol serves git-warp,
-Echo, and future WARP-based runtimes through host adapters.
-
-The CLI `--json` surface is the current canonical agent-facing
-interface. MCP is planned as a tool-native delivery adapter over the
-same application core.
-
-**The invariant:** canonical history is never silently rewritten.
-Every continuation from the past is explicit, capability-gated, and
-provenance-bearing.
-
-## What It Does
-
-### Observe
-
-- Step forward and backward through worldline ticks
-- Inspect receipts: who wrote what, admitted rewrites, rejected
-  counterfactuals
-- Inspect effect emissions and delivery observations (delivered,
-  suppressed, failed, skipped)
-- See execution context (live, replay, debug)
-- Pin observations to compare across frames
-
-### Control
-
-- Pause, step, seek to any tick
-- Fork strands from any point in history
-- Tick speculative strands independently
-- Compare strands against base worldlines
-
-### Inspect (planned)
-
-- **Worldline Viewer** — git-log-like view of ticks and strands
-- **Graph Viewer** — full materialized graph at any tick (nodes,
-  edges, properties, attachments)
-- **Provenance Viewer** — select any value and trace its reverse
-  causal cone through the receipt chain
-
-See [VISION.md](VISION.md) for the full architecture and
-design philosophy.
+- **Cross-Host Portability**: A host-neutral protocol allows the same debugger to serve git-warp, Echo, and future causal runtimes through capability-gated adapters.
+- **Wide-Aperture Observation**: Inspect what was admitted (applied rewrites), what was rejected (counterfactuals), and the resulting effect emissions and delivery observations.
+- **Causal Control**: Pause, step, and seek through Lamport ticks. Fork speculative strands to explore alternatives without rewriting canonical history.
+- **Deterministic Replay**: Built on the invariant that history is immutable. Every continuation is explicit, capability-gated, and provenance-bearing.
 
 ## Quick Start
 
-```sh
-npm install
-```
-
-### TUI
-
-```sh
+### 1. Interactive TUI
+Launch the reader-first interactive cockpit.
+```bash
 npm run tui
 ```
 
-Select an adapter from the connect page:
-
-- **Echo Fixture** — built-in demo data
-- **git-warp** — point at a local repository with an existing graph
-- **Scenario fixtures** — contrived scenarios for effect emissions,
-  replay suppression, and multi-writer conflicts
-
-Navigate with `n`/`→` (forward), `p`/`←` (backward), `g` (jump to
-frame), `P` (pin observation), `u` (unpin), `d` (disconnect),
-`[`/`]` (switch pages).
-
-### CLI
-
-```sh
-npm run demo          # full protocol walkthrough
-npm run hello         # host handshake
-npm run catalog       # lane catalog
-npm run frame         # current frame + receipts
-npm run step          # step forward
+### 2. Standalone CLI
+Handshake with a host or inspect the current playback frame.
+```bash
+npm run hello -- --json
+npm run frame -- --json
 ```
 
-Every command supports `--json` for structured JSONL output:
-
-```sh
-node --experimental-strip-types ./src/cli.ts hello --json
-node --experimental-strip-types ./src/cli.ts effects --json
-node --experimental-strip-types ./src/cli.ts deliveries --json
-node --experimental-strip-types ./src/cli.ts context --json
-```
-
-### Tests
-
-```sh
-npm test                 # fast suite (164 tests)
-npm run test:integration # git-warp integration (10 tests)
-```
-
-## Protocol
-
-The host-neutral TTD protocol is defined as a single GraphQL schema:
-
+### 3. Protocol First
+The TTD protocol is defined via a single GraphQL schema. Protocol changes start here.
 ```text
-schemas/warp-ttd-protocol.graphql   (v0.5.0)
+schemas/warp-ttd-protocol.graphql
 ```
 
-If you're building a host adapter (Echo, git-warp, or your own), this
-schema is your input. Feed it to Wesley's `compile-ttd` path to generate
-typed contracts for your target language — TypeScript, Rust WASM, or
-whatever Wesley supports:
+## Documentation
 
-```sh
-# From the Wesley repository
-pnpm wesley compile-ttd \
-  --schema <path-to>/warp-ttd/schemas/warp-ttd-protocol.graphql
-```
+- **[Guide](./GUIDE.md)**: Orientation, the fast path, and TUI navigation.
+- **[Advanced Guide](./ADVANCED_GUIDE.md)**: Theoretical foundations, Wesley integration, and custom adapters.
+- **[Architecture](./ARCHITECTURE.md)**: The authoritative system map (Hexagonal, Ports, DebuggerSession).
+- **[Vision](./VISION.md)**: Core tenets and the observer geometry mission.
+- **[Method](./METHOD.md)**: Repo work doctrine and the cycle loop.
 
-Add `--dry-run --json` to preview output without writing files.
-
-`src/protocol.ts` is a local convenience mirror for this repo's
-application code. It follows the schema — it does not own it. Adapter
-code, fixture data, and TUI layout are likewise local policy, not
-shared contract.
-
-**Rule:** protocol changes start in the `.graphql` file. Everything
-else follows.
-
-## Architecture
-
-```text
-Delivery Adapters (CLI, TUI, MCP, Web)
-  → DebuggerSession (investigation state, pins)
-    → TTD Application Core
-      → TTD Ports (TtdHostAdapter)
-        → Host Adapters (echo fixture, git-warp, scenario fixture)
-          → WARP Substrates (git-warp, Echo)
-```
-
-Key concepts:
-
-- **Worldline** — causal history (not a timeline)
-- **Tick** — Lamport clock value on a worldline
-- **Strand** — speculative causal lane (durable, forkable)
-- **Aperture** — what an observer preserves/projects
-- **Receipt** — per-operation provenance from a materialized tick
-- **Effect emission** — substrate fact that something was produced
-- **Delivery observation** — what happened to an effect at each sink
-- **PlaybackHead** — substrate-facing coordination primitive
-- **DebuggerSession** — app-layer investigation state: wraps a
-  playback head, manages snapshot + pinned observations
-
-## Documents
-
-- [**VISION.md**](VISION.md) — north star: what TTD is, how it
-  thinks, where it's going
-- [**docs/BEARING.md**](docs/BEARING.md) — current hill and near-term
-  direction
-- [**docs/CLI.md**](docs/CLI.md) — explicit CLI contract and current
-  agent-facing surface
-- [**docs/MCP.md**](docs/MCP.md) — MCP status and planned tool surface
-- [**METHOD.md**](METHOD.md) — how work moves from idea to shipped code
-- [**CONTRIBUTING.md**](CONTRIBUTING.md) — quickstart, rules, and links
-  to [doctrine](docs/design/doctrine.md),
-  [glossary](docs/design/glossary.md),
-  [process](docs/method/process.md), and
-  [release](docs/method/release.md)
-
-Design docs: `docs/design/`
-Retrospectives: `docs/method/retro/`
-Backlog: `docs/method/backlog/`
-Wesley schema: `schemas/warp-ttd-protocol.graphql`
-
-## Dependencies
-
-- **Runtime:** `@git-stunts/git-warp` ^16.0.0, `@git-stunts/plumbing`
-  ^2.8.0
-- **TUI:** `@flyingrobots/bijou` ^4.0.0 (bijou-tui, bijou-node)
-- **Build:** TypeScript with `--experimental-strip-types` (no build
-  step)
-- **Test:** Node.js built-in test runner
-- **Schema:** Wesley (`compile-ttd`)
-
-## License
-
-Apache 2.0. See [LICENSE](LICENSE).
+---
+Built with geometric lawfulness by [FLYING ROBOTS](https://github.com/flyingrobots)

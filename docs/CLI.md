@@ -1,75 +1,41 @@
 # CLI
 
-The `warp-ttd` CLI is the current canonical agent-facing surface.
+The WARP TTD CLI is the canonical agent-facing surface for structured debugger access.
 
-It is not just a human convenience wrapper around the TUI. It is the
-first explicit, inspectable boundary for structured debugger access.
-
-## Current status
-
-- Implemented
-- Backed by the same `DebuggerSession` and host adapter surfaces the
-  TUI uses
-- Supports structured `--json` output
-- Serves as the current truth for what an agent can inspect without a
-  TUI
-
-## Commands
-
-These commands exist today:
-
-- `npm run demo`
-- `npm run hello`
-- `npm run catalog`
-- `npm run frame`
-- `npm run step`
-
-The following commands are also available through the CLI entrypoint:
-
-- `hello`
-- `catalog`
-- `frame`
-- `step`
-- `effects`
-- `deliveries`
-- `context`
-- `session`
-- `worldline`
-
-Example:
-
-```sh
-node --experimental-strip-types ./src/cli.ts worldline --json
+```mermaid
+flowchart LR
+    A[WARP TTD CLI] --> B[Lifecycle]
+    A --> C[Inspection]
+    A --> D[Control]
+    B --> B1[hello]
+    B --> B2[catalog]
+    C --> C1[frame]
+    C --> C2[effects]
+    C --> C3[deliveries]
+    C --> C4[worldline]
+    D --> D1[step]
 ```
 
-## Agent contract
+## Agent Contract
 
-For agent use, `--json` is the contract.
+For agent use, `--json` is the primary contract. Every command emits a versioned, machine-readable JSONL envelope.
 
-Rules:
-
-- JSON output must remain structured and machine-readable.
-- Human-only text must not appear on stdout in `--json` mode.
-- CLI envelopes must reflect the authored schema and application-layer
-  runtime types, not ad hoc TUI formatting.
-- New inspection capabilities should land in the CLI/JSON surface
-  before the TUI depends on them.
+- **Handshake**: Handshake with a host to negotiate capabilities.
+  ```bash
+  npm run hello -- --json
+  ```
+- **Inspect**: Read the current playback frame and receipts.
+  ```bash
+  npm run frame -- --json
+  ```
+- **Step**: Advance the playback head by one tick.
+  ```bash
+  npm run step -- --json
+  ```
 
 ## Relationship to the TUI
 
-The TUI is a delivery adapter over the same application/session core.
-It should not invent debugger capabilities that the CLI and future MCP
-surface cannot express.
+The TUI is a delivery adapter over the same `DebuggerSession` core. It follows the explicit capabilities proven by the CLI surface. New inspection logic must land in the CLI before the TUI depends on it.
 
-That means:
-
-- CLI/JSON proves the structured surface.
-- MCP should map onto the same nouns and commands.
-- TUI should follow those explicit capabilities, not lead them.
-
-## Next cuts
-
-- Expand worldline and neighborhood inspection in CLI form
-- Add explicit lane/site filters where needed
-- Keep output aligned with `schemas/warp-ttd-protocol.graphql`
-- Use the CLI surface to define the future MCP tool vocabulary
+---
+**The goal is structured truth. Human-only text must not appear on stdout in `--json` mode.**
