@@ -8,8 +8,10 @@ For orientation and the productive-fast path, use the [GUIDE.md](./GUIDE.md).
 
 WARP TTD's architecture is grounded in the **AION Observer Geometry** papers and the **WARP Optics** formalism.
 
-### Observer Geometry (OG-I)
-An observer is not a scalar. It is a structural five-tuple:
+### Observer Geometry ([OG-I](https://github.com/flyingrobots/aion-og-1))
+
+An **observer** is not a scalar. It is a structural five-tuple:
+
 - **Projection (O)** — what the debugger display shows
 - **Basis (B)** — the native coordinate system of events
 - **State (M)** — the accumulated observational state
@@ -17,29 +19,35 @@ An observer is not a scalar. It is a structural five-tuple:
 - **Emission (E)** — the accumulated structural description produced
 
 ### Aperture
-Aperture is the measure of what task-relevant distinctions survive observation.
+
+**Aperture** is the measure of what task-relevant distinctions survive *observation*.
+
 - **Projection aperture** — what is visible in raw trace output
 - **Basis aperture** — what is visible in native coordinates
 - **Accumulated aperture** — what is visible after accumulation over time
 
 ### Degeneracy
-Degeneracy is the hidden multiplicity behind an observation. The debugger's job is to **surface degeneracy**, not collapse it. Counterfactual inspection is the exploration of degeneracy—showing what *could* have happened.
 
-## Worldlines & Suffix Transport (OG-IV)
+**Degeneracy** is the hidden multiplicity behind an observation. The debugger's job is to *surface degeneracy*, not collapse it. **Counterfactual inspection** is the exploration of degeneracy—showing what *could* have happened.
 
-Worldlines are not timelines. A worldline is a causal history—a chain of patches with deterministic materialization.
+## Worldlines & Suffix Transport ([OG-II](https://github.com/flyingrobots/aion-og-2))
+
+**Worldlines** are not timelines. A worldline is a **causal history**—a chain of patches with *deterministic materialization*.
+
 - **Common Frontier**: The last shared state between two worldlines.
-- **Suffix Transport**: Replaying an effect across the unseen suffix of a target worldline.
+- **Suffix Transport**: Replaying an effect across the *unseen suffix* of a target worldline.
 - **State Convergence**: Arriving at the same state through different histories.
 
-## Protocol Engineering (Wesley)
+## Protocol Engineering ([Wesley](https://github.com/flyingrobots/wesley))
 
 The TTD protocol is the sovereign boundary of the system. It is defined as a Wesley schema:
+
 ```text
 schemas/warp-ttd-protocol.graphql
 ```
 
 Wesley compiles this schema into:
+
 1. **TypeScript Types**: Local mirror in `src/protocol.ts`.
 2. **Zod Validators**: For runtime envelope verification.
 3. **IR**: Intermediate representation for heterogeneous host-adapter codegen.

@@ -6,7 +6,7 @@ string, error message, and doc should use these terms consistently.
 | Term | Definition | Not |
 |------|------------|-----|
 | **worldline** | Causal history of a deterministic graph. A worldline is a lane whose ticks form a linear chain of causally ordered states. | ~~timeline~~ |
-| **strand** | Speculative branch forked from a worldline. A strand is a writable lane that explores an alternative causal history. | ~~working-set~~ |
+| **strand** | Speculative branch created by an explicit fork from an admissible lane coordinate. A strand is a writable lane that explores an alternative causal history; observation alone does not create one. | ~~working-set~~ |
 | **lane** | Generic term for a worldline or strand. Lanes are the top-level containers in the lane catalog. Each lane has an ID, a kind, and an independent tick sequence. | |
 | **tick** | Lamport clock value on a single lane. Ticks are substrate-level coordinates. Each tick represents one causal step on one lane. Part of `Coordinate { laneId, tick }`. | |
 | **frame** | Composite snapshot across all tracked lanes at a point in playback time. Frame 0 is the synthetic empty state. Frame N shows every lane's coordinate after N steps forward. A frame contains multiple `Coordinate` objects, each with its own tick. | Not a synonym for tick. |

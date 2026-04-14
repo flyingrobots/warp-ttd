@@ -33,6 +33,19 @@ is extracted into its own repo.
 4. Multiple observer-relative panels may legitimately disagree on what matters
    while still inspecting the same underlying frame.
 
+## Counterfactual Creation Invariants
+
+1. A TTD reading or inspection act does not by itself create new causal truth.
+2. Explicit debugger requests to continue from an earlier coordinate or explore
+   a counterfactual must go through an explicit fork or strand-creation path.
+3. Counterfactual lanes created from TTD should default to scratch or
+   author-only retention, not silent shared publication.
+4. If a host retains such a lane, the resulting provenance should be able to
+   name creator, tool or session origin, exact fork basis, and retention or
+   revelation posture.
+5. Shared admitted publication remains a later explicit promotion step, not
+   the default result of debugger speculation.
+
 ## Architecture Invariants
 
 1. `PlaybackHead` is a coordination primitive, not the debugger itself.
