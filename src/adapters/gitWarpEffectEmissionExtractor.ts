@@ -86,25 +86,21 @@ function readNonEmptyStringProperty(
 
 function readEffectKind(
   props: GitWarpNodeProps | null,
-  effectNodeId: string
-): string {
-  const serializedKind = readNonEmptyStringProperty(props, "kind");
-
-  if (serializedKind === null) {
-    throw new TypeError(`git-warp effect node ${effectNodeId} is missing a non-empty kind property`);
-  }
-
-  return serializedKind;
+): string | null {
+  return readNonEmptyStringProperty(props, "kind");
 }
 
 async function buildEffectEmissionSummary<TMaterializedState, TNodeProps extends GitWarpNodeProps>(
   args: ExtractEffectEmissionsArgs<TMaterializedState, TNodeProps>,
   candidate: EffectNodeCandidate
-): Promise<EffectEmissionSummary> {
+): Promise<EffectEmissionSummary | null> {
   const effectKind = readEffectKind(
     await args.graph.getNodeProps(candidate.effectNodeId),
-    candidate.effectNodeId
   );
+
+  if (effectKind === null) {
+    return null;
+  }
 
   return {
     emissionId: candidate.effectNodeId,
@@ -139,7 +135,9 @@ export async function extractGitWarpEffectEmissions<TMaterializedState, TNodePro
   // that historical frame rather than the current live frontier.
   await args.graph.materialize({ ceiling: args.indexedFrame.tick });
 
-  return await Promise.all(
+  const results = await Promise.all(
     candidates.map(async (candidate) => await buildEffectEmissionSummary(args, candidate))
   );
+
+  return results.filter((r): r is EffectEmissionSummary => r !== null);
 }

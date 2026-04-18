@@ -536,7 +536,7 @@ test("git-warp adapter materializes effect-node props at the requested historica
   }
 });
 
-test("git-warp adapter rejects malformed effect nodes with no kind", async () => {
+test("git-warp adapter skips malformed effect nodes with no kind", async () => {
   const { graph } = createStubGraph(
     [{
       patchSha: "sha-1",
@@ -556,14 +556,12 @@ test("git-warp adapter rejects malformed effect nodes with no kind", async () =>
   );
 
   const adapter = await GitWarpAdapter.create(graph);
+  const emissions = await adapter.effectEmissions("head:default", 1);
 
-  await assert.rejects(
-    async () => await adapter.effectEmissions("head:default", 1),
-    /missing a non-empty kind property/
-  );
+  assert.deepEqual(emissions, [], "malformed effect node without kind should be silently skipped");
 });
 
-test("git-warp adapter rejects effect nodes whose kind is an empty string", async () => {
+test("git-warp adapter skips effect nodes whose kind is an empty string", async () => {
   const { graph } = createStubGraph(
     [{
       patchSha: "sha-1",
@@ -583,11 +581,9 @@ test("git-warp adapter rejects effect nodes whose kind is an empty string", asyn
   );
 
   const adapter = await GitWarpAdapter.create(graph);
+  const emissions = await adapter.effectEmissions("head:default", 1);
 
-  await assert.rejects(
-    async () => await adapter.effectEmissions("head:default", 1),
-    /missing a non-empty kind property/
-  );
+  assert.deepEqual(emissions, [], "effect node with empty kind should be silently skipped");
 });
 
 test("git-warp adapter rejects unknown heads for effect emissions", async () => {
