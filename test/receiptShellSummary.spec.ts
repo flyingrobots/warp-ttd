@@ -51,6 +51,32 @@ test("fromReceipts derives candidate and rejection counts from receipt shell", (
   assert.equal(shell.hasBlockingRelation, true);
 });
 
+test("hasBlockingRelation is true when only counterfactuals exist (no rejections)", () => {
+  const receipts: ReceiptSummary[] = [{
+    ...makeReceipts()[0]!,
+    rejectedRewriteCount: 0,
+    counterfactualCount: 3,
+  }];
+
+  const shell = ReceiptShellSummary.fromReceipts(makeNeighborhoodCore(), receipts);
+
+  assert.equal(shell.rejectedCount, 0);
+  assert.equal(shell.hasBlockingRelation, true, "counterfactual-only should still be blocking");
+});
+
+test("hasBlockingRelation is false when no rejections and no counterfactuals", () => {
+  const receipts: ReceiptSummary[] = [{
+    ...makeReceipts()[0]!,
+    rejectedRewriteCount: 0,
+    counterfactualCount: 0,
+  }];
+
+  const shell = ReceiptShellSummary.fromReceipts(makeNeighborhoodCore(), receipts);
+
+  assert.equal(shell.rejectedCount, 0);
+  assert.equal(shell.hasBlockingRelation, false, "all-zero should not be blocking");
+});
+
 test("toJSON returns stable plain data", () => {
   const shell = ReceiptShellSummary.fromReceipts(
     makeNeighborhoodCore(),
