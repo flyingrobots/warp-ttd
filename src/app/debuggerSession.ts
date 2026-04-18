@@ -8,22 +8,23 @@
  */
 import { randomUUID } from "node:crypto";
 import type { TtdHostAdapter } from "../adapter.ts";
-import {
+import type {
   NeighborhoodCoreSummary,
-  type SerializedNeighborhoodCoreSummary
+  SerializedNeighborhoodCoreSummary
 } from "./NeighborhoodCoreSummary.ts";
-import {
+import type {
   NeighborhoodSiteCatalog,
-  type SerializedNeighborhoodSiteCatalog
+  SerializedNeighborhoodSiteCatalog
 } from "./NeighborhoodSiteCatalog.ts";
-import {
+import type {
   ReintegrationDetailSummary,
-  type SerializedReintegrationDetailSummary
+  SerializedReintegrationDetailSummary
 } from "./ReintegrationDetailSummary.ts";
-import {
+import type {
   ReceiptShellSummary,
-  type SerializedReceiptShellSummary
+  SerializedReceiptShellSummary
 } from "./ReceiptShellSummary.ts";
+import { buildNeighborhoodState } from "./neighborhoodAssembler.ts";
 import type {
   DeliveryObservationSummary,
   EffectEmissionSummary,
@@ -210,28 +211,6 @@ export class DebuggerSession {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-function buildNeighborhoodState(
-  frame: PlaybackFrame,
-  receipts: readonly ReceiptSummary[],
-  emissions: readonly EffectEmissionSummary[]
-): Pick<
-  SessionSnapshot,
-  "neighborhoodCore" | "neighborhoodSites" | "reintegrationDetail" | "receiptShell"
-> {
-  const neighborhoodCore = NeighborhoodCoreSummary.fromFrame(frame, receipts, emissions);
-
-  return {
-    neighborhoodCore,
-    neighborhoodSites: NeighborhoodSiteCatalog.fromCore(neighborhoodCore),
-    reintegrationDetail: ReintegrationDetailSummary.fromSnapshot(
-      frame,
-      neighborhoodCore,
-      receipts
-    ),
-    receiptShell: ReceiptShellSummary.fromReceipts(neighborhoodCore, receipts)
-  };
-}
 
 async function fetchSnapshot(
   adapter: TtdHostAdapter,
