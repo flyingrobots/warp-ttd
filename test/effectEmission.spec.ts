@@ -204,12 +204,15 @@ test("EffectEmissionSummary v0.5.0 shape", async () => {
   assert.deepEqual(Object.keys(emission.producerWriter).sort(), ["headId", "worldlineId", "writerId"]);
 });
 
-test("effectEmissions preserves effect kind string after adapter cloning", async () => {
-  const emissions = await createAdapter().effectEmissions(HEAD_ID, 2);
-  const emission = emissions[0];
-  assert.ok(emission !== undefined);
-  assert.equal(typeof emission.effectKind, "string");
-  assert.equal(emission.effectKind, "notification");
+test("effectEmissions returns cloned emissions that are not aliased across calls", async () => {
+  const adapter = createAdapter();
+  const first = await adapter.effectEmissions(HEAD_ID, 1);
+  const second = await adapter.effectEmissions(HEAD_ID, 1);
+  assert.ok(first[0] !== undefined);
+  assert.ok(second[0] !== undefined);
+  assert.deepEqual(first, second, "results should be structurally equal");
+  assert.notEqual(first[0], second[0], "results should be distinct objects, not shared references");
+  assert.notEqual(first[0].coordinate, second[0].coordinate, "nested objects should also be cloned");
 });
 
 test("DeliveryObservationSummary shape", async () => {
