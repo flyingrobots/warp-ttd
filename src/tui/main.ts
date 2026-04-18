@@ -12,8 +12,7 @@ import {
   createFramedApp,
   createKeyMap,
 } from "@flyingrobots/bijou-tui";
-import type { FramePage, FramedApp, App, FramedAppMsg, Cmd } from "@flyingrobots/bijou-tui";
-import type { FrameModel } from "@flyingrobots/bijou-tui";
+import type { FramePage, FramedApp, App, FramedAppMsg, Cmd, FrameModel } from "@flyingrobots/bijou-tui";
 import { connectPage } from "./pages/connectPage.ts";
 import { navigatorPage } from "./pages/navigatorPage.ts";
 import { worldlinePage } from "./pages/worldlinePage.ts";
@@ -24,6 +23,8 @@ import {
   getSessionCtx,
   syncNeighborhoodSelection,
   syncSiteDrivenWorldlineFocus,
+  shouldResyncWorldlineFocus,
+  worldlineFocusSnapshot,
   syncSession,
   handleWorldlineLoaded,
 } from "./sessionSync.ts";
@@ -68,32 +69,11 @@ function isLaneSelectionMessage(msg: FMsg): boolean {
   return type === "lane-left" || type === "lane-right";
 }
 
-function typeCarrier(msg: FMsg): object | null {
-  if (typeof msg !== "object" || msg === null) {
-    return null;
-  }
-
-  if (!("type" in msg)) {
-    return null;
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- framed app carries heterogeneous page messages at this boundary
-  const carrier: object = msg;
-  return carrier;
-}
-
 function messageType(msg: FMsg): string | null {
-  const carrier = typeCarrier(msg);
-  if (carrier === null) {
-    return null;
-  }
-
-  const descriptor = Object.getOwnPropertyDescriptor(carrier, "type");
-  if (descriptor === undefined) {
-    return null;
-  }
-
-  return typeof descriptor.value === "string" ? descriptor.value : null;
+  if (typeof msg !== "object" || msg === null || !("type" in msg)) return null;
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- framed app carries heterogeneous page messages at this boundary
+  const value = (msg as Record<string, unknown>)["type"];
+  return typeof value === "string" ? value : null;
 }
 
 function initApp(): [FModel, Cmd<FMsg>[]] {
@@ -113,6 +93,7 @@ function updateApp(msg: FMsg, model: FModel): [FModel, Cmd<FMsg>[]] {
   }
 
   const prevCtx = getSessionCtx(model);
+  const prevSnap = worldlineFocusSnapshot(model);
   const [next, cmds] = framedApp.update(msg, model);
   const nextCtx = getSessionCtx(next);
 
@@ -125,7 +106,12 @@ function updateApp(msg: FMsg, model: FModel): [FModel, Cmd<FMsg>[]] {
     return [syncNeighborhoodFocus(syncNeighborhoodSelection(next)), cmds];
   }
 
-  return [syncNeighborhoodFocus(syncSiteDrivenWorldlineFocus(next)), cmds];
+  const nextSnap = worldlineFocusSnapshot(next);
+  if (nextSnap !== null && shouldResyncWorldlineFocus(prevSnap, nextSnap)) {
+    return [syncNeighborhoodFocus(syncSiteDrivenWorldlineFocus(next)), cmds];
+  }
+
+  return [syncNeighborhoodFocus(next), cmds];
 }
 
 const mainApp: App<FModel, FMsg> = {

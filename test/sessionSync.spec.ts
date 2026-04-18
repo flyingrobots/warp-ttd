@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 
 import { EchoFixtureAdapter } from "../src/adapters/echoFixtureAdapter.ts";
 import { DebuggerSession } from "../src/app/debuggerSession.ts";
-import { siteDrivenWorldlineFocus } from "../src/tui/sessionSync.ts";
+import { siteDrivenWorldlineFocus, shouldResyncWorldlineFocus } from "../src/tui/sessionSync.ts";
 import type { FrameData } from "../src/tui/worldlineLayout.ts";
 
 const HEAD_ID = "head:main";
@@ -75,4 +75,48 @@ test("siteDrivenWorldlineFocus keeps the primary site on its lane-local tick row
   assert.equal(focus.selectedLaneId, "wl:main");
   assert.equal(focus.laneCursor, 0);
   assert.equal(focus.cursor, 0);
+});
+
+test("shouldResyncWorldlineFocus returns false when frame index and site selection are unchanged", () => {
+  assert.equal(
+    shouldResyncWorldlineFocus(
+      { frameIndex: 3, selectedSiteId: "site:alpha" },
+      { frameIndex: 3, selectedSiteId: "site:alpha" }
+    ),
+    false,
+    "identical frame and site should NOT trigger resync"
+  );
+});
+
+test("shouldResyncWorldlineFocus returns true when frame index changes", () => {
+  assert.equal(
+    shouldResyncWorldlineFocus(
+      { frameIndex: 3, selectedSiteId: "site:alpha" },
+      { frameIndex: 4, selectedSiteId: "site:alpha" }
+    ),
+    true,
+    "frame index change should trigger resync"
+  );
+});
+
+test("shouldResyncWorldlineFocus returns true when selected site changes", () => {
+  assert.equal(
+    shouldResyncWorldlineFocus(
+      { frameIndex: 3, selectedSiteId: "site:alpha" },
+      { frameIndex: 3, selectedSiteId: "site:beta" }
+    ),
+    true,
+    "site selection change should trigger resync"
+  );
+});
+
+test("shouldResyncWorldlineFocus returns true when previous state is null", () => {
+  assert.equal(
+    shouldResyncWorldlineFocus(
+      null,
+      { frameIndex: 0, selectedSiteId: null }
+    ),
+    true,
+    "null previous state should trigger initial sync"
+  );
 });

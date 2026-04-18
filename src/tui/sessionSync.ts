@@ -421,6 +421,28 @@ function sameNeighborhoodFocusState(state: NeighborhoodFocusState): boolean {
     state.inspector.selectedSiteId === state.selectedSiteId;
 }
 
+export interface WorldlineFocusSnapshot {
+  readonly frameIndex: number;
+  readonly selectedSiteId: string | null;
+}
+
+export function shouldResyncWorldlineFocus(
+  prev: WorldlineFocusSnapshot | null,
+  next: WorldlineFocusSnapshot
+): boolean {
+  if (prev === null) return true;
+  return prev.frameIndex !== next.frameIndex || prev.selectedSiteId !== next.selectedSiteId;
+}
+
+export function worldlineFocusSnapshot(model: FModel): WorldlineFocusSnapshot | null {
+  const ctx = getSessionCtx(model);
+  if (ctx === null) return null;
+  return {
+    frameIndex: ctx.session.snapshot.head.currentFrameIndex,
+    selectedSiteId: getSelectedSiteId(model)
+  };
+}
+
 export function syncSiteDrivenWorldlineFocus(model: FModel): FModel {
   const sessionCtx = getSessionCtx(model);
   const worldline = getWorldlineModel(model);
