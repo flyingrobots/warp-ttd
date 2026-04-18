@@ -27,7 +27,7 @@ The WARP TTD work doctrine: A backlog, a loop, and honest bookkeeping.
 | **`up-next/`** | Queued after `asap/`. |
 | **`cool-ideas/`** | Uncommitted experiments. |
 | **`bad-code/`** | Technical debt that must be addressed. |
-| **`inbox/`** | Raw ideas. |
+| **`inbox/`** | Unprocessed ideas; must be promoted or buried before entering a cycle. |
 
 ## The Cycle Loop
 
@@ -51,5 +51,6 @@ stateDiagram-v2
 6. **Ship**: Open a PR to `main`. Update `BEARING.md` after merge.
 
 ## Naming Convention
+
 Backlog and cycle files follow: `<LEGEND>_<slug>.md`
 Example: `PROTO_strand-lifecycle.md`

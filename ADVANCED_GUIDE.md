@@ -30,7 +30,7 @@ An **observer** is not a scalar. It is a structural five-tuple:
 
 **Degeneracy** is the hidden multiplicity behind an observation. The debugger's job is to *surface degeneracy*, not collapse it. **Counterfactual inspection** is the exploration of degeneracy—showing what *could* have happened.
 
-## Worldlines & Suffix Transport ([OG-II](https://github.com/flyingrobots/aion-og-2))
+### Worldlines & Suffix Transport ([OG-II](https://github.com/flyingrobots/aion-og-2))
 
 **Worldlines** are not timelines. A worldline is a **causal history**—a chain of patches with *deterministic materialization*.
 

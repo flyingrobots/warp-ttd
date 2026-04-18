@@ -69,8 +69,6 @@ This project will use [Semantic Versioning](https://semver.org/) starting at
 - **sameNeighborhoodFocus**: Replaced `JSON.stringify` equality with
   field-by-field comparison (hot loop performance).
 
-### Changed
-
 - **docs/ restructure** — design docs moved to `docs/design/<cycle>/`,
   retrospectives to `docs/method/retro/<cycle>/`, backlog to
   `docs/method/backlog/` with priority subdirectories. Root `BACKLOG.md`
