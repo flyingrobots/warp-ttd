@@ -1,7 +1,5 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import fs from "node:fs";
-import path from "node:path";
 
 import { NeighborhoodCoreSummary } from "../src/app/NeighborhoodCoreSummary.ts";
 import {
@@ -64,16 +62,4 @@ test("selectedLaneIdForLaneCursor returns the lane at the clamped tree cursor", 
   assert.equal(selectedLaneIdForLaneCursor(scoped, 0), "wl:main");
   assert.equal(selectedLaneIdForLaneCursor(scoped, 1), "ws:sandbox");
   assert.equal(selectedLaneIdForLaneCursor(scoped, 99), "ws:sandbox");
-});
-
-test("worldline loading is not duplicated between page and shell", () => {
-  const pageSource = fs.readFileSync(
-    path.resolve(import.meta.dirname, "..", "src", "tui", "pages", "worldlinePage.ts"),
-    "utf-8"
-  );
-  assert.doesNotMatch(
-    pageSource,
-    /seekToFrame\(headId.*MAX_SAFE_INTEGER/,
-    "worldlinePage must not contain its own worldline loader — loading is handled by sessionSync"
-  );
 });

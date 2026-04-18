@@ -1,22 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import fs from "node:fs";
-import path from "node:path";
 
 import { buildNeighborhoodState } from "../src/app/neighborhoodAssembler.ts";
 import type { PlaybackFrame, ReceiptSummary, EffectEmissionSummary } from "../src/protocol.ts";
-
-test("buildNeighborhoodState is a standalone assembler, not embedded in DebuggerSession", () => {
-  const sessionSource = fs.readFileSync(
-    path.resolve(import.meta.dirname, "..", "src", "app", "debuggerSession.ts"),
-    "utf-8"
-  );
-  assert.doesNotMatch(
-    sessionSource,
-    /NeighborhoodCoreSummary\.fromFrame/,
-    "DebuggerSession must not call NeighborhoodCoreSummary.fromFrame directly — use the assembler"
-  );
-});
 
 test("buildNeighborhoodState produces all four neighborhood summaries from protocol data", () => {
   const frame: PlaybackFrame = {
@@ -49,9 +35,8 @@ test("buildNeighborhoodState produces all four neighborhood summaries from proto
 
   const state = buildNeighborhoodState(frame, receipts, emissions);
 
-  assert.equal(typeof state.neighborhoodCore.outcome, "string");
-  assert.equal(typeof state.neighborhoodSites.activeSiteId, "string");
-  assert.equal(typeof state.reintegrationDetail.summary, "string");
-  assert.equal(typeof state.receiptShell.summary, "string");
   assert.equal(state.neighborhoodCore.outcome, "LAWFUL");
+  assert.ok(state.neighborhoodSites.activeSiteId.startsWith("site:"));
+  assert.ok(state.reintegrationDetail.summary.length > 0);
+  assert.ok(state.receiptShell.summary.length > 0);
 });

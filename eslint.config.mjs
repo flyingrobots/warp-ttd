@@ -98,6 +98,18 @@ export default tseslint.config(
       'object-shorthand': ['error', 'always'],
     },
   },
+  // Hexagonal boundary enforcement — protocol mirror must be plain data
+  {
+    files: ['src/protocol.ts'],
+    rules: {
+      'no-restricted-imports': ['error', {
+        patterns: [{
+          group: ['./EffectKind*', '../EffectKind*'],
+          message: 'Protocol mirror must not import runtime classes — the port boundary must be plain data.',
+        }],
+      }],
+    },
+  },
   // Test file overrides — Node test runner handles async tests natively
   {
     files: ['test/**/*.ts'],

@@ -7,8 +7,6 @@
  */
 import test from "node:test";
 import assert from "node:assert/strict";
-import fs from "node:fs";
-import path from "node:path";
 
 import { EchoFixtureAdapter } from "../src/adapters/echoFixtureAdapter.ts";
 
@@ -164,16 +162,4 @@ test("EffectEmissionSummary shape", async () => {
     "coordinate", "effectKind", "emissionId", "frameIndex",
     "headId", "laneId", "producerWriter", "summary", "worldlineId"
   ]);
-});
-
-test("protocol mirror imports no runtime classes — hex boundary is plain data", () => {
-  const protocolSource = fs.readFileSync(
-    path.resolve(import.meta.dirname, "..", "src", "protocol.ts"),
-    "utf-8"
-  );
-  assert.doesNotMatch(
-    protocolSource,
-    /import\s.*\bfrom\b.*EffectKind/,
-    "protocol.ts must not import EffectKind — the port boundary must be plain data"
-  );
 });
