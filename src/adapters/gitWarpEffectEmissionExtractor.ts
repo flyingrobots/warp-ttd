@@ -74,14 +74,9 @@ function readNonEmptyStringProperty(
   props: GitWarpNodeProps | null,
   propertyName: string
 ): string | null {
-  const propertyEntry = props === null
-    ? undefined
-    : Object.entries(props).find(([key]) => key === propertyName);
-  const propertyValue = propertyEntry?.[1];
-
-  return typeof propertyValue === "string" && propertyValue.length > 0
-    ? propertyValue
-    : null;
+  if (props === null) return null;
+  const value = (props as Record<string, string | number | boolean | null | undefined>)[propertyName];
+  return typeof value === "string" && value.length > 0 ? value : null;
 }
 
 function readEffectKind(
@@ -126,10 +121,12 @@ export async function extractGitWarpEffectEmissions<TMaterializedState, TNodePro
 
   // Re-materialize at the requested ceiling so effect-node props reflect
   // that historical frame rather than the current live frontier.
+  // NOTE: This mutates shared graph state — callers must serialize
+  // concurrent calls per graph instance to avoid ceiling cross-contamination.
   await args.graph.materialize({ ceiling: args.indexedFrame.tick });
 
   const results = await Promise.all(
-    candidates.map(async (candidate) => await buildEffectEmissionSummary(args, candidate))
+    candidates.map((candidate) => buildEffectEmissionSummary(args, candidate))
   );
 
   return results.filter((r): r is EffectEmissionSummary => r !== null);

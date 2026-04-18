@@ -199,9 +199,9 @@ interface TreeWalkState {
 function walkLaneTree(lane: LaneRef, ctx: TreeWalkCtx, state: TreeWalkState): void {
   state.out.push({ laneId: lane.id, label: `${ctx.prefix}${treeConnector(ctx)}${lane.id}`, depth: ctx.depth });
   const np = treeNextPrefix(ctx);
-  for (const [i, child] of state.childrenOf(lane.id).entries()) {
-    const siblings = state.childrenOf(lane.id);
-    walkLaneTree(child, { depth: ctx.depth + 1, prefix: np, isLast: i === siblings.length - 1 }, state);
+  const children = state.childrenOf(lane.id);
+  for (const [i, child] of children.entries()) {
+    walkLaneTree(child, { depth: ctx.depth + 1, prefix: np, isLast: i === children.length - 1 }, state);
   }
 }
 

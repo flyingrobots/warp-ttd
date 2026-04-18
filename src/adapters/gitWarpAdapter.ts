@@ -345,6 +345,8 @@ export class GitWarpAdapter<TMaterializedState, TNodeProps extends GitWarpNodePr
         "READ_FRAME",
         "READ_RECEIPTS",
         "READ_EFFECT_EMISSIONS",
+        "READ_DELIVERY_OBSERVATIONS",
+        "READ_EXECUTION_CONTEXT",
         "CONTROL_STEP_FORWARD",
         "CONTROL_STEP_BACKWARD",
         "CONTROL_SEEK"
@@ -366,10 +368,7 @@ export class GitWarpAdapter<TMaterializedState, TNodeProps extends GitWarpNodePr
       frameIndex
     );
 
-    if (resolvedIndex !== 0) {
-      resolveIndexedFrameForResolvedIndex(this.#frameIndex, resolvedIndex);
-    }
-
+    // #buildFrame validates via resolveIndexedFrameForResolvedIndex internally
     return Promise.resolve(this.#buildFrame(headId, resolvedIndex));
   }
 
@@ -498,6 +497,8 @@ export class GitWarpAdapter<TMaterializedState, TNodeProps extends GitWarpNodePr
     return Promise.resolve([]);
   }
 
+  // git-warp reads historical patches post-hoc — DEBUG is the correct mode
+  // (LIVE would imply real-time event stream, REPLAY implies deterministic re-execution)
   public executionContext(): Promise<ExecutionContext> {
     return Promise.resolve({ mode: "DEBUG" });
   }

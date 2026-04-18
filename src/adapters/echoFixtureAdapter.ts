@@ -256,12 +256,7 @@ function cloneValue<T>(value: T): T {
 }
 
 function cloneEffectEmission(emission: EffectEmissionSummary): EffectEmissionSummary {
-  return {
-    ...cloneValue(emission),
-    coordinate: cloneValue(emission.coordinate),
-    producerWriter: cloneValue(emission.producerWriter),
-    effectKind: emission.effectKind
-  };
+  return structuredClone(emission);
 }
 
 function requireHeadState(

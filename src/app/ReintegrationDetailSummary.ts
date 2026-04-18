@@ -156,7 +156,7 @@ function buildAnchors(
     });
   }
 
-  for (const lane of participatingLanes(frame, neighborhoodCore)) {
+  for (const lane of participatingLanes(frame, neighborhoodCore).filter((l) => l.laneId !== neighborhoodCore.primaryLaneId)) {
     anchors.push({
       anchorId: `anchor:${lane.laneId}:participant`,
       kind: "PARTICIPATING_LANE",

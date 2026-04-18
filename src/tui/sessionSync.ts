@@ -459,6 +459,9 @@ function sameNeighborhoodFocus(
     return false;
   }
 
-  return JSON.stringify(left.toJSON()) === JSON.stringify(right.toJSON());
+  return left.siteId === right.siteId &&
+    left.outcome === right.outcome &&
+    left.selectedLaneId === right.selectedLaneId &&
+    left.participatingLaneIds.length === right.participatingLaneIds.length;
 }
 

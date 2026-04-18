@@ -269,12 +269,7 @@ function buildAllFrameData(scenario: Scenario): BuiltScenario {
 }
 
 function cloneEffectEmissionSummary(emission: EffectEmissionSummary): EffectEmissionSummary {
-  return {
-    ...structuredClone(emission),
-    coordinate: structuredClone(emission.coordinate),
-    producerWriter: structuredClone(emission.producerWriter),
-    effectKind: emission.effectKind
-  };
+  return structuredClone(emission);
 }
 
 function buildPlaybackFrame(
