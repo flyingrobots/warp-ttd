@@ -93,7 +93,8 @@ test("navigation fetches receipts and emissions for the new frame", async () => 
 });
 
 test("neighborhood core tracks obstruction and alternatives at the active frame", async () => {
-  const session = await DebuggerSession.create(createAdapter(), HEAD_ID);
+  const adapter = createAdapter();
+  const session = await DebuggerSession.create(adapter, HEAD_ID);
   await session.seekToFrame(2);
 
   assert.deepEqual(session.snapshot.neighborhoodCore.participatingLaneIds, ["ws:sandbox"]);
@@ -102,8 +103,9 @@ test("neighborhood core tracks obstruction and alternatives at the active frame"
   assert.equal(session.snapshot.neighborhoodSites.sites.length, 2);
   assert.equal(session.snapshot.reintegrationDetail.obligations.length, 2);
   assert.equal(session.snapshot.receiptShell.hasBlockingRelation, true);
+  const { lanes } = await adapter.laneCatalog();
   assert.equal(
-    session.snapshot.neighborhoodCore.buildDisplayCatalog(await createAdapter().laneCatalog().then((catalog) => catalog.lanes)).map((lane) => lane.id).join(","),
+    session.snapshot.neighborhoodCore.buildDisplayCatalog(lanes).map((lane) => lane.id).join(","),
     "wl:main,ws:sandbox"
   );
 });
@@ -194,6 +196,7 @@ test("toJSON() returns a serializable representation", async () => {
   assert.deepEqual(roundTripped, json, "toJSON output must survive JSON round-trip without loss");
 
   // effectKind must be a plain string, not a class instance
+  assert.ok(json.snapshot.emissions.length > 0, "test precondition: emissions must be present at frame 1");
   for (const emission of json.snapshot.emissions) {
     assert.equal(typeof emission.effectKind, "string", "effectKind must serialize as plain string");
   }

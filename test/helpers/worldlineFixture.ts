@@ -13,7 +13,7 @@ export function makeLane(id: string, kind: "WORLDLINE" | "STRAND", parentId?: st
     kind,
     worldlineId: kind === "WORLDLINE" ? id : (parentId ?? "wl:main"),
     ...(parentId !== undefined ? { parentId } : {}),
-    writable: kind === "WORLDLINE",
+    writable: false,
     description: `${kind.toLowerCase()} ${id}`
   };
 }

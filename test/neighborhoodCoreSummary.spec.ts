@@ -197,5 +197,5 @@ test("toJSON returns a stable plain-data representation", () => {
 
   assert.equal(json.siteId, core.siteId);
   assert.deepEqual(json.participatingLaneIds, ["ws:sandbox"]);
-  assert.equal(JSON.stringify(JSON.parse(serialized)), serialized);
+  assert.deepEqual(JSON.parse(serialized), json);
 });

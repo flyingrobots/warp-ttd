@@ -25,6 +25,7 @@ function makeFrames(): FrameData[] {
       { laneId: "ws:sandbox", worldlineId: "wl:main", coordinate: { laneId: "ws:sandbox", worldlineId: "wl:main", tick: 0 }, changed: false },
     ], receipts: [{
       receiptId: "r:1", headId: "head:test", frameIndex: 1, laneId: "wl:main", worldlineId: "wl:main",
+      writer: { writerId: "alice", worldlineId: "wl:main" },
       inputTick: 0, outputTick: 1, admittedRewriteCount: 1, rejectedRewriteCount: 0, counterfactualCount: 0,
       digest: "d1", summary: "r1"
     }] },
@@ -33,6 +34,7 @@ function makeFrames(): FrameData[] {
       { laneId: "ws:sandbox", worldlineId: "wl:main", coordinate: { laneId: "ws:sandbox", worldlineId: "wl:main", tick: 1 }, changed: true },
     ], receipts: [{
       receiptId: "r:2", headId: "head:test", frameIndex: 2, laneId: "ws:sandbox", worldlineId: "wl:main",
+      writer: { writerId: "bob", worldlineId: "wl:main" },
       inputTick: 0, outputTick: 1, admittedRewriteCount: 1, rejectedRewriteCount: 0, counterfactualCount: 1,
       digest: "d2", summary: "r2"
     }] },

@@ -98,5 +98,5 @@ test("toJSON returns stable plain data", () => {
 
   assert.equal(json.activeSiteId, catalog.activeSiteId);
   assert.equal(json.sites.length, 2);
-  assert.equal(JSON.stringify(JSON.parse(serialized)), serialized);
+  assert.deepEqual(JSON.parse(serialized), json);
 });

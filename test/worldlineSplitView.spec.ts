@@ -7,14 +7,12 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import type { LaneRef } from "../src/protocol.ts";
-import type { FrameData } from "../src/tui/worldlineLayout.ts";
-import { makeLane, makeLaneFrame, makeReceipt } from "./helpers/worldlineFixture.ts";
-
-// These are the new exports we expect from cycle 0014:
 import {
   filterFramesToLane,
   buildLaneTreeLines,
 } from "../src/tui/worldlineLayout.ts";
+import type { FrameData } from "../src/tui/worldlineLayout.ts";
+import { makeLane, makeLaneFrame, makeReceipt } from "./helpers/worldlineFixture.ts";
 
 function multiLaneCatalog(): LaneRef[] {
   return [
@@ -205,7 +203,7 @@ test("renderWorldline with selectedLaneId shows only that lane's ticks", () => {
   assert.ok(!output.includes("aaa1111"), "Should not show other lane's digests in timeline");
 });
 
-test("renderWorldline without selectedLaneId falls back to current behavior", () => {
+test("renderWorldline with no lane selection shows all lanes' ticks", () => {
   const { frames, catalog } = makeMultiLaneHistory();
   const output = renderToString(renderWorldline({
     frames, catalog, cursor: 0, w: 100, h: 30, ctx: bijouCtx,
@@ -235,8 +233,8 @@ test("renderWorldline narrow terminal collapses to single pane", () => {
   const narrowLines = narrow.split("\n");
   const wideLines = wide.split("\n");
   assert.ok(
-    narrowLines.some((l) => l.length <= 50),
-    "narrow render lines should respect narrow width"
+    narrowLines.filter((l) => l.length > 0).every((l) => l.length <= 50),
+    "narrow render non-empty lines should respect narrow width"
   );
   assert.ok(
     wideLines.some((l) => l.length > 50),

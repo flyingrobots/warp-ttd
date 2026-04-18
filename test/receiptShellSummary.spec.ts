@@ -82,5 +82,5 @@ test("toJSON returns stable plain data", () => {
   const json = shell.toJSON();
 
   assert.equal(json.summary, shell.summary);
-  assert.equal(JSON.stringify(JSON.parse(JSON.stringify(json))), JSON.stringify(json));
+  assert.deepEqual(JSON.parse(JSON.stringify(json)), json);
 });
