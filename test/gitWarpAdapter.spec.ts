@@ -656,6 +656,27 @@ test("git-warp adapter deduplicates repeated effect-node adds in one frame", asy
   assert.deepEqual(materializeCeilings, [1]);
 });
 
+test("git-warp adapter caches effect emissions per frame to avoid redundant materialization", async () => {
+  const { graph, materializeCeilings } = createStubGraph(
+    [{
+      patchSha: "sha-1",
+      writer: "alice",
+      lamport: 1,
+      ops: [{ op: "NodeAdd", target: "@warp/effect:alice-1-0", result: "applied" }]
+    }],
+    new Map([["@warp/effect:alice-1-0", { kind: "diagnostic", writer: "alice" }]])
+  );
+
+  const adapter = await GitWarpAdapter.create(graph);
+  const first = await adapter.effectEmissions("head:default", 1);
+  const second = await adapter.effectEmissions("head:default", 1);
+
+  assert.equal(first.length, 1);
+  assert.deepEqual(first, second, "cached result should be structurally equal");
+  assert.notEqual(first[0], second[0], "cached result should be a clone, not the same reference");
+  assert.equal(materializeCeilings.length, 1, "should materialize only once, not per-call");
+});
+
 test("git-warp adapter still returns no delivery observations", async () => {
   const fixture = await scenarioEffectHistory();
 

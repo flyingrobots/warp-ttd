@@ -291,6 +291,7 @@ export class GitWarpAdapter<TMaterializedState, TNodeProps extends GitWarpNodePr
   readonly #frameIndex: IndexedFrame[];
   readonly #lanes: LaneRef[];
   readonly #headStates = new Map<string, PlaybackHeadSnapshot>();
+  readonly #emissionCache = new Map<number, EffectEmissionSummary[]>();
 
   private constructor(
     graph: WarpCoreLike<TMaterializedState, TNodeProps>,
@@ -462,19 +463,23 @@ export class GitWarpAdapter<TMaterializedState, TNodeProps extends GitWarpNodePr
 
   // --- Effect/delivery inspection ---
 
-  public effectEmissions(headId: string, frameIndex?: number): Promise<EffectEmissionSummary[]> {
+  public async effectEmissions(headId: string, frameIndex?: number): Promise<EffectEmissionSummary[]> {
     const resolvedIndex = resolveRequestedFrameIndex(
       requireHead(this.#headStates, headId),
       frameIndex
     );
 
     if (resolvedIndex === 0) {
-      return Promise.resolve([]);
+      return [];
+    }
+
+    const cached = this.#emissionCache.get(resolvedIndex);
+    if (cached !== undefined) {
+      return structuredClone(cached);
     }
 
     const indexed = resolveIndexedFrameForResolvedIndex(this.#frameIndex, resolvedIndex);
-
-    return extractGitWarpEffectEmissions({
+    const emissions = await extractGitWarpEffectEmissions({
       graph: this.#graph,
       headId,
       frameIndex: resolvedIndex,
@@ -482,6 +487,9 @@ export class GitWarpAdapter<TMaterializedState, TNodeProps extends GitWarpNodePr
       laneId: LIVE_WORLDLINE_ID,
       worldlineId: LIVE_WORLDLINE_ID
     });
+
+    this.#emissionCache.set(resolvedIndex, emissions);
+    return structuredClone(emissions);
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars -- interface requires frameIndex param
