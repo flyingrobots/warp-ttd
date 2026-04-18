@@ -9,75 +9,15 @@ import { initDefaultContext } from "@flyingrobots/bijou-node";
 import { surfaceToString } from "@flyingrobots/bijou";
 import type { BijouContext, Surface } from "@flyingrobots/bijou";
 
-import type { LaneRef, LaneFrameView, ReceiptSummary } from "../src/protocol.ts";
 import { renderWorldline } from "../src/tui/worldlineLayout.ts";
 import type { FrameData } from "../src/tui/worldlineLayout.ts";
+import { makeLane, makeLaneFrame, makeReceipt } from "./helpers/worldlineFixture.ts";
+import type { LaneRef } from "../src/protocol.ts";
 
 const bijouCtx: BijouContext = initDefaultContext();
 
 function renderToString(surface: Surface): string {
   return surfaceToString(surface, bijouCtx.style);
-}
-
-function makeLane(id: string, kind: "WORLDLINE" | "STRAND", parentId?: string): LaneRef {
-  return {
-    id,
-    kind,
-    worldlineId: kind === "WORLDLINE" ? id : (parentId ?? "wl:main"),
-    ...(parentId !== undefined ? { parentId } : {}),
-    writable: kind === "WORLDLINE",
-    description: `${kind.toLowerCase()} ${id}`
-  };
-}
-
-function withDigest(laneFrame: LaneFrameView, btrDigest?: string): LaneFrameView {
-  if (btrDigest === undefined) {
-    return laneFrame;
-  }
-
-  return { ...laneFrame, btrDigest };
-}
-
-function makeLaneFrame(laneId: string, tick: number, opts?: {
-  changed?: boolean;
-  btrDigest?: string;
-  worldlineId?: string;
-}): LaneFrameView {
-  const worldlineId = opts?.worldlineId ?? laneId;
-
-  return withDigest({
-    laneId,
-    worldlineId,
-    coordinate: { laneId, worldlineId, tick },
-    changed: opts?.changed === true,
-  }, opts?.btrDigest);
-}
-
-interface ReceiptOpts {
-  laneId: string;
-  worldlineId?: string;
-  writerId: string;
-  frameIndex: number;
-  admitted?: number;
-  rejected?: number;
-}
-
-function makeReceipt(opts: ReceiptOpts): ReceiptSummary {
-  return {
-    receiptId: `receipt:${opts.laneId}:${String(opts.frameIndex)}`,
-    headId: "head:default",
-    frameIndex: opts.frameIndex,
-    laneId: opts.laneId,
-    worldlineId: opts.worldlineId ?? opts.laneId,
-    writer: { writerId: opts.writerId, worldlineId: opts.worldlineId ?? opts.laneId },
-    inputTick: opts.frameIndex,
-    outputTick: opts.frameIndex + 1,
-    admittedRewriteCount: opts.admitted ?? 1,
-    rejectedRewriteCount: opts.rejected ?? 0,
-    counterfactualCount: 0,
-    digest: `digest:${String(opts.frameIndex)}`,
-    summary: `receipt at frame ${String(opts.frameIndex)}`,
-  };
 }
 
 function makeHistory(): { catalog: LaneRef[]; frames: FrameData[] } {
