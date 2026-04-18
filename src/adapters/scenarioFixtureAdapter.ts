@@ -6,7 +6,6 @@
  * touching a real substrate.
  */
 import type { TtdHostAdapter } from "../adapter.ts";
-import { EffectKind } from "../EffectKind.ts";
 import { FrameOutOfRangeError, UnknownHeadError } from "../errors.ts";
 import type {
   Capability,
@@ -212,7 +211,7 @@ function buildFrameData(
     emissions.push({
       emissionId: emId, headId: HEAD_ID, frameIndex,
       laneId: se.laneId, worldlineId, coordinate: { laneId: se.laneId, worldlineId, tick: sf.tick },
-      effectKind: EffectKind.from(se.effectKind),
+      effectKind: se.effectKind,
       producerWriter: createWriterRef(
         se.producerWriterId ?? sf.receipts[0]?.writerId ?? "scenario-writer",
         worldlineId,
@@ -276,7 +275,7 @@ function cloneEffectEmissionSummary(emission: EffectEmissionSummary): EffectEmis
     ...structuredClone(emission),
     coordinate: structuredClone(emission.coordinate),
     producerWriter: structuredClone(emission.producerWriter),
-    effectKind: emission.effectKind.clone()
+    effectKind: emission.effectKind
   };
 }
 

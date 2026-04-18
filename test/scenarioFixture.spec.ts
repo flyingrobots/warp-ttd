@@ -7,7 +7,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { NotificationEffectKind } from "../src/EffectKind.ts";
 import {
   buildScenario,
   scenarioLiveWithEffects,
@@ -127,7 +126,7 @@ test("buildScenario maps emissions and deliveries", async () => {
   assert.equal(emissions.length, 1);
   const emission = emissions[0];
   assert.ok(emission !== undefined);
-  assert.ok(emission.effectKind instanceof NotificationEffectKind);
+  assert.equal(emission.effectKind, "notification");
   assert.equal(emission.producerWriter.headId, "head:writer:notification");
 
   const observations = await adapter.deliveryObservations("head:default", 1);

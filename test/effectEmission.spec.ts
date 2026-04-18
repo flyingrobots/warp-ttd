@@ -7,7 +7,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { DiagnosticEffectKind, NotificationEffectKind } from "../src/EffectKind.ts";
 import { EchoFixtureAdapter } from "../src/adapters/echoFixtureAdapter.ts";
 
 const HEAD_ID = "head:main";
@@ -55,7 +54,7 @@ test("effectEmissions returns emission records at frame 1", async () => {
   assert.equal(typeof emission.laneId, "string");
   assert.equal(typeof emission.coordinate.laneId, "string");
   assert.equal(typeof emission.coordinate.tick, "number");
-  assert.ok(emission.effectKind instanceof DiagnosticEffectKind);
+  assert.equal(emission.effectKind, "diagnostic");
   assert.equal(typeof emission.producerWriter.writerId, "string");
   assert.equal(typeof emission.producerWriter.worldlineId, "string");
   assert.equal(typeof emission.producerWriter.headId, "string");
@@ -205,11 +204,12 @@ test("EffectEmissionSummary v0.5.0 shape", async () => {
   assert.deepEqual(Object.keys(emission.producerWriter).sort(), ["headId", "worldlineId", "writerId"]);
 });
 
-test("effectEmissions preserves runtime effect kind classes after adapter cloning", async () => {
+test("effectEmissions preserves effect kind string after adapter cloning", async () => {
   const emissions = await createAdapter().effectEmissions(HEAD_ID, 2);
   const emission = emissions[0];
   assert.ok(emission !== undefined);
-  assert.ok(emission.effectKind instanceof NotificationEffectKind);
+  assert.equal(typeof emission.effectKind, "string");
+  assert.equal(emission.effectKind, "notification");
 });
 
 test("DeliveryObservationSummary shape", async () => {

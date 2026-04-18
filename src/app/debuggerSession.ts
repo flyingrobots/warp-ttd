@@ -8,7 +8,6 @@
  */
 import { randomUUID } from "node:crypto";
 import type { TtdHostAdapter } from "../adapter.ts";
-import type { EffectKind } from "../EffectKind.ts";
 import {
   NeighborhoodCoreSummary,
   type SerializedNeighborhoodCoreSummary
@@ -57,16 +56,11 @@ export interface PinnedObservation {
   emission: EffectEmissionSummary;
 }
 
-export interface SerializedEffectEmissionSummary
-  extends Omit<EffectEmissionSummary, "effectKind"> {
-  effectKind: string;
-}
-
 export interface SerializedSessionSnapshot {
   head: PlaybackHeadSnapshot;
   frame: PlaybackFrame;
   receipts: ReceiptSummary[];
-  emissions: SerializedEffectEmissionSummary[];
+  emissions: EffectEmissionSummary[];
   observations: DeliveryObservationSummary[];
   execCtx: ExecutionContext;
   neighborhoodCore: SerializedNeighborhoodCoreSummary;
@@ -75,40 +69,11 @@ export interface SerializedSessionSnapshot {
   receiptShell: SerializedReceiptShellSummary;
 }
 
-export interface SerializedPinnedObservation
-  extends Omit<PinnedObservation, "emission"> {
-  emission: SerializedEffectEmissionSummary;
-}
-
 export interface SerializedSession {
   sessionId: string;
   activeHeadId: string;
   snapshot: SerializedSessionSnapshot;
-  pins: SerializedPinnedObservation[];
-}
-
-function cloneEffectKind(kind: EffectKind): EffectKind {
-  return kind.clone();
-}
-
-function cloneEffectEmissionSummary(emission: EffectEmissionSummary): EffectEmissionSummary {
-  return {
-    ...structuredClone(emission),
-    coordinate: structuredClone(emission.coordinate),
-    producerWriter: structuredClone(emission.producerWriter),
-    effectKind: cloneEffectKind(emission.effectKind)
-  };
-}
-
-function serializeEffectEmissionSummary(
-  emission: EffectEmissionSummary
-): SerializedEffectEmissionSummary {
-  return {
-    ...structuredClone(emission),
-    coordinate: structuredClone(emission.coordinate),
-    producerWriter: structuredClone(emission.producerWriter),
-    effectKind: emission.effectKind.toString()
-  };
+  pins: PinnedObservation[];
 }
 
 function serializeSnapshot(
@@ -118,7 +83,7 @@ function serializeSnapshot(
     head: structuredClone(snapshot.head),
     frame: structuredClone(snapshot.frame),
     receipts: structuredClone(snapshot.receipts),
-    emissions: snapshot.emissions.map((emission) => serializeEffectEmissionSummary(emission)),
+    emissions: structuredClone(snapshot.emissions),
     observations: structuredClone(snapshot.observations),
     execCtx: structuredClone(snapshot.execCtx),
     neighborhoodCore: snapshot.neighborhoodCore.toJSON(),
@@ -128,14 +93,8 @@ function serializeSnapshot(
   };
 }
 
-function serializePinnedObservation(
-  pin: PinnedObservation
-): SerializedPinnedObservation {
-  return {
-    pinnedAt: pin.pinnedAt,
-    observation: structuredClone(pin.observation),
-    emission: serializeEffectEmissionSummary(pin.emission)
-  };
+function clonePinnedObservation(pin: PinnedObservation): PinnedObservation {
+  return structuredClone(pin);
 }
 
 // ---------------------------------------------------------------------------
@@ -223,7 +182,7 @@ export class DebuggerSession {
     const pinned: PinnedObservation = {
       pinnedAt: this.#snapshot.frame.frameIndex,
       observation: structuredClone(obs),
-      emission: cloneEffectEmissionSummary(emission)
+      emission: structuredClone(emission)
     };
     this.#pins.push(pinned);
     return pinned;
@@ -243,7 +202,7 @@ export class DebuggerSession {
       sessionId: this.sessionId,
       activeHeadId: this.#activeHeadId,
       snapshot: serializeSnapshot(this.#snapshot),
-      pins: this.#pins.map((pin) => serializePinnedObservation(pin))
+      pins: this.#pins.map((pin) => clonePinnedObservation(pin))
     };
   }
 }

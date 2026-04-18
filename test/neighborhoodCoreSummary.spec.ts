@@ -1,7 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { DiagnosticEffectKind } from "../src/EffectKind.ts";
 import {
   NeighborhoodCoreSummary
 } from "../src/app/NeighborhoodCoreSummary.ts";
@@ -88,7 +87,7 @@ function makeEmission(): EffectEmissionSummary {
     laneId: "ws:sandbox",
     worldlineId: "wl:main",
     coordinate: { laneId: "ws:sandbox", worldlineId: "wl:main", tick: 1 },
-    effectKind: new DiagnosticEffectKind(),
+    effectKind: "diagnostic",
     producerWriter: { writerId: "bob", worldlineId: "wl:main", headId: "head:writer:bob" },
     summary: "sandbox emission"
   };

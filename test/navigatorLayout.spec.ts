@@ -8,7 +8,6 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { initDefaultContext } from "@flyingrobots/bijou-node";
 import { surfaceToString } from "@flyingrobots/bijou";
-import { EffectKind } from "../src/EffectKind.ts";
 import {
   buildLaneTree,
   buildPositionBar,
@@ -96,7 +95,7 @@ function makeEmission(laneId: string, kind: string, frameIndex: number): EffectE
     emissionId: `emit:test:${kind}:${laneId}`,
     headId: "head:default", frameIndex, laneId, worldlineId: laneId,
     coordinate: { laneId, worldlineId: laneId, tick: frameIndex },
-    effectKind: EffectKind.from(kind), producerWriter: { writerId: "test-writer", worldlineId: laneId, headId: "head:writer:test" },
+    effectKind: kind, producerWriter: { writerId: "test-writer", worldlineId: laneId, headId: "head:writer:test" },
     summary: `${kind} at ${laneId}`
   };
 }

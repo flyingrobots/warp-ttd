@@ -2,7 +2,6 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import type { StrandDescriptor } from "@git-stunts/git-warp";
-import { NotificationEffectKind } from "../src/EffectKind.ts";
 import { GitWarpAdapter } from "../src/adapters/gitWarpAdapter.ts";
 import { scenarioEffectHistory } from "./helpers/gitWarpEffectFixture.ts";
 import { scenarioLinearHistory, scenarioMultiWriter } from "./helpers/gitWarpFixture.ts";
@@ -512,7 +511,7 @@ test("git-warp adapter surfaces substrate effect nodes as effect emissions", asy
       worldlineId: "wl:live",
       tick: 1
     });
-    assert.ok(emission.effectKind instanceof NotificationEffectKind);
+    assert.equal(emission.effectKind, "notification");
     assert.equal(emission.producerWriter.writerId, "alice");
     assert.equal(emission.producerWriter.worldlineId, "wl:live");
     assert.equal(emission.producerWriter.headId, undefined);

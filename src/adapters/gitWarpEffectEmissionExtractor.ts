@@ -1,5 +1,4 @@
 import type { WarpCore } from "@git-stunts/git-warp";
-import { EffectKind } from "../EffectKind.ts";
 import type { EffectEmissionSummary } from "../protocol.ts";
 
 export const GIT_WARP_EFFECT_NODE_PREFIX = "@warp/effect:";
@@ -88,14 +87,14 @@ function readNonEmptyStringProperty(
 function readEffectKind(
   props: GitWarpNodeProps | null,
   effectNodeId: string
-): EffectKind {
+): string {
   const serializedKind = readNonEmptyStringProperty(props, "kind");
 
   if (serializedKind === null) {
     throw new TypeError(`git-warp effect node ${effectNodeId} is missing a non-empty kind property`);
   }
 
-  return EffectKind.from(serializedKind);
+  return serializedKind;
 }
 
 async function buildEffectEmissionSummary<TMaterializedState, TNodeProps extends GitWarpNodeProps>(
@@ -123,7 +122,7 @@ async function buildEffectEmissionSummary<TMaterializedState, TNodeProps extends
       writerId: candidate.receiptWriterId,
       worldlineId: args.worldlineId
     },
-    summary: `${effectKind.toString()} effect node admitted at tick ${args.indexedFrame.tick.toString()}`
+    summary: `${effectKind} effect node admitted at tick ${args.indexedFrame.tick.toString()}`
   };
 }
 

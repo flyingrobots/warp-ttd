@@ -7,8 +7,9 @@
  */
 import test from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
 
-import { DiagnosticEffectKind } from "../src/EffectKind.ts";
 import { EchoFixtureAdapter } from "../src/adapters/echoFixtureAdapter.ts";
 
 const adapter = new EchoFixtureAdapter();
@@ -154,7 +155,8 @@ test("EffectEmissionSummary shape", async () => {
   assert.equal(typeof emission.frameIndex, "number");
   assert.equal(typeof emission.laneId, "string");
   assert.equal(typeof emission.worldlineId, "string");
-  assert.ok(emission.effectKind instanceof DiagnosticEffectKind);
+  assert.equal(typeof emission.effectKind, "string");
+  assert.equal(emission.effectKind, "diagnostic");
   assert.deepEqual(Object.keys(emission.producerWriter).sort(), ["headId", "worldlineId", "writerId"]);
 
   const keys = Object.keys(emission).sort();
@@ -162,4 +164,16 @@ test("EffectEmissionSummary shape", async () => {
     "coordinate", "effectKind", "emissionId", "frameIndex",
     "headId", "laneId", "producerWriter", "summary", "worldlineId"
   ]);
+});
+
+test("protocol mirror imports no runtime classes — hex boundary is plain data", () => {
+  const protocolSource = fs.readFileSync(
+    path.resolve(import.meta.dirname, "..", "src", "protocol.ts"),
+    "utf-8"
+  );
+  assert.doesNotMatch(
+    protocolSource,
+    /import\s.*\bfrom\b.*EffectKind/,
+    "protocol.ts must not import EffectKind — the port boundary must be plain data"
+  );
 });

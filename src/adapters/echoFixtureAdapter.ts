@@ -1,9 +1,5 @@
 import type { TtdHostAdapter } from "../adapter.ts";
 import {
-  DiagnosticEffectKind,
-  NotificationEffectKind,
-} from "../EffectKind.ts";
-import {
   FrameResolutionError,
   NoFramesConfiguredError,
   UnknownHeadError
@@ -182,7 +178,7 @@ const FIXTURE: FixtureState = {
         laneId: "wl:main",
         worldlineId: "wl:main",
         coordinate: { laneId: "wl:main", worldlineId: "wl:main", tick: 1 },
-        effectKind: new DiagnosticEffectKind(),
+        effectKind: "diagnostic",
         producerWriter: { writerId: "echo-writer", worldlineId: "wl:main", headId: "head:writer:main" },
         summary: "Diagnostic event emitted on canonical worldline advance."
       },
@@ -193,7 +189,7 @@ const FIXTURE: FixtureState = {
         laneId: "ws:sandbox",
         worldlineId: "wl:main",
         coordinate: { laneId: "ws:sandbox", worldlineId: "wl:main", tick: 1 },
-        effectKind: new NotificationEffectKind(),
+        effectKind: "notification",
         producerWriter: { writerId: "echo-writer", worldlineId: "wl:main", headId: "head:writer:main" },
         summary: "Notification emitted on speculative strand advance."
       }
@@ -264,7 +260,7 @@ function cloneEffectEmission(emission: EffectEmissionSummary): EffectEmissionSum
     ...cloneValue(emission),
     coordinate: cloneValue(emission.coordinate),
     producerWriter: cloneValue(emission.producerWriter),
-    effectKind: emission.effectKind.clone()
+    effectKind: emission.effectKind
   };
 }
 
