@@ -46,7 +46,7 @@ The TTD protocol is the sovereign boundary of the system. It is defined as a Wes
 schemas/warp-ttd-protocol.graphql
 ```
 
-Wesley compiles this schema into:
+Wesley compiles this schema via the `compile-ttd` path into:
 
 1. **TypeScript Types**: Local mirror in `src/protocol.ts`.
 2. **Zod Validators**: For runtime envelope verification.

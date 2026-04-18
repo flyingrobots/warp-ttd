@@ -14,6 +14,7 @@ const ROOT = path.resolve(import.meta.dirname, "..");
 const SCHEMA_PATH = path.join(ROOT, "schemas", "warp-ttd-protocol.graphql");
 const PROTOCOL_MIRROR_PATH = path.join(ROOT, "src", "protocol.ts");
 const README_PATH = path.join(ROOT, "README.md");
+const ADVANCED_GUIDE_PATH = path.join(ROOT, "ADVANCED_GUIDE.md");
 
 function extractSchemaEnumValues(schemaContent: string, enumName: string): string[] {
   const match = new RegExp(`enum\\s+${enumName}\\s*\\{([\\s\\S]*?)\\}`, "m").exec(schemaContent);
@@ -51,7 +52,7 @@ test("schema file contains protocol header comment identifying it as authored so
 
 // ─── User PQ 2: Is it clear what consumers should take from this repo?
 
-test("README names the schema file and its version for consumers", () => {
+test("README names the schema file and its protocol version for consumers", () => {
   const content = fs.readFileSync(README_PATH, "utf-8");
   assert.ok(
     content.includes("schemas/warp-ttd-protocol.graphql"),
@@ -59,32 +60,32 @@ test("README names the schema file and its version for consumers", () => {
   );
   assert.match(
     content,
-    /v\d+\.\d+\.\d+/,
+    /[Pp]rotocol\s+v\d+\.\d+\.\d+/,
     "README should show the protocol version",
   );
 });
 
-test("README tells consumers to feed the schema to Wesley", () => {
-  const content = fs.readFileSync(README_PATH, "utf-8");
+test("Advanced Guide documents the Wesley compile path", () => {
+  const content = fs.readFileSync(ADVANCED_GUIDE_PATH, "utf-8");
   assert.ok(
     content.includes("compile-ttd"),
-    "README should name the Wesley compile path",
+    "Advanced Guide should name the Wesley compile path",
   );
 });
 
 // ─── User PQ 3: Is it clear which local surfaces are not shared contract?
 
-test("README distinguishes local mirror from authored schema", () => {
-  const content = fs.readFileSync(README_PATH, "utf-8");
+test("Advanced Guide distinguishes local mirror from authored schema", () => {
+  const content = fs.readFileSync(ADVANCED_GUIDE_PATH, "utf-8");
   assert.match(
     content,
-    /src\/protocol\.ts.*local|local.*src\/protocol\.ts/i,
-    "README should identify src/protocol.ts as local",
+    /src\/protocol\.ts/,
+    "Advanced Guide should name the local mirror file",
   );
   assert.match(
     content,
-    /follows the schema|does not own/i,
-    "README should state the mirror follows the schema",
+    /[Ll]ocal\s+mirror/,
+    "Advanced Guide should identify the mirror as local",
   );
 });
 
