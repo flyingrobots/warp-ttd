@@ -1,5 +1,7 @@
 # MCP
 
+> **Status: planned.** This surface is not yet implemented. See [backlog item](./method/backlog/up-next/DELIVERY_mcp-agent-surface.md).
+
 WARP TTD is a tool-native participant in the agentic workstation via the Model Context Protocol (MCP).
 
 ```mermaid

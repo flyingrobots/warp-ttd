@@ -152,7 +152,7 @@ one.
 - `packages/ttd-protocol-ts`
   - keep as boring generated protocol consumer output
 
-### Freeze as product identities
+### Retire as product identities
 
 - `crates/ttd-browser` as "the browser debugger"
 - `apps/ttd-app` as "the canonical web debugger product"

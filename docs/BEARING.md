@@ -33,4 +33,4 @@ timeline
 
 ## Next Target
 
-The immediate focus is the **MCP Delivery Adapter** to ensure WARP TTD is a tool-native participant in the agentic workstation.
+The immediate focus is the **MCP Delivery Adapter** to ensure WARP TTD is a tool-native participant in the agentic workstation. See [`docs/method/backlog/up-next/DELIVERY_mcp-agent-surface.md`](./method/backlog/up-next/DELIVERY_mcp-agent-surface.md).

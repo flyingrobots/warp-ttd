@@ -224,6 +224,8 @@ type ExecutionContext
 }
 
 # ─── Protocol Channel ─────────────────────────────────────────────────────────
+# Channel version tracks breaking wire-format changes (not the semver header).
+# Header semver 0.5.0 adds optional fields but no breaking wire change since v4.
 
 type TtdProtocolChannel
   @wes_channel(name: "ttd.protocol", version: 4, ordered: true)

@@ -1,6 +1,6 @@
 # Advanced Guide — WARP TTD
 
-This is the second-track manual for WARP TTD. Use it when you need the deeper doctrine behind the theoretical foundations (Observer Geometry), Wesley protocol integration, and custom host-adapter implementation details.
+This is the second-track manual for WARP TTD. Use it for deeper doctrine: theoretical foundations (Observer Geometry), Wesley protocol integration, and custom host-adapter implementation.
 
 For orientation and the productive-fast path, use the [GUIDE.md](./GUIDE.md).
 
