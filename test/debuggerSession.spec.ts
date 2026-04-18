@@ -188,6 +188,16 @@ test("toJSON() returns a serializable representation", async () => {
   assert.equal(typeof json.snapshot.reintegrationDetail.summary, "string");
   assert.equal(typeof json.snapshot.receiptShell.summary, "string");
 
-  // Must be JSON-serializable (no circular refs, no class instances)
-  assert.doesNotThrow(() => JSON.stringify(json));
+  // Must survive a full JSON round-trip as stable plain data
+  const serialized = JSON.stringify(json);
+  const roundTripped = JSON.parse(serialized) as typeof json;
+  assert.deepEqual(roundTripped, json, "toJSON output must survive JSON round-trip without loss");
+
+  // effectKind must be a plain string, not a class instance
+  for (const emission of json.snapshot.emissions) {
+    assert.equal(typeof emission.effectKind, "string", "effectKind must serialize as plain string");
+  }
+  for (const pin of json.pins) {
+    assert.equal(typeof pin.emission.effectKind, "string", "pinned effectKind must serialize as plain string");
+  }
 });
