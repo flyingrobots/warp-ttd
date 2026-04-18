@@ -31,8 +31,6 @@ export interface SerializedNeighborhoodCoreSummary {
 
 const VALID_OUTCOMES = new Set<NeighborhoodOutcome>(["LAWFUL", "OBSTRUCTED", "PENDING"]);
 
-
-
 function sortByCatalogOrder(
   catalog: readonly LaneRef[],
   ids: ReadonlySet<string>

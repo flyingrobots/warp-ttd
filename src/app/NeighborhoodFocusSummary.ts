@@ -28,7 +28,6 @@ export interface SerializedNeighborhoodFocusSummary {
   parentSiteId?: string;
 }
 
-
 function createFocusArgs(
   core: NeighborhoodCoreSummary,
   site: NeighborhoodSiteSummary

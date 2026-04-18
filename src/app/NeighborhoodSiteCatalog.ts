@@ -25,8 +25,6 @@ export interface SerializedNeighborhoodSiteCatalog {
 
 const VALID_SITE_KINDS = new Set<NeighborhoodSiteKind>(["PRIMARY", "ALTERNATIVE"]);
 
-
-
 function validateKind(kind: NeighborhoodSiteKind): NeighborhoodSiteKind {
   if (!VALID_SITE_KINDS.has(kind)) {
     throw new TypeError(`Invalid neighborhood site kind: ${kind}`);

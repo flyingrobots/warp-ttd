@@ -268,9 +268,7 @@ function buildAllFrameData(scenario: Scenario): BuiltScenario {
   };
 }
 
-function cloneEffectEmissionSummary(emission: EffectEmissionSummary): EffectEmissionSummary {
-  return structuredClone(emission);
-}
+
 
 function buildPlaybackFrame(
   lanes: LaneRef[],
@@ -345,7 +343,7 @@ export function buildScenario(scenario: Scenario): TtdHostAdapter {
     receipts: (hid, fi) => Promise.resolve(structuredClone(built.receiptsByFrame.get(resolveFrame(hid, fi)) ?? [])),
     effectEmissions: (hid, fi) => Promise.resolve(
       (built.emissionsByFrame.get(resolveFrame(hid, fi)) ?? [])
-        .map((emission) => cloneEffectEmissionSummary(emission))
+        .map((emission) => structuredClone(emission))
     ),
     deliveryObservations: (hid, fi) => Promise.resolve(structuredClone(built.observationsByFrame.get(resolveFrame(hid, fi)) ?? [])),
     executionContext: () => Promise.resolve({ mode: scenario.executionMode }),

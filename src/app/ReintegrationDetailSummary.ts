@@ -36,8 +36,6 @@ export interface SerializedReintegrationDetailSummary {
 
 const VALID_STATUSES = new Set<ObligationStatus>(["SATISFIED", "VIOLATED", "UNKNOWN"]);
 
-
-
 function validateStatus(status: ObligationStatus): ObligationStatus {
   if (!VALID_STATUSES.has(status)) {
     throw new TypeError(`Invalid obligation status: ${status}`);

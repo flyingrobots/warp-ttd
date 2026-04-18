@@ -255,9 +255,6 @@ function cloneValue<T>(value: T): T {
   return structuredClone(value);
 }
 
-function cloneEffectEmission(emission: EffectEmissionSummary): EffectEmissionSummary {
-  return structuredClone(emission);
-}
 
 function requireHeadState(
   heads: Map<string, PlaybackHeadSnapshot>,
@@ -392,7 +389,7 @@ export class EchoFixtureAdapter implements TtdHostAdapter {
     return Promise.resolve(
       emissions
         .filter((e) => e.frameIndex === resolvedIndex)
-        .map((emission) => cloneEffectEmission(emission))
+        .map((emission) => structuredClone(emission))
     );
   }
 

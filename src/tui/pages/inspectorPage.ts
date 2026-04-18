@@ -381,14 +381,14 @@ function handleSessionReady(
   model: InspectorModel,
   ctx: SessionContext
 ): InspectorUpdateResult {
-    return [{
-      ...model,
-      sessionCtx: ctx,
-      selectedSiteId: ctx.session.snapshot.neighborhoodSites.normalizeSelection(
-        model.selectedSiteId
-      ),
-      focus: null
-    }, []];
+  return [{
+    ...model,
+    sessionCtx: ctx,
+    selectedSiteId: ctx.session.snapshot.neighborhoodSites.normalizeSelection(
+      model.selectedSiteId
+    ),
+    focus: null
+  }, []];
 }
 
 function navigationUpdate(msg: InspectorMsg, model: InspectorModel): InspectorUpdateResult | null {

@@ -6,10 +6,14 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
+import { initDefaultContext } from "@flyingrobots/bijou-node";
+import { surfaceToString } from "@flyingrobots/bijou";
+import type { BijouContext, Surface } from "@flyingrobots/bijou";
 import type { LaneRef } from "../src/protocol.ts";
 import {
   filterFramesToLane,
   buildLaneTreeLines,
+  renderWorldline,
 } from "../src/tui/worldlineLayout.ts";
 import type { FrameData } from "../src/tui/worldlineLayout.ts";
 import { makeLane, makeLaneFrame, makeReceipt } from "./helpers/worldlineFixture.ts";
@@ -168,11 +172,6 @@ test("buildLaneTreeLines handles single worldline with no strands", () => {
 // renderWorldline split view (integration)
 // ---------------------------------------------------------------------------
 // These test the updated renderWorldline with selectedLaneId.
-
-import { renderWorldline } from "../src/tui/worldlineLayout.ts";
-import { initDefaultContext } from "@flyingrobots/bijou-node";
-import { surfaceToString } from "@flyingrobots/bijou";
-import type { BijouContext, Surface } from "@flyingrobots/bijou";
 
 const bijouCtx: BijouContext = initDefaultContext();
 

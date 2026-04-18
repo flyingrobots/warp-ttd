@@ -69,21 +69,23 @@ function makeLane(id: string, kind: "WORLDLINE" | "STRAND", parentId?: string): 
 
 interface ReceiptArgs {
   laneId: string;
+  worldlineId?: string;
   writerId: string;
   frameIndex: number;
   headId?: string;
 }
 
 function makeReceipt(args: ReceiptArgs): ReceiptSummary {
+  const wlId = args.worldlineId ?? args.laneId;
   return {
     receiptId: `receipt:test:${args.laneId}:${args.writerId}`,
     headId: "head:default",
     frameIndex: args.frameIndex,
     laneId: args.laneId,
-    worldlineId: args.laneId,
+    worldlineId: wlId,
     writer: args.headId === undefined
-      ? { writerId: args.writerId, worldlineId: args.laneId }
-      : { writerId: args.writerId, worldlineId: args.laneId, headId: args.headId },
+      ? { writerId: args.writerId, worldlineId: wlId }
+      : { writerId: args.writerId, worldlineId: wlId, headId: args.headId },
     inputTick: args.frameIndex - 1, outputTick: args.frameIndex,
     admittedRewriteCount: 2, rejectedRewriteCount: 0, counterfactualCount: 0,
     digest: "digest:test", summary: `${args.writerId} wrote to ${args.laneId}`
