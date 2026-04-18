@@ -76,7 +76,6 @@ interface Scenario {
 interface BuiltScenario {
   capabilities: Capability[];
   lanes: LaneRef[];
-  worldlineIdByLaneId: Map<string, string>;
   receiptsByFrame: Map<number, ReceiptSummary[]>;
   emissionsByFrame: Map<number, EffectEmissionSummary[]>;
   observationsByFrame: Map<number, DeliveryObservationSummary[]>;
@@ -265,7 +264,6 @@ function buildAllFrameData(scenario: Scenario): BuiltScenario {
   return {
     capabilities: buildCapabilities(hasEffects),
     lanes,
-    worldlineIdByLaneId,
     receiptsByFrame, emissionsByFrame, observationsByFrame
   };
 }

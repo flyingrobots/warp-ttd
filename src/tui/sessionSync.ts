@@ -299,28 +299,6 @@ function applyLoadedWorldline(
   });
 }
 
-export function syncWorldlineCursor(model: FModel): FModel {
-  const sessionCtx = getSessionCtx(model);
-  const worldline = getWorldlineModel(model);
-  if (sessionCtx === null || worldline === null) {
-    return model;
-  }
-  const cursor = worldlineCursorForFrame({
-    catalog: sessionCtx.catalog.lanes,
-    frames: worldline.frames,
-    selectedLaneId: worldline.selectedLaneId,
-    frameIndex: sessionCtx.session.snapshot.head.currentFrameIndex
-  });
-  if (worldline.cursor === cursor) {
-    return model;
-  }
-  return withUpdatedPageModel(model, "worldline", { ...worldline, cursor });
-}
-
-function selectedLaneIdForModel(model: FModel, sessionCtx: SessionContext): string | null {
-  const selectedSiteId = getSelectedSiteId(model);
-  return sessionCtx.session.snapshot.neighborhoodSites.selectedLaneId(selectedSiteId);
-}
 
 function selectedSiteIdForFocus(model: FModel, sessionCtx: SessionContext): string {
   return sessionCtx.session.snapshot.neighborhoodSites.normalizeSelection(getSelectedSiteId(model));
@@ -331,20 +309,6 @@ interface NeighborhoodFocusState {
   readonly worldline: WorldlinePageModel;
   readonly selectedSiteId: string;
   readonly focus: NeighborhoodFocusSummary;
-}
-
-function computeWorldlineSelection(model: FModel, sessionCtx: SessionContext): {
-  selectedLaneId: string | null;
-  laneCursor: number;
-} {
-  const selectedLaneId = selectedLaneIdForModel(model, sessionCtx);
-  const scopedCatalog = sessionCtx.session.snapshot.neighborhoodCore.buildDisplayCatalog(
-    sessionCtx.catalog.lanes
-  );
-  return {
-    selectedLaneId,
-    laneCursor: laneCursorForLaneId(scopedCatalog, selectedLaneId ?? undefined)
-  };
 }
 
 export function syncNeighborhoodSelection(model: FModel): FModel {
@@ -498,15 +462,3 @@ function sameNeighborhoodFocus(
   return JSON.stringify(left.toJSON()) === JSON.stringify(right.toJSON());
 }
 
-export function syncWorldlineSelection(model: FModel): FModel {
-  const sessionCtx = getSessionCtx(model);
-  const worldline = getWorldlineModel(model);
-  if (sessionCtx === null || worldline === null) {
-    return model;
-  }
-  const { selectedLaneId, laneCursor } = computeWorldlineSelection(model, sessionCtx);
-  if (worldline.selectedLaneId === selectedLaneId && worldline.laneCursor === laneCursor) {
-    return model;
-  }
-  return withUpdatedPageModel(model, "worldline", { ...worldline, selectedLaneId, laneCursor });
-}
