@@ -5,7 +5,7 @@ import { NeighborhoodCoreSummary } from "../src/app/NeighborhoodCoreSummary.ts";
 import { NeighborhoodSiteCatalog } from "../src/app/NeighborhoodSiteCatalog.ts";
 import { siteDrivenWorldlineFocus, shouldResyncWorldlineFocus } from "../src/tui/sessionSync.ts";
 import type { FrameData } from "../src/tui/worldlineLayout.ts";
-import type { LaneRef, PlaybackFrame, ReceiptSummary } from "../src/protocol.ts";
+import type { LaneRef, PlaybackFrame } from "../src/protocol.ts";
 
 function makeCatalog(): LaneRef[] {
   return [
@@ -39,6 +39,14 @@ function makeFrames(): FrameData[] {
   ];
 }
 
+function requireAltSiteId(sites: NeighborhoodSiteCatalog): string {
+  const alt = sites.sites[1]?.siteId;
+  if (alt === undefined) {
+    throw new TypeError("Expected an alternative site");
+  }
+  return alt;
+}
+
 function makeHarness(): {
   frames: FrameData[];
   catalog: LaneRef[];
@@ -49,21 +57,15 @@ function makeHarness(): {
 } {
   const catalog = makeCatalog();
   const frames = makeFrames();
-  const frame: PlaybackFrame = {
-    headId: "head:test", frameIndex: 2,
-    lanes: frames[2]!.lanes
-  };
-  const receipts: ReceiptSummary[] = frames[2]!.receipts;
-  const core = NeighborhoodCoreSummary.fromFrame(frame, receipts, []);
+  const lastFrame = frames[2];
+  const frame: PlaybackFrame = { headId: "head:test", frameIndex: 2, lanes: lastFrame?.lanes ?? [] };
+  const core = NeighborhoodCoreSummary.fromFrame(frame, lastFrame?.receipts ?? [], []);
   const sites = NeighborhoodSiteCatalog.fromCore(core);
-  const displayCatalog = core.buildDisplayCatalog(catalog);
 
-  const alt = sites.sites[1]?.siteId;
-  if (alt === undefined) {
-    throw new TypeError("Expected an alternative site");
-  }
-
-  return { frames, catalog, displayCatalog, neighborhoodSites: sites, currentFrameIndex: 2, alternativeSiteId: alt };
+  return {
+    frames, catalog, displayCatalog: core.buildDisplayCatalog(catalog),
+    neighborhoodSites: sites, currentFrameIndex: 2, alternativeSiteId: requireAltSiteId(sites)
+  };
 }
 
 test("siteDrivenWorldlineFocus recomputes lane and cursor from the selected site", () => {

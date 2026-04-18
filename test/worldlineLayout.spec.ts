@@ -13,7 +13,6 @@ import {
 } from "../src/tui/worldlineLayout.ts";
 import type { FrameData } from "../src/tui/worldlineLayout.ts";
 import {
-  makeLane,
   makeLaneFrame,
   makeReceipt,
   makeHistory,
