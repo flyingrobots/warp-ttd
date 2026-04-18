@@ -1,58 +1,81 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { EchoFixtureAdapter } from "../src/adapters/echoFixtureAdapter.ts";
-import { DebuggerSession } from "../src/app/debuggerSession.ts";
+import { NeighborhoodCoreSummary } from "../src/app/NeighborhoodCoreSummary.ts";
+import { NeighborhoodSiteCatalog } from "../src/app/NeighborhoodSiteCatalog.ts";
 import { siteDrivenWorldlineFocus, shouldResyncWorldlineFocus } from "../src/tui/sessionSync.ts";
 import type { FrameData } from "../src/tui/worldlineLayout.ts";
+import type { LaneRef, PlaybackFrame, ReceiptSummary } from "../src/protocol.ts";
 
-const HEAD_ID = "head:main";
-
-async function createHarness(): Promise<{
-  frames: FrameData[];
-  catalog: Awaited<ReturnType<EchoFixtureAdapter["laneCatalog"]>>["lanes"];
-  currentFrameIndex: number;
-  neighborhoodSites: DebuggerSession["snapshot"]["neighborhoodSites"];
-  displayCatalog: Awaited<ReturnType<EchoFixtureAdapter["laneCatalog"]>>["lanes"];
-  alternativeSiteId: string;
-}> {
-  const adapter = new EchoFixtureAdapter();
-  const session = await DebuggerSession.create(adapter, HEAD_ID);
-  await session.seekToFrame(2);
-  const laneCatalog = await adapter.laneCatalog();
-  const frames: FrameData[] = [];
-
-  for (let index = 0; index <= 2; index += 1) {
-    const frame = await adapter.frame(HEAD_ID, index);
-    const receipts = await adapter.receipts(HEAD_ID, index);
-    frames.push({ frameIndex: frame.frameIndex, lanes: frame.lanes, receipts });
-  }
-
-  const alternativeSiteId = session.snapshot.neighborhoodSites.sites[1]?.siteId;
-  if (alternativeSiteId === undefined) {
-    throw new TypeError("Expected an alternative site in the neighborhood catalog");
-  }
-
-  return {
-    frames,
-    catalog: laneCatalog.lanes,
-    currentFrameIndex: session.snapshot.head.currentFrameIndex,
-    neighborhoodSites: session.snapshot.neighborhoodSites,
-    displayCatalog: session.snapshot.neighborhoodCore.buildDisplayCatalog(laneCatalog.lanes),
-    alternativeSiteId
-  };
+function makeCatalog(): LaneRef[] {
+  return [
+    { id: "wl:main", kind: "WORLDLINE", worldlineId: "wl:main", writable: false, description: "main" },
+    { id: "ws:sandbox", kind: "STRAND", worldlineId: "wl:main", parentId: "wl:main", writable: false, description: "sandbox" },
+  ];
 }
 
-test("siteDrivenWorldlineFocus recomputes lane and cursor from the selected site", async () => {
-  const harness = await createHarness();
+function makeFrames(): FrameData[] {
+  return [
+    { frameIndex: 0, lanes: [
+      { laneId: "wl:main", worldlineId: "wl:main", coordinate: { laneId: "wl:main", worldlineId: "wl:main", tick: 0 }, changed: false },
+      { laneId: "ws:sandbox", worldlineId: "wl:main", coordinate: { laneId: "ws:sandbox", worldlineId: "wl:main", tick: 0 }, changed: false },
+    ], receipts: [] },
+    { frameIndex: 1, lanes: [
+      { laneId: "wl:main", worldlineId: "wl:main", coordinate: { laneId: "wl:main", worldlineId: "wl:main", tick: 1 }, changed: true },
+      { laneId: "ws:sandbox", worldlineId: "wl:main", coordinate: { laneId: "ws:sandbox", worldlineId: "wl:main", tick: 0 }, changed: false },
+    ], receipts: [{
+      receiptId: "r:1", headId: "head:test", frameIndex: 1, laneId: "wl:main", worldlineId: "wl:main",
+      inputTick: 0, outputTick: 1, admittedRewriteCount: 1, rejectedRewriteCount: 0, counterfactualCount: 0,
+      digest: "d1", summary: "r1"
+    }] },
+    { frameIndex: 2, lanes: [
+      { laneId: "wl:main", worldlineId: "wl:main", coordinate: { laneId: "wl:main", worldlineId: "wl:main", tick: 2 }, changed: true },
+      { laneId: "ws:sandbox", worldlineId: "wl:main", coordinate: { laneId: "ws:sandbox", worldlineId: "wl:main", tick: 1 }, changed: true },
+    ], receipts: [{
+      receiptId: "r:2", headId: "head:test", frameIndex: 2, laneId: "ws:sandbox", worldlineId: "wl:main",
+      inputTick: 0, outputTick: 1, admittedRewriteCount: 1, rejectedRewriteCount: 0, counterfactualCount: 1,
+      digest: "d2", summary: "r2"
+    }] },
+  ];
+}
+
+function makeHarness(): {
+  frames: FrameData[];
+  catalog: LaneRef[];
+  displayCatalog: LaneRef[];
+  neighborhoodSites: NeighborhoodSiteCatalog;
+  currentFrameIndex: number;
+  alternativeSiteId: string;
+} {
+  const catalog = makeCatalog();
+  const frames = makeFrames();
+  const frame: PlaybackFrame = {
+    headId: "head:test", frameIndex: 2,
+    lanes: frames[2]!.lanes
+  };
+  const receipts: ReceiptSummary[] = frames[2]!.receipts;
+  const core = NeighborhoodCoreSummary.fromFrame(frame, receipts, []);
+  const sites = NeighborhoodSiteCatalog.fromCore(core);
+  const displayCatalog = core.buildDisplayCatalog(catalog);
+
+  const alt = sites.sites[1]?.siteId;
+  if (alt === undefined) {
+    throw new TypeError("Expected an alternative site");
+  }
+
+  return { frames, catalog, displayCatalog, neighborhoodSites: sites, currentFrameIndex: 2, alternativeSiteId: alt };
+}
+
+test("siteDrivenWorldlineFocus recomputes lane and cursor from the selected site", () => {
+  const h = makeHarness();
 
   const focus = siteDrivenWorldlineFocus({
-    catalog: harness.catalog,
-    displayCatalog: harness.displayCatalog,
-    neighborhoodSites: harness.neighborhoodSites,
-    selectedSiteId: harness.alternativeSiteId,
-    frames: harness.frames,
-    currentFrameIndex: harness.currentFrameIndex
+    catalog: h.catalog,
+    displayCatalog: h.displayCatalog,
+    neighborhoodSites: h.neighborhoodSites,
+    selectedSiteId: h.alternativeSiteId,
+    frames: h.frames,
+    currentFrameIndex: h.currentFrameIndex
   });
 
   assert.equal(focus.selectedLaneId, "ws:sandbox");
@@ -60,16 +83,16 @@ test("siteDrivenWorldlineFocus recomputes lane and cursor from the selected site
   assert.equal(focus.cursor, 0);
 });
 
-test("siteDrivenWorldlineFocus keeps the primary site on its lane-local tick row when no site is selected", async () => {
-  const harness = await createHarness();
+test("siteDrivenWorldlineFocus keeps the primary site on its lane-local tick row when no site is selected", () => {
+  const h = makeHarness();
 
   const focus = siteDrivenWorldlineFocus({
-    catalog: harness.catalog,
-    displayCatalog: harness.displayCatalog,
-    neighborhoodSites: harness.neighborhoodSites,
+    catalog: h.catalog,
+    displayCatalog: h.displayCatalog,
+    neighborhoodSites: h.neighborhoodSites,
     selectedSiteId: null,
-    frames: harness.frames,
-    currentFrameIndex: harness.currentFrameIndex
+    frames: h.frames,
+    currentFrameIndex: h.currentFrameIndex
   });
 
   assert.equal(focus.selectedLaneId, "wl:main");
