@@ -18,7 +18,8 @@ import type {
   LaneRef,
   PlaybackFrame,
   PlaybackHeadSnapshot,
-  ReceiptSummary
+  ReceiptSummary,
+  WriterRef
 } from "../protocol.ts";
 
 // ---------------------------------------------------------------------------
@@ -35,12 +36,14 @@ interface ScenarioEmission {
   effectKind: string;
   laneId: string;
   producerWriterId?: string;
+  producerHeadId?: string;
   deliveries: ScenarioDelivery[];
 }
 
 interface ScenarioReceipt {
   laneId: string;
   writerId: string;
+  headId?: string;
   admitted: number;
   rejected: number;
   counterfactual: number;
@@ -84,11 +87,34 @@ interface BuiltScenario {
 
 const HEAD_ID = "head:default";
 
+function resolveScenarioWorldlineId(
+  lane: ScenarioLane,
+  lanesById: Map<string, ScenarioLane>
+): string {
+  if (lane.kind === "WORLDLINE") {
+    return lane.id;
+  }
+
+  if (lane.parentId === undefined) {
+    throw new TypeError(`Strand lane ${lane.id} is missing parentId`);
+  }
+
+  const parent = lanesById.get(lane.parentId);
+
+  if (parent === undefined) {
+    throw new TypeError(`Lane ${lane.id} points at unknown parent ${lane.parentId}`);
+  }
+
+  return resolveScenarioWorldlineId(parent, lanesById);
+}
+
 function buildLanes(scenarioLanes: ScenarioLane[]): LaneRef[] {
+  const lanesById = new Map(scenarioLanes.map((lane) => [lane.id, lane]));
   return scenarioLanes.map((l) => {
     const ref: LaneRef = {
       id: l.id,
       kind: l.kind,
+      worldlineId: resolveScenarioWorldlineId(l, lanesById),
       writable: l.writable,
       description: `${l.kind} ${l.id}`
     };
@@ -101,17 +127,17 @@ function buildLanes(scenarioLanes: ScenarioLane[]): LaneRef[] {
 
 function buildCapabilities(hasEffects: boolean): Capability[] {
   const caps: Capability[] = [
-    "read:hello",
-    "read:lane-catalog",
-    "read:playback-head",
-    "read:frame",
-    "read:receipts",
-    "control:step-forward",
-    "control:step-backward",
-    "control:seek"
+    "READ_HELLO",
+    "READ_LANE_CATALOG",
+    "READ_PLAYBACK_HEAD",
+    "READ_FRAME",
+    "READ_RECEIPTS",
+    "CONTROL_STEP_FORWARD",
+    "CONTROL_STEP_BACKWARD",
+    "CONTROL_SEEK"
   ];
   if (hasEffects) {
-    caps.push("read:effect-emissions", "read:delivery-observations", "read:execution-context");
+    caps.push("READ_EFFECT_EMISSIONS", "READ_DELIVERY_OBSERVATIONS", "READ_EXECUTION_CONTEXT");
   }
   return caps;
 }
@@ -128,18 +154,39 @@ interface BuildFrameDataArgs {
   prevTick: number;
   mode: ExecutionMode;
   counters: Counters;
+  worldlineIdByLaneId: Map<string, string>;
+}
+
+function createWriterRef(
+  writerId: string,
+  worldlineId: string,
+  headId?: string
+): WriterRef {
+  if (headId === undefined) {
+    return { writerId, worldlineId };
+  }
+
+  return { writerId, worldlineId, headId };
 }
 
 function buildFrameData(
   args: BuildFrameDataArgs
 ): { receipts: ReceiptSummary[]; emissions: EffectEmissionSummary[]; observations: DeliveryObservationSummary[] } {
-  const { sf, frameIndex, prevTick, mode, counters } = args;
+  const { sf, frameIndex, prevTick, mode, counters, worldlineIdByLaneId } = args;
   const receipts = sf.receipts.map((sr) => {
     counters.receipt++;
     const id = counters.receipt.toString().padStart(4, "0");
+    const worldlineId = worldlineIdByLaneId.get(sr.laneId);
+    if (worldlineId === undefined) {
+      throw new TypeError(`Receipt lane ${sr.laneId} is not declared in the scenario catalog`);
+    }
     return {
       receiptId: `receipt:scenario:${id}`,
-      headId: HEAD_ID, frameIndex, laneId: sr.laneId, writerId: sr.writerId,
+      headId: HEAD_ID,
+      frameIndex,
+      laneId: sr.laneId,
+      worldlineId,
+      writer: createWriterRef(sr.writerId, worldlineId, sr.headId),
       inputTick: prevTick, outputTick: sf.tick,
       admittedRewriteCount: sr.admitted, rejectedRewriteCount: sr.rejected,
       counterfactualCount: sr.counterfactual,
@@ -154,12 +201,21 @@ function buildFrameData(
   for (const se of sf.emissions) {
     counters.emission++;
     const emId = `emit:scenario:${counters.emission.toString().padStart(4, "0")}`;
+    const worldlineId = worldlineIdByLaneId.get(se.laneId);
+
+    if (worldlineId === undefined) {
+      throw new TypeError(`Emission lane ${se.laneId} is not declared in the scenario catalog`);
+    }
 
     emissions.push({
       emissionId: emId, headId: HEAD_ID, frameIndex,
-      laneId: se.laneId, coordinate: { laneId: se.laneId, tick: sf.tick },
+      laneId: se.laneId, worldlineId, coordinate: { laneId: se.laneId, worldlineId, tick: sf.tick },
       effectKind: se.effectKind,
-      producerWriterId: se.producerWriterId ?? sf.receipts[0]?.writerId ?? "scenario-writer",
+      producerWriter: createWriterRef(
+        se.producerWriterId ?? sf.receipts[0]?.writerId ?? "scenario-writer",
+        worldlineId,
+        se.producerHeadId
+      ),
       summary: `${se.effectKind} emitted at tick ${sf.tick.toString()}`
     });
 
@@ -180,6 +236,8 @@ function buildFrameData(
 
 function buildAllFrameData(scenario: Scenario): BuiltScenario {
   const counters: Counters = { emission: 0, observation: 0, receipt: 0 };
+  const lanes = buildLanes(scenario.lanes);
+  const worldlineIdByLaneId = new Map(lanes.map((lane) => [lane.id, lane.worldlineId]));
   const receiptsByFrame = new Map<number, ReceiptSummary[]>();
   const emissionsByFrame = new Map<number, EffectEmissionSummary[]>();
   const observationsByFrame = new Map<number, DeliveryObservationSummary[]>();
@@ -188,7 +246,14 @@ function buildAllFrameData(scenario: Scenario): BuiltScenario {
     const sf = scenario.frames[fi];
     if (sf === undefined) continue;
     const prevTick = fi > 0 ? (scenario.frames[fi - 1]?.tick ?? 0) : 0;
-    const data = buildFrameData({ sf, frameIndex: fi + 1, prevTick, mode: scenario.executionMode, counters });
+    const data = buildFrameData({
+      sf,
+      frameIndex: fi + 1,
+      prevTick,
+      mode: scenario.executionMode,
+      counters,
+      worldlineIdByLaneId
+    });
     receiptsByFrame.set(fi + 1, data.receipts);
     emissionsByFrame.set(fi + 1, data.emissions);
     observationsByFrame.set(fi + 1, data.observations);
@@ -198,10 +263,12 @@ function buildAllFrameData(scenario: Scenario): BuiltScenario {
 
   return {
     capabilities: buildCapabilities(hasEffects),
-    lanes: buildLanes(scenario.lanes),
+    lanes,
     receiptsByFrame, emissionsByFrame, observationsByFrame
   };
 }
+
+
 
 function buildPlaybackFrame(
   lanes: LaneRef[],
@@ -212,7 +279,10 @@ function buildPlaybackFrame(
     return {
       headId: HEAD_ID, frameIndex: 0,
       lanes: lanes.map((lane) => ({
-        laneId: lane.id, coordinate: { laneId: lane.id, tick: 0 }, changed: false
+        laneId: lane.id,
+        worldlineId: lane.worldlineId,
+        coordinate: { laneId: lane.id, worldlineId: lane.worldlineId, tick: 0 },
+        changed: false
       }))
     };
   }
@@ -224,7 +294,9 @@ function buildPlaybackFrame(
   return {
     headId: HEAD_ID, frameIndex,
     lanes: lanes.map((lane) => ({
-      laneId: lane.id, coordinate: { laneId: lane.id, tick: sf.tick },
+      laneId: lane.id,
+      worldlineId: lane.worldlineId,
+      coordinate: { laneId: lane.id, worldlineId: lane.worldlineId, tick: sf.tick },
       changed: changedLanes.has(lane.id)
     }))
   };
@@ -262,14 +334,17 @@ export function buildScenario(scenario: Scenario): TtdHostAdapter {
     adapterName: "scenario-fixture",
     hello: () => Promise.resolve({
       hostKind: scenario.hostKind, hostVersion: "0.0.0-scenario",
-      protocolVersion: "0.2.0", schemaId: "ttd-protocol-scenario-v1",
+      protocolVersion: "0.5.0", schemaId: "ttd-protocol-scenario-v1",
       capabilities: built.capabilities
     }),
     laneCatalog: () => Promise.resolve({ lanes: structuredClone(built.lanes) }),
     playbackHead: (hid) => Promise.resolve(structuredClone(requireHead(hid))),
     frame: (hid, fi) => Promise.resolve(structuredClone(buildPlaybackFrame(built.lanes, scenario, resolveFrame(hid, fi)))),
     receipts: (hid, fi) => Promise.resolve(structuredClone(built.receiptsByFrame.get(resolveFrame(hid, fi)) ?? [])),
-    effectEmissions: (hid, fi) => Promise.resolve(structuredClone(built.emissionsByFrame.get(resolveFrame(hid, fi)) ?? [])),
+    effectEmissions: (hid, fi) => Promise.resolve(
+      (built.emissionsByFrame.get(resolveFrame(hid, fi)) ?? [])
+        .map((emission) => structuredClone(emission))
+    ),
     deliveryObservations: (hid, fi) => Promise.resolve(structuredClone(built.observationsByFrame.get(resolveFrame(hid, fi)) ?? [])),
     executionContext: () => Promise.resolve({ mode: scenario.executionMode }),
     stepForward(headId: string): Promise<PlaybackFrame> {
@@ -304,20 +379,20 @@ export function buildScenario(scenario: Scenario): TtdHostAdapter {
 
 export function scenarioLiveWithEffects(): TtdHostAdapter {
   return buildScenario({
-    hostKind: "git-warp", executionMode: "live",
-    lanes: [{ id: "wl:live", kind: "worldline", writable: false }],
+    hostKind: "GIT_WARP", executionMode: "LIVE",
+    lanes: [{ id: "wl:live", kind: "WORLDLINE", writable: false }],
     frames: [
       { tick: 1,
         receipts: [{ laneId: "wl:live", writerId: "alice", admitted: 2, rejected: 0, counterfactual: 0 }],
         emissions: [{ effectKind: "diagnostic", laneId: "wl:live", deliveries: [
-          { sinkId: "sink:tui-log", outcome: "delivered", reason: "Live — delivered to TUI log." },
-          { sinkId: "sink:chunk-file", outcome: "delivered", reason: "Live — written to chunk file." }
+          { sinkId: "sink:tui-log", outcome: "DELIVERED", reason: "Live — delivered to TUI log." },
+          { sinkId: "sink:chunk-file", outcome: "DELIVERED", reason: "Live — written to chunk file." }
         ]}]
       },
       { tick: 2,
         receipts: [{ laneId: "wl:live", writerId: "alice", admitted: 1, rejected: 0, counterfactual: 0 }],
         emissions: [{ effectKind: "notification", laneId: "wl:live", deliveries: [
-          { sinkId: "sink:network", outcome: "delivered", reason: "Live — sent via network." }
+          { sinkId: "sink:network", outcome: "DELIVERED", reason: "Live — sent via network." }
         ]}]
       }
     ]
@@ -326,13 +401,13 @@ export function scenarioLiveWithEffects(): TtdHostAdapter {
 
 export function scenarioReplayWithSuppression(): TtdHostAdapter {
   return buildScenario({
-    hostKind: "git-warp", executionMode: "replay",
-    lanes: [{ id: "wl:live", kind: "worldline", writable: false }],
+    hostKind: "GIT_WARP", executionMode: "REPLAY",
+    lanes: [{ id: "wl:live", kind: "WORLDLINE", writable: false }],
     frames: [{ tick: 1,
       receipts: [{ laneId: "wl:live", writerId: "alice", admitted: 2, rejected: 0, counterfactual: 0 }],
       emissions: [{ effectKind: "notification", laneId: "wl:live", deliveries: [
-        { sinkId: "sink:network", outcome: "suppressed", reason: "Replay — external delivery suppressed." },
-        { sinkId: "sink:tui-log", outcome: "delivered", reason: "Replay — local sink delivers." }
+        { sinkId: "sink:network", outcome: "SUPPRESSED", reason: "Replay — external delivery suppressed." },
+        { sinkId: "sink:tui-log", outcome: "DELIVERED", reason: "Replay — local sink delivers." }
       ]}]
     }]
   });
@@ -340,10 +415,10 @@ export function scenarioReplayWithSuppression(): TtdHostAdapter {
 
 export function scenarioMultiWriterWithConflicts(): TtdHostAdapter {
   return buildScenario({
-    hostKind: "git-warp", executionMode: "live",
+    hostKind: "GIT_WARP", executionMode: "LIVE",
     lanes: [
-      { id: "wl:live", kind: "worldline", writable: false },
-      { id: "strand:experiment", kind: "strand", writable: true, parentId: "wl:live" }
+      { id: "wl:live", kind: "WORLDLINE", writable: false },
+      { id: "strand:experiment", kind: "STRAND", writable: true, parentId: "wl:live" }
     ],
     frames: [
       { tick: 1,
@@ -352,19 +427,19 @@ export function scenarioMultiWriterWithConflicts(): TtdHostAdapter {
           { laneId: "wl:live", writerId: "bob", admitted: 1, rejected: 1, counterfactual: 0 }
         ],
         emissions: [{ effectKind: "diagnostic", laneId: "wl:live", deliveries: [
-          { sinkId: "sink:tui-log", outcome: "delivered", reason: "Conflict resolution diagnostic." }
+          { sinkId: "sink:tui-log", outcome: "DELIVERED", reason: "Conflict resolution diagnostic." }
         ]}]
       },
       { tick: 2,
         receipts: [{ laneId: "wl:live", writerId: "alice", admitted: 1, rejected: 0, counterfactual: 1 }],
         emissions: [{ effectKind: "export", laneId: "wl:live", deliveries: [
-          { sinkId: "sink:export", outcome: "failed", reason: "Export adapter unavailable." }
+          { sinkId: "sink:export", outcome: "FAILED", reason: "Export adapter unavailable." }
         ]}]
       },
       { tick: 3,
         receipts: [{ laneId: "strand:experiment", writerId: "bob", admitted: 1, rejected: 0, counterfactual: 0 }],
         emissions: [{ effectKind: "bridge", laneId: "strand:experiment", deliveries: [
-          { sinkId: "sink:bridge", outcome: "skipped", reason: "Debug inspection — bridge dispatch skipped." }
+          { sinkId: "sink:bridge", outcome: "SKIPPED", reason: "Debug inspection — bridge dispatch skipped." }
         ]}]
       }
     ]

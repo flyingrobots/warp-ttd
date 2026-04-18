@@ -9,6 +9,23 @@
 import { randomUUID } from "node:crypto";
 import type { TtdHostAdapter } from "../adapter.ts";
 import type {
+  NeighborhoodCoreSummary,
+  SerializedNeighborhoodCoreSummary
+} from "./NeighborhoodCoreSummary.ts";
+import type {
+  NeighborhoodSiteCatalog,
+  SerializedNeighborhoodSiteCatalog
+} from "./NeighborhoodSiteCatalog.ts";
+import type {
+  ReintegrationDetailSummary,
+  SerializedReintegrationDetailSummary
+} from "./ReintegrationDetailSummary.ts";
+import type {
+  ReceiptShellSummary,
+  SerializedReceiptShellSummary
+} from "./ReceiptShellSummary.ts";
+import { buildNeighborhoodState } from "./neighborhoodAssembler.ts";
+import type {
   DeliveryObservationSummary,
   EffectEmissionSummary,
   ExecutionContext,
@@ -28,6 +45,10 @@ export interface SessionSnapshot {
   emissions: EffectEmissionSummary[];
   observations: DeliveryObservationSummary[];
   execCtx: ExecutionContext;
+  neighborhoodCore: NeighborhoodCoreSummary;
+  neighborhoodSites: NeighborhoodSiteCatalog;
+  reintegrationDetail: ReintegrationDetailSummary;
+  receiptShell: ReceiptShellSummary;
 }
 
 export interface PinnedObservation {
@@ -36,11 +57,45 @@ export interface PinnedObservation {
   emission: EffectEmissionSummary;
 }
 
+export interface SerializedSessionSnapshot {
+  head: PlaybackHeadSnapshot;
+  frame: PlaybackFrame;
+  receipts: ReceiptSummary[];
+  emissions: EffectEmissionSummary[];
+  observations: DeliveryObservationSummary[];
+  execCtx: ExecutionContext;
+  neighborhoodCore: SerializedNeighborhoodCoreSummary;
+  neighborhoodSites: SerializedNeighborhoodSiteCatalog;
+  reintegrationDetail: SerializedReintegrationDetailSummary;
+  receiptShell: SerializedReceiptShellSummary;
+}
+
 export interface SerializedSession {
   sessionId: string;
   activeHeadId: string;
-  snapshot: SessionSnapshot;
+  snapshot: SerializedSessionSnapshot;
   pins: PinnedObservation[];
+}
+
+function serializeSnapshot(
+  snapshot: SessionSnapshot
+): SerializedSessionSnapshot {
+  return {
+    head: structuredClone(snapshot.head),
+    frame: structuredClone(snapshot.frame),
+    receipts: structuredClone(snapshot.receipts),
+    emissions: structuredClone(snapshot.emissions),
+    observations: structuredClone(snapshot.observations),
+    execCtx: structuredClone(snapshot.execCtx),
+    neighborhoodCore: snapshot.neighborhoodCore.toJSON(),
+    neighborhoodSites: snapshot.neighborhoodSites.toJSON(),
+    reintegrationDetail: snapshot.reintegrationDetail.toJSON(),
+    receiptShell: snapshot.receiptShell.toJSON()
+  };
+}
+
+function clonePinnedObservation(pin: PinnedObservation): PinnedObservation {
+  return structuredClone(pin);
 }
 
 // ---------------------------------------------------------------------------
@@ -147,8 +202,8 @@ export class DebuggerSession {
     return {
       sessionId: this.sessionId,
       activeHeadId: this.#activeHeadId,
-      snapshot: structuredClone(this.#snapshot),
-      pins: structuredClone(this.#pins)
+      snapshot: serializeSnapshot(this.#snapshot),
+      pins: this.#pins.map((pin) => clonePinnedObservation(pin))
     };
   }
 }
@@ -167,5 +222,15 @@ async function fetchSnapshot(
   const emissions = await adapter.effectEmissions(headId);
   const observations = await adapter.deliveryObservations(headId);
   const execCtx = await adapter.executionContext();
-  return { head, frame, receipts, emissions, observations, execCtx };
+  const neighborhoodState = buildNeighborhoodState(frame, receipts, emissions);
+
+  return {
+    head,
+    frame,
+    receipts,
+    emissions,
+    observations,
+    execCtx,
+    ...neighborhoodState
+  };
 }

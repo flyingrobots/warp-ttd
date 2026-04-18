@@ -21,8 +21,8 @@ export function assignColumns(
   catalog: readonly LaneRef[],
 ): Map<string, number> {
   const columns = new Map<string, number>();
-  const worldlines = catalog.filter((l) => l.kind === "worldline");
-  const strands = catalog.filter((l) => l.kind === "strand");
+  const worldlines = catalog.filter((l) => l.kind === "WORLDLINE");
+  const strands = catalog.filter((l) => l.kind === "STRAND");
 
   let col = 0;
   for (const lane of [...worldlines, ...strands]) {
@@ -35,8 +35,8 @@ export function assignColumns(
 
 /** Character lookup: [isStrand][state] → glyph */
 const GLYPHS: Record<string, Record<string, string>> = {
-  worldline: { active: "●", pass: "│", quiet: "·" },
-  strand: { active: "●", pass: "┆", quiet: "·" },
+  WORLDLINE: { active: "●", pass: "│", quiet: "·" },
+  STRAND: { active: "●", pass: "┆", quiet: "·" },
 };
 
 function resolveGlyph(kind: string, state: string, isFork: boolean): string {

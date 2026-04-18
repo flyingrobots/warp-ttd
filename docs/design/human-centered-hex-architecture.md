@@ -300,10 +300,12 @@ Supports:
 
 Optional, capability-gated support for:
 
-- fork from coordinate
-- create strand
+- request an explicit counterfactual fork from a coordinate
+- create a scratch or retained private strand when the host supports it
 - enqueue intents
-- tick strand
+- ask the host to advance the controlled lane through its ordinary admission
+  path
+- promote or drop the speculative lane when the host supports it
 
 ### `SessionStorePort`
 

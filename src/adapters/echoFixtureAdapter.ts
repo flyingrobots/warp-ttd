@@ -28,35 +28,37 @@ interface FixtureState {
 
 const FIXTURE: FixtureState = {
   hello: {
-    hostKind: "echo",
+    hostKind: "ECHO",
     hostVersion: "0.0.0-fixture",
-    protocolVersion: "0.2.0",
+    protocolVersion: "0.5.0",
     schemaId: "ttd-protocol-fixture-v1",
     capabilities: [
-      "read:hello",
-      "read:lane-catalog",
-      "read:playback-head",
-      "read:frame",
-      "read:receipts",
-      "read:effect-emissions",
-      "read:delivery-observations",
-      "read:execution-context",
-      "control:step-forward",
-      "control:step-backward",
-      "control:seek"
+      "READ_HELLO",
+      "READ_LANE_CATALOG",
+      "READ_PLAYBACK_HEAD",
+      "READ_FRAME",
+      "READ_RECEIPTS",
+      "READ_EFFECT_EMISSIONS",
+      "READ_DELIVERY_OBSERVATIONS",
+      "READ_EXECUTION_CONTEXT",
+      "CONTROL_STEP_FORWARD",
+      "CONTROL_STEP_BACKWARD",
+      "CONTROL_SEEK"
     ]
   },
   catalog: {
     lanes: [
       {
         id: "wl:main",
-        kind: "worldline",
+        kind: "WORLDLINE",
+        worldlineId: "wl:main",
         writable: false,
         description: "Canonical application worldline"
       },
       {
         id: "ws:sandbox",
-        kind: "strand",
+        kind: "STRAND",
+        worldlineId: "wl:main",
         parentId: "wl:main",
         writable: true,
         description: "Speculative child strand at frame 1"
@@ -81,12 +83,14 @@ const FIXTURE: FixtureState = {
         lanes: [
           {
             laneId: "wl:main",
-            coordinate: { laneId: "wl:main", tick: 0 },
+            worldlineId: "wl:main",
+            coordinate: { laneId: "wl:main", worldlineId: "wl:main", tick: 0 },
             changed: false
           },
           {
             laneId: "ws:sandbox",
-            coordinate: { laneId: "ws:sandbox", tick: 0 },
+            worldlineId: "wl:main",
+            coordinate: { laneId: "ws:sandbox", worldlineId: "wl:main", tick: 0 },
             changed: false
           }
         ]
@@ -97,13 +101,15 @@ const FIXTURE: FixtureState = {
         lanes: [
           {
             laneId: "wl:main",
-            coordinate: { laneId: "wl:main", tick: 1 },
+            worldlineId: "wl:main",
+            coordinate: { laneId: "wl:main", worldlineId: "wl:main", tick: 1 },
             changed: true,
             btrDigest: "btr:echo:main:0001"
           },
           {
             laneId: "ws:sandbox",
-            coordinate: { laneId: "ws:sandbox", tick: 0 },
+            worldlineId: "wl:main",
+            coordinate: { laneId: "ws:sandbox", worldlineId: "wl:main", tick: 0 },
             changed: false
           }
         ]
@@ -114,12 +120,14 @@ const FIXTURE: FixtureState = {
         lanes: [
           {
             laneId: "wl:main",
-            coordinate: { laneId: "wl:main", tick: 1 },
+            worldlineId: "wl:main",
+            coordinate: { laneId: "wl:main", worldlineId: "wl:main", tick: 1 },
             changed: false
           },
           {
             laneId: "ws:sandbox",
-            coordinate: { laneId: "ws:sandbox", tick: 1 },
+            worldlineId: "wl:main",
+            coordinate: { laneId: "ws:sandbox", worldlineId: "wl:main", tick: 1 },
             changed: true,
             btrDigest: "btr:echo:sandbox:0001"
           }
@@ -134,7 +142,8 @@ const FIXTURE: FixtureState = {
         headId: "head:main",
         frameIndex: 1,
         laneId: "wl:main",
-        writerId: "echo-writer",
+        worldlineId: "wl:main",
+        writer: { writerId: "echo-writer", worldlineId: "wl:main", headId: "head:writer:main" },
         inputTick: 0,
         outputTick: 1,
         admittedRewriteCount: 2,
@@ -148,7 +157,8 @@ const FIXTURE: FixtureState = {
         headId: "head:main",
         frameIndex: 2,
         laneId: "ws:sandbox",
-        writerId: "sandbox-writer",
+        worldlineId: "wl:main",
+        writer: { writerId: "sandbox-writer", worldlineId: "wl:main", headId: "head:writer:sandbox" },
         inputTick: 0,
         outputTick: 1,
         admittedRewriteCount: 1,
@@ -166,9 +176,10 @@ const FIXTURE: FixtureState = {
         headId: "head:main",
         frameIndex: 1,
         laneId: "wl:main",
-        coordinate: { laneId: "wl:main", tick: 1 },
+        worldlineId: "wl:main",
+        coordinate: { laneId: "wl:main", worldlineId: "wl:main", tick: 1 },
         effectKind: "diagnostic",
-        producerWriterId: "echo-writer",
+        producerWriter: { writerId: "echo-writer", worldlineId: "wl:main", headId: "head:writer:main" },
         summary: "Diagnostic event emitted on canonical worldline advance."
       },
       {
@@ -176,9 +187,10 @@ const FIXTURE: FixtureState = {
         headId: "head:main",
         frameIndex: 2,
         laneId: "ws:sandbox",
-        coordinate: { laneId: "ws:sandbox", tick: 1 },
+        worldlineId: "wl:main",
+        coordinate: { laneId: "ws:sandbox", worldlineId: "wl:main", tick: 1 },
         effectKind: "notification",
-        producerWriterId: "echo-writer",
+        producerWriter: { writerId: "echo-writer", worldlineId: "wl:main", headId: "head:writer:main" },
         summary: "Notification emitted on speculative strand advance."
       }
     ]
@@ -191,9 +203,9 @@ const FIXTURE: FixtureState = {
         headId: "head:main",
         frameIndex: 1,
         sinkId: "sink:tui-log",
-        outcome: "delivered",
+        outcome: "DELIVERED",
         reason: "Live execution — delivered to local TUI log sink.",
-        executionMode: "live",
+        executionMode: "LIVE",
         summary: "Diagnostic delivered to TUI log."
       },
       {
@@ -202,9 +214,9 @@ const FIXTURE: FixtureState = {
         headId: "head:main",
         frameIndex: 1,
         sinkId: "sink:chunk-file",
-        outcome: "delivered",
+        outcome: "DELIVERED",
         reason: "Live execution — written to rotating chunk file.",
-        executionMode: "live",
+        executionMode: "LIVE",
         summary: "Diagnostic written to chunk file."
       },
       {
@@ -213,9 +225,9 @@ const FIXTURE: FixtureState = {
         headId: "head:main",
         frameIndex: 2,
         sinkId: "sink:network",
-        outcome: "suppressed",
+        outcome: "SUPPRESSED",
         reason: "Replay-safe suppression — external delivery blocked during replay.",
-        executionMode: "replay",
+        executionMode: "REPLAY",
         summary: "Notification suppressed during replay."
       },
       {
@@ -224,9 +236,9 @@ const FIXTURE: FixtureState = {
         headId: "head:main",
         frameIndex: 2,
         sinkId: "sink:tui-log",
-        outcome: "delivered",
+        outcome: "DELIVERED",
         reason: "Local sink delivers even during replay.",
-        executionMode: "replay",
+        executionMode: "REPLAY",
         summary: "Notification delivered to TUI log (replay-safe sink)."
       }
     ]
@@ -235,13 +247,14 @@ const FIXTURE: FixtureState = {
   // This intentionally demonstrates that per-observation mode can differ from
   // session context — the fixture exercises both live and replay code paths.
   executionContext: {
-    mode: "live"
+    mode: "LIVE"
   }
 };
 
 function cloneValue<T>(value: T): T {
   return structuredClone(value);
 }
+
 
 function requireHeadState(
   heads: Map<string, PlaybackHeadSnapshot>,
@@ -373,9 +386,11 @@ export class EchoFixtureAdapter implements TtdHostAdapter {
     const resolvedIndex = frameIndex ?? head.currentFrameIndex;
     const emissions = FIXTURE.effectEmissions[headId] ?? [];
 
-    return Promise.resolve(cloneValue(
-      emissions.filter((e) => e.frameIndex === resolvedIndex)
-    ));
+    return Promise.resolve(
+      emissions
+        .filter((e) => e.frameIndex === resolvedIndex)
+        .map((emission) => structuredClone(emission))
+    );
   }
 
   public deliveryObservations(headId: string, frameIndex?: number): Promise<DeliveryObservationSummary[]> {
