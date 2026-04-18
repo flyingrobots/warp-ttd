@@ -134,6 +134,24 @@ test("fromFrame falls back to the primary lane when nothing changed", () => {
   assert.deepEqual(core.alternatives, []);
 });
 
+test("fromFrame derives PENDING outcome when counterfactuals exist but no rejections", () => {
+  const receipt: ReceiptSummary = {
+    ...makeReceipt(),
+    rejectedRewriteCount: 0,
+    counterfactualCount: 2,
+    admittedRewriteCount: 1,
+  };
+
+  const core = NeighborhoodCoreSummary.fromFrame(makeFrame(), [receipt], []);
+
+  assert.equal(core.outcome, "PENDING");
+  assert.equal(core.alternatives.length, 1);
+  const alt = core.alternatives[0];
+  assert.ok(alt);
+  assert.equal(alt.outcome, "PENDING");
+  assert.match(alt.summary, /2 counterfactual/);
+});
+
 test("buildDisplayCatalog preserves ancestor context for participating strands", () => {
   const core = NeighborhoodCoreSummary.fromFrame(
     makeFrame(),
