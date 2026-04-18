@@ -231,3 +231,74 @@ test("scenarioMultiWriterWithConflicts has rejected rewrites and effect emission
   assert.ok(foundRejected, "Expected at least one frame with rejected rewrites");
   assert.ok(foundEmissions, "Expected at least one frame with effect emissions");
 });
+
+// --- Negative path tests ---
+
+test("buildScenario rejects strand lane missing parentId", () => {
+  assert.throws(
+    () => buildScenario({
+      hostKind: "GIT_WARP", executionMode: "LIVE",
+      lanes: [{ id: "ws:orphan", kind: "STRAND", writable: false }],
+      frames: []
+    }),
+    /missing parentId/
+  );
+});
+
+test("buildScenario rejects strand lane pointing at unknown parent", () => {
+  assert.throws(
+    () => buildScenario({
+      hostKind: "GIT_WARP", executionMode: "LIVE",
+      lanes: [{ id: "ws:orphan", kind: "STRAND", writable: false, parentId: "wl:ghost" }],
+      frames: []
+    }),
+    /unknown parent/
+  );
+});
+
+test("buildScenario rejects receipt referencing undeclared lane", () => {
+  assert.throws(
+    () => buildScenario({
+      hostKind: "GIT_WARP", executionMode: "LIVE",
+      lanes: [{ id: "wl:main", kind: "WORLDLINE", writable: false }],
+      frames: [{ tick: 1, receipts: [{ laneId: "wl:ghost", writerId: "alice", admitted: 1, rejected: 0, counterfactual: 0 }], emissions: [] }]
+    }),
+    /not declared in the scenario catalog/
+  );
+});
+
+test("buildScenario rejects emission referencing undeclared lane", () => {
+  assert.throws(
+    () => buildScenario({
+      hostKind: "GIT_WARP", executionMode: "LIVE",
+      lanes: [{ id: "wl:main", kind: "WORLDLINE", writable: false }],
+      frames: [{ tick: 1, receipts: [], emissions: [{ effectKind: "diagnostic", laneId: "wl:ghost", deliveries: [] }] }]
+    }),
+    /not declared in the scenario catalog/
+  );
+});
+
+test("buildScenario rejects unknown playback head", async () => {
+  const adapter = buildScenario({
+    hostKind: "GIT_WARP", executionMode: "LIVE",
+    lanes: [], frames: []
+  });
+
+  await assert.rejects(
+    async () => await adapter.playbackHead("head:missing"),
+    /Unknown playback head/
+  );
+});
+
+test("buildScenario rejects out-of-range frame index", async () => {
+  const adapter = buildScenario({
+    hostKind: "GIT_WARP", executionMode: "LIVE",
+    lanes: [{ id: "wl:main", kind: "WORLDLINE", writable: false }],
+    frames: [{ tick: 1, receipts: [], emissions: [] }]
+  });
+
+  await assert.rejects(
+    async () => await adapter.frame("head:default", 99),
+    /Frame index/
+  );
+});
