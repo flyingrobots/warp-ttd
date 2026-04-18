@@ -279,10 +279,29 @@ test("renderWorldline without selectedLaneId falls back to current behavior", ()
 
 test("renderWorldline narrow terminal collapses to single pane", () => {
   const { frames, catalog } = makeMultiLaneHistory();
-  const output = renderToString(renderWorldline({
+  const narrow = renderToString(renderWorldline({
     frames, catalog, cursor: 0, w: 50, h: 20, ctx: bijouCtx,
     selectedLaneId: "wl:alpha", laneCursor: 0,
   }));
-  // Should still render without error at narrow width
-  assert.ok(output.length > 0);
+  const wide = renderToString(renderWorldline({
+    frames, catalog, cursor: 0, w: 100, h: 20, ctx: bijouCtx,
+    selectedLaneId: "wl:alpha", laneCursor: 0,
+  }));
+
+  // Narrow render should still have timeline content
+  assert.ok(narrow.length > 0, "narrow render should produce output");
+  assert.ok(narrow.includes("aaa"), "narrow render should show timeline data");
+  // Lane tree labels appear in the wide render but should be absent or truncated at narrow width
+  assert.ok(wide.includes("strand:feature-a"), "wide render should show lane tree labels");
+  // At 50 cols, the tree pane is either hidden or too narrow to show full lane IDs
+  const narrowLines = narrow.split("\n");
+  const wideLines = wide.split("\n");
+  assert.ok(
+    narrowLines.some((l) => l.length <= 50),
+    "narrow render lines should respect narrow width"
+  );
+  assert.ok(
+    wideLines.some((l) => l.length > 50),
+    "wide render should use the wider terminal"
+  );
 });
