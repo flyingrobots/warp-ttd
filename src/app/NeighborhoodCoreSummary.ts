@@ -1,4 +1,5 @@
 import type { EffectEmissionSummary, LaneRef, PlaybackFrame, ReceiptSummary } from "../protocol.ts";
+import { requireNonEmpty, uniqueStrings } from "./validate.ts";
 
 export type NeighborhoodOutcome = "LAWFUL" | "OBSTRUCTED" | "PENDING";
 
@@ -30,17 +31,7 @@ export interface SerializedNeighborhoodCoreSummary {
 
 const VALID_OUTCOMES = new Set<NeighborhoodOutcome>(["LAWFUL", "OBSTRUCTED", "PENDING"]);
 
-function requireNonEmpty(value: string, field: string): string {
-  if (value.length === 0) {
-    throw new TypeError(`${field} must be non-empty`);
-  }
 
-  return value;
-}
-
-function uniqueStrings(values: readonly string[]): string[] {
-  return [...new Set(values)];
-}
 
 function sortByCatalogOrder(
   catalog: readonly LaneRef[],

@@ -3,6 +3,7 @@ import {
   type NeighborhoodOutcome,
   NeighborhoodCoreSummary
 } from "./NeighborhoodCoreSummary.ts";
+import { requireNonEmpty } from "./validate.ts";
 
 export type NeighborhoodSiteKind = "PRIMARY" | "ALTERNATIVE";
 
@@ -24,13 +25,7 @@ export interface SerializedNeighborhoodSiteCatalog {
 
 const VALID_SITE_KINDS = new Set<NeighborhoodSiteKind>(["PRIMARY", "ALTERNATIVE"]);
 
-function requireNonEmpty(value: string, field: string): string {
-  if (value.length === 0) {
-    throw new TypeError(`${field} must be non-empty`);
-  }
 
-  return value;
-}
 
 function validateKind(kind: NeighborhoodSiteKind): NeighborhoodSiteKind {
   if (!VALID_SITE_KINDS.has(kind)) {

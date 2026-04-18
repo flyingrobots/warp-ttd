@@ -1,5 +1,6 @@
 import type { ReceiptSummary } from "../protocol.ts";
 import type { NeighborhoodCoreSummary } from "./NeighborhoodCoreSummary.ts";
+import { requireNonEmpty } from "./validate.ts";
 
 export interface SerializedReceiptShellSummary {
   siteId: string;
@@ -10,13 +11,7 @@ export interface SerializedReceiptShellSummary {
   summary: string;
 }
 
-function requireNonEmpty(value: string, field: string): string {
-  if (value.length === 0) {
-    throw new TypeError(`${field} must be non-empty`);
-  }
 
-  return value;
-}
 
 function sum(values: readonly number[]): number {
   return values.reduce((total, value) => total + value, 0);

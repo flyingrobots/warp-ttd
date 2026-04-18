@@ -1,5 +1,6 @@
 import type { PlaybackFrame, ReceiptSummary } from "../protocol.ts";
 import type { NeighborhoodCoreSummary } from "./NeighborhoodCoreSummary.ts";
+import { requireNonEmpty } from "./validate.ts";
 
 export type ObligationStatus = "SATISFIED" | "VIOLATED" | "UNKNOWN";
 
@@ -35,13 +36,7 @@ export interface SerializedReintegrationDetailSummary {
 
 const VALID_STATUSES = new Set<ObligationStatus>(["SATISFIED", "VIOLATED", "UNKNOWN"]);
 
-function requireNonEmpty(value: string, field: string): string {
-  if (value.length === 0) {
-    throw new TypeError(`${field} must be non-empty`);
-  }
 
-  return value;
-}
 
 function validateStatus(status: ObligationStatus): ObligationStatus {
   if (!VALID_STATUSES.has(status)) {

@@ -7,6 +7,7 @@ import type {
   NeighborhoodSiteKind,
   NeighborhoodSiteSummary
 } from "./NeighborhoodSiteCatalog.ts";
+import { requireNonEmpty, uniqueStrings } from "./validate.ts";
 
 export interface SerializedNeighborhoodFocusSummary {
   siteId: string;
@@ -27,17 +28,6 @@ export interface SerializedNeighborhoodFocusSummary {
   parentSiteId?: string;
 }
 
-function requireNonEmpty(value: string, field: string): string {
-  if (value.length === 0) {
-    throw new TypeError(`${field} must be non-empty`);
-  }
-
-  return value;
-}
-
-function uniqueStrings(values: readonly string[]): string[] {
-  return [...new Set(values)];
-}
 
 function createFocusArgs(
   core: NeighborhoodCoreSummary,
