@@ -72,7 +72,7 @@ function isLaneSelectionMessage(msg: FMsg): boolean {
 function messageType(msg: FMsg): string | null {
   if (typeof msg !== "object" || msg === null || !("type" in msg)) return null;
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- framed app carries heterogeneous page messages at this boundary
-  const value = (msg as Record<string, unknown>)["type"];
+  const value = (msg as Record<string, string>)["type"];
   return typeof value === "string" ? value : null;
 }
 

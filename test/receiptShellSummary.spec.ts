@@ -52,11 +52,9 @@ test("fromReceipts derives candidate and rejection counts from receipt shell", (
 });
 
 test("hasBlockingRelation is true when only counterfactuals exist (no rejections)", () => {
-  const receipts: ReceiptSummary[] = [{
-    ...makeReceipts()[0]!,
-    rejectedRewriteCount: 0,
-    counterfactualCount: 3,
-  }];
+  const base = makeReceipts()[0];
+  assert.ok(base !== undefined);
+  const receipts: ReceiptSummary[] = [{ ...base, rejectedRewriteCount: 0, counterfactualCount: 3 }];
 
   const shell = ReceiptShellSummary.fromReceipts(makeNeighborhoodCore(), receipts);
 
@@ -65,11 +63,9 @@ test("hasBlockingRelation is true when only counterfactuals exist (no rejections
 });
 
 test("hasBlockingRelation is false when no rejections and no counterfactuals", () => {
-  const receipts: ReceiptSummary[] = [{
-    ...makeReceipts()[0]!,
-    rejectedRewriteCount: 0,
-    counterfactualCount: 0,
-  }];
+  const base = makeReceipts()[0];
+  assert.ok(base !== undefined);
+  const receipts: ReceiptSummary[] = [{ ...base, rejectedRewriteCount: 0, counterfactualCount: 0 }];
 
   const shell = ReceiptShellSummary.fromReceipts(makeNeighborhoodCore(), receipts);
 

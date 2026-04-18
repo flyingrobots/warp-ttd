@@ -102,22 +102,15 @@ async function buildEffectEmissionSummary<TMaterializedState, TNodeProps extends
     return null;
   }
 
+  const { laneId, worldlineId } = args;
   return {
     emissionId: candidate.effectNodeId,
     headId: args.headId,
     frameIndex: args.frameIndex,
-    laneId: args.laneId,
-    worldlineId: args.worldlineId,
-    coordinate: {
-      laneId: args.laneId,
-      worldlineId: args.worldlineId,
-      tick: args.indexedFrame.tick
-    },
+    laneId, worldlineId,
+    coordinate: { laneId, worldlineId, tick: args.indexedFrame.tick },
     effectKind,
-    producerWriter: {
-      writerId: candidate.receiptWriterId,
-      worldlineId: args.worldlineId
-    },
+    producerWriter: { writerId: candidate.receiptWriterId, worldlineId },
     summary: `${effectKind} effect node admitted at tick ${args.indexedFrame.tick.toString()}`
   };
 }

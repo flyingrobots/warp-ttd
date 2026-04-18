@@ -52,6 +52,11 @@ export interface ReceiptOpts {
   counterfactual?: number;
 }
 
+function makeWriter(opts: ReceiptOpts, worldlineId: string): import("../../src/protocol.ts").WriterRef {
+  const base = { writerId: opts.writerId, worldlineId };
+  return opts.headId === undefined ? base : { ...base, headId: opts.headId };
+}
+
 export function makeReceipt(opts: ReceiptOpts): ReceiptSummary {
   const worldlineId = opts.worldlineId ?? opts.laneId;
   return {
@@ -60,9 +65,7 @@ export function makeReceipt(opts: ReceiptOpts): ReceiptSummary {
     frameIndex: opts.frameIndex,
     laneId: opts.laneId,
     worldlineId,
-    writer: opts.headId === undefined
-      ? { writerId: opts.writerId, worldlineId }
-      : { writerId: opts.writerId, worldlineId, headId: opts.headId },
+    writer: makeWriter(opts, worldlineId),
     inputTick: opts.frameIndex,
     outputTick: opts.frameIndex + 1,
     admittedRewriteCount: opts.admitted ?? 1,

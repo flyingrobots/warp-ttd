@@ -49,9 +49,9 @@ test("buildNeighborhoodState produces all four neighborhood summaries from proto
 
   const state = buildNeighborhoodState(frame, receipts, emissions);
 
-  assert.ok(state.neighborhoodCore);
-  assert.ok(state.neighborhoodSites);
-  assert.ok(state.reintegrationDetail);
-  assert.ok(state.receiptShell);
+  assert.equal(typeof state.neighborhoodCore.outcome, "string");
+  assert.equal(typeof state.neighborhoodSites.activeSiteId, "string");
+  assert.equal(typeof state.reintegrationDetail.summary, "string");
+  assert.equal(typeof state.receiptShell.summary, "string");
   assert.equal(state.neighborhoodCore.outcome, "LAWFUL");
 });
