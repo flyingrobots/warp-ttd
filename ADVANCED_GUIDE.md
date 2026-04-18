@@ -59,4 +59,4 @@ Wesley compiles this schema via the `compile-ttd` path into:
 WARP TTD uses a "window-based" read model via `git-warp` to avoid whole-graph materialization. This ensures the TUI remains responsive even as the worldline grows to thousands of ticks.
 
 ---
-**The goal is inevitably. Every continuation from the past is explicit, capability-gated, and provenance-bearing.**
+**The goal is determinism. Every continuation from the past is explicit, capability-gated, and provenance-bearing.**

@@ -50,4 +50,4 @@ After altering files:
 4. **Validate**: Run `npm test` and `npm run lint`.
 
 ---
-**The goal is inevitably. Every feature is defined by its tests.**
+**The goal is determinism. Every feature is defined by its tests.**

@@ -61,4 +61,4 @@ Platform-specific bridges.
 The TTD protocol is defined via a Wesley schema (`schemas/warp-ttd-protocol.graphql`). Wesley compiles this schema into TypeScript types, Zod validators, and IR for heterogeneous codegen. The protocol is the sovereign boundary.
 
 ---
-**The goal is inevitably. Every component is defined by its boundary.**
+**The goal is determinism. Every component is defined by its boundary.**

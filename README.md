@@ -15,7 +15,7 @@ Unlike traditional debuggers that inspect transient state, WARP TTD inspects the
 - **Causal Control**: *Pause*, *step* forward or backward, and *seek* through Lamport *ticks*. *Fork* **speculative strands** to explore alternatives without rewriting canonical history.
 - **Deterministic Replay**: Built on the invariant that *history is immutable*. Every continuation is explicit, capability-gated, and provenance-bearing. Each tick is cryptographically deterministic, no matter what.
 
-**WARP** is a causal computing paradigm that treats history as a first-class byproduct of computation. Because worldlines are patch-deterministic, there is no need to manually capture sessions or enable specialized time-travel debugging modes. Instead, the system produces **computational holograms**: compact boundary representations—consisting of an initial state and a **provenance payload**–that are information-complete for the entire interior derivation volume. These holograms enable the reconstruction of any state (up to isomorphism) at any point in history. Because WARP graphs are inherently holographic, the full deterministic causal history of a worldline is recoverable from its boundary encoding alone.
+**WARP** is a causal computing paradigm that treats history as a first-class byproduct of computation. Because worldlines are patch-deterministic, there is no need to manually capture sessions or enable specialized time-travel debugging modes. Instead, the system produces **computational holograms**: compact boundary representations—consisting of an initial state and a **provenance payload**—that are information-complete for the entire interior derivation volume. These holograms enable the reconstruction of any state (up to isomorphism) at any point in history. Because WARP graphs are inherently holographic, the full deterministic causal history of a worldline is recoverable from its boundary encoding alone.
 
 ## Quick Start
 
@@ -38,7 +38,7 @@ npm run frame -- --json
 
 ### 3. Protocol First
 
-The TTD protocol is defined via a single **GraphQL schema** (protocol v0.5.0). Protocol changes start here.
+The TTD protocol is defined via a single **GraphQL schema** (protocol v0.5.0 schema; delivery observation support is adapter-dependent). Protocol changes start here.
 
 ```text
 schemas/warp-ttd-protocol.graphql

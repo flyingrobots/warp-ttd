@@ -41,4 +41,4 @@ Rejected rewrites are not noise; they are counterfactuals—what *could* have ha
 The same debugger serves heterogeneous hosts (git-warp, Echo). The protocol is the sovereign boundary, ensuring that systems engineering expertise is portable across causal runtimes.
 
 ---
-**The goal is inevitably. Every continuation from the past is explicit, capability-gated, and provenance-bearing.**
+**The goal is determinism. Every continuation from the past is explicit, capability-gated, and provenance-bearing.**
