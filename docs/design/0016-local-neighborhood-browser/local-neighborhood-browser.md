@@ -143,7 +143,7 @@ It is optional enrichment around that core.
 
 The simplest honest shape is:
 
-```
+```text
 ┌─ Lane / Site List ───────┬─ Neighborhood Core ───────┬─ Detail Tabs ──────────┐
 │ lane tree / local sites  │ site identity             │ [Reintegration]        │
 │ current lane highlighted │ participating lanes       │ seam anchors           │

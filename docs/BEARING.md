@@ -13,15 +13,18 @@ timeline
 ## Active Gravity
 
 ### 1. Agent-First Sovereignty
+
 - Treating CLI `--json` as the canonical agent-facing surface.
 - Promoting MCP from speculative experiment to an explicit delivery adapter.
 - Ensuring TUI capabilities follow explicit CLI/MCP/session nouns rather than inventing ad-hoc behavior.
 
 ### 2. Neighborhood & Site Catalog
+
 - Refinement of the `NeighborhoodFocusSummary` to share focus across disparate debugger pages.
 - Hardening site-driven worldline cursor recomputation for consistent navigation.
 
 ### 3. DebuggerSession Maturity
+
 - Implementation of the `DebuggerSession` investigation object to track speculative result handles and investigator context.
 - Scaling the window-based read model to handle high-density causal worldlines.
 

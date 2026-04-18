@@ -3,7 +3,7 @@
  */
 
 export function requireNonEmpty(value: string, field: string): string {
-  if (value.length === 0) {
+  if (value.trim().length === 0) {
     throw new TypeError(`${field} must be non-empty`);
   }
 

@@ -41,7 +41,7 @@
 
 ## Witness
 
-```
+```text
 164 tests, 0 failures.
 16 new tests covering filterFramesToLane, buildLaneTreeLines, and
 split-view renderWorldline.

@@ -61,7 +61,8 @@ function isWorldlineLoadedMessage(msg: FMsg): msg is {
   frames: FrameData[];
   sessionId?: string;
 } {
-  return messageType(msg) === "worldline-loaded";
+  return messageType(msg) === "worldline-loaded" &&
+    typeof msg === "object" && msg !== null && "frames" in msg && Array.isArray((msg as Record<string, string>)["frames"]);
 }
 
 function isLaneSelectionMessage(msg: FMsg): boolean {

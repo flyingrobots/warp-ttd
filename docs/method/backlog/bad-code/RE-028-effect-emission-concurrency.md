@@ -1,3 +1,5 @@
+# RE-028 — Effect Emission Concurrency
+
 **Legend:** RE (Reliability)
 **Source:** Code review round 2 (2026-04-18)
 

@@ -190,7 +190,7 @@ const FIXTURE: FixtureState = {
         worldlineId: "wl:main",
         coordinate: { laneId: "ws:sandbox", worldlineId: "wl:main", tick: 1 },
         effectKind: "notification",
-        producerWriter: { writerId: "echo-writer", worldlineId: "wl:main", headId: "head:writer:main" },
+        producerWriter: { writerId: "sandbox-writer", worldlineId: "wl:main", headId: "head:writer:sandbox" },
         summary: "Notification emitted on speculative strand advance."
       }
     ]

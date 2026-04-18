@@ -94,9 +94,6 @@ function serializeSnapshot(
   };
 }
 
-function clonePinnedObservation(pin: PinnedObservation): PinnedObservation {
-  return structuredClone(pin);
-}
 
 // ---------------------------------------------------------------------------
 // Session
@@ -203,7 +200,7 @@ export class DebuggerSession {
       sessionId: this.sessionId,
       activeHeadId: this.#activeHeadId,
       snapshot: serializeSnapshot(this.#snapshot),
-      pins: this.#pins.map((pin) => clonePinnedObservation(pin))
+      pins: this.#pins.map((pin) => structuredClone(pin))
     };
   }
 }

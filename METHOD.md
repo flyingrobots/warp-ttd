@@ -48,7 +48,7 @@ stateDiagram-v2
 3. **Red**: Write failing tests based on the design's playback questions.
 4. **Green**: Implement the solution until tests pass.
 5. **Retro**: Document findings and follow-on debt in the cycle doc.
-6. **Ship**: Open a PR to `main`. Update `BEARING.md` after merge.
+6. **Ship**: Open a PR to `main`. Update `docs/BEARING.md` after merge.
 
 ## Naming Convention
 

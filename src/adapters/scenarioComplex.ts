@@ -18,6 +18,7 @@
  */
 import { buildScenario } from "./scenarioFixtureAdapter.ts";
 import type { TtdHostAdapter } from "../adapter.ts";
+import type { DeliveryOutcome } from "../protocol.ts";
 
 const WRITERS = ["alice", "bob", "carol", "dave"];
 
@@ -32,7 +33,7 @@ interface Receipt {
 interface Emission {
   effectKind: string;
   laneId: string;
-  deliveries: { sinkId: string; outcome: "DELIVERED" | "SUPPRESSED" | "FAILED" | "SKIPPED"; reason: string }[];
+  deliveries: { sinkId: string; outcome: DeliveryOutcome; reason: string }[];
 }
 
 interface FrameSpec {

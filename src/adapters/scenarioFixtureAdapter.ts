@@ -268,8 +268,6 @@ function buildAllFrameData(scenario: Scenario): BuiltScenario {
   };
 }
 
-
-
 function buildPlaybackFrame(
   lanes: LaneRef[],
   scenario: Scenario,

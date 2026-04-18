@@ -47,7 +47,7 @@ After altering files:
 1. **Verify Truth**: Ensure documentation is updated if behavior or structure changed.
 2. **Log Debt**: Add follow-on backlog items to `bad-code/` or `cool-ideas/`.
 3. **Commit**: Use focused, conventional commit messages. Propose a draft before executing.
-4. **Validate**: Run `npm test` and `npm run lint`.
+4. **Validate**: Run `npm test`, `npx tsc --noEmit`, and `npm run lint`.
 
 ---
 **The goal is determinism. Every feature is defined by its tests.**

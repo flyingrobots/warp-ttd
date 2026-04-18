@@ -17,3 +17,7 @@ Refactor `fetchSnapshot` to use `Promise.all()` for concurrent adapter calls. Th
 ## Effort
 
 Small — refactor `fetchSnapshot` in `src/app/debuggerSession.ts` to use settled concurrency.
+
+## Related
+
+See [DX-019 — Resilient Partial Snapshots](../cool-ideas/DX-019-resilient-partial-snapshots.md) which proposes `Promise.allSettled()` for resilience. If DX-019 lands first, this ticket is subsumed.
