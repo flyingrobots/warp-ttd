@@ -54,28 +54,6 @@ type WorldlineMsg =
 // Helpers
 // ---------------------------------------------------------------------------
 
-function makeWorldlineLoadCmd(
-  ctx: SessionContext,
-): (emit: (msg: WorldlineMsg) => void) => Promise<void> {
-  return async (emit): Promise<void> => {
-    try {
-      const adapter = ctx.session.adapter;
-      const headId = ctx.session.snapshot.head.headId;
-      const maxFrame = await adapter.seekToFrame(headId, Number.MAX_SAFE_INTEGER);
-      const maxIndex = maxFrame.frameIndex;
-      const frames: FrameData[] = [];
-      for (let i = 0; i <= maxIndex; i++) {
-        const f = await adapter.frame(headId, i);
-        const r = await adapter.receipts(headId, i);
-        frames.push({ frameIndex: f.frameIndex, lanes: f.lanes, receipts: r });
-      }
-      emit({ type: "worldline-loaded", frames, sessionId: ctx.session.sessionId });
-    } catch {
-      // Silently ignore — worldline view will show empty state
-    }
-  };
-}
-
 function initialWorldlineModel(): WorldlineModel {
   return {
     time: 0,
@@ -216,6 +194,8 @@ function moveLaneSelection(model: WorldlineModel, delta: number): WorldlineUpdat
 }
 
 function handleSessionReady(model: WorldlineModel, ctx: SessionContext): WorldlineUpdateResult {
+  // Shell-level syncSession issues the worldline load command,
+  // so the page only resets state and waits for worldline-loaded.
   return [{
     ...model,
     sessionCtx: ctx,
@@ -224,19 +204,11 @@ function handleSessionReady(model: WorldlineModel, ctx: SessionContext): Worldli
     selectedLaneId: null,
     laneCursor: 0,
     focus: null
-  }, [makeWorldlineLoadCmd(ctx)]];
+  }, []];
 }
 
 function handleDisconnect(model: WorldlineModel): WorldlineUpdateResult {
   return [{ ...initialWorldlineModel(), time: model.time }, []];
-}
-
-function handleWorldlineLoaded(model: WorldlineModel, msg: Extract<WorldlineMsg, { type: "worldline-loaded" }>): WorldlineUpdateResult {
-  if (model.sessionCtx?.session.sessionId !== msg.sessionId) {
-    return [model, []];
-  }
-
-  return [{ ...model, frames: msg.frames, cursor: 0 }, []];
 }
 
 function buildSeekCommand(model: WorldlineModel): WorldlineCmd[] {
@@ -275,10 +247,6 @@ function simpleWorldlineUpdate(
 
   if (msg.type === "disconnect") {
     return handleDisconnect(model);
-  }
-
-  if (msg.type === "worldline-loaded") {
-    return handleWorldlineLoaded(model, msg);
   }
 
   return null;
