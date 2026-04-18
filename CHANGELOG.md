@@ -8,6 +8,41 @@ This project will use [Semantic Versioning](https://semver.org/) starting at
 
 ## [Unreleased]
 
+### Changed
+
+- **Protocol boundary**: `EffectKind` removed from protocol mirror — port types
+  are now plain data (strings). Runtime class remains available for app-layer use.
+- **Neighborhood assembler**: Extracted `buildNeighborhoodState` from
+  `DebuggerSession` to standalone `neighborhoodAssembler.ts` (SRP).
+- **Worldline loading**: Deduplicated between page and shell — single loader in
+  `sessionSync.ts`, removed divergent cursor-reset path in `worldlinePage.ts`.
+- **Worldline focus sync**: `syncSiteDrivenWorldlineFocus` now guarded by
+  `shouldResyncWorldlineFocus` — only runs when frame index or site selection
+  changes, not on every message (cursor keys, pulse).
+
+### Fixed
+
+- **Publication boundary spec**: Tests now check correct documentation files
+  after README restructuring. Protocol version added to README.
+- **Effect emission extractor**: Malformed effect nodes (missing/empty kind)
+  are now silently skipped instead of throwing, preventing single bad nodes
+  from breaking entire frame inspection.
+- **Effect emission cache**: Per-frame emission cache in git-warp adapter
+  eliminates O(n²) re-materialization when browsing multiple frames.
+- **Dead code cleanup**: Removed unused `worldlineIdByLaneId`,
+  `syncWorldlineCursor`, `syncWorldlineSelection`, and related helpers.
+
+### Tests
+
+- Restored `toJSON()` round-trip equality assertion (was weakened to `doesNotThrow`).
+- Added negative-path tests for all `ScenarioFixtureAdapter` error branches.
+- Added `PENDING` outcome coverage for `NeighborhoodCoreSummary`.
+- Added counterfactual-only and all-zero edge cases for `ReceiptShellSummary`.
+- Strengthened narrow-terminal collapse test with real layout assertions.
+- Added adapter emission non-aliasing verification.
+- Extracted shared worldline test fixtures to `test/helpers/worldlineFixture.ts`.
+- Replaced adapter/session integration in unit specs with inline fixtures.
+
 ### Added
 
 - **Worldline view rethink** (cycle 0014) — split-view worldline page
