@@ -20,7 +20,7 @@ test("resolveAdapter returns a git-warp adapter for git-warp config", async () =
     assert.equal(defaultHeadId, "head:default");
 
     const hello = await adapter.hello();
-    assert.equal(hello.hostKind, "git-warp");
+    assert.equal(hello.hostKind, "GIT_WARP");
   } finally {
     await fixture.cleanup();
   }

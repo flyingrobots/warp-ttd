@@ -1,209 +1,56 @@
 # METHOD
 
-A backlog, a loop, and honest bookkeeping.
+The WARP TTD work doctrine: A backlog, a loop, and honest bookkeeping.
 
 ## Principles
 
-The agent and the human sit at the same table. They see different
-things. Both are named in every design. Both must agree before work
-ships. Default to building the agent surface first — it is the
-foundation the human experience stands on. If the work is
-human-first exploratory design, say so in the design doc.
-
-Everything traces to a playback question. If you cannot say which
-question your work answers, you are drifting. Stop. Reconnect to
-the design, or change it.
-
-Tests are the executable spec. Design names the hill and the playback
-questions. Tests prove the answers. No ceremonial prose between
-intent and proof.
-
-The filesystem is the database. A directory is a priority. A filename
-is an identity. Moving a file is a decision. `ls` is the query.
-
-Process should be calm. No sprints. No velocity. No burndown. A
-backlog tiered by judgment, and a loop for doing it well.
+- **The agent and the human sit at the same table.** Both matter. Both are named in every design. Default to building the agent surface first.
+- **Tests are the executable spec.** Design names the hill and the playback questions. Tests prove the answers.
+- **The filesystem is the database.** A directory is a priority. A filename is an identity. Moving a file is a decision.
+- **Process is calm.** No sprints or velocity theater. A backlog tiered by judgment, and a loop for doing it well.
 
 ## Structure
 
-```
-docs/
-  method/
-    backlog/
-      inbox/                        raw ideas, anyone, anytime
-      asap/                         do this now
-      up-next/                      do this soon
-      cool-ideas/                   experiments, wild thoughts
-      bad-code/                     tech debt
-      *.md                          everything else
-    legends/                        named domains
-    retro/<cycle>/<task>.md         retrospectives
-    graveyard/                      rejected ideas
-    process.md                      how cycles run
-    release.md                      how releases work
-  design/
-    <cycle>/<task>.md               cycle design docs
-    *.md                            living documents
-```
+| Signpost | Role |
+| :--- | :--- |
+| **`README.md`** | Public front door and project identity. |
+| **`GUIDE.md`** | Orientation and productive-fast path. |
+| **`VISION.md`** | Core tenets and the observer geometry mission. |
+| **`ARCHITECTURE.md`** | Authoritative structural reference. |
+| **`METHOD.md`** | Repo work doctrine (this document). |
 
-Signpost documents live at root or one level into `docs/`. They use
-`ALL_CAPS.md`. Deeper than that, it is not a signpost.
+## Backlog Lanes
 
-## Backlog
+| Lane | Purpose |
+| :--- | :--- |
+| **`asap/`** | Imminent work; pull into the next cycle. |
+| **`up-next/`** | Queued after `asap/`. |
+| **`cool-ideas/`** | Uncommitted experiments. |
+| **`bad-code/`** | Technical debt that must be addressed. |
+| **`inbox/`** | Unprocessed ideas; must be promoted or buried before entering a cycle. |
 
-Markdown files. Each describes work worth doing. The filesystem is
-the index.
+## The Cycle Loop
 
-### Inbox
-
-Anyone — human or agent — drops ideas in at any time. A sentence is
-enough. No legend, no scope, no ceremony. Capture it. Keep moving.
-The inbox is processed during maintenance.
-
-### Lanes
-
-- **`inbox/`** — unprocessed.
-- **`asap/`** — pull into a cycle soon.
-- **`up-next/`** — next in line.
-- **`cool-ideas/`** — not commitments.
-- **`bad-code/`** — it works, but it bothers you.
-
-Anything else sits in the backlog root.
-
-### Naming
-
-Legend prefix if applicable. No numeric IDs.
-
-```
-VIZ_braille-rendering.md
-PROTO_strand-lifecycle.md
-debt-trailer-codec-dts.md
+```mermaid
+stateDiagram-v2
+    direction LR
+    [*] --> Pull: asap/
+    Pull --> Branch: cycle/
+    Branch --> Red: failing tests
+    Red --> Green: passing tests
+    Green --> Retro: findings/debt
+    Retro --> Ship: PR to main
+    Ship --> [*]
 ```
 
-### Promoting
+1. **Pull**: Move an item from `asap/` to `docs/design/`.
+2. **Branch**: Create `cycle/<cycle_name>`.
+3. **Red**: Write failing tests based on the design's playback questions.
+4. **Green**: Implement the solution until tests pass.
+5. **Retro**: Document findings and follow-on debt in the cycle doc.
+6. **Ship**: Open a PR to `main`. Update `docs/BEARING.md` after merge.
 
-Pulled into a cycle, a backlog item becomes a design doc:
+## Naming Convention
 
-```
-backlog/asap/PROTO_strand-lifecycle.md → design/<cycle>/strand-lifecycle.md
-```
-
-The backlog file is removed.
-
-### Commitment
-
-Pull it and you own it. It does not go back.
-
-- **Finish** — hill met.
-- **Pivot** — end early, write the retro. Remaining work re-enters
-  the backlog as a new item.
-
-### Maintenance
-
-End of cycle:
-
-- Process inbox. Promote, flesh out, or bury.
-- Re-prioritize. What you learned changes what matters.
-- Clean up. Merge duplicates, kill the dead.
-
-Do not reorganize mid-cycle.
-
-### Cycle types
-
-Same loop regardless:
-
-- **Feature** — design, test, build, ship.
-- **Design** — the deliverable is docs, not code.
-- **Debt** — pull from `bad-code/`. The hill is "this no longer
-  bothers us."
-
-## Legends
-
-A named domain that spans many cycles. Each legend describes what it
-covers, who cares, what success looks like, and how you know.
-
-Legends do not start or finish. They are reference frames.
-
-A legend code (`VIZ`, `PROTO`, `TUI`) prefixes backlog filenames.
-
-## Cycles
-
-A unit of shipped work. Design, implementation, retrospective.
-Numbered sequentially.
-
-### The loop
-
-0. **Pull** — choose. Move it. Committed.
-
-1. **Design** — write a design doc in `docs/design/<cycle>/`.
-   - Sponsor human
-   - Sponsor agent
-   - Hill
-   - Playback questions — yes/no, both perspectives. Write them first.
-   - Non-goals
-
-2. **RED** — write failing tests. Playback questions become specs.
-   Default to agent surface first.
-
-3. **GREEN** — make them pass.
-
-4. **Playback** — produce a witness. The agent answers agent
-   questions. The human answers user questions. Write it down. The
-   witness is the concrete artifact — test output, transcript,
-   screenshot, recording — that shows both answers. No clear yes
-   means no.
-
-5. **PR → main** — review until merge.
-
-6. **Close** — merge. Retro in `docs/method/retro/<cycle>/`.
-   - Drift check (mandatory). Undocumented drift is the only failure.
-   - New debt to `bad-code/`.
-   - Cool ideas to `cool-ideas/`.
-   - Backlog maintenance.
-
-   Releases happen when externally meaningful behavior changes.
-   Not every cycle is a release. Update CHANGELOG and README
-   regardless.
-
-### Outcomes
-
-- **Hill met** — merge, close.
-- **Partial** — merge what is honest. Retro explains the gap.
-- **Not met** — cycle still concludes. Write the retro. A failed
-  cycle with a good retro beats a successful one with no learnings.
-
-Every cycle ends with a retro. Success is not required.
-
-## Graveyard
-
-Rejected work moves to `docs/method/graveyard/` with a note. The
-graveyard prevents re-proposing without context.
-
-## Flow
-
-```
-idea → inbox/ → cool-ideas/ → up-next/ → asap/
-  → design/<cycle>/  (committed)
-  → RED → GREEN → playback (witness)
-  → retro/<cycle>/
-  → release (when meaningful)
-      — or →
-  → graveyard/
-```
-
-## What this system does not have
-
-No milestones. No velocity. No ticket numbers.
-
-The backlog is tiered by lane. Choice within a lane is judgment at
-pull time. That is enough.
-
-## Naming
-
-| Convention | Example | When |
-|------------|---------|------|
-| `ALL_CAPS.md` | `VISION.md` | Signpost — root or `docs/` |
-| `lowercase.md` | `doctrine.md` | Everything else |
-| `<LEGEND>_<name>.md` | `VIZ_braille.md` | Backlog with legend |
-| `<name>.md` | `debt-trailer-codec.md` | Backlog without |
-| `<cycle>/` | `0010-strand-speculation/` | Cycle directory |
+Backlog and cycle files follow: `<LEGEND>_<slug>.md`
+Example: `PROTO_strand-lifecycle.md`

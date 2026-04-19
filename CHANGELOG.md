@@ -10,6 +10,12 @@ This project will use [Semantic Versioning](https://semver.org/) starting at
 
 ### Added
 
+- **Worldline view rethink** (cycle 0014) — split-view worldline page
+  with lane tree on the left and per-lane tick timeline on the right.
+  `filterFramesToLane` scopes frame data to a single lane.
+  `buildLaneTreeLines` renders lane hierarchy with tree connectors.
+  Backward compatible — legacy view preserved when no lane selected.
+  Narrow terminals collapse to single-pane timeline. 16 new tests (164 total).
 - **Bijou app frame migration** (cycle 0013) — per-page models,
   updates, and keymaps. Command palette, help viewer, quit modal
   unlocked. Cross-page session sync. Default to latest tick on
@@ -32,6 +38,36 @@ This project will use [Semantic Versioning](https://semver.org/) starting at
   named domains, graveyard for rejected ideas.
 
 ### Changed
+
+- **Protocol boundary**: `EffectKind` removed from protocol mirror — port types
+  are now plain data (strings). Dead `EffectKind` class deleted entirely.
+- **Neighborhood assembler**: Extracted `buildNeighborhoodState` from
+  `DebuggerSession` to standalone `neighborhoodAssembler.ts` (SRP).
+- **Worldline loading**: Deduplicated between page and shell — single loader in
+  `sessionSync.ts`, removed divergent cursor-reset path in `worldlinePage.ts`.
+- **Worldline focus sync**: `syncSiteDrivenWorldlineFocus` now guarded by
+  `shouldResyncWorldlineFocus` — only runs when frame index or site selection
+  changes, not on every message (cursor keys, pulse).
+- **DRY**: Extracted `requireNonEmpty`/`uniqueStrings` to shared `validate.ts`.
+- **Test quality**: Replaced source-grep arch tests with ESLint boundary rules.
+  Fixed tautological assertions, writable fixture inversion, JSON round-trip
+  tautologies. Added missing test preconditions and fixtures.
+
+### Fixed
+
+- **Publication boundary spec**: Tests now check correct documentation files
+  after README restructuring. Protocol version added to README.
+- **Effect emission extractor**: Malformed effect nodes (missing/empty kind)
+  are now silently skipped instead of throwing, preventing single bad nodes
+  from breaking entire frame inspection.
+- **Effect emission cache**: Per-frame emission cache in git-warp adapter
+  eliminates O(n²) re-materialization when browsing multiple frames.
+- **Dead code cleanup**: Removed unused `worldlineIdByLaneId`,
+  `syncWorldlineCursor`, `syncWorldlineSelection`, and related helpers.
+- **buildAnchors**: Primary lane no longer double-reported as both
+  `PRIMARY_LANE` and `PARTICIPATING_LANE`.
+- **sameNeighborhoodFocus**: Replaced `JSON.stringify` equality with
+  field-by-field comparison (hot loop performance).
 
 - **docs/ restructure** — design docs moved to `docs/design/<cycle>/`,
   retrospectives to `docs/method/retro/<cycle>/`, backlog to

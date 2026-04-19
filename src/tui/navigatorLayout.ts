@@ -13,7 +13,13 @@ import {
 import type { TableColumn } from "@flyingrobots/bijou";
 import type { BijouContext, Surface } from "@flyingrobots/bijou";
 import type { SessionSnapshot, PinnedObservation } from "../app/debuggerSession.ts";
-import type { Capability, LaneRef } from "../protocol.ts";
+import {
+  formatDeliveryOutcome,
+  formatExecutionMode,
+  formatLaneKind,
+  formatWriterRef,
+} from "../protocol.ts";
+import type { Capability, LaneRef, WriterRef } from "../protocol.ts";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -35,6 +41,14 @@ export function hasCap(caps: readonly Capability[], cap: Capability): boolean {
 
 export function pluralize(n: number, noun: string): string {
   return n === 1 ? `${n.toString()} ${noun}` : `${n.toString()} ${noun}s`;
+}
+
+function writerSortKey(writer?: WriterRef): string {
+  if (writer === undefined) {
+    return "";
+  }
+
+  return `${writer.writerId}\u0000${writer.worldlineId}\u0000${writer.headId ?? ""}`;
 }
 
 /** Build lane tree: roots in catalog order, depth-first pre-order. */
@@ -73,14 +87,14 @@ export function buildPositionBar(args: PositionBarArgs): string {
   const parts = [
     `Frame ${snap.frame.frameIndex.toString()}`,
     catalog[0]?.id ?? "\u2014",
-    snap.execCtx.mode
+    formatExecutionMode(snap.execCtx.mode)
   ];
-  if (hasCap(caps, "read:receipts")) {
+  if (hasCap(caps, "READ_RECEIPTS")) {
     parts.push(wide ? pluralize(snap.receipts.length, "receipt") : `${snap.receipts.length.toString()}r`);
   } else {
     parts.push("receipts: unsupported");
   }
-  if (hasCap(caps, "read:effect-emissions")) {
+  if (hasCap(caps, "READ_EFFECT_EMISSIONS")) {
     parts.push(wide ? pluralize(snap.emissions.length, "effect") : `${snap.emissions.length.toString()}e`);
   } else {
     parts.push("effects: unsupported");
@@ -102,7 +116,7 @@ export function buildLaneLines(
     const tick = frameView !== undefined ? frameView.coordinate.tick.toString() : "\u2014";
     const prefix = lane.parentId !== undefined ? " \u2514 " : " ";
     const chgCol = hasReceipts ? (receiptLanes.has(lane.id) ? " *" : "  ") : "";
-    return `${prefix}${lane.id.padEnd(16)} ${lane.kind.padEnd(10)} tick ${tick.padStart(3)}${chgCol}`;
+    return `${prefix}${lane.id.padEnd(16)} ${formatLaneKind(lane.kind).padEnd(10)} tick ${tick.padStart(3)}${chgCol}`;
   });
   if (total > MAX_LANES) {
     lines.push(` +${(total - MAX_LANES).toString()} more lanes`);
@@ -119,12 +133,12 @@ export function buildReceiptRows(snap: SessionSnapshot, max: number): { rows: st
   const sorted = [...snap.receipts].sort((a, b) => {
     const lc = a.laneId.localeCompare(b.laneId);
     if (lc !== 0) return lc;
-    return (a.writerId ?? "").localeCompare(b.writerId ?? "");
+    return writerSortKey(a.writer).localeCompare(writerSortKey(b.writer));
   });
   const { visible, total } = truncateRows(sorted, max);
   const rows = visible.map((r) => [
     r.laneId,
-    r.writerId ?? "\u2014",
+    r.writer === undefined ? "\u2014" : formatWriterRef(r.writer),
     r.admittedRewriteCount.toString(),
     r.rejectedRewriteCount.toString(),
     r.counterfactualCount.toString()
@@ -137,7 +151,7 @@ export function buildEffectRows(
   caps: readonly Capability[],
   max: number
 ): { rows: string[][]; total: number } {
-  const hasDeliveries = hasCap(caps, "read:delivery-observations");
+  const hasDeliveries = hasCap(caps, "READ_DELIVERY_OBSERVATIONS");
   const allRows: string[][] = snap.emissions.flatMap((em) => {
     if (!hasDeliveries) {
       return [[em.effectKind, em.laneId, "\u2014", "(delivery unsupported)"]];
@@ -146,7 +160,12 @@ export function buildEffectRows(
     if (deliveries.length === 0) {
       return [[em.effectKind, em.laneId, "(none)", "emitted"]];
     }
-    return deliveries.map((o) => [em.effectKind, em.laneId, o.sinkId.replace("sink:", ""), o.outcome]);
+    return deliveries.map((o) => [
+      em.effectKind,
+      em.laneId,
+      o.sinkId.replace("sink:", ""),
+      formatDeliveryOutcome(o.outcome),
+    ]);
   });
   const { visible, total } = truncateRows(allRows, max);
   return { rows: visible, total };
@@ -184,8 +203,8 @@ export function renderNavigator(input: NavigatorInput): Surface {
   const final = createSurface(w, h);
   final.fill({ char: " " });
   const wide = w >= HORIZONTAL_THRESHOLD;
-  const hasReceipts = hasCap(caps, "read:receipts");
-  const hasEmissions = hasCap(caps, "read:effect-emissions");
+  const hasReceipts = hasCap(caps, "READ_RECEIPTS");
+  const hasEmissions = hasCap(caps, "READ_EFFECT_EMISSIONS");
   let y = 0;
 
   // --- position-bar ---

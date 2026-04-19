@@ -12,7 +12,7 @@ test("resolveAdapter returns an echo fixture adapter for echo-fixture config", a
   assert.equal(defaultHeadId, "head:main");
 
   const hello = await adapter.hello();
-  assert.equal(hello.hostKind, "echo");
+  assert.equal(hello.hostKind, "ECHO");
 });
 
 test("resolveAdapter throws for unknown adapter kind", async () => {
