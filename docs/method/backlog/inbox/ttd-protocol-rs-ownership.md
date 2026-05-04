@@ -18,5 +18,11 @@ should either:
 Option 2 is cleanest: warp-ttd publishes `ttd-protocol-rs`, Echo
 consumes it. One schema, one generated output, two consumers.
 
+Wesley's domain-empty cleanup retired its local `schemas/ttd-protocol.graphql`
+copy instead of moving another protocol SDL into this repo. The canonical
+authored SDL remains `schemas/warp-ttd-protocol.graphql`; any missing old
+Wesley protocol nouns should become explicit protocol evolution work here, not
+a second schema authority.
+
 Triage: decide which option and coordinate with Echo (see Echo
 backlog: `PLATFORM_ttd-schema-reconciliation`).
