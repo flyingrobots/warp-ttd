@@ -21,8 +21,8 @@
 1. Can the agent identify exactly one authored protocol source? **Yes.**
    Sole `.graphql` in `schemas/`, header self-identifies.
 2. Can the agent name the Wesley-generated artifact family consumers
-   should depend on? **Yes.** README names `compile-ttd` and the schema
-   file.
+   should depend on? **Yes.** The Advanced Guide names the Wesley compile
+   target and the schema file.
 3. Can the agent distinguish generated contract from local debugger or
    adapter policy? **Yes.** README calls out `src/protocol.ts` as local
    mirror, not shared contract.

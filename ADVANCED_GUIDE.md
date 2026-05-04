@@ -46,7 +46,18 @@ The TTD protocol is the sovereign boundary of the system. It is defined as a Wes
 schemas/warp-ttd-protocol.graphql
 ```
 
-Wesley compiles this schema via the `compile-ttd` path into:
+The current stack compiles this schema through the Continuum-owned Wesley
+module target:
+
+```bash
+WESLEY_MODULES=../continuum/wesley/continuum-cli-module.mjs \
+  node ../wesley/packages/wesley-host-node/bin/wesley.mjs compile \
+  --schema schemas/warp-ttd-protocol.graphql \
+  --target warp-ttd \
+  --out-dir .wesley-cache/protocol
+```
+
+That `warp-ttd` target produces:
 
 1. **TypeScript Types**: Local mirror in `src/protocol.ts`.
 2. **Zod Validators**: For runtime envelope verification.

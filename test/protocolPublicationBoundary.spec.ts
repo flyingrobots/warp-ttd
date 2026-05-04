@@ -68,8 +68,12 @@ test("README names the schema file and its protocol version for consumers", () =
 test("Advanced Guide documents the Wesley compile path", () => {
   const content = fs.readFileSync(ADVANCED_GUIDE_PATH, "utf-8");
   assert.ok(
-    content.includes("compile-ttd"),
-    "Advanced Guide should name the Wesley compile path",
+    content.includes("--target warp-ttd"),
+    "Advanced Guide should name the Wesley warp-ttd compile target",
+  );
+  assert.ok(
+    content.includes("WESLEY_MODULES=../continuum/wesley/continuum-cli-module.mjs"),
+    "Advanced Guide should name the Continuum module handoff",
   );
 });
 

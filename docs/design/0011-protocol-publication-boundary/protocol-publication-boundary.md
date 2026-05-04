@@ -58,8 +58,9 @@ and codec metadata start there.
 
 ### Wesley compile path
 
-Wesley is the contract compiler for this schema. The current compile shape is
-the `compile-ttd` path used against this SDL.
+Wesley is the contract compiler for this schema. The current stack compile
+shape is the Continuum-owned Wesley module target named `warp-ttd`, invoked via
+`wesley compile --target warp-ttd` with that module loaded.
 
 The contract family Wesley generates from this schema is:
 
@@ -124,9 +125,12 @@ adapter-local instead of silently redefining the shared base protocol.
 1. Change shared protocol nouns in `schemas/warp-ttd-protocol.graphql`.
 2. Regenerate the Wesley artifact family from that schema:
    ```sh
-   # From the Wesley repository
-   pnpm wesley compile-ttd \
-     --schema <path-to>/warp-ttd/schemas/warp-ttd-protocol.graphql
+   # From the warp-ttd repository, with sibling Continuum and Wesley checkouts
+   WESLEY_MODULES=../continuum/wesley/continuum-cli-module.mjs \
+     node ../wesley/packages/wesley-host-node/bin/wesley.mjs compile \
+     --schema schemas/warp-ttd-protocol.graphql \
+     --target warp-ttd \
+     --out-dir .wesley-cache/protocol
    ```
    Add `--dry-run --json` to preview output without writing files.
 3. Update local mirrors such as `src/protocol.ts` only as followers of the
