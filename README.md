@@ -44,6 +44,12 @@ The TTD protocol is defined via a single **GraphQL schema** (protocol v0.5.0 sch
 schemas/warp-ttd-protocol.graphql
 ```
 
+Refresh the Rust-Wesley generated operation metadata artifact with:
+
+```bash
+npm run gen:protocol:wesley
+```
+
 ## Documentation
 
 - **[Guide](./GUIDE.md)**: Orientation, the fast path, and TUI navigation.

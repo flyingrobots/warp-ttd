@@ -11,6 +11,7 @@ export default tseslint.config(
       '*.js',
       '*.json',
       '*.md',
+      'src/generated/',
     ],
   },
   // Inherit the strictest base rulesets available
