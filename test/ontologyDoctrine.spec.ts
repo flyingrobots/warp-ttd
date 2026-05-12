@@ -36,3 +36,10 @@ test("admission-chain backlog keeps registration and handle as primary facts", (
   assert.match(content, /- Echo-owned `OpticArtifactHandle`/);
   assert.match(content, /artifact registration, registration descriptor, handle/);
 });
+
+test("README documents the Wesley sibling checkout needed by generation", () => {
+  const content = readRepoText("README.md");
+
+  assert.match(content, /sibling checkout/i);
+  assert.match(content, /\.\.\/wesley\/crates\/wesley-cli\/Cargo\.toml/);
+});

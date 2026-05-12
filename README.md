@@ -50,6 +50,9 @@ Refresh the Rust-Wesley generated operation metadata artifact with:
 npm run gen:protocol:wesley
 ```
 
+This command expects a sibling checkout at `../wesley`; specifically, the
+script invokes `../wesley/crates/wesley-cli/Cargo.toml`.
+
 ## Documentation
 
 - **[Guide](./GUIDE.md)**: Orientation, the fast path, and TUI navigation.
