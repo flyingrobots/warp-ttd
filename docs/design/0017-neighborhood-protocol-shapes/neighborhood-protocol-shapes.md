@@ -297,7 +297,7 @@ The key doctrine is:
 
 That means capability gating will matter.
 
-## Capability Direction
+## Adapter Capability Direction
 
 This cycle does not freeze capability names, but the direction is already
 clear:

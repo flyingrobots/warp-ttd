@@ -1,4 +1,4 @@
-# Core Views — Worldline, Graph, Provenance
+# Core Views — Worldline, Materialized Readings, Provenance
 
 **Status:** queued
 
@@ -9,7 +9,7 @@ data in stacked boxes, but lacks the three foundational debugging views
 that make TTD a real instrument:
 
 1. No worldline history view (git-log-like timeline of ticks)
-2. No graph state viewer (nodes, edges, properties, attachments)
+2. No materialized reading inspector for graph-shaped readings
 3. No provenance viewer (reverse causal cone of a selected value)
 
 ## Views
@@ -24,17 +24,20 @@ Protocol requirements:
 - `receipts()` for BTR digests (writer info pending — see receipt-writer-field backlog)
 - Need: full tick history enumeration (not just step-by-step)
 
-### WARP Graph Viewer
+### Materialized Reading Inspector
 
-Full materialized graph at a tick: nodes, edges, properties,
-attachments plane.
+Graph-shaped reading over a witnessed causal basis: nodes, edges,
+properties, attachments plane, plus the metadata that makes the reading
+honest.
 
 Protocol requirements:
-- Need new adapter methods: `graphState(headId, frameIndex)` or
-  similar, returning nodes/edges/properties
-- Need: content/attachment access (by hash)
-- git-warp has `getNodes()`, `getEdges()`, `getNodeProps()` —
-  need to expose through TtdHostAdapter
+- Need generated/shared reading envelope shape before adding a debugger-local
+  payload format
+- Need: `basisRef`, `observerPlanRef`, `readingEnvelopeRef`,
+  `readingPosture`, `witnessRef` or `receiptRef`, `runtimeSource`,
+  `aperture`, and `budgetPosture`
+- Need: content/attachment access only as part of the reading contract, not
+  as ambient substrate access
 
 ### Provenance Viewer
 
@@ -51,10 +54,11 @@ Protocol requirements:
 - writerId on ReceiptSummary (see receipt-writer-field.md)
 - DebuggerSession (scopes navigation state across views)
 - Design Vocabulary audit (worldline not timeline, tick not frame)
-- Protocol additions for graph state and per-entity provenance queries
+- Protocol additions for materialized readings and per-entity provenance
+  queries
 
 ## Implementation Order
 
 1. Worldline viewer first (mostly uses existing protocol surface; needs tick-history enumeration beyond step-by-step)
-2. Graph viewer second (needs protocol additions for graph state)
+2. Materialized reading inspector second (needs reading envelope and posture metadata)
 3. Provenance viewer third (needs per-entity receipt queries)

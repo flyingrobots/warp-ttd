@@ -16,7 +16,7 @@ string, error message, and doc should use these terms consistently.
 | **effect emission** | Protocol-level record of an outbound effect candidate at a causal coordinate (diagnostic, notification, export, etc.). Distinct from the later delivery result and distinct from any future observer-trace surface. Protocol type: `EffectEmissionSummary`. | |
 | **delivery observation** | Record of what happened when an emission reached a sink. Outcomes: delivered, suppressed, failed, skipped. Protocol type: `DeliveryObservationSummary`. | |
 | **execution context** | Session-level metadata describing the current mode (live, replay, debug). Affects delivery behavior — e.g., replay mode suppresses external sinks. Protocol type: `ExecutionContext`. | |
-| **capability** | A declared ability of a host adapter. Capabilities gate which protocol methods are available. Enumerated in `HostHello.capabilities`. | |
+| **adapter capability** | A declared ability of a host adapter. Adapter capabilities gate which debugger protocol methods are available. Enumerated in `HostHello.capabilities`. | Not a `CapabilityGrant`; it does not authorize a principal. |
 
 ## Frame vs tick — why both exist
 

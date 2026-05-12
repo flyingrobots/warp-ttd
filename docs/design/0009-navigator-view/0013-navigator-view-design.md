@@ -82,8 +82,8 @@ Problems:
    box. With receipts, effects, and pins all visible, the navigator
    overflows any reasonable terminal height. No prioritization.
 
-4. **No capability-driven layout.** If an adapter doesn't declare
-   `read:effect-emissions`, the Effects box just doesn't appear.
+4. **No adapter-capability-driven layout.** If an adapter doesn't declare
+   `READ_EFFECT_EMISSIONS`, the Effects box just doesn't appear.
    But the layout doesn't adapt — it leaves a gap.
 
 5. **No overflow policy.** 30 lanes, 18 receipts, 40 effects — the
@@ -150,7 +150,7 @@ lane advancement). The marker derives from `ReceiptSummary`,
 not from `LaneFrameView.changed`.
 
 **When receipts are unsupported:** If the adapter does not declare
-`read:receipts`, the `Chg` column is omitted entirely from the
+`READ_RECEIPTS`, the `Chg` column is omitted entirely from the
 lane table. The lane table still renders coordinates and tree
 structure — it just cannot show change markers. This is the
 cleanest truthful behavior: don't show a column you can't populate.
@@ -166,23 +166,23 @@ Replace the animated DAG shader with the real lane tree from
 principle 3. The Navigator should not show decoration in place
 of data.
 
-### 6. Capability-driven sections
+### 6. Adapter-capability-driven sections
 
 Sections have four render states. Each state has explicit rules:
 
 | State | Meaning | Render |
 |-------|---------|--------|
-| **unavailable** | Adapter does not declare the capability | Section omitted entirely. Position bar shows `(unsupported)` for the missing noun. |
-| **empty** | Capability declared, zero items at this frame | Section header visible, body shows `(none at this frame)` |
-| **populated** | Capability declared, 1+ items | Normal table rendering, subject to row budget |
+| **unavailable** | Adapter does not declare the adapter capability | Section omitted entirely. Position bar shows `(unsupported)` for the missing noun. |
+| **empty** | Adapter capability declared, zero items at this frame | Section header visible, body shows `(none at this frame)` |
+| **populated** | Adapter capability declared, 1+ items | Normal table rendering, subject to row budget |
 | **truncated** | Items exceed row budget | Render up to budget, footer shows `showing N of M` |
 
-Capability → section mapping:
+Adapter capability -> section mapping:
 
-- `read:receipts` → `receipt-summary`
-- `read:effect-emissions` → `effect-summary` (required; without
+- `READ_RECEIPTS` -> `receipt-summary`
+- `READ_EFFECT_EMISSIONS` -> `effect-summary` (required; without
   emissions, the section is omitted entirely)
-- `read:delivery-observations` → delivery columns within
+- `READ_DELIVERY_OBSERVATIONS` -> delivery columns within
   `effect-summary` (optional; if emissions are supported but
   deliveries are not, the effects table renders with the Status
   column showing `(delivery unsupported)` instead of an outcome)
@@ -274,7 +274,7 @@ Below 93: vertical stack. Above 93: side by side.
 
 ## Proposed Layout
 
-### Full-featured (wide terminal, all capabilities)
+### Full-featured (wide terminal, all adapter capabilities)
 
 ```
  Frame 3 of 12 │ wl:main │ live │ 2 receipts │ 1 effect
@@ -421,13 +421,13 @@ Singular when count is 1, plural otherwise.
 
 Implementation should cover these scenarios:
 
-| Scenario | Width | Capabilities | Data |
+| Scenario | Width | Adapter capabilities | Data |
 |----------|-------|-------------|------|
-| Wide, all capabilities | ≥93 | all | receipts + effects |
-| Narrow, all capabilities | <93 | all | receipts + effects |
+| Wide, all adapter capabilities | ≥93 | all | receipts + effects |
+| Narrow, all adapter capabilities | <93 | all | receipts + effects |
 | Frame 0, empty | any | all | no receipts, no effects |
-| No receipts capability | any | no `read:receipts` | effects only |
-| No effects capability | any | no `read:effect-emissions` | receipts only |
+| No receipts adapter capability | any | no `READ_RECEIPTS` | effects only |
+| No effects adapter capability | any | no `READ_EFFECT_EMISSIONS` | receipts only |
 | Emissions without deliveries | any | emissions, no deliveries | emissions with `(delivery unsupported)` |
 | Lane overflow | any | all | 12 lanes |
 | Receipt overflow | any | all | 10 receipts |

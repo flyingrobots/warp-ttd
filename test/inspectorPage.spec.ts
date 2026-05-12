@@ -1,17 +1,20 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
+import { DebuggerSession } from "../src/app/debuggerSession.ts";
 import { NeighborhoodCoreSummary } from "../src/app/NeighborhoodCoreSummary.ts";
 import { NeighborhoodFocusSummary } from "../src/app/NeighborhoodFocusSummary.ts";
 import { NeighborhoodSiteCatalog } from "../src/app/NeighborhoodSiteCatalog.ts";
 import { ReintegrationDetailSummary } from "../src/app/ReintegrationDetailSummary.ts";
 import { ReceiptShellSummary } from "../src/app/ReceiptShellSummary.ts";
+import { EchoFixtureAdapter } from "../src/adapters/echoFixtureAdapter.ts";
 import {
   buildNeighborhoodSiteItems,
   buildNeighborhoodCoreLines,
   buildNeighborhoodFocusLines,
   buildReintegrationLines,
-  buildReceiptShellLines
+  buildReceiptShellLines,
+  contextInfoLines
 } from "../src/tui/pages/inspectorPage.ts";
 
 function makeCore(): NeighborhoodCoreSummary {
@@ -129,4 +132,17 @@ test("buildReceiptShellLines renders shell counters and receipt ids", () => {
   assert.match(lines, /Rejected: 1/);
   assert.match(lines, /Blocking: yes/);
   assert.match(lines, /Receipt: receipt:test:1/);
+});
+
+test("contextInfoLines labels adapter capabilities explicitly", async () => {
+  const adapter = new EchoFixtureAdapter();
+  const session = await DebuggerSession.create(adapter, "head:main");
+  const lines = contextInfoLines({
+    session,
+    hello: await adapter.hello(),
+    catalog: await adapter.laneCatalog()
+  });
+
+  assert.match(lines, /Adapter Capabilities:/);
+  assert.doesNotMatch(lines, /^ Capabilities:/m);
 });

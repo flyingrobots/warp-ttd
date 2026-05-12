@@ -139,7 +139,7 @@ test("protocol mirror enum unions match the authored schema literals", () => {
   const enumNames = [
     "HostKind",
     "LaneKind",
-    "Capability",
+    "AdapterCapability",
     "DeliveryOutcome",
     "ExecutionMode",
   ];

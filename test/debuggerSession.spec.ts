@@ -9,11 +9,66 @@ import assert from "node:assert/strict";
 
 import { DebuggerSession } from "../src/app/debuggerSession.ts";
 import { EchoFixtureAdapter } from "../src/adapters/echoFixtureAdapter.ts";
+import type {
+  DeliveryObservationSummary,
+  ExecutionContext,
+  HostHello
+} from "../src/protocol.ts";
 
 const HEAD_ID = "head:main";
 
 function createAdapter(): EchoFixtureAdapter {
   return new EchoFixtureAdapter();
+}
+
+class UnsupportedAdapterMethodError extends Error {
+  public constructor(methodName: string) {
+    super(`Unsupported adapter method was called: ${methodName}`);
+    this.name = "UnsupportedAdapterMethodError";
+  }
+}
+
+class TransientHelloUnavailableError extends Error {
+  public constructor() {
+    super("Host hello unavailable after initial handshake");
+    this.name = "TransientHelloUnavailableError";
+  }
+}
+
+class SparseCapabilityAdapter extends EchoFixtureAdapter {
+  public override async hello(): Promise<HostHello> {
+    const hello = await super.hello();
+    return {
+      ...hello,
+      capabilities: hello.capabilities.filter(
+        (cap) => cap !== "READ_DELIVERY_OBSERVATIONS" && cap !== "READ_EXECUTION_CONTEXT"
+      )
+    };
+  }
+
+  public override deliveryObservations(): Promise<DeliveryObservationSummary[]> {
+    throw new UnsupportedAdapterMethodError("deliveryObservations");
+  }
+
+  public override executionContext(): Promise<ExecutionContext> {
+    throw new UnsupportedAdapterMethodError("executionContext");
+  }
+}
+
+class TransientHelloAdapter extends EchoFixtureAdapter {
+  #helloCalls = 0;
+
+  public get helloCalls(): number {
+    return this.#helloCalls;
+  }
+
+  public override async hello(): Promise<HostHello> {
+    this.#helloCalls += 1;
+    if (this.#helloCalls > 1) {
+      throw new TransientHelloUnavailableError();
+    }
+    return super.hello();
+  }
 }
 
 // --- Creation ---
@@ -47,6 +102,13 @@ test("create() starts with no pins", async () => {
   assert.deepEqual(session.pins, []);
 });
 
+test("create() skips adapter methods when capabilities are absent", async () => {
+  const session = await DebuggerSession.create(new SparseCapabilityAdapter(), HEAD_ID);
+
+  assert.deepEqual(session.snapshot.observations, []);
+  assert.deepEqual(session.snapshot.execCtx, { mode: "DEBUG" });
+});
+
 // --- Navigation ---
 
 test("stepForward() advances frame and updates snapshot", async () => {
@@ -56,6 +118,16 @@ test("stepForward() advances frame and updates snapshot", async () => {
   assert.equal(snap.frame.frameIndex, 1);
   assert.equal(snap.head.currentFrameIndex, 1);
   assert.equal(session.snapshot, snap);
+});
+
+test("navigation reuses capabilities from the initial hello handshake", async () => {
+  const adapter = new TransientHelloAdapter();
+  const session = await DebuggerSession.create(adapter, HEAD_ID);
+
+  const snap = await session.stepForward();
+
+  assert.equal(snap.frame.frameIndex, 1);
+  assert.equal(adapter.helloCalls, 1);
 });
 
 test("stepBackward() retreats frame and updates snapshot", async () => {

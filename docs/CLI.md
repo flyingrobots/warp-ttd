@@ -20,7 +20,7 @@ flowchart LR
 
 For agent use, `--json` is the primary contract. Every command emits a versioned, machine-readable JSONL envelope.
 
-- **Handshake**: Handshake with a host to negotiate capabilities.
+- **Handshake**: Handshake with a host to inspect adapter capabilities.
   ```bash
   npm run hello -- --json
   ```
@@ -35,7 +35,7 @@ For agent use, `--json` is the primary contract. Every command emits a versioned
 
 ## Relationship to the TUI
 
-The TUI is a delivery adapter over the same `DebuggerSession` core. It follows the explicit capabilities proven by the CLI surface. New inspection logic must land in the CLI before the TUI depends on it.
+The TUI is a delivery adapter over the same `DebuggerSession` core. It follows the explicit adapter capabilities proven by the CLI surface. New inspection logic must land in the CLI before the TUI depends on it.
 
 ---
 **The goal is structured truth. Human-only text must not appear on stdout in `--json` mode.**

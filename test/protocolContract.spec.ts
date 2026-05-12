@@ -1,5 +1,5 @@
 /**
- * Protocol contract tests — pin the v0.5.0 envelope shapes.
+ * Protocol contract tests — pin the v0.6.0 envelope shapes.
  *
  * These tests assert that every protocol type has exactly the expected
  * fields with the correct types. If a future change breaks one of these
@@ -24,7 +24,7 @@ test("HostHello shape", async () => {
   assert.ok(Array.isArray(hello.capabilities));
 
   // Protocol version tracks latest implemented surface
-  assert.equal(hello.protocolVersion, "0.5.0");
+  assert.equal(hello.protocolVersion, "0.6.0");
 
   // No unexpected fields
   const keys = Object.keys(hello).sort();

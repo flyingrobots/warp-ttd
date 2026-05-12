@@ -7,7 +7,7 @@
 # Local files such as `src/protocol.ts` are convenience mirrors, not peer
 # authorities.
 #
-# Protocol version: 0.5.0 (adds optional exact writer head identity)
+# Protocol version: 0.6.0 (renames adapter support enum to AdapterCapability)
 #
 # Doctrine:
 #   - warp-ttd is read-mostly and receipt-centric
@@ -31,7 +31,7 @@ enum LaneKind {
   STRAND
 }
 
-enum Capability {
+enum AdapterCapability {
   READ_HELLO
   READ_LANE_CATALOG
   READ_PLAYBACK_HEAD
@@ -48,13 +48,13 @@ enum Capability {
 type HostHello
   @wes_codec(format: "cbor", canonical: true)
   @wes_registry(id: 1)
-  @wes_version(major: 0, minor: 5)
+  @wes_version(major: 0, minor: 6)
 {
   hostKind: HostKind!
   hostVersion: String!
   protocolVersion: String!
   schemaId: String!
-  capabilities: [Capability!]!
+  capabilities: [AdapterCapability!]!
 }
 
 # ─── Lane Catalog ──────────────────────────────────────────────────────────────
@@ -227,7 +227,8 @@ type ExecutionContext
 # ─── Protocol Channel ─────────────────────────────────────────────────────────
 # Channel version tracks breaking wire-format changes (not the semver header).
 # v4 is a breaking change from v2: added required worldlineId fields and
-# renamed writerId to writer: WriterRef. Semver 0.5.0 adds optional WriterRef.headId.
+# renamed writerId to writer: WriterRef. Semver 0.5.0 adds optional
+# WriterRef.headId; semver 0.6.0 names adapter support as AdapterCapability.
 
 type TtdProtocolChannel
   @wes_channel(name: "ttd.protocol", version: 4, ordered: true)

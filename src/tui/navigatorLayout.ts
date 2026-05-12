@@ -19,7 +19,7 @@ import {
   formatLaneKind,
   formatWriterRef,
 } from "../protocol.ts";
-import type { Capability, LaneRef, WriterRef } from "../protocol.ts";
+import type { AdapterCapability, LaneRef, WriterRef } from "../protocol.ts";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -35,7 +35,10 @@ export const HORIZONTAL_THRESHOLD = 93;
 // Pure helpers (exported for testing)
 // ---------------------------------------------------------------------------
 
-export function hasCap(caps: readonly Capability[], cap: Capability): boolean {
+export function hasAdapterCap(
+  caps: readonly AdapterCapability[],
+  cap: AdapterCapability
+): boolean {
   return caps.includes(cap);
 }
 
@@ -77,7 +80,7 @@ export function truncateRows<T>(rows: readonly T[], max: number): { visible: T[]
 
 export interface PositionBarArgs {
   snap: SessionSnapshot;
-  caps: readonly Capability[];
+  caps: readonly AdapterCapability[];
   catalog: readonly LaneRef[];
   wide: boolean;
 }
@@ -89,12 +92,12 @@ export function buildPositionBar(args: PositionBarArgs): string {
     catalog[0]?.id ?? "\u2014",
     formatExecutionMode(snap.execCtx.mode)
   ];
-  if (hasCap(caps, "READ_RECEIPTS")) {
+  if (hasAdapterCap(caps, "READ_RECEIPTS")) {
     parts.push(wide ? pluralize(snap.receipts.length, "receipt") : `${snap.receipts.length.toString()}r`);
   } else {
     parts.push("receipts: unsupported");
   }
-  if (hasCap(caps, "READ_EFFECT_EMISSIONS")) {
+  if (hasAdapterCap(caps, "READ_EFFECT_EMISSIONS")) {
     parts.push(wide ? pluralize(snap.emissions.length, "effect") : `${snap.emissions.length.toString()}e`);
   } else {
     parts.push("effects: unsupported");
@@ -148,10 +151,10 @@ export function buildReceiptRows(snap: SessionSnapshot, max: number): { rows: st
 
 export function buildEffectRows(
   snap: SessionSnapshot,
-  caps: readonly Capability[],
+  caps: readonly AdapterCapability[],
   max: number
 ): { rows: string[][]; total: number } {
-  const hasDeliveries = hasCap(caps, "READ_DELIVERY_OBSERVATIONS");
+  const hasDeliveries = hasAdapterCap(caps, "READ_DELIVERY_OBSERVATIONS");
   const allRows: string[][] = snap.emissions.flatMap((em) => {
     if (!hasDeliveries) {
       return [[em.effectKind, em.laneId, "\u2014", "(delivery unsupported)"]];
@@ -188,7 +191,7 @@ export function buildPinLines(pins: readonly PinnedObservation[]): { lines: stri
 
 export interface NavigatorInput {
   snap: SessionSnapshot;
-  caps: readonly Capability[];
+  caps: readonly AdapterCapability[];
   catalog: readonly LaneRef[];
   pins: readonly PinnedObservation[];
   error: string | null;
@@ -203,8 +206,8 @@ export function renderNavigator(input: NavigatorInput): Surface {
   const final = createSurface(w, h);
   final.fill({ char: " " });
   const wide = w >= HORIZONTAL_THRESHOLD;
-  const hasReceipts = hasCap(caps, "READ_RECEIPTS");
-  const hasEmissions = hasCap(caps, "READ_EFFECT_EMISSIONS");
+  const hasReceipts = hasAdapterCap(caps, "READ_RECEIPTS");
+  const hasEmissions = hasAdapterCap(caps, "READ_EFFECT_EMISSIONS");
   let y = 0;
 
   // --- position-bar ---
@@ -263,7 +266,7 @@ export function renderNavigator(input: NavigatorInput): Surface {
 interface RenderSectionArgs {
   final: Surface;
   snap: SessionSnapshot;
-  caps: readonly Capability[];
+  caps: readonly AdapterCapability[];
   w: number;
   startY: number;
   ctx: BijouContext;
