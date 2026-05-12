@@ -43,3 +43,12 @@ test("README documents the Wesley sibling checkout needed by generation", () => 
   assert.match(content, /sibling checkout/i);
   assert.match(content, /\.\.\/wesley\/crates\/wesley-cli\/Cargo\.toml/);
 });
+
+test("navigator design uses exact AdapterCapability enum literals", () => {
+  const content = readRepoText("docs/design/0009-navigator-view/0013-navigator-view-design.md");
+
+  assert.doesNotMatch(content, /`read:/);
+  assert.match(content, /`READ_RECEIPTS`/);
+  assert.match(content, /`READ_EFFECT_EMISSIONS`/);
+  assert.match(content, /`READ_DELIVERY_OBSERVATIONS`/);
+});
