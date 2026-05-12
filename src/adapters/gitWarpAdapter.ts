@@ -345,8 +345,6 @@ export class GitWarpAdapter<TMaterializedState, TNodeProps extends GitWarpNodePr
         "READ_FRAME",
         "READ_RECEIPTS",
         "READ_EFFECT_EMISSIONS",
-        "READ_DELIVERY_OBSERVATIONS",
-        "READ_EXECUTION_CONTEXT",
         "CONTROL_STEP_FORWARD",
         "CONTROL_STEP_BACKWARD",
         "CONTROL_SEEK"
