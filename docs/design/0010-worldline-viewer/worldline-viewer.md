@@ -50,7 +50,8 @@ it further.
 
 ## Non-Goals
 
-- This cycle does not build the Graph Viewer or Provenance Viewer.
+- This cycle does not build the Materialized Reading Inspector or Provenance
+  Viewer.
 - This cycle does not implement strand creation or mutation — those
   are observation surfaces only.
 - This cycle does not require a real host adapter. Scenario fixtures
