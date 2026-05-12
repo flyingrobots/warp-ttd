@@ -1,6 +1,6 @@
 # Materialized Reading Inspector
 
-**Legend:** VIZ
+**Legend:** CORE_VIEWS
 **Type:** design cycle
 
 ## Intent

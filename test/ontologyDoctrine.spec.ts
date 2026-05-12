@@ -9,6 +9,10 @@ function readRepoText(relativePath: string): string {
   return fs.readFileSync(path.join(ROOT, relativePath), "utf-8");
 }
 
+function repoPathExists(relativePath: string): boolean {
+  return fs.existsSync(path.join(ROOT, relativePath));
+}
+
 test("MCP backlog exposes the admission chain instead of mirroring CLI", () => {
   const content = readRepoText("docs/method/backlog/up-next/DELIVERY_mcp-agent-surface.md");
 
@@ -51,4 +55,13 @@ test("navigator design uses exact AdapterCapability enum literals", () => {
   assert.match(content, /`READ_RECEIPTS`/);
   assert.match(content, /`READ_EFFECT_EMISSIONS`/);
   assert.match(content, /`READ_DELIVERY_OBSERVATIONS`/);
+});
+
+test("materialized reading inspector stays in CORE_VIEWS taxonomy", () => {
+  const cvPath = "docs/method/backlog/up-next/CV_materialized-reading-inspector.md";
+  const vizPath = "docs/method/backlog/up-next/VIZ_materialized-reading-inspector.md";
+
+  assert.equal(repoPathExists(cvPath), true);
+  assert.equal(repoPathExists(vizPath), false);
+  assert.match(readRepoText(cvPath), /\*\*Legend:\*\* CORE_VIEWS/);
 });
