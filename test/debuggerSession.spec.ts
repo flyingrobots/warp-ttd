@@ -9,11 +9,43 @@ import assert from "node:assert/strict";
 
 import { DebuggerSession } from "../src/app/debuggerSession.ts";
 import { EchoFixtureAdapter } from "../src/adapters/echoFixtureAdapter.ts";
+import type {
+  DeliveryObservationSummary,
+  ExecutionContext,
+  HostHello
+} from "../src/protocol.ts";
 
 const HEAD_ID = "head:main";
 
 function createAdapter(): EchoFixtureAdapter {
   return new EchoFixtureAdapter();
+}
+
+class UnsupportedAdapterMethodError extends Error {
+  public constructor(methodName: string) {
+    super(`Unsupported adapter method was called: ${methodName}`);
+    this.name = "UnsupportedAdapterMethodError";
+  }
+}
+
+class SparseCapabilityAdapter extends EchoFixtureAdapter {
+  public override async hello(): Promise<HostHello> {
+    const hello = await super.hello();
+    return {
+      ...hello,
+      capabilities: hello.capabilities.filter(
+        (cap) => cap !== "READ_DELIVERY_OBSERVATIONS" && cap !== "READ_EXECUTION_CONTEXT"
+      )
+    };
+  }
+
+  public override deliveryObservations(): Promise<DeliveryObservationSummary[]> {
+    throw new UnsupportedAdapterMethodError("deliveryObservations");
+  }
+
+  public override executionContext(): Promise<ExecutionContext> {
+    throw new UnsupportedAdapterMethodError("executionContext");
+  }
 }
 
 // --- Creation ---
@@ -45,6 +77,13 @@ test("create() produces a valid initial snapshot at frame 0", async () => {
 test("create() starts with no pins", async () => {
   const session = await DebuggerSession.create(createAdapter(), HEAD_ID);
   assert.deepEqual(session.pins, []);
+});
+
+test("create() skips adapter methods when capabilities are absent", async () => {
+  const session = await DebuggerSession.create(new SparseCapabilityAdapter(), HEAD_ID);
+
+  assert.deepEqual(session.snapshot.observations, []);
+  assert.deepEqual(session.snapshot.execCtx, { mode: "DEBUG" });
 });
 
 // --- Navigation ---

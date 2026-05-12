@@ -26,6 +26,7 @@ import type {
 } from "./ReceiptShellSummary.ts";
 import { buildNeighborhoodState } from "./neighborhoodAssembler.ts";
 import type {
+  AdapterCapability,
   DeliveryObservationSummary,
   EffectEmissionSummary,
   ExecutionContext,
@@ -209,16 +210,59 @@ export class DebuggerSession {
 // Helpers
 // ---------------------------------------------------------------------------
 
+function hasAdapterCapability(
+  capabilities: readonly AdapterCapability[],
+  capability: AdapterCapability
+): boolean {
+  return capabilities.includes(capability);
+}
+
+async function fetchReceipts(
+  adapter: TtdHostAdapter,
+  headId: string,
+  capabilities: readonly AdapterCapability[]
+): Promise<ReceiptSummary[]> {
+  if (!hasAdapterCapability(capabilities, "READ_RECEIPTS")) return [];
+  return adapter.receipts(headId);
+}
+
+async function fetchEmissions(
+  adapter: TtdHostAdapter,
+  headId: string,
+  capabilities: readonly AdapterCapability[]
+): Promise<EffectEmissionSummary[]> {
+  if (!hasAdapterCapability(capabilities, "READ_EFFECT_EMISSIONS")) return [];
+  return adapter.effectEmissions(headId);
+}
+
+async function fetchObservations(
+  adapter: TtdHostAdapter,
+  headId: string,
+  capabilities: readonly AdapterCapability[]
+): Promise<DeliveryObservationSummary[]> {
+  if (!hasAdapterCapability(capabilities, "READ_DELIVERY_OBSERVATIONS")) return [];
+  return adapter.deliveryObservations(headId);
+}
+
+async function fetchExecutionContext(
+  adapter: TtdHostAdapter,
+  capabilities: readonly AdapterCapability[]
+): Promise<ExecutionContext> {
+  if (!hasAdapterCapability(capabilities, "READ_EXECUTION_CONTEXT")) return { mode: "DEBUG" };
+  return adapter.executionContext();
+}
+
 async function fetchSnapshot(
   adapter: TtdHostAdapter,
   headId: string
 ): Promise<SessionSnapshot> {
+  const hello = await adapter.hello();
   const head = await adapter.playbackHead(headId);
   const frame = await adapter.frame(headId);
-  const receipts = await adapter.receipts(headId);
-  const emissions = await adapter.effectEmissions(headId);
-  const observations = await adapter.deliveryObservations(headId);
-  const execCtx = await adapter.executionContext();
+  const receipts = await fetchReceipts(adapter, headId, hello.capabilities);
+  const emissions = await fetchEmissions(adapter, headId, hello.capabilities);
+  const observations = await fetchObservations(adapter, headId, hello.capabilities);
+  const execCtx = await fetchExecutionContext(adapter, hello.capabilities);
   const neighborhoodState = buildNeighborhoodState(frame, receipts, emissions);
 
   return {
