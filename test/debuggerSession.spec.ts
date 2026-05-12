@@ -28,6 +28,13 @@ class UnsupportedAdapterMethodError extends Error {
   }
 }
 
+class TransientHelloUnavailableError extends Error {
+  public constructor() {
+    super("Host hello unavailable after initial handshake");
+    this.name = "TransientHelloUnavailableError";
+  }
+}
+
 class SparseCapabilityAdapter extends EchoFixtureAdapter {
   public override async hello(): Promise<HostHello> {
     const hello = await super.hello();
@@ -45,6 +52,22 @@ class SparseCapabilityAdapter extends EchoFixtureAdapter {
 
   public override executionContext(): Promise<ExecutionContext> {
     throw new UnsupportedAdapterMethodError("executionContext");
+  }
+}
+
+class TransientHelloAdapter extends EchoFixtureAdapter {
+  #helloCalls = 0;
+
+  public get helloCalls(): number {
+    return this.#helloCalls;
+  }
+
+  public override async hello(): Promise<HostHello> {
+    this.#helloCalls += 1;
+    if (this.#helloCalls > 1) {
+      throw new TransientHelloUnavailableError();
+    }
+    return super.hello();
   }
 }
 
@@ -95,6 +118,16 @@ test("stepForward() advances frame and updates snapshot", async () => {
   assert.equal(snap.frame.frameIndex, 1);
   assert.equal(snap.head.currentFrameIndex, 1);
   assert.equal(session.snapshot, snap);
+});
+
+test("navigation reuses capabilities from the initial hello handshake", async () => {
+  const adapter = new TransientHelloAdapter();
+  const session = await DebuggerSession.create(adapter, HEAD_ID);
+
+  const snap = await session.stepForward();
+
+  assert.equal(snap.frame.frameIndex, 1);
+  assert.equal(adapter.helloCalls, 1);
 });
 
 test("stepBackward() retreats frame and updates snapshot", async () => {

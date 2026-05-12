@@ -104,6 +104,7 @@ export class DebuggerSession {
   public readonly sessionId: string;
   readonly #adapter: TtdHostAdapter;
   readonly #activeHeadId: string;
+  #capabilities: readonly AdapterCapability[] = [];
   #snapshot: SessionSnapshot;
   #pins: PinnedObservation[];
 
@@ -123,8 +124,12 @@ export class DebuggerSession {
     adapter: TtdHostAdapter,
     headId: string
   ): Promise<DebuggerSession> {
-    const snapshot = await fetchSnapshot(adapter, headId);
-    return new DebuggerSession(adapter, headId, snapshot);
+    const hello = await adapter.hello();
+    const capabilities = [...hello.capabilities];
+    const snapshot = await fetchSnapshot(adapter, headId, capabilities);
+    const session = new DebuggerSession(adapter, headId, snapshot);
+    session.#capabilities = capabilities;
+    return session;
   }
 
   public get adapter(): TtdHostAdapter {
@@ -146,7 +151,7 @@ export class DebuggerSession {
   public async stepForward(): Promise<SessionSnapshot> {
     await this.#adapter.stepForward(this.#activeHeadId);
     this.#snapshot = await fetchSnapshot(
-      this.#adapter, this.#activeHeadId
+      this.#adapter, this.#activeHeadId, this.#capabilities
     );
     return this.#snapshot;
   }
@@ -154,7 +159,7 @@ export class DebuggerSession {
   public async stepBackward(): Promise<SessionSnapshot> {
     await this.#adapter.stepBackward(this.#activeHeadId);
     this.#snapshot = await fetchSnapshot(
-      this.#adapter, this.#activeHeadId
+      this.#adapter, this.#activeHeadId, this.#capabilities
     );
     return this.#snapshot;
   }
@@ -162,7 +167,7 @@ export class DebuggerSession {
   public async seekToFrame(frameIndex: number): Promise<SessionSnapshot> {
     await this.#adapter.seekToFrame(this.#activeHeadId, frameIndex);
     this.#snapshot = await fetchSnapshot(
-      this.#adapter, this.#activeHeadId
+      this.#adapter, this.#activeHeadId, this.#capabilities
     );
     return this.#snapshot;
   }
@@ -254,15 +259,15 @@ async function fetchExecutionContext(
 
 async function fetchSnapshot(
   adapter: TtdHostAdapter,
-  headId: string
+  headId: string,
+  capabilities: readonly AdapterCapability[]
 ): Promise<SessionSnapshot> {
-  const hello = await adapter.hello();
   const head = await adapter.playbackHead(headId);
   const frame = await adapter.frame(headId);
-  const receipts = await fetchReceipts(adapter, headId, hello.capabilities);
-  const emissions = await fetchEmissions(adapter, headId, hello.capabilities);
-  const observations = await fetchObservations(adapter, headId, hello.capabilities);
-  const execCtx = await fetchExecutionContext(adapter, hello.capabilities);
+  const receipts = await fetchReceipts(adapter, headId, capabilities);
+  const emissions = await fetchEmissions(adapter, headId, capabilities);
+  const observations = await fetchObservations(adapter, headId, capabilities);
+  const execCtx = await fetchExecutionContext(adapter, capabilities);
   const neighborhoodState = buildNeighborhoodState(frame, receipts, emissions);
 
   return {
