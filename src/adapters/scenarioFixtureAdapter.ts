@@ -8,7 +8,7 @@
 import type { TtdHostAdapter } from "../adapter.ts";
 import { FrameOutOfRangeError, UnknownHeadError } from "../errors.ts";
 import type {
-  Capability,
+  AdapterCapability,
   DeliveryObservationSummary,
   DeliveryOutcome,
   EffectEmissionSummary,
@@ -74,7 +74,7 @@ interface Scenario {
 // ---------------------------------------------------------------------------
 
 interface BuiltScenario {
-  capabilities: Capability[];
+  capabilities: AdapterCapability[];
   lanes: LaneRef[];
   receiptsByFrame: Map<number, ReceiptSummary[]>;
   emissionsByFrame: Map<number, EffectEmissionSummary[]>;
@@ -125,8 +125,8 @@ function buildLanes(scenarioLanes: ScenarioLane[]): LaneRef[] {
   });
 }
 
-function buildCapabilities(hasEffects: boolean): Capability[] {
-  const caps: Capability[] = [
+function buildCapabilities(hasEffects: boolean): AdapterCapability[] {
+  const caps: AdapterCapability[] = [
     "READ_HELLO",
     "READ_LANE_CATALOG",
     "READ_PLAYBACK_HEAD",

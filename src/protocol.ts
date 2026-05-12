@@ -26,7 +26,7 @@ export type DeliveryOutcome = "DELIVERED" | "SUPPRESSED" | "FAILED" | "SKIPPED";
 
 export type ExecutionMode = "LIVE" | "REPLAY" | "DEBUG";
 
-export type Capability =
+export type AdapterCapability =
   | "READ_HELLO"
   | "READ_LANE_CATALOG"
   | "READ_PLAYBACK_HEAD"
@@ -44,7 +44,7 @@ export interface HostHello {
   hostVersion: string;
   protocolVersion: string;
   schemaId: string;
-  capabilities: Capability[];
+  capabilities: AdapterCapability[];
 }
 
 export interface LaneCatalog {

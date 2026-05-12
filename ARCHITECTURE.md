@@ -46,7 +46,7 @@ The central coordination object. It manages investigator state, including the ac
 
 ### 3. TtdHostAdapter (The Port)
 
-The host-neutral interface. It defines the capabilities (Read Frame, Step, Seek, Fork) that a host must declare. Host adapters implement this interface, translating substrate-specific facts (like Git patches) into protocol-compliant envelopes.
+The host-neutral interface. It defines the adapter capabilities (Read Frame, Step, Seek, Fork) that a host must declare. Host adapters implement this interface, translating substrate-specific facts (like Git patches) into protocol-compliant envelopes.
 
 ### 4. Host Adapters
 

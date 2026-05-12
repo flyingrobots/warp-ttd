@@ -14,7 +14,7 @@ reinterpretation as display labels, preserve byte width). The protocol
 uses `String!` for all identifiers. This loses the opacity contract.
 
 **Proposed change:** Add optional typed scalar aliases to the protocol
-schema. Adapters that support them declare a capability; adapters
+schema. Adapters that support them declare an adapter capability; adapters
 that don't continue using strings. The protocol should at least
 document the expected semantics per field even if the wire format
 stays string.
@@ -46,7 +46,7 @@ The protocol only has three mutations: `stepForward`, `stepBackward`,
 
 **Proposed change:** Add `play(headId)` and `pause(headId)` mutations.
 Extend `seekToFrame` with an optional `then: SeekThen` enum argument.
-Capability-gated; git-warp can skip if it doesn't have continuous
+Adapter-capability-gated; git-warp can skip if it doesn't have continuous
 playback.
 
 ### 4. Ingress routing (not present at all)
@@ -80,7 +80,7 @@ retired.
 headStatus(headId: String!): HeadStatus!
 ```
 Where `HeadStatus` contains `eligibility`, `disposition`, and
-optionally `blockReason`. Capability-gated.
+optionally `blockReason`. Adapter-capability-gated.
 
 ### 6. Scheduler introspection
 
@@ -95,7 +95,7 @@ The protocol has `ExecutionContext` (mode + sessionId) which is the
 debugger's own session state, not the substrate's scheduler state.
 
 **Proposed change:** Add a `schedulerStatus` query that returns
-Echo's full scheduler metadata. Capability-gated. git-warp doesn't
+Echo's full scheduler metadata. Adapter-capability-gated. git-warp doesn't
 have a scheduler; it returns null or a simplified analog.
 
 ### 7. WriterHeadKey composite
@@ -180,12 +180,12 @@ without an explicit merge phase.
 
 ## Implementation strategy
 
-All additions should be **capability-gated**:
-1. New capabilities in the `Capability` enum (e.g., `READ_HEAD_STATUS`,
+All additions should be **adapter-capability-gated**:
+1. New adapter capabilities in the `AdapterCapability` enum (e.g., `READ_HEAD_STATUS`,
    `READ_SCHEDULER_STATUS`, `CONTROL_PLAY`, `CONTROL_PAUSE`)
 2. New types added to the schema but not required
-3. git-warp adapter unchanged; Echo adapter declares new capabilities
-4. TUI/CLI gain new views when capabilities are present
+3. git-warp adapter unchanged; Echo adapter declares new adapter capabilities
+4. TUI/CLI gain new views when adapter capabilities are present
 
 This follows warp-ttd's existing doctrine: explicit envelopes,
-capability-gated evolution, no breaking changes.
+adapter-capability-gated evolution, no breaking changes.

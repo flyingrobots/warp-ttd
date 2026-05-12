@@ -15,7 +15,7 @@ mindmap
             Effect Delivery Truth
         Host Neutrality
             GraphQL Protocol
-            Capability Gating
+            Adapter Capability Gating
             Pluggable Adapters
         Deterministic Replay
             Provenance Over State
@@ -31,8 +31,8 @@ Traditional debuggers inspect state; WARP TTD inspects history. A worldline is a
 ### 2. Wide-Aperture Observation
 An observer is a structural five-tuple (Projection, Basis, State, Update, Emission). TTD surfaces what survives each layer of observation, ensuring that task-relevant distinctions are never collapsed.
 
-### 3. Capability-Gated Control
-TTD observes facts honestly and, when the host declares the capability, drives explicit controls: pause, step, seek, and strand fork. Control is an emergent property of the host-adapter contract.
+### 3. Adapter-Capability-Gated Control
+TTD observes facts honestly and, when the host declares the adapter capability, drives explicit controls: pause, step, seek, and strand fork. Adapter capabilities say which debugger methods exist; they are not authority grants.
 
 ### 4. Counterfactuals are First-Class
 Rejected rewrites are not noise; they are counterfactuals—what *could* have happened. TTD surfaces these alternatives to explore degeneracy and understand the decision boundaries of the substrate.
@@ -41,4 +41,4 @@ Rejected rewrites are not noise; they are counterfactuals—what *could* have ha
 The same debugger serves heterogeneous hosts (git-warp, Echo). The protocol is the sovereign boundary, ensuring that systems engineering expertise is portable across causal runtimes.
 
 ---
-**The goal is determinism. Every continuation from the past is explicit, capability-gated, and provenance-bearing.**
+**The goal is determinism. Every continuation from the past is explicit, adapter-capability-gated, authority-bearing, and provenance-bearing.**

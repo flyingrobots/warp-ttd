@@ -31,7 +31,7 @@ enum LaneKind {
   STRAND
 }
 
-enum Capability {
+enum AdapterCapability {
   READ_HELLO
   READ_LANE_CATALOG
   READ_PLAYBACK_HEAD
@@ -54,7 +54,7 @@ type HostHello
   hostVersion: String!
   protocolVersion: String!
   schemaId: String!
-  capabilities: [Capability!]!
+  capabilities: [AdapterCapability!]!
 }
 
 # ─── Lane Catalog ──────────────────────────────────────────────────────────────

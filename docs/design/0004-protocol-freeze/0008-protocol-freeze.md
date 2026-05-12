@@ -27,7 +27,7 @@ bump.
 | `LaneFrameView` | laneId, coordinate, changed, btrDigest? |
 | `ReceiptSummary` | receiptId, headId, frameIndex, laneId, inputTick, outputTick, admittedRewriteCount, rejectedRewriteCount, counterfactualCount, digest, summary |
 
-Supporting types: `HostKind`, `LaneKind`, `Capability`.
+Supporting types: `HostKind`, `LaneKind`, `AdapterCapability`.
 
 ## Protocol Version Semantics
 

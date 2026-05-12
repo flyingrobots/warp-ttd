@@ -37,7 +37,7 @@ The initial MCP tool family should mirror the current structured CLI:
 - Tool results must be derived from `DebuggerSession` and the host
   adapter boundary.
 - Tool nouns must reuse the authored schema vocabulary.
-- The TUI should consume capabilities proven here rather than
+- The TUI should consume adapter capabilities proven here rather than
   freelancing new ones.
 
 ## Done when

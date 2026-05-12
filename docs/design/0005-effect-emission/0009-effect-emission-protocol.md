@@ -18,7 +18,7 @@ git-warp already has substrate-side effect entities and host-domain
 effect/delivery runtime types. The warp-ttd adapter now maps substrate
 effect entities into debugger-visible `EffectEmissionSummary` records.
 What it has not yet landed is delivery-observation wiring or a real
-session-lens export. Adapters still declare capabilities honestly and
+session-lens export. Adapters still declare adapter capabilities honestly and
 fixture adapters provide the wider test matrix.
 
 ## Three Distinct Layers
@@ -96,10 +96,10 @@ interface ExecutionContext {
 }
 ```
 
-### New capabilities
+### New adapter capabilities
 
 ```typescript
-type Capability =
+type AdapterCapability =
   | ... existing ...
   | "READ_EFFECT_EMISSIONS"
   | "READ_DELIVERY_OBSERVATIONS"
@@ -117,9 +117,9 @@ interface TtdHostAdapter {
 }
 ```
 
-These methods are **capability-gated**. Callers check `HostHello.capabilities`
+These methods are **adapter-capability-gated**. Callers check `HostHello.capabilities`
 before invoking them. Adapters that do not support effect/delivery inspection
-omit the capability strings and the methods return empty arrays or a default
+omit the adapter capability strings and the methods return empty arrays or a default
 execution context.
 
 ### CLI `--json` envelopes
@@ -144,11 +144,11 @@ The execution mode (live/replay/debug) applies to the entire session. It
 does not vary per effect. Individual delivery observations record which
 mode was active at the time of the delivery attempt.
 
-### Capabilities gate the new methods
+### Adapter capabilities gate the new methods
 
 This preserves backward compatibility. Existing adapters that have not
 yet added debugger-facing effect/delivery data do not need to declare
-the new capabilities. Adapters declare exactly the slices they can back
+the new adapter capabilities. Adapters declare exactly the slices they can back
 with real host truth.
 
 ### Fixture adapter provides test data
@@ -157,15 +157,15 @@ The echo fixture adapter gains contrived effect/delivery data for testing.
 The git-warp adapter now declares `READ_EFFECT_EMISSIONS` and maps
 historical `@warp/effect:*` graph entities into effect summaries by
 materializing at the requested frame ceiling. It still omits the
-delivery/context capabilities and returns empty delivery arrays until
+delivery/context adapter capabilities and returns empty delivery arrays until
 delivery-observation wiring exists.
 
 ## Protocol Version Impact
 
-This adds new envelope types, new capability strings, and new adapter
+This adds new envelope types, new adapter capability strings, and new adapter
 methods. Per the versioning rules in design doc 0008:
 
-- New optional capabilities and envelope types = **minor bump**
+- New optional adapter capabilities and envelope types = **minor bump**
 - Protocol version bumped to v0.5.0 for adapters implementing the
   current head-aware writer and runtime-backed effect-kind surface
 
@@ -185,7 +185,7 @@ What git-warp does not yet provide to warp-ttd is:
 
 When git-warp lands these, the GitWarpAdapter should:
 
-1. Declare the delivery/context capabilities in `HostHello`
+1. Declare the delivery/context adapter capabilities in `HostHello`
 2. Map git-warp's host-domain delivery facts into
    `DeliveryObservationSummary`
 3. Read the execution lens from the WarpCore session context

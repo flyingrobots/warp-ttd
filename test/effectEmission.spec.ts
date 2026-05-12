@@ -15,21 +15,21 @@ function createAdapter(): EchoFixtureAdapter {
   return new EchoFixtureAdapter();
 }
 
-// --- Capability declarations ---
+// --- Adapter capability declarations ---
 
-test("hello declares effect-emission and delivery-observation capabilities", async () => {
+test("hello declares effect-emission and delivery-observation adapter capabilities", async () => {
   const hello = await createAdapter().hello();
   assert.ok(
     hello.capabilities.includes("READ_EFFECT_EMISSIONS"),
-    "Should declare READ_EFFECT_EMISSIONS capability"
+    "Should declare READ_EFFECT_EMISSIONS adapter capability"
   );
   assert.ok(
     hello.capabilities.includes("READ_DELIVERY_OBSERVATIONS"),
-    "Should declare READ_DELIVERY_OBSERVATIONS capability"
+    "Should declare READ_DELIVERY_OBSERVATIONS adapter capability"
   );
   assert.ok(
     hello.capabilities.includes("READ_EXECUTION_CONTEXT"),
-    "Should declare READ_EXECUTION_CONTEXT capability"
+    "Should declare READ_EXECUTION_CONTEXT adapter capability"
   );
 });
 

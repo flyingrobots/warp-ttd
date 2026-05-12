@@ -15,7 +15,7 @@ import {
   buildReceiptRows,
   buildEffectRows,
   buildPinLines,
-  hasCap,
+  hasAdapterCap,
   pluralize,
   truncateRows,
   renderNavigator,
@@ -28,7 +28,7 @@ import { NeighborhoodSiteCatalog } from "../src/app/NeighborhoodSiteCatalog.ts";
 import { ReintegrationDetailSummary } from "../src/app/ReintegrationDetailSummary.ts";
 import { ReceiptShellSummary } from "../src/app/ReceiptShellSummary.ts";
 import type {
-  Capability,
+  AdapterCapability,
   DeliveryObservationSummary,
   EffectEmissionSummary,
   LaneRef,
@@ -41,14 +41,14 @@ const bijouCtx = initDefaultContext();
 // Fixture helpers
 // ---------------------------------------------------------------------------
 
-const ALL_CAPS: Capability[] = [
+const ALL_CAPS: AdapterCapability[] = [
   "READ_HELLO", "READ_LANE_CATALOG", "READ_PLAYBACK_HEAD",
   "READ_FRAME", "READ_RECEIPTS", "READ_EFFECT_EMISSIONS",
   "READ_DELIVERY_OBSERVATIONS", "READ_EXECUTION_CONTEXT",
   "CONTROL_STEP_FORWARD", "CONTROL_STEP_BACKWARD", "CONTROL_SEEK"
 ];
 
-function capsWithout(...exclude: Capability[]): Capability[] {
+function capsWithout(...exclude: AdapterCapability[]): AdapterCapability[] {
   return ALL_CAPS.filter((c) => !exclude.includes(c));
 }
 
@@ -193,12 +193,12 @@ function renderToString(surface: ReturnType<typeof renderNavigator>): string {
 // Pure helper tests
 // ---------------------------------------------------------------------------
 
-test("hasCap returns true for present capability", () => {
-  assert.equal(hasCap(ALL_CAPS, "READ_RECEIPTS"), true);
+test("hasAdapterCap returns true for present adapter capability", () => {
+  assert.equal(hasAdapterCap(ALL_CAPS, "READ_RECEIPTS"), true);
 });
 
-test("hasCap returns false for absent capability", () => {
-  assert.equal(hasCap(capsWithout("READ_RECEIPTS"), "READ_RECEIPTS"), false);
+test("hasAdapterCap returns false for absent adapter capability", () => {
+  assert.equal(hasAdapterCap(capsWithout("READ_RECEIPTS"), "READ_RECEIPTS"), false);
 });
 
 test("pluralize: singular and plural", () => {

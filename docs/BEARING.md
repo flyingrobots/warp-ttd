@@ -16,7 +16,7 @@ timeline
 
 - Treating CLI `--json` as the canonical agent-facing surface.
 - Promoting MCP from speculative experiment to an explicit delivery adapter.
-- Ensuring TUI capabilities follow explicit CLI/MCP/session nouns rather than inventing ad-hoc behavior.
+- Ensuring TUI adapter capabilities follow explicit CLI/MCP/session nouns rather than inventing ad-hoc behavior.
 
 ### 2. Neighborhood & Site Catalog
 

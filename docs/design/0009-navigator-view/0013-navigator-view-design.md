@@ -82,7 +82,7 @@ Problems:
    box. With receipts, effects, and pins all visible, the navigator
    overflows any reasonable terminal height. No prioritization.
 
-4. **No capability-driven layout.** If an adapter doesn't declare
+4. **No adapter-capability-driven layout.** If an adapter doesn't declare
    `read:effect-emissions`, the Effects box just doesn't appear.
    But the layout doesn't adapt — it leaves a gap.
 
@@ -166,18 +166,18 @@ Replace the animated DAG shader with the real lane tree from
 principle 3. The Navigator should not show decoration in place
 of data.
 
-### 6. Capability-driven sections
+### 6. Adapter-capability-driven sections
 
 Sections have four render states. Each state has explicit rules:
 
 | State | Meaning | Render |
 |-------|---------|--------|
-| **unavailable** | Adapter does not declare the capability | Section omitted entirely. Position bar shows `(unsupported)` for the missing noun. |
-| **empty** | Capability declared, zero items at this frame | Section header visible, body shows `(none at this frame)` |
-| **populated** | Capability declared, 1+ items | Normal table rendering, subject to row budget |
+| **unavailable** | Adapter does not declare the adapter capability | Section omitted entirely. Position bar shows `(unsupported)` for the missing noun. |
+| **empty** | Adapter capability declared, zero items at this frame | Section header visible, body shows `(none at this frame)` |
+| **populated** | Adapter capability declared, 1+ items | Normal table rendering, subject to row budget |
 | **truncated** | Items exceed row budget | Render up to budget, footer shows `showing N of M` |
 
-Capability → section mapping:
+Adapter capability -> section mapping:
 
 - `read:receipts` → `receipt-summary`
 - `read:effect-emissions` → `effect-summary` (required; without
