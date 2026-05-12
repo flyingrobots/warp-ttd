@@ -28,3 +28,11 @@ test("MCP backlog exposes the admission chain instead of mirroring CLI", () => {
     assert.match(content, new RegExp(noun, "i"));
   }
 });
+
+test("admission-chain backlog keeps registration and handle as primary facts", () => {
+  const content = readRepoText("docs/method/backlog/up-next/PROTO_admission-chain-inspector.md");
+
+  assert.match(content, /- `OpticRegistrationDescriptor`/);
+  assert.match(content, /- Echo-owned `OpticArtifactHandle`/);
+  assert.match(content, /artifact registration, registration descriptor, handle/);
+});

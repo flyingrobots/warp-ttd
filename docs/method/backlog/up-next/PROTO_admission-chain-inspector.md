@@ -10,6 +10,10 @@ collapse:
 
 - `OpticArtifact` - what is being proposed
 - `OpticAdmissionRequirements` - what authority and support must cover
+- `OpticRegistrationDescriptor` and artifact hash - what the app registers
+  with Echo or another runtime
+- Echo-owned `OpticArtifactHandle` - the runtime-local lookup token proving
+  registration, not authority
 - `CapabilityGrant` - who has bounded authority
 - `CapabilityPresentation` - how authority is presented for an invocation
 - `AdmissionTicket` - this exact invocation is authorized
@@ -24,13 +28,16 @@ unknown law posture, and returned reading.
 
 ## Hill
 
-WARP TTD can display artifact registration, grant presentation, admission
-ticket, law witness, receipt, and reading posture as distinct debugger facts.
+WARP TTD can display artifact registration, registration descriptor, handle,
+grant presentation, admission ticket, law witness, receipt, and reading posture
+as distinct debugger facts.
 
 ## Playback Questions
 
 - Can an operator see which `OpticArtifact` or artifact hash was invoked?
 - Can an operator see the compiled `OpticAdmissionRequirements` digest?
+- Can an operator inspect the `OpticRegistrationDescriptor` used to register
+  the artifact?
 - Can an operator distinguish the Echo-owned `OpticArtifactHandle` from the
   authority-bearing `CapabilityGrant`?
 - Can an operator inspect the `CapabilityPresentation` used for this exact
