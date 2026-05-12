@@ -192,14 +192,14 @@ function disconnectedInspectorSurface(args: InspectorRenderArgs): Surface {
   return centerBox(bg, stringToSurface(" Connect to a host first.", 40, 1), "Neighborhood", ctx);
 }
 
-function contextInfoLines(sessionCtx: SessionContext): string {
+export function contextInfoLines(sessionCtx: SessionContext): string {
   const { session, hello } = sessionCtx;
   return vstack(
     ` Host Kind:    ${hello.hostKind}`,
     ` Version:      ${hello.hostVersion}`,
     ` Protocol:     ${hello.protocolVersion}`,
     ` Session Mode: ${session.snapshot.execCtx.mode}`,
-    ` Capabilities: ${hello.capabilities.length.toString()}`,
+    ` Adapter Capabilities: ${hello.capabilities.length.toString()}`,
     ` Catalog Lanes: ${sessionCtx.catalog.lanes.length.toString()}`,
     ` Session:      ${session.sessionId.slice(0, 8)}`
   );
