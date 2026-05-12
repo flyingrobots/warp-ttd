@@ -38,7 +38,7 @@ npm run frame -- --json
 
 ### 3. Protocol First
 
-The TTD protocol is defined via a single **GraphQL schema** (protocol v0.5.0 schema; adds explicit WriterRef identity). Protocol changes start here.
+The TTD protocol is defined via a single **GraphQL schema** (protocol v0.6.0 schema; names adapter support as `AdapterCapability`). Protocol changes start here.
 
 ```text
 schemas/warp-ttd-protocol.graphql

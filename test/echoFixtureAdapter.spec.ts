@@ -8,7 +8,7 @@ test("hello exposes the minimal host handshake contract", async () => {
   const hello = await adapter.hello();
 
   assert.equal(hello.hostKind, "ECHO");
-  assert.equal(hello.protocolVersion, "0.5.0");
+  assert.equal(hello.protocolVersion, "0.6.0");
   assert.equal(hello.schemaId, "ttd-protocol-fixture-v1");
   assert.deepEqual(hello.capabilities, [
     "READ_HELLO",

@@ -30,7 +30,7 @@ const FIXTURE: FixtureState = {
   hello: {
     hostKind: "ECHO",
     hostVersion: "0.0.0-fixture",
-    protocolVersion: "0.5.0",
+    protocolVersion: "0.6.0",
     schemaId: "ttd-protocol-fixture-v1",
     capabilities: [
       "READ_HELLO",

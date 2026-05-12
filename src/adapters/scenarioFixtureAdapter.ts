@@ -332,7 +332,7 @@ export function buildScenario(scenario: Scenario): TtdHostAdapter {
     adapterName: "scenario-fixture",
     hello: () => Promise.resolve({
       hostKind: scenario.hostKind, hostVersion: "0.0.0-scenario",
-      protocolVersion: "0.5.0", schemaId: "ttd-protocol-scenario-v1",
+      protocolVersion: "0.6.0", schemaId: "ttd-protocol-scenario-v1",
       capabilities: built.capabilities
     }),
     laneCatalog: () => Promise.resolve({ lanes: structuredClone(built.lanes) }),

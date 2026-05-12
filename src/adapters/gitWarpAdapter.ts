@@ -336,7 +336,7 @@ export class GitWarpAdapter<TMaterializedState, TNodeProps extends GitWarpNodePr
     return Promise.resolve({
       hostKind: "GIT_WARP",
       hostVersion: GIT_WARP_HOST_VERSION,
-      protocolVersion: "0.5.0",
+      protocolVersion: "0.6.0",
       schemaId: "ttd-protocol-git-warp-v1",
       capabilities: [
         "READ_HELLO",
