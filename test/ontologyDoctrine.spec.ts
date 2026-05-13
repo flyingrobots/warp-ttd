@@ -97,3 +97,19 @@ test("materialized reading inspector stays in CORE_VIEWS taxonomy", () => {
   assert.equal(repoPathExists(vizPath), false);
   assert.match(readRepoText(cvPath), /\*\*Legend:\*\* CORE_VIEWS/);
 });
+
+test("lint ratchet doctrine reflects zero ceiling", () => {
+  assert.equal(readRepoText("lint-ceiling.txt").trim(), "0");
+  assert.equal(
+    repoPathExists("docs/method/backlog/bad-code/lint-ratchet-hot-files.md"),
+    false,
+  );
+  assert.equal(
+    repoPathExists("docs/method/graveyard/lint-ratchet-hot-files.md"),
+    true,
+  );
+
+  const policy = readRepoText("docs/method/backlog/lint-ratchet.md");
+  assert.match(policy, /\*\*Status:\*\* complete/);
+  assert.doesNotMatch(policy, /does not yet comply/i);
+});

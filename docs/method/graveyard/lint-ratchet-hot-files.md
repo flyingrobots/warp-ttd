@@ -1,10 +1,15 @@
 # Lint ratchet on hot protocol/view adapter files
 
+**Status:** complete
+
 The protocol-alignment slice had to touch `src/adapters/gitWarpAdapter.ts`,
 `src/adapters/scenarioFixtureAdapter.ts`, and `src/tui/navigatorLayout.ts` to
 stop `src/protocol.ts` from lying about the authored schema vocabulary.
-Behavioral verification is green, but these files are still carrying old lint
-ratchet debt: `unknown` use, oversized functions, and complexity violations.
+This item tracked the old lint ratchet debt in those hot files: `unknown` use,
+oversized functions, and complexity violations.
+
+The debt was retired during cycle 0019. `lint-ceiling.txt` is now `0`, and both
+`npm run lint` and `npm run lint:check` are clean.
 
 ## Why this matters
 
@@ -15,12 +20,12 @@ more expensive than it should be.
 
 ## Done looks like
 
-- `gitWarpAdapter.ts` no longer uses `unknown` in its WarpCoreLike surface
-- receipt/frame helpers are split so the adapter stops tripping max-lines and
+- [x] `gitWarpAdapter.ts` no longer uses `unknown` in its WarpCoreLike surface
+- [x] receipt/frame helpers are split so the adapter stops tripping max-lines and
   complexity rules
-- `scenarioFixtureAdapter.ts` frame-building and built-in scenarios are split
+- [x] `scenarioFixtureAdapter.ts` frame-building and built-in scenarios are split
   into smaller units that satisfy the ratchet
-- `navigatorLayout.ts` rendering branches are decomposed so capability checks
+- [x] `navigatorLayout.ts` rendering branches are decomposed so capability checks
   and surface composition do not trip the complexity ceiling
-- the stale unused-eslint-disable warning in `test/adapterRegistry.spec.ts` is
+- [x] the stale unused-eslint-disable warning in `test/adapterRegistry.spec.ts` is
   removed as part of the same cleanup
