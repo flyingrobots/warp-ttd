@@ -30,6 +30,11 @@ function parseArgs(argv: string[]): { command: Command; json: boolean } {
   const args = argv.slice(2);
   const json = args.includes("--json");
   const positional = args.filter((a) => !a.startsWith("--"));
+  const unknown = args.filter((a) => a.startsWith("--") && a !== "--json");
+
+  if (unknown.length > 0) {
+    throw new UnknownFlagsError(unknown);
+  }
 
   if (positional.length > 1) {
     throw new UnexpectedArgumentsError(positional.slice(1));
@@ -39,12 +44,6 @@ function parseArgs(argv: string[]): { command: Command; json: boolean } {
 
   if (command === undefined) {
     return { command: "demo", json };
-  }
-
-  const unknown = args.filter((a) => a.startsWith("--") && a !== "--json");
-
-  if (unknown.length > 0) {
-    throw new UnknownFlagsError(unknown);
   }
 
   if (isValidCommand(command)) {

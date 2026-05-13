@@ -64,6 +64,8 @@ This project will use [Semantic Versioning](https://semver.org/) starting at
 
 ### Fixed
 
+- **CLI flags**: Unknown flags now fail even when no positional command is
+  provided; the default `demo` command no longer bypasses flag validation.
 - **DebuggerSession capability handshakes**: host adapter capabilities are now
   cached at session creation and reused across navigation refreshes, avoiding
   repeated `hello()` calls on every step/seek.
