@@ -23,6 +23,8 @@ test("MCP backlog exposes the admission chain instead of mirroring CLI", () => {
   assert.match(content, /MCP should expose the lawful admission chain\./);
   assert.match(content, /MCP is transport and inspection\./);
   assert.match(content, /It is not authority, admission, grants, or\s+mutation\./);
+  assert.doesNotMatch(content, /present an invocation for admission/i);
+  assert.match(content, /inspect capability presentation and invocation posture/i);
 
   for (const noun of [
     "registered optic handles",

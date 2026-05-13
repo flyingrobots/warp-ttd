@@ -40,7 +40,7 @@ The initial tool family should expose read-only facts:
 - list registered optic handles
 - inspect artifact requirements
 - inspect grants and grant posture
-- present an invocation for admission
+- inspect capability presentation and invocation posture
 - inspect admission ticket or obstruction posture
 - inspect law witness output
 - inspect receipt output
