@@ -80,6 +80,20 @@ class TransientHelloAdapter extends EchoFixtureAdapter {
   }
 }
 
+class SlowHelloAdapter extends EchoFixtureAdapter {
+  #helloCalls = 0;
+
+  public get helloCalls(): number {
+    return this.#helloCalls;
+  }
+
+  public override async hello(): Promise<HostHello> {
+    this.#helloCalls += 1;
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    return super.hello();
+  }
+}
+
 class NoControlAdapter extends EchoFixtureAdapter {
   public override stepForward(): Promise<PlaybackFrame> {
     throw new UnexpectedControlCallError("stepForward");
@@ -146,6 +160,35 @@ test("MCP tools expose cached session and reading facts", async () => {
     );
 
     assert.equal(adapter.helloCalls, 1);
+  } finally {
+    await closeMcp(client, server);
+  }
+});
+
+test("MCP concurrent first inspection calls share one session initialization", async () => {
+  const adapter = new SlowHelloAdapter();
+  const { client, server } = await connectMcp(adapter);
+
+  try {
+    const [sessionResult, readingsResult] = await Promise.all([
+      client.callTool({
+        name: MCP_ADMISSION_TOOL_NAMES.inspectSession,
+        arguments: {}
+      }),
+      client.callTool({
+        name: MCP_ADMISSION_TOOL_NAMES.inspectReadings,
+        arguments: {}
+      })
+    ]);
+    const session = requireRecord(
+      structuredContent(sessionResult)["session"],
+      "session"
+    );
+    const readings = structuredContent(readingsResult);
+
+    assert.equal(adapter.helloCalls, 1);
+    assert.equal(session["activeHeadId"], HEAD_ID);
+    assert.equal(readings["basisRef"], "head:main@frame:0");
   } finally {
     await closeMcp(client, server);
   }

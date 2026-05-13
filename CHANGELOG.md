@@ -14,7 +14,8 @@ This project will use [Semantic Versioning](https://semver.org/) starting at
   server using the official MCP TypeScript SDK. Adds inspection tools for
   session state, adapter capabilities, readings, and admission-chain posture.
   Missing artifact, grant, ticket, and witness facts are explicit `ABSENT`
-  posture. No grants, admission, mutation, or strand creation.
+  posture. Concurrent first inspections share one session initialization. No
+  grants, admission, mutation, or strand creation.
 - **Worldline view rethink** (cycle 0014) — split-view worldline page
   with lane tree on the left and per-lane tick timeline on the right.
   `filterFramesToLane` scopes frame data to a single lane.

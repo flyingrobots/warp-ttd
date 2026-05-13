@@ -89,6 +89,7 @@ The shipped first implementation adds:
 - `test/mcpAdmissionChainSurface.spec.ts`
   - SDK in-memory transport tests for tool listing and tool calls
   - regression that cached `hello()` is reused
+  - regression that concurrent first MCP calls share one initialization
   - regression that control adapter methods are not invoked
 
 ## Follow-On Work

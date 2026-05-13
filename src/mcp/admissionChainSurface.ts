@@ -294,6 +294,31 @@ function registerAdmissionTools(
   }
 }
 
+function createSessionResolver(
+  options: McpAdmissionChainServerOptions
+): () => Promise<DebuggerSession> {
+  let session: DebuggerSession | undefined;
+  let sessionPromise: Promise<DebuggerSession> | undefined;
+
+  async function initializeSession(): Promise<DebuggerSession> {
+    try {
+      const created = await DebuggerSession.create(options.adapter, options.headId);
+      session = created;
+      return created;
+    } catch (err) {
+      sessionPromise = undefined;
+      throw err;
+    }
+  }
+
+  return async function getSession(): Promise<DebuggerSession> {
+    if (session !== undefined) return session;
+
+    sessionPromise ??= initializeSession();
+    return sessionPromise;
+  };
+}
+
 export function createMcpAdmissionChainServer(
   options: McpAdmissionChainServerOptions
 ): McpServer {
@@ -304,12 +329,7 @@ export function createMcpAdmissionChainServer(
         "Read-only WARP TTD inspection over DebuggerSession and admission-chain posture."
     }
   );
-  let session: DebuggerSession | undefined;
-
-  async function getSession(): Promise<DebuggerSession> {
-    session ??= await DebuggerSession.create(options.adapter, options.headId);
-    return session;
-  }
+  const getSession = createSessionResolver(options);
 
   registerAdmissionTools(server, getSession);
 
