@@ -45,6 +45,9 @@ This project will use [Semantic Versioning](https://semver.org/) starting at
 
 ### Changed
 
+- **Lint ratchet**: Cleared the remaining structural ESLint debt in the TUI
+  shell, CLI, adapter registry, scenario fixture, and test helpers. The lint
+  ceiling is now zero; both `npm run lint` and `npm run lint:check` are clean.
 - **Protocol boundary**: `EffectKind` removed from protocol mirror — port types
   are now plain data (strings). Dead `EffectKind` class deleted entirely.
 - **Neighborhood assembler**: Extracted `buildNeighborhoodState` from

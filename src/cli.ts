@@ -9,8 +9,18 @@ import {
 } from "./errors.ts";
 
 type Command = "demo" | "hello" | "catalog" | "frame" | "step" | "effects" | "deliveries" | "context" | "session" | "worldline";
+type PrintableValue = object | string | number | boolean | null | undefined;
+type PrintFn = (envelope: string, data: PrintableValue, label?: string) => void;
+type CliHandler = (ctx: CliContext) => Promise<void>;
 
 const VALID_COMMANDS = new Set<Command>(["demo", "hello", "catalog", "frame", "step", "effects", "deliveries", "context", "session", "worldline"]);
+
+interface CliContext {
+  adapter: EchoFixtureAdapter;
+  headId: string;
+  json: boolean;
+  print: PrintFn;
+}
 
 function isValidCommand(cmd: string): cmd is Command {
   return (VALID_COMMANDS as Set<string>).has(cmd);
@@ -44,166 +54,196 @@ function parseArgs(argv: string[]): { command: Command; json: boolean } {
   throw new UnsupportedCommandError(command);
 }
 
-function printSection(label: string, value: unknown): void {
-  console.log(`\n## ${label}`);
-  console.log(JSON.stringify(value, null, 2));
+function writeLine(line: string): void {
+  process.stdout.write(`${line}\n`);
 }
 
-function printJsonl(envelope: string, data: unknown, label?: string): void {
+function printSection(label: string, value: PrintableValue): void {
+  writeLine(`\n## ${label}`);
+  writeLine(JSON.stringify(value, null, 2));
+}
+
+function printJsonl(envelope: string, data: PrintableValue, label?: string): void {
   const line = label !== undefined
     ? JSON.stringify({ envelope, data, label })
     : JSON.stringify({ envelope, data });
-  process.stdout.write(line + "\n");
+  writeLine(line);
 }
+
+function createPrintFn(json: boolean): PrintFn {
+  if (json) return printJsonl;
+
+  return (envelope, data): void => {
+    printSection(envelope, data);
+  };
+}
+
+async function handleHello(ctx: CliContext): Promise<void> {
+  ctx.print("HostHello", await ctx.adapter.hello());
+}
+
+async function handleCatalog(ctx: CliContext): Promise<void> {
+  ctx.print("LaneCatalog", await ctx.adapter.laneCatalog());
+}
+
+async function printReceipts(ctx: CliContext): Promise<void> {
+  const receipts = await ctx.adapter.receipts(ctx.headId);
+  for (const receipt of receipts) {
+    ctx.print("ReceiptSummary", receipt);
+  }
+}
+
+async function handleFrame(ctx: CliContext): Promise<void> {
+  ctx.print("PlaybackHeadSnapshot", await ctx.adapter.playbackHead(ctx.headId));
+  ctx.print("PlaybackFrame", await ctx.adapter.frame(ctx.headId));
+  await printReceipts(ctx);
+}
+
+function printList(
+  ctx: CliContext,
+  envelope: string,
+  items: PrintableValue[]
+): void {
+  if (!ctx.json) {
+    printSection(envelope, items);
+    return;
+  }
+  for (const item of items) {
+    ctx.print(envelope, item);
+  }
+}
+
+async function handleEffects(ctx: CliContext): Promise<void> {
+  printList(ctx, "EffectEmissionSummary", await ctx.adapter.effectEmissions(ctx.headId));
+}
+
+async function handleDeliveries(ctx: CliContext): Promise<void> {
+  printList(ctx, "DeliveryObservationSummary", await ctx.adapter.deliveryObservations(ctx.headId));
+}
+
+async function handleContext(ctx: CliContext): Promise<void> {
+  ctx.print("ExecutionContext", await ctx.adapter.executionContext());
+}
+
+async function handleSession(ctx: CliContext): Promise<void> {
+  const session = await DebuggerSession.create(ctx.adapter, ctx.headId);
+  if (ctx.json) {
+    ctx.print("SerializedSession", session.toJSON());
+    return;
+  }
+  printSection("Session", session.toJSON());
+}
+
+async function collectWorldlineFrames(ctx: CliContext): Promise<FrameData[]> {
+  const maxFrame = await ctx.adapter.seekToFrame(ctx.headId, Number.MAX_SAFE_INTEGER);
+  const frames: FrameData[] = [];
+
+  for (let i = 0; i <= maxFrame.frameIndex; i++) {
+    const frame = await ctx.adapter.frame(ctx.headId, i);
+    const receipts = await ctx.adapter.receipts(ctx.headId, i);
+    frames.push({ frameIndex: frame.frameIndex, lanes: frame.lanes, receipts });
+  }
+
+  return frames;
+}
+
+function printWorldlineHuman(row: ReturnType<typeof buildTickRows>[number]): void {
+  const conflict = row.hasConflict ? "!" : " ";
+  const digest = row.digest.slice(0, 7).padEnd(7);
+  const writers = row.writers.length > 0 ? row.writers.join(", ") : "(genesis)";
+  const strands = row.strandIds.length > 0 ? ` [${row.strandIds.join(", ")}]` : "";
+  writeLine(`${conflict} ${String(row.frameIndex).padStart(4)}  ${digest}  ${writers}${strands}`);
+}
+
+async function handleWorldline(ctx: CliContext): Promise<void> {
+  const frames = await collectWorldlineFrames(ctx);
+  const catalog = await ctx.adapter.laneCatalog();
+  const rows = buildTickRows(frames, catalog.lanes);
+
+  for (const row of rows) {
+    if (ctx.json) {
+      ctx.print("WorldlineTick", row);
+    } else {
+      printWorldlineHuman(row);
+    }
+  }
+}
+
+async function handleStep(ctx: CliContext): Promise<void> {
+  if (!ctx.json) {
+    printSection("Before", await ctx.adapter.playbackHead(ctx.headId));
+    printSection("NextFrame", await ctx.adapter.stepForward(ctx.headId));
+    printSection("After", await ctx.adapter.playbackHead(ctx.headId));
+    printSection("ReceiptSummary[]", await ctx.adapter.receipts(ctx.headId));
+    return;
+  }
+
+  ctx.print("PlaybackHeadSnapshot", await ctx.adapter.playbackHead(ctx.headId), "before");
+  ctx.print("PlaybackFrame", await ctx.adapter.stepForward(ctx.headId), "stepped");
+  ctx.print("PlaybackHeadSnapshot", await ctx.adapter.playbackHead(ctx.headId), "after");
+  await printReceipts(ctx);
+}
+
+async function printDemoAfterStep(ctx: CliContext): Promise<void> {
+  ctx.print("PlaybackFrame", await ctx.adapter.stepForward(ctx.headId), "stepped");
+  ctx.print("PlaybackHeadSnapshot", await ctx.adapter.playbackHead(ctx.headId), "after");
+  await printReceipts(ctx);
+  await handleEffects(ctx);
+  await handleDeliveries(ctx);
+  ctx.print("ExecutionContext", await ctx.adapter.executionContext());
+}
+
+async function handleDemo(ctx: CliContext): Promise<void> {
+  await handleHello(ctx);
+  await handleCatalog(ctx);
+  ctx.print("PlaybackHeadSnapshot", await ctx.adapter.playbackHead(ctx.headId));
+  ctx.print("PlaybackFrame", await ctx.adapter.frame(ctx.headId));
+  await printReceipts(ctx);
+  if (ctx.json) {
+    await printDemoAfterStep(ctx);
+    return;
+  }
+  printSection("StepForward", await ctx.adapter.stepForward(ctx.headId));
+  printSection("PlaybackHeadSnapshot (after step)", await ctx.adapter.playbackHead(ctx.headId));
+  printSection("PlaybackFrame (after step)", await ctx.adapter.frame(ctx.headId));
+  printSection("ReceiptSummary[] (after step)", await ctx.adapter.receipts(ctx.headId));
+}
+
+const COMMAND_HANDLERS: Record<Command, CliHandler> = {
+  catalog: handleCatalog,
+  context: handleContext,
+  deliveries: handleDeliveries,
+  demo: handleDemo,
+  effects: handleEffects,
+  frame: handleFrame,
+  hello: handleHello,
+  session: handleSession,
+  step: handleStep,
+  worldline: handleWorldline
+};
 
 async function main(): Promise<void> {
-  const adapter = new EchoFixtureAdapter();
   const { command, json } = parseArgs(process.argv);
-  const headId = "head:main";
+  const ctx: CliContext = {
+    adapter: new EchoFixtureAdapter(),
+    headId: "head:main",
+    json,
+    print: createPrintFn(json)
+  };
 
-  const print = json ? printJsonl : (envelope: string, data: unknown): void => { printSection(envelope, data); };
-
-  if (command === "hello") {
-    print("HostHello", await adapter.hello());
-    return;
-  }
-
-  if (command === "catalog") {
-    print("LaneCatalog", await adapter.laneCatalog());
-    return;
-  }
-
-  if (command === "frame") {
-    print("PlaybackHeadSnapshot", await adapter.playbackHead(headId));
-    print("PlaybackFrame", await adapter.frame(headId));
-    const receipts = await adapter.receipts(headId);
-    for (const r of receipts) {
-      print("ReceiptSummary", r);
-    }
-    return;
-  }
-
-  if (command === "effects" || command === "deliveries") {
-    const [envelope, items] = command === "effects"
-      ? ["EffectEmissionSummary", await adapter.effectEmissions(headId)] as const
-      : ["DeliveryObservationSummary", await adapter.deliveryObservations(headId)] as const;
-    if (json) {
-      for (const item of items) {
-        print(envelope, item);
-      }
-    } else {
-      printSection(envelope, items);
-    }
-    return;
-  }
-
-  if (command === "context") {
-    print("ExecutionContext", await adapter.executionContext());
-    return;
-  }
-
-  if (command === "session") {
-    const session = await DebuggerSession.create(adapter, headId);
-    if (json) {
-      print("SerializedSession", session.toJSON());
-    } else {
-      printSection("Session", session.toJSON());
-    }
-    return;
-  }
-
-  if (command === "worldline") {
-    // Discover max frame by seeking to a high index (adapter clamps).
-    const maxFrame = await adapter.seekToFrame(headId, Number.MAX_SAFE_INTEGER);
-    const maxIndex = maxFrame.frameIndex;
-
-    // Collect all frames with their receipts.
-    const frames: FrameData[] = [];
-    for (let i = 0; i <= maxIndex; i++) {
-      const f = await adapter.frame(headId, i);
-      const r = await adapter.receipts(headId, i);
-      frames.push({ frameIndex: f.frameIndex, lanes: f.lanes, receipts: r });
-    }
-
-    const catalog = await adapter.laneCatalog();
-    const rows = buildTickRows(frames, catalog.lanes);
-
-    if (json) {
-      for (const row of rows) {
-        print("WorldlineTick", row);
-      }
-    } else {
-      for (const row of rows) {
-        const conflict = row.hasConflict ? "!" : " ";
-        const digest = row.digest.slice(0, 7).padEnd(7);
-        const writers = row.writers.length > 0 ? row.writers.join(", ") : "(genesis)";
-        const strands = row.strandIds.length > 0 ? ` [${row.strandIds.join(", ")}]` : "";
-        process.stdout.write(`${conflict} ${String(row.frameIndex).padStart(4)}  ${digest}  ${writers}${strands}\n`);
-      }
-    }
-    return;
-  }
-
-  if (command === "step") {
-    if (json) {
-      print("PlaybackHeadSnapshot", await adapter.playbackHead(headId), "before");
-      print("PlaybackFrame", await adapter.stepForward(headId), "stepped");
-      print("PlaybackHeadSnapshot", await adapter.playbackHead(headId), "after");
-      const receipts = await adapter.receipts(headId);
-      for (const r of receipts) {
-        print("ReceiptSummary", r);
-      }
-    } else {
-      printSection("Before", await adapter.playbackHead(headId));
-      printSection("NextFrame", await adapter.stepForward(headId));
-      printSection("After", await adapter.playbackHead(headId));
-      printSection("ReceiptSummary[]", await adapter.receipts(headId));
-    }
-    return;
-  }
-
-  // demo: full sequence
-  print("HostHello", await adapter.hello());
-  print("LaneCatalog", await adapter.laneCatalog());
-  print("PlaybackHeadSnapshot", await adapter.playbackHead(headId));
-  print("PlaybackFrame", await adapter.frame(headId));
-  const receipts0 = await adapter.receipts(headId);
-  for (const r of receipts0) {
-    print("ReceiptSummary", r);
-  }
-  if (json) {
-    print("PlaybackFrame", await adapter.stepForward(headId), "stepped");
-    print("PlaybackHeadSnapshot", await adapter.playbackHead(headId), "after");
-    const receiptsAfter = await adapter.receipts(headId);
-    for (const r of receiptsAfter) {
-      print("ReceiptSummary", r);
-    }
-    // Effect/delivery data at the stepped frame (JSON-only; human-readable mode omits these)
-    const emissions = await adapter.effectEmissions(headId);
-    for (const e of emissions) {
-      print("EffectEmissionSummary", e);
-    }
-    const observations = await adapter.deliveryObservations(headId);
-    for (const o of observations) {
-      print("DeliveryObservationSummary", o);
-    }
-    print("ExecutionContext", await adapter.executionContext());
-  } else {
-    printSection("StepForward", await adapter.stepForward(headId));
-    printSection("PlaybackHeadSnapshot (after step)", await adapter.playbackHead(headId));
-    printSection("PlaybackFrame (after step)", await adapter.frame(headId));
-    printSection("ReceiptSummary[] (after step)", await adapter.receipts(headId));
-  }
+  await COMMAND_HANDLERS[command](ctx);
 }
 
-main().catch((err: unknown) => {
+try {
+  await main();
+} catch (err) {
   const message = err instanceof Error ? err.message : String(err);
 
   if (process.argv.includes("--json")) {
     process.stderr.write(JSON.stringify({ error: message }) + "\n");
   } else {
-    console.error(message);
+    process.stderr.write(`${message}\n`);
   }
 
   process.exitCode = 1;
-});
+}
