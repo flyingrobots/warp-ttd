@@ -1,9 +1,7 @@
 /**
  * warp-ttd TUI entry point.
  *
- * Thin app shell: registers pages, configures the frame, runs.
- * All page logic lives in src/tui/pages/.
- * Cross-page session sync lives in sessionSync.ts.
+ * Thin app shell: registers pages, configures the frame, and runs.
  */
 import { initDefaultContext } from "@flyingrobots/bijou-node";
 import {
@@ -12,12 +10,13 @@ import {
   createFramedApp,
   createKeyMap,
 } from "@flyingrobots/bijou-tui";
-import type { FramePage, FramedApp, App, FramedAppMsg, Cmd, FrameModel } from "@flyingrobots/bijou-tui";
+import type { FramePage, FramedApp, App, Cmd } from "@flyingrobots/bijou-tui";
 import { connectPage } from "./pages/connectPage.ts";
 import { navigatorPage } from "./pages/navigatorPage.ts";
 import { worldlinePage } from "./pages/worldlinePage.ts";
 import { inspectorPage } from "./pages/inspectorPage.ts";
 import type { FrameData } from "./worldlineLayout.ts";
+import type { AnyMsg, FModel, FMsg, PageMessageValue } from "./frameTypes.ts";
 import {
   syncNeighborhoodFocus,
   getSessionCtx,
@@ -30,13 +29,9 @@ import {
 } from "./sessionSync.ts";
 
 const ctx = initDefaultContext();
+type AnyPage = FramePage<object, AnyMsg>;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- page models/messages are heterogeneous by design
-type AnyPage = FramePage<any, any>;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- page messages are heterogeneous by design
-type AnyMsg = any;
-
-const framedApp: FramedApp<AnyMsg, AnyMsg> = createFramedApp<AnyMsg, AnyMsg>({
+const framedApp: FramedApp<object, AnyMsg> = createFramedApp<object, AnyMsg>({
   title: "WARP TTD v0.1",
   enableCommandPalette: true,
   pages: [
@@ -49,9 +44,6 @@ const framedApp: FramedApp<AnyMsg, AnyMsg> = createFramedApp<AnyMsg, AnyMsg>({
     .bind("q", "Quit", { type: "quit" }),
 });
 
-type FModel = FrameModel<AnyMsg>;
-type FMsg = FramedAppMsg<AnyMsg>;
-
 function isQuitMessage(msg: FMsg): boolean {
   return messageType(msg) === "quit";
 }
@@ -61,8 +53,8 @@ function isWorldlineLoadedMessage(msg: FMsg): msg is {
   frames: FrameData[];
   sessionId?: string;
 } {
-  return messageType(msg) === "worldline-loaded" &&
-    typeof msg === "object" && msg !== null && "frames" in msg && Array.isArray((msg as Record<string, string>)["frames"]);
+  const record = msg as { readonly frames?: PageMessageValue };
+  return messageType(msg) === "worldline-loaded" && Array.isArray(record.frames);
 }
 
 function isLaneSelectionMessage(msg: FMsg): boolean {
@@ -71,14 +63,14 @@ function isLaneSelectionMessage(msg: FMsg): boolean {
 }
 
 function messageType(msg: FMsg): string | null {
-  if (typeof msg !== "object" || msg === null || !("type" in msg)) return null;
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- framed app carries heterogeneous page messages at this boundary
-  const value = (msg as Record<string, string>)["type"];
+  if (!("type" in msg)) return null;
+  const value = (msg as { readonly type?: PageMessageValue }).type;
   return typeof value === "string" ? value : null;
 }
 
 function initApp(): [FModel, Cmd<FMsg>[]] {
-  const [fModel, fCmds] = framedApp.init();
+  const [fModel, rawCmds] = framedApp.init();
+  const fCmds = rawCmds as Cmd<FMsg>[];
   const pulseCmd = (emit: (msg: FMsg) => void): (() => void) => {
     const interval = setInterval(() => { emit({ type: "pulse", dt: 1 / 30 }); }, 33);
     return (): void => { clearInterval(interval); };
@@ -86,22 +78,24 @@ function initApp(): [FModel, Cmd<FMsg>[]] {
   return [fModel, [pulseCmd as Cmd<FMsg>, ...fCmds]];
 }
 
-function updateApp(msg: FMsg, model: FModel): [FModel, Cmd<FMsg>[]] {
-  if (isQuitMessage(msg)) return [model, [quit()]];
+function syncAfterSessionChange(
+  next: FModel,
+  cmds: Cmd<FMsg>[],
+  nextCtx: ReturnType<typeof getSessionCtx>
+): [FModel, Cmd<FMsg>[]] {
+  const [synced, syncCmds] = syncSession(next, nextCtx);
+  return [syncNeighborhoodFocus(syncSiteDrivenWorldlineFocus(synced)), [...cmds, ...syncCmds]];
+}
 
-  if (isWorldlineLoadedMessage(msg)) {
-    return [handleWorldlineLoaded(model, msg.frames, msg.sessionId), []];
-  }
+interface SyncAfterFrameChangeArgs {
+  msg: FMsg;
+  prevSnap: ReturnType<typeof worldlineFocusSnapshot>;
+  next: FModel;
+  cmds: Cmd<FMsg>[];
+}
 
-  const prevCtx = getSessionCtx(model);
-  const prevSnap = worldlineFocusSnapshot(model);
-  const [next, cmds] = framedApp.update(msg, model);
-  const nextCtx = getSessionCtx(next);
-
-  if (prevCtx !== nextCtx) {
-    const [synced, syncCmds] = syncSession(next, nextCtx);
-    return [syncNeighborhoodFocus(syncSiteDrivenWorldlineFocus(synced)), [...cmds, ...syncCmds]];
-  }
+function syncAfterFrameChange(args: SyncAfterFrameChangeArgs): [FModel, Cmd<FMsg>[]] {
+  const { msg, prevSnap, next, cmds } = args;
 
   if (isLaneSelectionMessage(msg)) {
     return [syncNeighborhoodFocus(syncNeighborhoodSelection(next)), cmds];
@@ -113,6 +107,27 @@ function updateApp(msg: FMsg, model: FModel): [FModel, Cmd<FMsg>[]] {
   }
 
   return [syncNeighborhoodFocus(next), cmds];
+}
+
+function updateApp(msg: FMsg, model: FModel): [FModel, Cmd<FMsg>[]] {
+  if (isQuitMessage(msg)) return [model, [quit()]];
+
+  if (isWorldlineLoadedMessage(msg)) {
+    const cmds: Cmd<FMsg>[] = [];
+    return [handleWorldlineLoaded(model, msg.frames, msg.sessionId), cmds];
+  }
+
+  const prevCtx = getSessionCtx(model);
+  const prevSnap = worldlineFocusSnapshot(model);
+  const [next, rawCmds] = framedApp.update(msg, model);
+  const cmds = rawCmds as Cmd<FMsg>[];
+  const nextCtx = getSessionCtx(next);
+
+  if (prevCtx !== nextCtx) {
+    return syncAfterSessionChange(next, cmds, nextCtx);
+  }
+
+  return syncAfterFrameChange({ msg, prevSnap, next, cmds });
 }
 
 const mainApp: App<FModel, FMsg> = {

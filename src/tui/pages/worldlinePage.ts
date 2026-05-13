@@ -75,7 +75,12 @@ interface WorldlineRenderArgs {
 function disconnectedWorldlineSurface(args: WorldlineRenderArgs): Surface {
   const { model, size, ctx } = args;
   const bg = renderWaveShader(size.w, size.h, model.time);
-  return centerBox(bg, stringToSurface(" Connect to a host first.", 40, 1), "Worldline", ctx);
+  return centerBox({
+    bg,
+    content: stringToSurface(" Connect to a host first.", 40, 1),
+    title: "Worldline",
+    ctx
+  });
 }
 
 function worldlineCatalog(model: WorldlineModel): LaneRef[] {
@@ -310,11 +315,11 @@ function buildWorldlinePageDefinition(
     init: () => [initialWorldlineModel(), []],
     keyMap: worldlineKeyMap(),
     update: (msg, model): WorldlineUpdateResult => {
-      if (!isPageMsg<WorldlineMsg>(msg)) {
+      if (!isPageMsg(msg)) {
         return [model, []];
       }
 
-      return updateWorldlineModel(msg, model);
+      return updateWorldlineModel(msg as WorldlineMsg, model);
     },
     layout: (model) => ({
       kind: "pane" as const,

@@ -85,23 +85,32 @@ export interface PositionBarArgs {
   wide: boolean;
 }
 
+function receiptPositionText(args: PositionBarArgs): string {
+  if (!hasAdapterCap(args.caps, "READ_RECEIPTS")) return "receipts: unsupported";
+
+  return args.wide
+    ? pluralize(args.snap.receipts.length, "receipt")
+    : `${args.snap.receipts.length.toString()}r`;
+}
+
+function effectPositionText(args: PositionBarArgs): string {
+  if (!hasAdapterCap(args.caps, "READ_EFFECT_EMISSIONS")) return "effects: unsupported";
+
+  return args.wide
+    ? pluralize(args.snap.emissions.length, "effect")
+    : `${args.snap.emissions.length.toString()}e`;
+}
+
 export function buildPositionBar(args: PositionBarArgs): string {
-  const { snap, caps, catalog, wide } = args;
+  const { snap, catalog } = args;
   const parts = [
     `Frame ${snap.frame.frameIndex.toString()}`,
     catalog[0]?.id ?? "\u2014",
-    formatExecutionMode(snap.execCtx.mode)
+    formatExecutionMode(snap.execCtx.mode),
+    receiptPositionText(args),
+    effectPositionText(args)
   ];
-  if (hasAdapterCap(caps, "READ_RECEIPTS")) {
-    parts.push(wide ? pluralize(snap.receipts.length, "receipt") : `${snap.receipts.length.toString()}r`);
-  } else {
-    parts.push("receipts: unsupported");
-  }
-  if (hasAdapterCap(caps, "READ_EFFECT_EMISSIONS")) {
-    parts.push(wide ? pluralize(snap.emissions.length, "effect") : `${snap.emissions.length.toString()}e`);
-  } else {
-    parts.push("effects: unsupported");
-  }
+
   return parts.join(" \u2502 ");
 }
 
@@ -201,54 +210,80 @@ export interface NavigatorInput {
   ctx: BijouContext;
 }
 
-export function renderNavigator(input: NavigatorInput): Surface {
-  const { snap, caps, catalog, pins, error, jumpInput, w, h, ctx: bijouCtx } = input;
-  const final = createSurface(w, h);
+interface NavigatorRenderState {
+  final: Surface;
+  input: NavigatorInput;
+  wide: boolean;
+  hasReceipts: boolean;
+  hasEmissions: boolean;
+}
+
+function createNavigatorState(input: NavigatorInput): NavigatorRenderState {
+  const final = createSurface(input.w, input.h);
   final.fill({ char: " " });
-  const wide = w >= HORIZONTAL_THRESHOLD;
-  const hasReceipts = hasAdapterCap(caps, "READ_RECEIPTS");
-  const hasEmissions = hasAdapterCap(caps, "READ_EFFECT_EMISSIONS");
+
+  return {
+    final,
+    input,
+    wide: input.w >= HORIZONTAL_THRESHOLD,
+    hasReceipts: hasAdapterCap(input.caps, "READ_RECEIPTS"),
+    hasEmissions: hasAdapterCap(input.caps, "READ_EFFECT_EMISSIONS")
+  };
+}
+
+function renderPositionAndLanes(state: NavigatorRenderState): number {
+  const { final, input, wide, hasReceipts } = state;
+  const { snap, caps, catalog, w } = input;
   let y = 0;
 
-  // --- position-bar ---
   final.blit(stringToSurface(` ${buildPositionBar({ snap, caps, catalog, wide })}`, w - 1, 1), 1, y);
-  y += 1;
-  final.blit(stringToSurface("\u2500".repeat(w - 2), w - 2, 1), 1, y);
-  y += 1;
+  final.blit(stringToSurface("\u2500".repeat(w - 2), w - 2, 1), 1, y + 1);
+  y += 2;
 
-  // --- lane-table ---
   const laneData = buildLaneLines(catalog, snap, hasReceipts);
   final.blit(stringToSurface(laneData.header, w - 2, 1), 1, y);
-  y += 1;
-  for (const line of laneData.lines) {
-    final.blit(stringToSurface(line, w - 2, 1), 1, y);
-    y += 1;
+  for (const [index, line] of laneData.lines.entries()) {
+    final.blit(stringToSurface(line, w - 2, 1), 1, y + 1 + index);
   }
-  y += 1;
 
-  // --- receipt-summary + effect-summary ---
-  const renderArgs: RenderSectionArgs = { final, snap, caps, w, startY: y, ctx: bijouCtx };
+  return y + laneData.lines.length + 2;
+}
+
+function renderSummarySections(state: NavigatorRenderState, startY: number): void {
+  const { final, input, wide, hasReceipts, hasEmissions } = state;
+  const { snap, caps, w, ctx } = input;
+  const args: RenderSectionArgs = { final, snap, caps, w, startY, ctx };
+
   if (wide && hasReceipts && hasEmissions) {
-    renderSideBySide(renderArgs);
-  } else {
-    renderStacked({ ...renderArgs, hasReceipts, hasEmissions });
+    renderSideBySide(args);
+    return;
   }
 
-  // --- pins-panel ---
-  const statusY = h - 2;
+  renderStacked({ ...args, hasReceipts, hasEmissions });
+}
+
+function renderPins(state: NavigatorRenderState): void {
+  const { final, input } = state;
+  const { pins, error, w, h } = input;
   const flashY = h - 3;
   const pinsEndY = error !== null ? flashY - 1 : flashY;
 
-  if (pins.length > 0) {
-    const pinData = buildPinLines(pins);
-    const pinStartY = pinsEndY - pinData.lines.length - 1;
-    final.blit(stringToSurface(` \u2550\u2550\u2550 Pins (${pinData.total.toString()}) \u2550\u2550\u2550`, w - 2, 1), 1, pinStartY);
-    for (let i = 0; i < pinData.lines.length; i++) {
-      final.blit(stringToSurface(pinData.lines[i] ?? "", w - 2, 1), 1, pinStartY + 1 + i);
-    }
-  }
+  if (pins.length === 0) return;
 
-  // --- status-bar ---
+  const pinData = buildPinLines(pins);
+  const pinStartY = pinsEndY - pinData.lines.length - 1;
+  final.blit(stringToSurface(` \u2550\u2550\u2550 Pins (${pinData.total.toString()}) \u2550\u2550\u2550`, w - 2, 1), 1, pinStartY);
+  for (const [index, line] of pinData.lines.entries()) {
+    final.blit(stringToSurface(line, w - 2, 1), 1, pinStartY + 1 + index);
+  }
+}
+
+function renderStatus(state: NavigatorRenderState): void {
+  const { final, input } = state;
+  const { error, jumpInput, w, h } = input;
+  const statusY = h - 2;
+  const flashY = h - 3;
+
   if (error !== null) {
     final.blit(stringToSurface(` ${error}`, w - 2, 1), 1, flashY);
   }
@@ -257,8 +292,16 @@ export function renderNavigator(input: NavigatorInput): Surface {
     ? ` Jump to frame: ${jumpInput}_  [Enter] Go  [Esc] Cancel`
     : " [n/\u2192] Fwd  [p/\u2190] Back  [g] Jump  [P] Pin  [u] Unpin  [d] Disc";
   final.blit(stringToSurface(controlText, w - 2, 1), 1, statusY);
+}
 
-  return final;
+export function renderNavigator(input: NavigatorInput): Surface {
+  const state = createNavigatorState(input);
+  const y = renderPositionAndLanes(state);
+  renderSummarySections(state, y);
+  renderPins(state);
+  renderStatus(state);
+
+  return state.final;
 }
 
 // --- Internal render helpers ---
@@ -272,6 +315,87 @@ interface RenderSectionArgs {
   ctx: BijouContext;
 }
 
+function receiptTitle(total: number): string {
+  return total > MAX_RECEIPTS
+    ? ` Receipts (${MAX_RECEIPTS.toString()} of ${total.toString()}) `
+    : " Receipts ";
+}
+
+function effectTitle(snap: SessionSnapshot, total: number): string {
+  return total > MAX_EFFECTS
+    ? ` Effects [${snap.execCtx.mode}] (${MAX_EFFECTS.toString()} of ${total.toString()}) `
+    : ` Effects [${snap.execCtx.mode}] `;
+}
+
+function compactReceiptColumns(): TableColumn[] {
+  return [
+    { header: "Lane", width: 14 }, { header: "Writer", width: 10 },
+    { header: "Adm", width: 4 }, { header: "Rej", width: 4 }, { header: "CF", width: 3 }
+  ];
+}
+
+function stackedReceiptColumns(): TableColumn[] {
+  return [
+    { header: "Lane", width: 14 }, { header: "Writer", width: 12 },
+    { header: "Adm", width: 5 }, { header: "Rej", width: 5 }, { header: "CF", width: 4 }
+  ];
+}
+
+function effectColumns(compact: boolean): TableColumn[] {
+  return compact
+    ? [
+      { header: "Kind", width: 10 }, { header: "Lane", width: 10 },
+      { header: "Sink", width: 10 }, { header: "Stat", width: 8 }
+    ]
+    : [
+      { header: "Kind", width: 12 }, { header: "Lane", width: 14 },
+      { header: "Sink", width: 12 }, { header: "Stat", width: 10 }
+    ];
+}
+
+interface BoxedTableArgs {
+  columns: TableColumn[];
+  rows: string[][];
+  title: string;
+  width: number;
+  ctx: BijouContext;
+}
+
+function boxedTable(args: BoxedTableArgs): Surface {
+  const { columns, rows, title, width, ctx } = args;
+  return boxSurface(tableSurface({ columns, rows, ctx }), { title, width, ctx });
+}
+
+interface SideBySideEffectArgs {
+  args: RenderSectionArgs;
+  eRows: string[][];
+  eTotal: number;
+  halfW: number;
+  rBox: Surface;
+  y: number;
+}
+
+function renderSideBySideEffects(input: SideBySideEffectArgs): number {
+  const { args, eRows, eTotal, halfW, rBox, y } = input;
+  const { final, snap, ctx: bijouCtx } = args;
+
+  if (eRows.length === 0) {
+    const empty = stringToSurface(" (none at this frame)", halfW - 4, 1);
+    final.blit(boxSurface(empty, { title: effectTitle(snap, eTotal), width: halfW, ctx: bijouCtx }), halfW + 2, y);
+    return y + rBox.height + 1;
+  }
+
+  const eBox = boxedTable({
+    columns: effectColumns(true),
+    rows: eRows,
+    title: effectTitle(snap, eTotal),
+    width: halfW,
+    ctx: bijouCtx
+  });
+  final.blit(eBox, halfW + 2, y);
+  return y + Math.max(rBox.height, eBox.height) + 1;
+}
+
 function renderSideBySide(args: RenderSectionArgs): number {
   const { final, snap, caps, w, startY, ctx: bijouCtx } = args;
   let y = startY;
@@ -279,31 +403,17 @@ function renderSideBySide(args: RenderSectionArgs): number {
   const { rows: rRows, total: rTotal } = buildReceiptRows(snap, MAX_RECEIPTS);
   const { rows: eRows, total: eTotal } = buildEffectRows(snap, caps, MAX_EFFECTS);
 
-  const rTitle = rTotal > MAX_RECEIPTS ? ` Receipts (${MAX_RECEIPTS.toString()} of ${rTotal.toString()}) ` : " Receipts ";
-  const eTitle = eTotal > MAX_EFFECTS
-    ? ` Effects [${snap.execCtx.mode}] (${MAX_EFFECTS.toString()} of ${eTotal.toString()}) `
-    : ` Effects [${snap.execCtx.mode}] `;
-
   if (rRows.length > 0) {
-    const rCols: TableColumn[] = [
-      { header: "Lane", width: 14 }, { header: "Writer", width: 10 },
-      { header: "Adm", width: 4 }, { header: "Rej", width: 4 }, { header: "CF", width: 3 }
-    ];
-    const rBox = boxSurface(tableSurface({ columns: rCols, rows: rRows, ctx: bijouCtx }), { title: rTitle, width: halfW, ctx: bijouCtx });
+    const rBox = boxedTable({
+      columns: compactReceiptColumns(),
+      rows: rRows,
+      title: receiptTitle(rTotal),
+      width: halfW,
+      ctx: bijouCtx
+    });
     final.blit(rBox, 1, y);
 
-    if (eRows.length > 0) {
-      const eCols: TableColumn[] = [
-        { header: "Kind", width: 10 }, { header: "Lane", width: 10 },
-        { header: "Sink", width: 10 }, { header: "Stat", width: 8 }
-      ];
-      const eBox = boxSurface(tableSurface({ columns: eCols, rows: eRows, ctx: bijouCtx }), { title: eTitle, width: halfW, ctx: bijouCtx });
-      final.blit(eBox, halfW + 2, y);
-      y += Math.max(rBox.height, eBox.height) + 1;
-    } else {
-      final.blit(boxSurface(stringToSurface(" (none at this frame)", halfW - 4, 1), { title: eTitle, width: halfW, ctx: bijouCtx }), halfW + 2, y);
-      y += rBox.height + 1;
-    }
+    y = renderSideBySideEffects({ args, eRows, eTotal, halfW, rBox, y });
   } else {
     final.blit(stringToSurface(" (no receipts at this frame)", w - 2, 1), 1, y);
     y += 2;
@@ -312,44 +422,44 @@ function renderSideBySide(args: RenderSectionArgs): number {
   return y;
 }
 
+function renderStackedReceipts(args: RenderSectionArgs): number {
+  const { final, snap, w, startY, ctx: bijouCtx } = args;
+  const { rows, total } = buildReceiptRows(snap, MAX_RECEIPTS);
+
+  if (rows.length === 0) {
+    final.blit(stringToSurface(" (no receipts at this frame)", w - 2, 1), 1, startY);
+    return startY + 2;
+  }
+
+  const tbl = tableSurface({ columns: stackedReceiptColumns(), rows, ctx: bijouCtx });
+  final.blit(boxSurface(tbl, { title: receiptTitle(total), width: w - 2, ctx: bijouCtx }), 1, startY);
+  return startY + tbl.height + 3;
+}
+
+function renderStackedEffects(args: RenderSectionArgs): number {
+  const { final, snap, caps, w, startY, ctx: bijouCtx } = args;
+  const { rows, total } = buildEffectRows(snap, caps, MAX_EFFECTS);
+
+  if (rows.length === 0) {
+    final.blit(stringToSurface(" (no effects at this frame)", w - 2, 1), 1, startY);
+    return startY + 2;
+  }
+
+  const tbl = tableSurface({ columns: effectColumns(false), rows, ctx: bijouCtx });
+  final.blit(boxSurface(tbl, { title: effectTitle(snap, total), width: w - 2, ctx: bijouCtx }), 1, startY);
+  return startY + tbl.height + 3;
+}
+
 function renderStacked(args: RenderSectionArgs & { hasReceipts: boolean; hasEmissions: boolean }): number {
-  const { final, snap, caps, w, startY, ctx: bijouCtx, hasReceipts, hasEmissions } = args;
+  const { hasReceipts, hasEmissions, startY } = args;
   let y = startY;
 
   if (hasReceipts) {
-    const { rows, total } = buildReceiptRows(snap, MAX_RECEIPTS);
-    const title = total > MAX_RECEIPTS ? ` Receipts (${MAX_RECEIPTS.toString()} of ${total.toString()}) ` : " Receipts ";
-    if (rows.length > 0) {
-      const cols: TableColumn[] = [
-        { header: "Lane", width: 14 }, { header: "Writer", width: 12 },
-        { header: "Adm", width: 5 }, { header: "Rej", width: 5 }, { header: "CF", width: 4 }
-      ];
-      const tbl = tableSurface({ columns: cols, rows, ctx: bijouCtx });
-      final.blit(boxSurface(tbl, { title, width: w - 2, ctx: bijouCtx }), 1, y);
-      y += tbl.height + 3;
-    } else {
-      final.blit(stringToSurface(" (no receipts at this frame)", w - 2, 1), 1, y);
-      y += 2;
-    }
+    y = renderStackedReceipts({ ...args, startY: y });
   }
 
   if (hasEmissions) {
-    const { rows, total } = buildEffectRows(snap, caps, MAX_EFFECTS);
-    const title = total > MAX_EFFECTS
-      ? ` Effects [${snap.execCtx.mode}] (${MAX_EFFECTS.toString()} of ${total.toString()}) `
-      : ` Effects [${snap.execCtx.mode}] `;
-    if (rows.length > 0) {
-      const cols: TableColumn[] = [
-        { header: "Kind", width: 12 }, { header: "Lane", width: 14 },
-        { header: "Sink", width: 12 }, { header: "Stat", width: 10 }
-      ];
-      const tbl = tableSurface({ columns: cols, rows, ctx: bijouCtx });
-      final.blit(boxSurface(tbl, { title, width: w - 2, ctx: bijouCtx }), 1, y);
-      y += tbl.height + 3;
-    } else {
-      final.blit(stringToSurface(" (no effects at this frame)", w - 2, 1), 1, y);
-      y += 2;
-    }
+    y = renderStackedEffects({ ...args, startY: y });
   }
 
   return y;

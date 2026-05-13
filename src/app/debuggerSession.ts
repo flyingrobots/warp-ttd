@@ -30,6 +30,7 @@ import type {
   DeliveryObservationSummary,
   EffectEmissionSummary,
   ExecutionContext,
+  HostHello,
   PlaybackFrame,
   PlaybackHeadSnapshot,
   ReceiptSummary
@@ -78,6 +79,13 @@ export interface SerializedSession {
   pins: PinnedObservation[];
 }
 
+interface DebuggerSessionInit {
+  adapter: TtdHostAdapter;
+  activeHeadId: string;
+  hostHello: HostHello;
+  snapshot: SessionSnapshot;
+}
+
 function serializeSnapshot(
   snapshot: SessionSnapshot
 ): SerializedSessionSnapshot {
@@ -104,19 +112,18 @@ export class DebuggerSession {
   public readonly sessionId: string;
   readonly #adapter: TtdHostAdapter;
   readonly #activeHeadId: string;
-  #capabilities: readonly AdapterCapability[] = [];
+  readonly #hostHello: HostHello;
+  readonly #capabilities: readonly AdapterCapability[];
   #snapshot: SessionSnapshot;
   #pins: PinnedObservation[];
 
-  private constructor(
-    adapter: TtdHostAdapter,
-    activeHeadId: string,
-    snapshot: SessionSnapshot
-  ) {
+  private constructor(init: DebuggerSessionInit) {
     this.sessionId = randomUUID();
-    this.#adapter = adapter;
-    this.#activeHeadId = activeHeadId;
-    this.#snapshot = snapshot;
+    this.#adapter = init.adapter;
+    this.#activeHeadId = init.activeHeadId;
+    this.#hostHello = structuredClone(init.hostHello);
+    this.#capabilities = [...init.hostHello.capabilities];
+    this.#snapshot = init.snapshot;
     this.#pins = [];
   }
 
@@ -127,9 +134,12 @@ export class DebuggerSession {
     const hello = await adapter.hello();
     const capabilities = [...hello.capabilities];
     const snapshot = await fetchSnapshot(adapter, headId, capabilities);
-    const session = new DebuggerSession(adapter, headId, snapshot);
-    session.#capabilities = capabilities;
-    return session;
+    return new DebuggerSession({
+      adapter,
+      activeHeadId: headId,
+      hostHello: hello,
+      snapshot
+    });
   }
 
   public get adapter(): TtdHostAdapter {
@@ -138,6 +148,14 @@ export class DebuggerSession {
 
   public get activeHeadId(): string {
     return this.#activeHeadId;
+  }
+
+  public get hostHello(): HostHello {
+    return structuredClone(this.#hostHello);
+  }
+
+  public get adapterCapabilities(): readonly AdapterCapability[] {
+    return [...this.#capabilities];
   }
 
   public get snapshot(): SessionSnapshot {

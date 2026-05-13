@@ -15,6 +15,7 @@ import {
 } from "@git-stunts/git-warp";
 
 type WarpCoreInstance = InstanceType<typeof WarpCore>;
+type PlumbingInstance = ReturnType<typeof Plumbing.createDefault>;
 
 export interface GitWarpFixture {
   /** The WarpCore instance (plumbing surface with materialize + receipts). */
@@ -104,6 +105,52 @@ export async function scenarioLinearHistory(): Promise<GitWarpFixture> {
   return fixture;
 }
 
+async function initTempGitRepo(tempDir: string): Promise<PlumbingInstance> {
+  const plumbing = Plumbing.createDefault({ cwd: tempDir });
+  await plumbing.execute({ args: ["init"] });
+  await plumbing.execute({ args: ["config", "user.email", "test@test.com"] });
+  await plumbing.execute({ args: ["config", "user.name", "Test"] });
+  return plumbing;
+}
+
+async function openGraph(
+  plumbing: PlumbingInstance,
+  graphName: string,
+  writerId: string
+): Promise<WarpCoreInstance> {
+  return WarpCore.open({
+    persistence: new GitGraphAdapter({ plumbing }),
+    graphName,
+    writerId,
+    crypto: new WebCryptoAdapter()
+  });
+}
+
+async function writeAliceSeed(graph: WarpCoreInstance): Promise<void> {
+  const patch = await graph.createPatch();
+  await patch
+    .addNode("user:alice")
+    .setProperty("user:alice", "name", "Alice")
+    .commit();
+}
+
+async function writeBobSeed(graph: WarpCoreInstance): Promise<void> {
+  const patch = await graph.createPatch();
+  await patch
+    .addNode("user:bob")
+    .setProperty("user:bob", "name", "Bob")
+    .commit();
+}
+
+async function writeAliceFollowup(graph: WarpCoreInstance): Promise<void> {
+  await graph.materialize();
+  const patch = await graph.createPatch();
+  await patch
+    .addEdge("user:alice", "user:bob", "follows")
+    .commit();
+  await graph.materialize();
+}
+
 /**
  * Scenario: multi-writer with concurrent patches.
  *
@@ -120,50 +167,13 @@ export async function scenarioMultiWriter(): Promise<
   const tempDir = await mkdtemp(join(tmpdir(), "warp-multiwriter-"));
 
   try {
-    const plumbing = Plumbing.createDefault({ cwd: tempDir });
-    await plumbing.execute({ args: ["init"] });
-    await plumbing.execute({ args: ["config", "user.email", "test@test.com"] });
-    await plumbing.execute({ args: ["config", "user.name", "Test"] });
+    const plumbing = await initTempGitRepo(tempDir);
+    const aliceGraph = await openGraph(plumbing, "collab", "alice");
+    const bobGraph = await openGraph(plumbing, "collab", "bob");
 
-    const persistence = new GitGraphAdapter({ plumbing });
-    const crypto = new WebCryptoAdapter();
-
-    const aliceGraph = await WarpCore.open({
-      persistence,
-      graphName: "collab",
-      writerId: "alice",
-      crypto
-    });
-
-    const bobGraph = await WarpCore.open({
-      persistence,
-      graphName: "collab",
-      writerId: "bob",
-      crypto
-    });
-
-    // Alice writes first
-    const pa1 = await aliceGraph.createPatch();
-    await pa1
-      .addNode("user:alice")
-      .setProperty("user:alice", "name", "Alice")
-      .commit();
-
-    // Bob writes concurrently (same lamport epoch from bob's perspective)
-    const pb1 = await bobGraph.createPatch();
-    await pb1
-      .addNode("user:bob")
-      .setProperty("user:bob", "name", "Bob")
-      .commit();
-
-    // Alice discovers bob's patches and writes a follow-up
-    await aliceGraph.materialize();
-    const pa2 = await aliceGraph.createPatch();
-    await pa2
-      .addEdge("user:alice", "user:bob", "follows")
-      .commit();
-
-    await aliceGraph.materialize();
+    await writeAliceSeed(aliceGraph);
+    await writeBobSeed(bobGraph);
+    await writeAliceFollowup(aliceGraph);
 
     return {
       graph: aliceGraph,

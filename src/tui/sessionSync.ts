@@ -5,19 +5,15 @@
  * changes, the shell propagates it to all other pages. The worldline
  * cursor is kept in sync with the session's current frame index.
  */
-import type { FrameModel, Cmd, FramedAppMsg } from "@flyingrobots/bijou-tui";
+import type { Cmd } from "@flyingrobots/bijou-tui";
 import type { SessionContext } from "./pages/shared.ts";
 import { buildTickRows, filterFramesToLane } from "./worldlineLayout.ts";
 import { laneCursorForLaneId } from "./pages/worldlinePage.ts";
 import type { FrameData } from "./worldlineLayout.ts";
+import type { FModel, FMsg } from "./frameTypes.ts";
 import type { LaneRef } from "../protocol.ts";
 import { NeighborhoodFocusSummary } from "../app/NeighborhoodFocusSummary.ts";
 import type { NeighborhoodSiteCatalog } from "../app/NeighborhoodSiteCatalog.ts";
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- page messages are heterogeneous by design
-type AnyMsg = any;
-type FModel = FrameModel<AnyMsg>;
-type FMsg = FramedAppMsg<AnyMsg>;
 
 interface ConnectPageModel {
   sessionCtx: SessionContext | null;
@@ -55,13 +51,8 @@ export function getSelectedSiteId(model: FModel): string | null {
 }
 
 function getRawPageModel(model: FModel, pageId: string): object | null {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Bijou stores heterogeneous page models behind one frame boundary
   const value = model.pageModels[pageId];
-  if (typeof value !== "object" || value === null) {
-    return null;
-  }
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- validated object boundary for page model parsing
-  return value;
+  return value ?? null;
 }
 
 function isConnectModel(value: object): value is ConnectPageModel {
@@ -165,14 +156,14 @@ export function syncSession(
       return [withSession, []];
     }
     const loadCmd = makeWorldlineLoadCmd(sessionCtx);
-    return [withUpdatedPageModel(withSession, "worldline", resetWorldlineSession(worldline)), [loadCmd as Cmd<FMsg>]];
+    return [withUpdatedPageModel(withSession, "worldline", resetWorldlineSession(worldline)), [loadCmd]];
   }
   return [withSession, []];
 }
 
 function makeWorldlineLoadCmd(
   sessionCtx: SessionContext,
-): (emit: (msg: FMsg) => void) => Promise<void> {
+): Cmd<FMsg> {
   return async (emit): Promise<void> => {
     try {
       const adapter = sessionCtx.session.adapter;
@@ -184,7 +175,7 @@ function makeWorldlineLoadCmd(
         const r = await adapter.receipts(headId, i);
         frames.push({ frameIndex: f.frameIndex, lanes: f.lanes, receipts: r });
       }
-      emit({ type: "worldline-loaded", frames, sessionId: sessionCtx.session.sessionId } as FMsg);
+      emit({ type: "worldline-loaded", frames, sessionId: sessionCtx.session.sessionId });
     } catch {
       // Silently ignore — worldline view will show empty state
     }
@@ -464,4 +455,3 @@ function sameNeighborhoodFocus(
     left.selectedLaneId === right.selectedLaneId &&
     left.participatingLaneIds.join(",") === right.participatingLaneIds.join(",");
 }
-

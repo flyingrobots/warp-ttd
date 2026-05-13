@@ -189,7 +189,12 @@ function initialInspectorModel(): InspectorModel {
 function disconnectedInspectorSurface(args: InspectorRenderArgs): Surface {
   const { model, size, ctx } = args;
   const bg = renderWaveShader(size.w, size.h, model.time);
-  return centerBox(bg, stringToSurface(" Connect to a host first.", 40, 1), "Neighborhood", ctx);
+  return centerBox({
+    bg,
+    content: stringToSurface(" Connect to a host first.", 40, 1),
+    title: "Neighborhood",
+    ctx
+  });
 }
 
 export function contextInfoLines(sessionCtx: SessionContext): string {
@@ -443,11 +448,11 @@ export function inspectorPage(ctx: BijouContext): FramePage<InspectorModel, Insp
       .bind("down", "Next site", { type: "site-down" })
       .bind("j", "Next site", { type: "site-down" }),
     update: (msg, model): InspectorUpdateResult => {
-      if (!isPageMsg<InspectorMsg>(msg)) {
+      if (!isPageMsg(msg)) {
         return [model, []];
       }
 
-      return updateInspectorModel(msg, model);
+      return updateInspectorModel(msg as InspectorMsg, model);
     },
     layout: (model) => ({
       kind: "pane" as const,

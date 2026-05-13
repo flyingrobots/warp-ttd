@@ -14,7 +14,7 @@ import type { BijouContext, Surface } from "@flyingrobots/bijou";
 import type { FramePage } from "@flyingrobots/bijou-tui";
 import { renderWaveShader } from "../shaders/bgShader.ts";
 import { resolveAdapter } from "../../app/adapterRegistry.ts";
-import type { AdapterConfig } from "../../app/adapterRegistry.ts";
+import type { AdapterConfig, ResolvedAdapter } from "../../app/adapterRegistry.ts";
 import { DebuggerSession } from "../../app/debuggerSession.ts";
 import { centerBox, isPageMsg, type SessionContext } from "./shared.ts";
 
@@ -50,6 +50,11 @@ type ConnectMsg =
   | { type: "session-ready"; ctx: SessionContext; generation: number }
   | { type: "connect-error"; message: string; generation: number };
 
+type ConnectCommand = (emit: (msg: ConnectMsg) => void) => Promise<void>;
+type ConnectUpdateResult = [ConnectModel, ConnectCommand[]];
+type ConnectKeyMap = ReturnType<typeof createKeyMap<ConnectMsg>>;
+export type ConnectAdapterResolver = (config: AdapterConfig) => Promise<ResolvedAdapter>;
+
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -79,15 +84,15 @@ const SCENARIO_CONFIGS: Record<number, AdapterConfig | "git-warp-wizard"> = {
 function makeConnectCmd(
   config: AdapterConfig,
   gen: number,
-): (emit: (msg: ConnectMsg) => void) => Promise<void> {
+  adapterResolver: ConnectAdapterResolver,
+): ConnectCommand {
   return async (emit): Promise<void> => {
     try {
-      const { adapter, defaultHeadId } = await resolveAdapter(config);
+      const { adapter, defaultHeadId } = await adapterResolver(config);
       const session = await DebuggerSession.create(adapter, defaultHeadId);
       await session.seekToFrame(Number.MAX_SAFE_INTEGER);
-      const hello = await adapter.hello();
       const catalog = await adapter.laneCatalog();
-      emit({ type: "session-ready", ctx: { session, hello, catalog }, generation: gen });
+      emit({ type: "session-ready", ctx: { session, hello: session.hostHello, catalog }, generation: gen });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       emit({ type: "connect-error", message, generation: gen });
@@ -99,10 +104,27 @@ function makeConnectCmd(
 // Update
 // ---------------------------------------------------------------------------
 
+function selectConfig(
+  model: ConnectModel,
+  adapterResolver: ConnectAdapterResolver
+): ConnectUpdateResult {
+  const selected = SCENARIO_CONFIGS[model.choice];
+
+  if (selected === "git-warp-wizard") {
+    return [{ ...model, step: "input-path", inputValue: process.cwd() }, []];
+  }
+
+  if (selected === undefined) return [model, []];
+
+  const gen = model.generation + 1;
+  return [{ ...model, generation: gen, connecting: true }, [makeConnectCmd(selected, gen, adapterResolver)]];
+}
+
 function updateChoose(
   msg: ConnectMsg,
   model: ConnectModel,
-): [ConnectModel, ((emit: (msg: ConnectMsg) => void) => Promise<void>)[]] {
+  adapterResolver: ConnectAdapterResolver,
+): ConnectUpdateResult {
   if (msg.type === "down") {
     return [{ ...model, choice: Math.min(model.choice + 1, CONNECT_OPTIONS.length - 1) }, []];
   }
@@ -110,14 +132,7 @@ function updateChoose(
     return [{ ...model, choice: Math.max(model.choice - 1, 0) }, []];
   }
   if (msg.type === "select") {
-    const selected = SCENARIO_CONFIGS[model.choice];
-    if (selected === "git-warp-wizard") {
-      return [{ ...model, step: "input-path", inputValue: process.cwd() }, []];
-    }
-    if (selected !== undefined) {
-      const gen = model.generation + 1;
-      return [{ ...model, generation: gen, connecting: true }, [makeConnectCmd(selected, gen)]];
-    }
+    return selectConfig(model, adapterResolver);
   }
   return [model, []];
 }
@@ -135,49 +150,89 @@ function updateTextInput(
 // Layout
 // ---------------------------------------------------------------------------
 
-function renderConnect(model: ConnectModel, w: number, h: number, ctx: BijouContext): Surface {
-  const bg = renderWaveShader(w, h, model.time);
+interface RenderConnectArgs {
+  model: ConnectModel;
+  w: number;
+  h: number;
+  ctx: BijouContext;
+}
 
-  if (model.sessionCtx !== null) {
-    const info = vstack(
-      surfaceToString(badge("CONNECTED", { variant: "success", ctx }), ctx.style),
-      "",
-      ` Host: ${model.sessionCtx.hello.hostKind}`,
-      ` Protocol: ${model.sessionCtx.hello.protocolVersion}`,
-      ` Lanes: ${model.sessionCtx.catalog.lanes.length.toString()}`,
-      ` Session: ${model.sessionCtx.session.sessionId.slice(0, 8)}`,
-      "",
-      " Use [ / ] to switch pages.",
-      " Press [d] to disconnect.",
-    );
-    return centerBox(bg, stringToSurface(info, 56, info.split("\n").length), "Status", ctx);
-  }
+function renderConnected(model: ConnectModel, bg: Surface, ctx: BijouContext): Surface {
+  const sessionCtx = model.sessionCtx;
+  if (sessionCtx === null) return bg;
+  const info = vstack(
+    surfaceToString(badge("CONNECTED", { variant: "success", ctx }), ctx.style),
+    "",
+    ` Host: ${sessionCtx.hello.hostKind}`,
+    ` Protocol: ${sessionCtx.hello.protocolVersion}`,
+    ` Lanes: ${sessionCtx.catalog.lanes.length.toString()}`,
+    ` Session: ${sessionCtx.session.sessionId.slice(0, 8)}`,
+    "",
+    " Use [ / ] to switch pages.",
+    " Press [d] to disconnect.",
+  );
 
-  if (model.step === "choose") {
-    const items = CONNECT_OPTIONS.map((label, i) =>
-      i === model.choice
-        ? ctx.style.styled(ctx.semantic("primary"), ` > ${label}`)
-        : `   ${label}`,
-    ).join("\n");
-    const errorLine = model.error !== null
-      ? vstack("", ctx.style.styled(ctx.status("error"), ` Error: ${model.error}`))
-      : "";
-    const content = vstack(" Choose a host adapter:", "", items, "", " [Enter] Select  [q] Quit", errorLine);
-    return centerBox(bg, stringToSurface(content, 56, content.split("\n").length), "Connect", ctx);
-  }
+  return centerBox({
+    bg,
+    content: stringToSurface(info, 56, info.split("\n").length),
+    title: "Status",
+    ctx
+  });
+}
 
+function renderChoose(model: ConnectModel, bg: Surface, ctx: BijouContext): Surface {
+  const items = CONNECT_OPTIONS.map((label, i) =>
+    i === model.choice
+      ? ctx.style.styled(ctx.semantic("primary"), ` > ${label}`)
+      : `   ${label}`,
+  ).join("\n");
+  const errorLine = model.error !== null
+    ? vstack("", ctx.style.styled(ctx.status("error"), ` Error: ${model.error}`))
+    : "";
+  const content = vstack(" Choose a host adapter:", "", items, "", " [Enter] Select  [q] Quit", errorLine);
+
+  return centerBox({
+    bg,
+    content: stringToSurface(content, 56, content.split("\n").length),
+    title: "Connect",
+    ctx
+  });
+}
+
+function renderInput(model: ConnectModel, bg: Surface, ctx: BijouContext): Surface {
   const label = model.step === "input-path" ? "Repository Path" : "Graph Name";
   const prompt = model.step === "input-path" ? "Enter repository path:" : "Enter graph name:";
   const content = vstack(` ${prompt}`, "", ` > ${model.inputValue}_`, "", " [Enter] Confirm  [Esc] Back");
-  return centerBox(bg, stringToSurface(content, 56, content.split("\n").length), label, ctx);
+
+  return centerBox({
+    bg,
+    content: stringToSurface(content, 56, content.split("\n").length),
+    title: label,
+    ctx
+  });
+}
+
+function renderConnect(args: RenderConnectArgs): Surface {
+  const { model, w, h, ctx } = args;
+  const bg = renderWaveShader(w, h, model.time);
+
+  if (model.sessionCtx !== null) {
+    return renderConnected(model, bg, ctx);
+  }
+
+  if (model.step === "choose") {
+    return renderChoose(model, bg, ctx);
+  }
+
+  return renderInput(model, bg, ctx);
 }
 
 // ---------------------------------------------------------------------------
 // Page definition
 // ---------------------------------------------------------------------------
 
-export function connectPage(ctx: BijouContext): FramePage<ConnectModel, ConnectMsg> {
-  const initial: ConnectModel = {
+function initialConnectModel(): ConnectModel {
+  return {
     time: 0,
     step: "choose",
     choice: 0,
@@ -188,75 +243,116 @@ export function connectPage(ctx: BijouContext): FramePage<ConnectModel, ConnectM
     connecting: false,
     sessionCtx: null,
   };
+}
 
+function connectKeyMap(): ConnectKeyMap {
+  return createKeyMap<ConnectMsg>()
+    .bind("up", "Previous", { type: "up" })
+    .bind("k", "Previous", { type: "up" })
+    .bind("down", "Next", { type: "down" })
+    .bind("j", "Next", { type: "down" })
+    .bind("enter", "Select", { type: "select" })
+    .bind("escape", "Back", { type: "back" })
+    .bind("backspace", "Delete", { type: "backspace" })
+    .bind("d", "Disconnect", { type: "disconnect" });
+}
+
+function handleConnectionResult(msg: ConnectMsg, model: ConnectModel): ConnectUpdateResult {
+  if (msg.type === "session-ready" && msg.generation === model.generation) {
+    return [{ ...model, connecting: false, sessionCtx: msg.ctx }, []];
+  }
+  if (msg.type === "connect-error" && msg.generation === model.generation) {
+    return [{ ...model, connecting: false, error: msg.message, step: "choose" }, []];
+  }
+  return [model, []];
+}
+
+function handleBack(model: ConnectModel): ConnectUpdateResult {
+  if (model.step === "input-graph") {
+    return [{ ...model, step: "input-path", inputValue: model.repoPath }, []];
+  }
+  return [{ ...model, step: "choose" }, []];
+}
+
+function handleInputSelect(
+  model: ConnectModel,
+  adapterResolver: ConnectAdapterResolver
+): ConnectUpdateResult {
+  if (model.step === "input-path" && model.inputValue.trim().length === 0) {
+    return [{ ...model, error: "Repository path cannot be empty" }, []];
+  }
+  if (model.step === "input-path") {
+    return [{ ...model, repoPath: model.inputValue, step: "input-graph", inputValue: "default", error: null }, []];
+  }
+  const gen = model.generation + 1;
+  const config: AdapterConfig = { kind: "git-warp", repoPath: model.repoPath, graphName: model.inputValue };
+  return [{ ...model, generation: gen, connecting: true }, [makeConnectCmd(config, gen, adapterResolver)]];
+}
+
+function updateInputStep(
+  msg: ConnectMsg,
+  model: ConnectModel,
+  adapterResolver: ConnectAdapterResolver
+): ConnectUpdateResult {
+  if (msg.type === "back") return handleBack(model);
+  if (msg.type === "select") return handleInputSelect(model, adapterResolver);
+  return [updateTextInput(msg, model), []];
+}
+
+function updateConnectGlobal(
+  msg: ConnectMsg,
+  model: ConnectModel
+): ConnectUpdateResult | null {
+  if (msg.type === "pulse") return [{ ...model, time: model.time + msg.dt }, []];
+  if (msg.type === "session-ready" || msg.type === "connect-error") {
+    return handleConnectionResult(msg, model);
+  }
+  if (msg.type === "disconnect") return [{ ...initialConnectModel(), time: model.time }, []];
+  return null;
+}
+
+function updateConnect(
+  msg: ConnectMsg,
+  model: ConnectModel,
+  adapterResolver: ConnectAdapterResolver
+): ConnectUpdateResult {
+  const global = updateConnectGlobal(msg, model);
+  if (global !== null) return global;
+  if (model.sessionCtx !== null) return [model, []];
+  if (model.step === "choose") return updateChoose(msg, model, adapterResolver);
+  return updateInputStep(msg, model, adapterResolver);
+}
+
+function connectUpdate(
+  adapterResolver: ConnectAdapterResolver
+): FramePage<ConnectModel, ConnectMsg>["update"] {
+  return (msg, model): ConnectUpdateResult => {
+    if (!isPageMsg(msg)) return [model, []];
+
+    return updateConnect(msg as ConnectMsg, model, adapterResolver);
+  };
+}
+
+function connectLayout(
+  ctx: BijouContext
+): FramePage<ConnectModel, ConnectMsg>["layout"] {
+  return (model) => ({
+    kind: "pane" as const,
+    paneId: "main",
+    render: (w: number, h: number) => renderConnect({ model, w, h, ctx }),
+  });
+}
+
+export function connectPage(
+  ctx: BijouContext,
+  adapterResolver: ConnectAdapterResolver = resolveAdapter
+): FramePage<ConnectModel, ConnectMsg> {
   return {
     id: "connect",
     title: "Connect",
-    init: () => [initial, []],
-
-    keyMap: createKeyMap<ConnectMsg>()
-      .bind("up", "Previous", { type: "up" })
-      .bind("k", "Previous", { type: "up" })
-      .bind("down", "Next", { type: "down" })
-      .bind("j", "Next", { type: "down" })
-      .bind("enter", "Select", { type: "select" })
-      .bind("escape", "Back", { type: "back" })
-      .bind("backspace", "Delete", { type: "backspace" })
-      .bind("d", "Disconnect", { type: "disconnect" }),
-
-    update: (msg, model) => {
-      if (!isPageMsg<ConnectMsg>(msg)) return [model, []];
-      const m = msg;
-
-      if (m.type === "pulse") {
-        return [{ ...model, time: model.time + m.dt }, []];
-      }
-
-      if (m.type === "session-ready") {
-        if (m.generation !== model.generation) return [model, []];
-        return [{ ...model, connecting: false, sessionCtx: m.ctx }, []];
-      }
-
-      if (m.type === "connect-error") {
-        if (m.generation !== model.generation) return [model, []];
-        return [{ ...model, connecting: false, error: m.message, step: "choose" }, []];
-      }
-
-      if (m.type === "disconnect") {
-        return [{ ...initial, time: model.time }, []];
-      }
-
-      if (model.sessionCtx !== null) return [model, []];
-
-      if (model.step === "choose") return updateChoose(m, model);
-
-      if (m.type === "back") {
-        if (model.step === "input-graph") {
-          return [{ ...model, step: "input-path", inputValue: model.repoPath }, []];
-        }
-        return [{ ...model, step: "choose" }, []];
-      }
-
-      if (m.type === "select" && model.step === "input-path") {
-        if (model.inputValue.trim().length === 0) {
-          return [{ ...model, error: "Repository path cannot be empty" }, []];
-        }
-        return [{ ...model, repoPath: model.inputValue, step: "input-graph", inputValue: "default", error: null }, []];
-      }
-
-      if (m.type === "select" && model.step === "input-graph") {
-        const gen = model.generation + 1;
-        const config: AdapterConfig = { kind: "git-warp", repoPath: model.repoPath, graphName: model.inputValue };
-        return [{ ...model, generation: gen, connecting: true }, [makeConnectCmd(config, gen)]];
-      }
-
-      return [updateTextInput(m, model), []];
-    },
-
-    layout: (model) => ({
-      kind: "pane" as const,
-      paneId: "main",
-      render: (w: number, h: number) => renderConnect(model, w, h, ctx),
-    }),
+    init: () => [initialConnectModel(), []],
+    keyMap: connectKeyMap(),
+    update: connectUpdate(adapterResolver),
+    layout: connectLayout(ctx),
   };
 }

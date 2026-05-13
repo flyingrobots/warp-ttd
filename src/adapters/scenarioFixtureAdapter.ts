@@ -13,6 +13,7 @@ import type {
   DeliveryOutcome,
   EffectEmissionSummary,
   ExecutionMode,
+  HostHello,
   HostKind,
   LaneKind,
   LaneRef,
@@ -157,6 +158,38 @@ interface BuildFrameDataArgs {
   worldlineIdByLaneId: Map<string, string>;
 }
 
+interface BuiltFrameData {
+  receipts: ReceiptSummary[];
+  emissions: EffectEmissionSummary[];
+  observations: DeliveryObservationSummary[];
+}
+
+interface BuiltFrameMaps {
+  receiptsByFrame: Map<number, ReceiptSummary[]>;
+  emissionsByFrame: Map<number, EffectEmissionSummary[]>;
+  observationsByFrame: Map<number, DeliveryObservationSummary[]>;
+}
+
+interface DeliveryObservationArgs {
+  sd: ScenarioDelivery;
+  se: ScenarioEmission;
+  frameArgs: BuildFrameDataArgs;
+  emissionId: string;
+}
+
+interface PopulateFrameDataArgs {
+  scenario: Scenario;
+  counters: Counters;
+  worldlineIdByLaneId: Map<string, string>;
+  maps: BuiltFrameMaps;
+}
+
+interface ScenarioRuntime {
+  scenario: Scenario;
+  built: BuiltScenario;
+  heads: Map<string, PlaybackHeadSnapshot>;
+}
+
 function createWriterRef(
   writerId: string,
   worldlineId: string,
@@ -169,83 +202,138 @@ function createWriterRef(
   return { writerId, worldlineId, headId };
 }
 
-function buildFrameData(
-  args: BuildFrameDataArgs
-): { receipts: ReceiptSummary[]; emissions: EffectEmissionSummary[]; observations: DeliveryObservationSummary[] } {
-  const { sf, frameIndex, prevTick, mode, counters, worldlineIdByLaneId } = args;
-  const receipts = sf.receipts.map((sr) => {
-    counters.receipt++;
-    const id = counters.receipt.toString().padStart(4, "0");
-    const worldlineId = worldlineIdByLaneId.get(sr.laneId);
-    if (worldlineId === undefined) {
-      throw new TypeError(`Receipt lane ${sr.laneId} is not declared in the scenario catalog`);
-    }
-    return {
-      receiptId: `receipt:scenario:${id}`,
-      headId: HEAD_ID,
-      frameIndex,
-      laneId: sr.laneId,
-      worldlineId,
-      writer: createWriterRef(sr.writerId, worldlineId, sr.headId),
-      inputTick: prevTick, outputTick: sf.tick,
-      admittedRewriteCount: sr.admitted, rejectedRewriteCount: sr.rejected,
-      counterfactualCount: sr.counterfactual,
-      digest: `digest:${id}`,
-      summary: `Writer ${sr.writerId}: ${sr.admitted.toString()} applied, ${sr.rejected.toString()} rejected, ${sr.counterfactual.toString()} counterfactual`
-    };
-  });
+function requireScenarioWorldline(
+  laneId: string,
+  worldlineIdByLaneId: Map<string, string>,
+  noun: "Receipt" | "Emission"
+): string {
+  const worldlineId = worldlineIdByLaneId.get(laneId);
 
+  if (worldlineId === undefined) {
+    throw new TypeError(`${noun} lane ${laneId} is not declared in the scenario catalog`);
+  }
+
+  return worldlineId;
+}
+
+function buildReceiptSummary(
+  sr: ScenarioReceipt,
+  args: BuildFrameDataArgs
+): ReceiptSummary {
+  args.counters.receipt++;
+  const id = args.counters.receipt.toString().padStart(4, "0");
+  const worldlineId = requireScenarioWorldline(sr.laneId, args.worldlineIdByLaneId, "Receipt");
+
+  return {
+    receiptId: `receipt:scenario:${id}`,
+    headId: HEAD_ID,
+    frameIndex: args.frameIndex,
+    laneId: sr.laneId,
+    worldlineId,
+    writer: createWriterRef(sr.writerId, worldlineId, sr.headId),
+    inputTick: args.prevTick,
+    outputTick: args.sf.tick,
+    admittedRewriteCount: sr.admitted,
+    rejectedRewriteCount: sr.rejected,
+    counterfactualCount: sr.counterfactual,
+    digest: `digest:${id}`,
+    summary: `Writer ${sr.writerId}: ${sr.admitted.toString()} applied, ${sr.rejected.toString()} rejected, ${sr.counterfactual.toString()} counterfactual`
+  };
+}
+
+function buildEmissionSummary(
+  se: ScenarioEmission,
+  args: BuildFrameDataArgs,
+  emissionId: string
+): EffectEmissionSummary {
+  const worldlineId = requireScenarioWorldline(se.laneId, args.worldlineIdByLaneId, "Emission");
+  const writerId = se.producerWriterId ?? args.sf.receipts[0]?.writerId ?? "scenario-writer";
+
+  return {
+    emissionId,
+    headId: HEAD_ID,
+    frameIndex: args.frameIndex,
+    laneId: se.laneId,
+    worldlineId,
+    coordinate: { laneId: se.laneId, worldlineId, tick: args.sf.tick },
+    effectKind: se.effectKind,
+    producerWriter: createWriterRef(writerId, worldlineId, se.producerHeadId),
+    summary: `${se.effectKind} emitted at tick ${args.sf.tick.toString()}`
+  };
+}
+
+function buildDeliveryObservation(
+  args: DeliveryObservationArgs
+): DeliveryObservationSummary {
+  const { sd, se, frameArgs, emissionId } = args;
+  frameArgs.counters.observation++;
+
+  return {
+    observationId: `deliv:scenario:${frameArgs.counters.observation.toString().padStart(4, "0")}`,
+    emissionId,
+    headId: HEAD_ID,
+    frameIndex: frameArgs.frameIndex,
+    sinkId: sd.sinkId,
+    outcome: sd.outcome,
+    reason: sd.reason,
+    executionMode: frameArgs.mode,
+    summary: `${se.effectKind} → ${sd.sinkId}: ${sd.outcome}`
+  };
+}
+
+function buildEmissionData(args: BuildFrameDataArgs): {
+  emissions: EffectEmissionSummary[];
+  observations: DeliveryObservationSummary[];
+} {
   const emissions: EffectEmissionSummary[] = [];
   const observations: DeliveryObservationSummary[] = [];
 
-  for (const se of sf.emissions) {
-    counters.emission++;
-    const emId = `emit:scenario:${counters.emission.toString().padStart(4, "0")}`;
-    const worldlineId = worldlineIdByLaneId.get(se.laneId);
-
-    if (worldlineId === undefined) {
-      throw new TypeError(`Emission lane ${se.laneId} is not declared in the scenario catalog`);
-    }
-
-    emissions.push({
-      emissionId: emId, headId: HEAD_ID, frameIndex,
-      laneId: se.laneId, worldlineId, coordinate: { laneId: se.laneId, worldlineId, tick: sf.tick },
-      effectKind: se.effectKind,
-      producerWriter: createWriterRef(
-        se.producerWriterId ?? sf.receipts[0]?.writerId ?? "scenario-writer",
-        worldlineId,
-        se.producerHeadId
-      ),
-      summary: `${se.effectKind} emitted at tick ${sf.tick.toString()}`
-    });
-
-    for (const sd of se.deliveries) {
-      counters.observation++;
-      observations.push({
-        observationId: `deliv:scenario:${counters.observation.toString().padStart(4, "0")}`,
-        emissionId: emId, headId: HEAD_ID, frameIndex,
-        sinkId: sd.sinkId, outcome: sd.outcome, reason: sd.reason,
-        executionMode: mode,
-        summary: `${se.effectKind} → ${sd.sinkId}: ${sd.outcome}`
-      });
-    }
+  for (const se of args.sf.emissions) {
+    args.counters.emission++;
+    const emissionId = `emit:scenario:${args.counters.emission.toString().padStart(4, "0")}`;
+    emissions.push(buildEmissionSummary(se, args, emissionId));
+    observations.push(...se.deliveries.map((sd) =>
+      buildDeliveryObservation({ sd, se, frameArgs: args, emissionId })
+    ));
   }
 
-  return { receipts, emissions, observations };
+  return { emissions, observations };
 }
 
-function buildAllFrameData(scenario: Scenario): BuiltScenario {
-  const counters: Counters = { emission: 0, observation: 0, receipt: 0 };
-  const lanes = buildLanes(scenario.lanes);
-  const worldlineIdByLaneId = new Map(lanes.map((lane) => [lane.id, lane.worldlineId]));
-  const receiptsByFrame = new Map<number, ReceiptSummary[]>();
-  const emissionsByFrame = new Map<number, EffectEmissionSummary[]>();
-  const observationsByFrame = new Map<number, DeliveryObservationSummary[]>();
+function buildFrameData(args: BuildFrameDataArgs): BuiltFrameData {
+  return {
+    receipts: args.sf.receipts.map((sr) => buildReceiptSummary(sr, args)),
+    ...buildEmissionData(args)
+  };
+}
+
+function createBuiltFrameMaps(): BuiltFrameMaps {
+  return {
+    receiptsByFrame: new Map<number, ReceiptSummary[]>(),
+    emissionsByFrame: new Map<number, EffectEmissionSummary[]>(),
+    observationsByFrame: new Map<number, DeliveryObservationSummary[]>()
+  };
+}
+
+function storeFrameData(
+  maps: BuiltFrameMaps,
+  frameIndex: number,
+  data: BuiltFrameData
+): void {
+  maps.receiptsByFrame.set(frameIndex, data.receipts);
+  maps.emissionsByFrame.set(frameIndex, data.emissions);
+  maps.observationsByFrame.set(frameIndex, data.observations);
+}
+
+function populateFrameData(args: PopulateFrameDataArgs): void {
+  const { scenario, counters, worldlineIdByLaneId, maps } = args;
 
   for (let fi = 0; fi < scenario.frames.length; fi++) {
     const sf = scenario.frames[fi];
     if (sf === undefined) continue;
-    const prevTick = fi > 0 ? (scenario.frames[fi - 1]?.tick ?? 0) : 0;
+
+    const prev = scenario.frames[fi - 1];
+    const prevTick = prev === undefined ? 0 : prev.tick;
     const data = buildFrameData({
       sf,
       frameIndex: fi + 1,
@@ -254,43 +342,49 @@ function buildAllFrameData(scenario: Scenario): BuiltScenario {
       counters,
       worldlineIdByLaneId
     });
-    receiptsByFrame.set(fi + 1, data.receipts);
-    emissionsByFrame.set(fi + 1, data.emissions);
-    observationsByFrame.set(fi + 1, data.observations);
+    storeFrameData(maps, fi + 1, data);
   }
+}
 
+function buildAllFrameData(scenario: Scenario): BuiltScenario {
+  const counters: Counters = { emission: 0, observation: 0, receipt: 0 };
+  const lanes = buildLanes(scenario.lanes);
+  const maps = createBuiltFrameMaps();
+  const worldlineIdByLaneId = new Map(lanes.map((lane) => [lane.id, lane.worldlineId]));
+
+  populateFrameData({ scenario, counters, worldlineIdByLaneId, maps });
   const hasEffects = scenario.frames.some((f) => f.emissions.length > 0);
 
   return {
     capabilities: buildCapabilities(hasEffects),
     lanes,
-    receiptsByFrame, emissionsByFrame, observationsByFrame
+    ...maps
   };
 }
 
-function buildPlaybackFrame(
-  lanes: LaneRef[],
-  scenario: Scenario,
+function initialPlaybackFrame(lanes: readonly LaneRef[]): PlaybackFrame {
+  return {
+    headId: HEAD_ID,
+    frameIndex: 0,
+    lanes: lanes.map((lane) => ({
+      laneId: lane.id,
+      worldlineId: lane.worldlineId,
+      coordinate: { laneId: lane.id, worldlineId: lane.worldlineId, tick: 0 },
+      changed: false
+    }))
+  };
+}
+
+function materializedPlaybackFrame(
+  lanes: readonly LaneRef[],
+  sf: ScenarioFrame,
   frameIndex: number
 ): PlaybackFrame {
-  if (frameIndex === 0) {
-    return {
-      headId: HEAD_ID, frameIndex: 0,
-      lanes: lanes.map((lane) => ({
-        laneId: lane.id,
-        worldlineId: lane.worldlineId,
-        coordinate: { laneId: lane.id, worldlineId: lane.worldlineId, tick: 0 },
-        changed: false
-      }))
-    };
-  }
-  const sf = scenario.frames[frameIndex - 1];
-  if (sf === undefined) {
-    throw new FrameOutOfRangeError(frameIndex, scenario.frames.length);
-  }
   const changedLanes = new Set(sf.receipts.map((r) => r.laneId));
+
   return {
-    headId: HEAD_ID, frameIndex,
+    headId: HEAD_ID,
+    frameIndex,
     lanes: lanes.map((lane) => ({
       laneId: lane.id,
       worldlineId: lane.worldlineId,
@@ -300,75 +394,157 @@ function buildPlaybackFrame(
   };
 }
 
+function buildPlaybackFrame(
+  lanes: readonly LaneRef[],
+  scenario: Scenario,
+  frameIndex: number
+): PlaybackFrame {
+  if (frameIndex === 0) return initialPlaybackFrame(lanes);
+
+  const sf = scenario.frames[frameIndex - 1];
+
+  if (sf === undefined) {
+    throw new FrameOutOfRangeError(frameIndex, scenario.frames.length);
+  }
+
+  return materializedPlaybackFrame(lanes, sf, frameIndex);
+}
+
 // ---------------------------------------------------------------------------
 // Builder
 // ---------------------------------------------------------------------------
 
-export function buildScenario(scenario: Scenario): TtdHostAdapter {
-  const built = buildAllFrameData(scenario);
-  const heads = new Map<string, PlaybackHeadSnapshot>();
+function buildInitialHead(scenario: Scenario): PlaybackHeadSnapshot {
   const laneIds = scenario.lanes.map((l) => l.id);
   const writableIds = scenario.lanes.filter((l) => l.writable).map((l) => l.id);
 
-  heads.set(HEAD_ID, {
-    headId: HEAD_ID, label: "Scenario Playback Head",
-    currentFrameIndex: 0, trackedLaneIds: laneIds,
-    writableLaneIds: writableIds, paused: true
+  return {
+    headId: HEAD_ID,
+    label: "Scenario Playback Head",
+    currentFrameIndex: 0,
+    trackedLaneIds: laneIds,
+    writableLaneIds: writableIds,
+    paused: true
+  };
+}
+
+function createScenarioRuntime(scenario: Scenario): ScenarioRuntime {
+  const heads = new Map<string, PlaybackHeadSnapshot>();
+  heads.set(HEAD_ID, buildInitialHead(scenario));
+
+  return {
+    scenario,
+    built: buildAllFrameData(scenario),
+    heads
+  };
+}
+
+function requireRuntimeHead(runtime: ScenarioRuntime, headId: string): PlaybackHeadSnapshot {
+  const head = runtime.heads.get(headId);
+
+  if (head === undefined) {
+    throw new UnknownHeadError(headId);
+  }
+
+  return head;
+}
+
+function resolveRuntimeFrame(
+  runtime: ScenarioRuntime,
+  headId: string,
+  frameIndex?: number
+): number {
+  return frameIndex ?? requireRuntimeHead(runtime, headId).currentFrameIndex;
+}
+
+function runtimePlaybackFrame(
+  runtime: ScenarioRuntime,
+  headId: string,
+  frameIndex?: number
+): PlaybackFrame {
+  const index = resolveRuntimeFrame(runtime, headId, frameIndex);
+  return buildPlaybackFrame(runtime.built.lanes, runtime.scenario, index);
+}
+
+function moveRuntimeHead(
+  runtime: ScenarioRuntime,
+  headId: string,
+  frameIndex: number
+): PlaybackFrame {
+  const head = requireRuntimeHead(runtime, headId);
+  const frame = buildPlaybackFrame(runtime.built.lanes, runtime.scenario, frameIndex);
+  runtime.heads.set(headId, { ...head, currentFrameIndex: frameIndex, paused: true });
+  return structuredClone(frame);
+}
+
+function nextRuntimeFrame(runtime: ScenarioRuntime, headId: string): number {
+  const head = requireRuntimeHead(runtime, headId);
+  return Math.min(head.currentFrameIndex + 1, runtime.scenario.frames.length);
+}
+
+function previousRuntimeFrame(runtime: ScenarioRuntime, headId: string): number {
+  const head = requireRuntimeHead(runtime, headId);
+  return Math.max(head.currentFrameIndex - 1, 0);
+}
+
+function clampedRuntimeFrame(runtime: ScenarioRuntime, frameIndex: number): number {
+  return Math.max(0, Math.min(frameIndex, runtime.scenario.frames.length));
+}
+
+function cloneFrameReceipts(runtime: ScenarioRuntime, headId: string, frameIndex?: number): ReceiptSummary[] {
+  const resolved = resolveRuntimeFrame(runtime, headId, frameIndex);
+  return structuredClone(runtime.built.receiptsByFrame.get(resolved) ?? []);
+}
+
+function cloneFrameObservations(
+  runtime: ScenarioRuntime,
+  headId: string,
+  frameIndex?: number
+): DeliveryObservationSummary[] {
+  const resolved = resolveRuntimeFrame(runtime, headId, frameIndex);
+  return structuredClone(runtime.built.observationsByFrame.get(resolved) ?? []);
+}
+
+function scenarioHello(runtime: ScenarioRuntime): Promise<HostHello> {
+  return Promise.resolve({
+    hostKind: runtime.scenario.hostKind,
+    hostVersion: "0.0.0-scenario",
+    protocolVersion: "0.6.0",
+    schemaId: "ttd-protocol-scenario-v1",
+    capabilities: runtime.built.capabilities
   });
+}
 
-  function requireHead(headId: string): PlaybackHeadSnapshot {
-    const head = heads.get(headId);
-    if (head === undefined) {
-      throw new UnknownHeadError(headId);
-    }
-    return head;
-  }
-
-  function resolveFrame(headId: string, frameIndex?: number): number {
-    return frameIndex ?? requireHead(headId).currentFrameIndex;
-  }
+function buildScenarioAdapter(runtime: ScenarioRuntime): TtdHostAdapter {
+  const { scenario } = runtime;
 
   return {
     adapterName: "scenario-fixture",
-    hello: () => Promise.resolve({
-      hostKind: scenario.hostKind, hostVersion: "0.0.0-scenario",
-      protocolVersion: "0.6.0", schemaId: "ttd-protocol-scenario-v1",
-      capabilities: built.capabilities
-    }),
-    laneCatalog: () => Promise.resolve({ lanes: structuredClone(built.lanes) }),
-    playbackHead: (hid) => Promise.resolve(structuredClone(requireHead(hid))),
-    frame: (hid, fi) => Promise.resolve(structuredClone(buildPlaybackFrame(built.lanes, scenario, resolveFrame(hid, fi)))),
-    receipts: (hid, fi) => Promise.resolve(structuredClone(built.receiptsByFrame.get(resolveFrame(hid, fi)) ?? [])),
+    hello: () => scenarioHello(runtime),
+    laneCatalog: () => Promise.resolve({ lanes: structuredClone(runtime.built.lanes) }),
+    playbackHead: (hid) => Promise.resolve(structuredClone(requireRuntimeHead(runtime, hid))),
+    frame: (hid, fi) => Promise.resolve(structuredClone(runtimePlaybackFrame(runtime, hid, fi))),
+    receipts: (hid, fi) => Promise.resolve(cloneFrameReceipts(runtime, hid, fi)),
     effectEmissions: (hid, fi) => Promise.resolve(
-      (built.emissionsByFrame.get(resolveFrame(hid, fi)) ?? [])
+      (runtime.built.emissionsByFrame.get(resolveRuntimeFrame(runtime, hid, fi)) ?? [])
         .map((emission) => structuredClone(emission))
     ),
-    deliveryObservations: (hid, fi) => Promise.resolve(structuredClone(built.observationsByFrame.get(resolveFrame(hid, fi)) ?? [])),
+    deliveryObservations: (hid, fi) => Promise.resolve(cloneFrameObservations(runtime, hid, fi)),
     executionContext: () => Promise.resolve({ mode: scenario.executionMode }),
     stepForward(headId: string): Promise<PlaybackFrame> {
-      const head = requireHead(headId);
-      const maxFrame = scenario.frames.length;
-      const nextIndex = Math.min(head.currentFrameIndex + 1, maxFrame);
-      const frame = buildPlaybackFrame(built.lanes, scenario, nextIndex);
-      heads.set(headId, { ...head, currentFrameIndex: nextIndex, paused: true });
-      return Promise.resolve(structuredClone(frame));
+      return Promise.resolve(moveRuntimeHead(runtime, headId, nextRuntimeFrame(runtime, headId)));
     },
     stepBackward(headId: string): Promise<PlaybackFrame> {
-      const head = requireHead(headId);
-      const prevIndex = Math.max(head.currentFrameIndex - 1, 0);
-      const frame = buildPlaybackFrame(built.lanes, scenario, prevIndex);
-      heads.set(headId, { ...head, currentFrameIndex: prevIndex, paused: true });
-      return Promise.resolve(structuredClone(frame));
+      return Promise.resolve(moveRuntimeHead(runtime, headId, previousRuntimeFrame(runtime, headId)));
     },
     seekToFrame(headId: string, frameIndex: number): Promise<PlaybackFrame> {
-      const head = requireHead(headId);
-      const maxFrame = scenario.frames.length;
-      const clamped = Math.max(0, Math.min(frameIndex, maxFrame));
-      const frame = buildPlaybackFrame(built.lanes, scenario, clamped);
-      heads.set(headId, { ...head, currentFrameIndex: clamped, paused: true });
-      return Promise.resolve(structuredClone(frame));
+      return Promise.resolve(moveRuntimeHead(runtime, headId, clampedRuntimeFrame(runtime, frameIndex)));
     }
   };
+}
+
+export function buildScenario(scenario: Scenario): TtdHostAdapter {
+  return buildScenarioAdapter(createScenarioRuntime(scenario));
 }
 
 // ---------------------------------------------------------------------------
@@ -411,35 +587,43 @@ export function scenarioReplayWithSuppression(): TtdHostAdapter {
   });
 }
 
+function multiWriterConflictLanes(): ScenarioLane[] {
+  return [
+    { id: "wl:live", kind: "WORLDLINE", writable: false },
+    { id: "strand:experiment", kind: "STRAND", writable: true, parentId: "wl:live" }
+  ];
+}
+
+function multiWriterConflictFrames(): ScenarioFrame[] {
+  return [
+    { tick: 1,
+      receipts: [
+        { laneId: "wl:live", writerId: "alice", admitted: 2, rejected: 0, counterfactual: 0 },
+        { laneId: "wl:live", writerId: "bob", admitted: 1, rejected: 1, counterfactual: 0 }
+      ],
+      emissions: [{ effectKind: "diagnostic", laneId: "wl:live", deliveries: [
+        { sinkId: "sink:tui-log", outcome: "DELIVERED", reason: "Conflict resolution diagnostic." }
+      ]}]
+    },
+    { tick: 2,
+      receipts: [{ laneId: "wl:live", writerId: "alice", admitted: 1, rejected: 0, counterfactual: 1 }],
+      emissions: [{ effectKind: "export", laneId: "wl:live", deliveries: [
+        { sinkId: "sink:export", outcome: "FAILED", reason: "Export adapter unavailable." }
+      ]}]
+    },
+    { tick: 3,
+      receipts: [{ laneId: "strand:experiment", writerId: "bob", admitted: 1, rejected: 0, counterfactual: 0 }],
+      emissions: [{ effectKind: "bridge", laneId: "strand:experiment", deliveries: [
+        { sinkId: "sink:bridge", outcome: "SKIPPED", reason: "Debug inspection — bridge dispatch skipped." }
+      ]}]
+    }
+  ];
+}
+
 export function scenarioMultiWriterWithConflicts(): TtdHostAdapter {
   return buildScenario({
     hostKind: "GIT_WARP", executionMode: "LIVE",
-    lanes: [
-      { id: "wl:live", kind: "WORLDLINE", writable: false },
-      { id: "strand:experiment", kind: "STRAND", writable: true, parentId: "wl:live" }
-    ],
-    frames: [
-      { tick: 1,
-        receipts: [
-          { laneId: "wl:live", writerId: "alice", admitted: 2, rejected: 0, counterfactual: 0 },
-          { laneId: "wl:live", writerId: "bob", admitted: 1, rejected: 1, counterfactual: 0 }
-        ],
-        emissions: [{ effectKind: "diagnostic", laneId: "wl:live", deliveries: [
-          { sinkId: "sink:tui-log", outcome: "DELIVERED", reason: "Conflict resolution diagnostic." }
-        ]}]
-      },
-      { tick: 2,
-        receipts: [{ laneId: "wl:live", writerId: "alice", admitted: 1, rejected: 0, counterfactual: 1 }],
-        emissions: [{ effectKind: "export", laneId: "wl:live", deliveries: [
-          { sinkId: "sink:export", outcome: "FAILED", reason: "Export adapter unavailable." }
-        ]}]
-      },
-      { tick: 3,
-        receipts: [{ laneId: "strand:experiment", writerId: "bob", admitted: 1, rejected: 0, counterfactual: 0 }],
-        emissions: [{ effectKind: "bridge", laneId: "strand:experiment", deliveries: [
-          { sinkId: "sink:bridge", outcome: "SKIPPED", reason: "Debug inspection — bridge dispatch skipped." }
-        ]}]
-      }
-    ]
+    lanes: multiWriterConflictLanes(),
+    frames: multiWriterConflictFrames()
   });
 }

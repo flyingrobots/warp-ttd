@@ -10,6 +10,12 @@ This project will use [Semantic Versioning](https://semver.org/) starting at
 
 ### Added
 
+- **MCP admission-chain surface** (cycle 0019, initial) — read-only MCP stdio
+  server using the official MCP TypeScript SDK. Adds inspection tools for
+  session state, adapter capabilities, readings, and admission-chain posture.
+  Missing artifact, grant, ticket, and witness facts are explicit `ABSENT`
+  posture. Concurrent first inspections share one session initialization. No
+  grants, admission, mutation, or strand creation.
 - **Worldline view rethink** (cycle 0014) — split-view worldline page
   with lane tree on the left and per-lane tick timeline on the right.
   `filterFramesToLane` scopes frame data to a single lane.
@@ -39,6 +45,9 @@ This project will use [Semantic Versioning](https://semver.org/) starting at
 
 ### Changed
 
+- **Lint ratchet**: Cleared the remaining structural ESLint debt in the TUI
+  shell, CLI, adapter registry, scenario fixture, and test helpers. The lint
+  ceiling is now zero; both `npm run lint` and `npm run lint:check` are clean.
 - **Protocol boundary**: `EffectKind` removed from protocol mirror — port types
   are now plain data (strings). Dead `EffectKind` class deleted entirely.
 - **Neighborhood assembler**: Extracted `buildNeighborhoodState` from
@@ -55,6 +64,14 @@ This project will use [Semantic Versioning](https://semver.org/) starting at
 
 ### Fixed
 
+- **CLI flags**: Unknown flags now fail even when no positional command is
+  provided; the default `demo` command no longer bypasses flag validation.
+- **Connect flow handshake**: the TUI connect page now reuses the
+  `DebuggerSession` HostHello when building session context instead of calling
+  `adapter.hello()` a second time.
+- **Scenario fixture sparse frames**: sparse frame holes are skipped while
+  preserving explicit frame indexes, matching the original fixture builder
+  behavior.
 - **DebuggerSession capability handshakes**: host adapter capabilities are now
   cached at session creation and reused across navigation refreshes, avoiding
   repeated `hello()` calls on every step/seek.

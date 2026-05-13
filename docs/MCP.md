@@ -1,6 +1,8 @@
 # MCP
 
-> **Status: planned.** This surface is not yet implemented. See [backlog item](./method/backlog/asap/DELIVERY_mcp-admission-chain-surface.md).
+> **Status: initial read-only stdio surface implemented.** See
+> [cycle 0019](./design/0019-mcp-admission-chain-surface/mcp-admission-chain-surface.md)
+> and [backlog item](./method/backlog/asap/DELIVERY_mcp-admission-chain-surface.md).
 
 WARP TTD is a tool-native participant in the agentic workstation via the Model
 Context Protocol (MCP).
@@ -30,12 +32,22 @@ perform admission, mutate host state, or create local strands.
 
 ## Tool Groups
 
-- **Inspection**: `hello`, `session`, `catalog`, `frame`, `worldline`,
-  `effects`, `deliveries`, `readings`.
+- **Inspection**: `warp_ttd.inspect_session`,
+  `warp_ttd.inspect_adapter_capabilities`, `warp_ttd.inspect_readings`.
 - **Capabilities**: adapter support reported as `AdapterCapability` facts.
-- **Admission Chain**: registered artifact facts, requirement posture, grant
-  posture, admission ticket or obstruction posture, witness facts, receipt
-  facts, and reading envelope facts when present.
+- **Admission Chain**: `warp_ttd.inspect_admission_chain` reports registered
+  artifact facts, requirement posture, grant posture, admission ticket or
+  obstruction posture, witness facts, receipt facts, and reading envelope facts
+  when present.
+
+## Running
+
+```bash
+npm run mcp
+```
+
+The initial server uses stdio transport and the fixture-backed host adapter. It
+is intentionally read-only.
 
 ## Design Rules
 
@@ -48,6 +60,8 @@ perform admission, mutate host state, or create local strands.
 - **Read-Only First**: Initial MCP work exposes absent, present, and obstructed
   facts. It does not add strand creation, grant issuance, admission, or
   mutation paths.
+- **Honest Absence**: Missing Echo/Wesley admission-chain facts are returned as
+  explicit `ABSENT` posture until host adapters provide them.
 
 ---
 **The goal is tool-native inspection. TUI work follows explicit MCP capability,

@@ -171,6 +171,30 @@ test("buildScenario stepForward advances the head", async () => {
   assert.equal(head.currentFrameIndex, 1);
 });
 
+test("buildScenario skips sparse frame holes while preserving frame indexes", async () => {
+  const frames = [] as Parameters<typeof buildScenario>[0]["frames"];
+  frames[1] = {
+    tick: 2,
+    receipts: [{ laneId: "wl:main", writerId: "alice", admitted: 1, rejected: 0, counterfactual: 0 }],
+    emissions: []
+  };
+
+  const adapter = buildScenario({
+    hostKind: "GIT_WARP",
+    executionMode: "LIVE",
+    lanes: [{ id: "wl:main", kind: "WORLDLINE", writable: false }],
+    frames
+  });
+
+  const receipts = await adapter.receipts("head:default", 2);
+  assert.equal(receipts.length, 1);
+  const receipt = receipts[0];
+  assert.ok(receipt !== undefined);
+  assert.equal(receipt.frameIndex, 2);
+  assert.equal(receipt.inputTick, 0);
+  assert.equal(receipt.outputTick, 2);
+});
+
 // --- Built-in scenarios ---
 
 test("scenarioLiveWithEffects produces delivered effects in live mode", async () => {

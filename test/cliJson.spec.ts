@@ -162,3 +162,20 @@ test("invalid command --json writes JSON error to stderr", async () => {
     assert.ok(parsed.error.includes("badcommand"));
   }
 });
+
+test("unknown flag without command --json writes JSON error to stderr", async () => {
+  await assert.rejects(
+    () => exec("node", [...NODE_ARGS, "--bogus", "--json"]),
+    (err) => {
+      const execErr = err as { stderr: string; stdout: string };
+      assert.equal(execErr.stdout.trim(), "");
+
+      const errLine = execErr.stderr.trim();
+      assert.ok(errLine.startsWith("{"), `Expected JSON error on stderr, got: ${errLine}`);
+      const parsed = JSON.parse(errLine) as { error: string };
+      assert.equal(typeof parsed.error, "string");
+      assert.ok(parsed.error.includes("--bogus"));
+      return true;
+    }
+  );
+});
