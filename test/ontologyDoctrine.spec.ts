@@ -14,11 +14,17 @@ function repoPathExists(relativePath: string): boolean {
 }
 
 test("MCP backlog exposes the admission chain instead of mirroring CLI", () => {
-  const content = readRepoText("docs/method/backlog/up-next/DELIVERY_mcp-agent-surface.md");
+  const content = readRepoText(
+    "docs/method/backlog/asap/DELIVERY_mcp-admission-chain-surface.md",
+  );
 
   assert.doesNotMatch(content, /mirror the current structured CLI/i);
   assert.match(content, /MCP should not mirror CLI\./);
   assert.match(content, /MCP should expose the lawful admission chain\./);
+  assert.match(content, /MCP is transport and inspection\./);
+  assert.match(content, /It is not authority, admission, grants, or\s+mutation\./);
+  assert.doesNotMatch(content, /present an invocation for admission/i);
+  assert.match(content, /inspect capability presentation and invocation posture/i);
 
   for (const noun of [
     "registered optic handles",
@@ -31,6 +37,32 @@ test("MCP backlog exposes the admission chain instead of mirroring CLI", () => {
   ]) {
     assert.match(content, new RegExp(noun, "i"));
   }
+});
+
+test("asap queue promotes MCP before strand speculation", () => {
+  assert.equal(
+    repoPathExists("docs/method/backlog/asap/DELIVERY_mcp-admission-chain-surface.md"),
+    true,
+  );
+  assert.equal(
+    repoPathExists("docs/method/backlog/asap/D-strand-speculation.md"),
+    false,
+  );
+  assert.equal(
+    repoPathExists("docs/method/backlog/up-next/D-strand-speculation.md"),
+    true,
+  );
+
+  const bearing = readRepoText("docs/BEARING.md");
+  const strand = readRepoText("docs/method/backlog/up-next/D-strand-speculation.md");
+
+  assert.match(bearing, /MCP Admission-Chain Surface/);
+  assert.match(
+    bearing,
+    /MCP is not authority, admission, grant issuance, or\s+mutation\./,
+  );
+  assert.match(strand, /blocked by admission-chain representation/);
+  assert.match(strand, /No strand creation before admission-chain representation exists\./);
 });
 
 test("admission-chain backlog keeps registration and handle as primary facts", () => {

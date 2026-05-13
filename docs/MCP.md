@@ -1,8 +1,9 @@
 # MCP
 
-> **Status: planned.** This surface is not yet implemented. See [backlog item](./method/backlog/up-next/DELIVERY_mcp-agent-surface.md).
+> **Status: planned.** This surface is not yet implemented. See [backlog item](./method/backlog/asap/DELIVERY_mcp-admission-chain-surface.md).
 
-WARP TTD is a tool-native participant in the agentic workstation via the Model Context Protocol (MCP).
+WARP TTD is a tool-native participant in the agentic workstation via the Model
+Context Protocol (MCP).
 
 ```mermaid
 sequenceDiagram
@@ -10,29 +11,44 @@ sequenceDiagram
     participant S as MCP Server
     participant DS as DebuggerSession
     participant H as Host Adapter
-    A->>S: call tool(step_forward)
-    S->>DS: session.stepForward()
-    DS->>H: adapter.stepForward()
-    H-->>DS: PlaybackFrame
-    DS-->>S: SessionUpdate
-    S-->>A: JSON Result
+    A->>S: call tool(inspect_session)
+    S->>DS: inspect read model
+    DS->>H: read host facts
+    H-->>DS: readings and posture
+    DS-->>S: session/worldline/admission facts
+    S-->>A: structured result
 ```
 
 ## Scope
 
-The MCP surface exposes structured debugger operations as tools. It is a thin projection over the `DebuggerSession` and the host-neutral protocol bedrock.
+The MCP surface exposes structured debugger facts as tools. It is a thin,
+read-only projection over the `DebuggerSession`, the host adapter boundary, and
+the host-neutral protocol bedrock.
+
+MCP is transport and inspection. It does not issue authority, construct grants,
+perform admission, mutate host state, or create local strands.
 
 ## Tool Groups
 
-- **Inspection**: `hello`, `catalog`, `frame`, `worldline`, `effects`, `deliveries`.
-- **Control**: `step_forward`, `step_backward`, `seek_to_frame`.
-- **Context**: `session`, `context`.
+- **Inspection**: `hello`, `session`, `catalog`, `frame`, `worldline`,
+  `effects`, `deliveries`, `readings`.
+- **Capabilities**: adapter support reported as `AdapterCapability` facts.
+- **Admission Chain**: registered artifact facts, requirement posture, grant
+  posture, admission ticket or obstruction posture, witness facts, receipt
+  facts, and reading envelope facts when present.
 
 ## Design Rules
 
-- **Shared Core**: MCP must reuse the `DebuggerSession` logic. No second debugger stack.
-- **Ontology Parity**: Use the same worldline/provenance/receipt nouns as the CLI.
-- **Machine-Readable**: Every result must be parseable by an agent without ad-hoc TUI formatting.
+- **Shared Core**: MCP must reuse the `DebuggerSession` logic. No second
+  debugger stack.
+- **Ontology Parity**: Use the same worldline, provenance, receipt, reading,
+  and admission-chain nouns as the CLI and authored schema.
+- **Machine-Readable**: Every result must be parseable by an agent without
+  ad-hoc TUI formatting.
+- **Read-Only First**: Initial MCP work exposes absent, present, and obstructed
+  facts. It does not add strand creation, grant issuance, admission, or
+  mutation paths.
 
 ---
-**The goal is tool-native debugging. TUI work follows explicit MCP capability, not the other way around.**
+**The goal is tool-native inspection. TUI work follows explicit MCP capability,
+not the other way around.**

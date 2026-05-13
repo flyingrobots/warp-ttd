@@ -1,6 +1,6 @@
 # Cycle D — Strand & Speculation Support
 
-**Status:** queued
+**Status:** blocked by admission-chain representation
 
 ## Sponsor Human
 
@@ -22,6 +22,20 @@ intents, advance through host admission, compare, drop or promote) through
 `TtdHostAdapter`, and the TUI renders strands as speculative lanes with honest
 provenance and retention posture.
 
+This hill only becomes eligible after WARP TTD can inspect the lawful
+admission chain that makes a debugger-created strand an authorized optic
+invocation rooted at an exact causal basis.
+
+## Blocked By
+
+- MCP admission-chain surface can expose read-only session, worldline, reading,
+  adapter capability, and admission-chain posture.
+- WARP TTD can represent registered artifact facts, grant posture,
+  `AdmissionTicket` or obstruction posture, `LawWitness`, receipt or
+  `ReadingEnvelope`, basis, aperture, and budget posture as distinct facts.
+- Debugger-created strands can be specified as admitted invocations rather than
+  local UI mutations.
+
 ## Playback Questions
 
 - Can a strand be created from the TUI and appear in the lane catalog?
@@ -40,6 +54,9 @@ provenance and retention posture.
 - No automatic shared promotion from debugger-created strands.
 - Durable author-only retention only where the host already supports it.
 - No automatic conflict resolution.
+- No strand creation before admission-chain representation exists.
+- No local fork path that bypasses artifact registration, capability
+  presentation, admission, witness, or receipt posture.
 
 ## Scope
 
