@@ -14,7 +14,7 @@ import type { BijouContext, Surface } from "@flyingrobots/bijou";
 import type { FramePage } from "@flyingrobots/bijou-tui";
 import { renderWaveShader } from "../shaders/bgShader.ts";
 import { resolveAdapter } from "../../app/adapterRegistry.ts";
-import type { AdapterConfig } from "../../app/adapterRegistry.ts";
+import type { AdapterConfig, ResolvedAdapter } from "../../app/adapterRegistry.ts";
 import { DebuggerSession } from "../../app/debuggerSession.ts";
 import { centerBox, isPageMsg, type SessionContext } from "./shared.ts";
 
@@ -53,6 +53,7 @@ type ConnectMsg =
 type ConnectCommand = (emit: (msg: ConnectMsg) => void) => Promise<void>;
 type ConnectUpdateResult = [ConnectModel, ConnectCommand[]];
 type ConnectKeyMap = ReturnType<typeof createKeyMap<ConnectMsg>>;
+export type ConnectAdapterResolver = (config: AdapterConfig) => Promise<ResolvedAdapter>;
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -83,15 +84,15 @@ const SCENARIO_CONFIGS: Record<number, AdapterConfig | "git-warp-wizard"> = {
 function makeConnectCmd(
   config: AdapterConfig,
   gen: number,
+  adapterResolver: ConnectAdapterResolver,
 ): ConnectCommand {
   return async (emit): Promise<void> => {
     try {
-      const { adapter, defaultHeadId } = await resolveAdapter(config);
+      const { adapter, defaultHeadId } = await adapterResolver(config);
       const session = await DebuggerSession.create(adapter, defaultHeadId);
       await session.seekToFrame(Number.MAX_SAFE_INTEGER);
-      const hello = await adapter.hello();
       const catalog = await adapter.laneCatalog();
-      emit({ type: "session-ready", ctx: { session, hello, catalog }, generation: gen });
+      emit({ type: "session-ready", ctx: { session, hello: session.hostHello, catalog }, generation: gen });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       emit({ type: "connect-error", message, generation: gen });
@@ -103,7 +104,10 @@ function makeConnectCmd(
 // Update
 // ---------------------------------------------------------------------------
 
-function selectConfig(model: ConnectModel): ConnectUpdateResult {
+function selectConfig(
+  model: ConnectModel,
+  adapterResolver: ConnectAdapterResolver
+): ConnectUpdateResult {
   const selected = SCENARIO_CONFIGS[model.choice];
 
   if (selected === "git-warp-wizard") {
@@ -113,12 +117,13 @@ function selectConfig(model: ConnectModel): ConnectUpdateResult {
   if (selected === undefined) return [model, []];
 
   const gen = model.generation + 1;
-  return [{ ...model, generation: gen, connecting: true }, [makeConnectCmd(selected, gen)]];
+  return [{ ...model, generation: gen, connecting: true }, [makeConnectCmd(selected, gen, adapterResolver)]];
 }
 
 function updateChoose(
   msg: ConnectMsg,
   model: ConnectModel,
+  adapterResolver: ConnectAdapterResolver,
 ): ConnectUpdateResult {
   if (msg.type === "down") {
     return [{ ...model, choice: Math.min(model.choice + 1, CONNECT_OPTIONS.length - 1) }, []];
@@ -127,7 +132,7 @@ function updateChoose(
     return [{ ...model, choice: Math.max(model.choice - 1, 0) }, []];
   }
   if (msg.type === "select") {
-    return selectConfig(model);
+    return selectConfig(model, adapterResolver);
   }
   return [model, []];
 }
@@ -269,7 +274,10 @@ function handleBack(model: ConnectModel): ConnectUpdateResult {
   return [{ ...model, step: "choose" }, []];
 }
 
-function handleInputSelect(model: ConnectModel): ConnectUpdateResult {
+function handleInputSelect(
+  model: ConnectModel,
+  adapterResolver: ConnectAdapterResolver
+): ConnectUpdateResult {
   if (model.step === "input-path" && model.inputValue.trim().length === 0) {
     return [{ ...model, error: "Repository path cannot be empty" }, []];
   }
@@ -278,12 +286,16 @@ function handleInputSelect(model: ConnectModel): ConnectUpdateResult {
   }
   const gen = model.generation + 1;
   const config: AdapterConfig = { kind: "git-warp", repoPath: model.repoPath, graphName: model.inputValue };
-  return [{ ...model, generation: gen, connecting: true }, [makeConnectCmd(config, gen)]];
+  return [{ ...model, generation: gen, connecting: true }, [makeConnectCmd(config, gen, adapterResolver)]];
 }
 
-function updateInputStep(msg: ConnectMsg, model: ConnectModel): ConnectUpdateResult {
+function updateInputStep(
+  msg: ConnectMsg,
+  model: ConnectModel,
+  adapterResolver: ConnectAdapterResolver
+): ConnectUpdateResult {
   if (msg.type === "back") return handleBack(model);
-  if (msg.type === "select") return handleInputSelect(model);
+  if (msg.type === "select") return handleInputSelect(model, adapterResolver);
   return [updateTextInput(msg, model), []];
 }
 
@@ -299,18 +311,26 @@ function updateConnectGlobal(
   return null;
 }
 
-function updateConnect(msg: ConnectMsg, model: ConnectModel): ConnectUpdateResult {
+function updateConnect(
+  msg: ConnectMsg,
+  model: ConnectModel,
+  adapterResolver: ConnectAdapterResolver
+): ConnectUpdateResult {
   const global = updateConnectGlobal(msg, model);
   if (global !== null) return global;
   if (model.sessionCtx !== null) return [model, []];
-  if (model.step === "choose") return updateChoose(msg, model);
-  return updateInputStep(msg, model);
+  if (model.step === "choose") return updateChoose(msg, model, adapterResolver);
+  return updateInputStep(msg, model, adapterResolver);
 }
 
-function updateConnectPage(msg: ConnectMsg, model: ConnectModel): ConnectUpdateResult {
-  if (!isPageMsg(msg)) return [model, []];
+function connectUpdate(
+  adapterResolver: ConnectAdapterResolver
+): FramePage<ConnectModel, ConnectMsg>["update"] {
+  return (msg, model): ConnectUpdateResult => {
+    if (!isPageMsg(msg)) return [model, []];
 
-  return updateConnect(msg, model);
+    return updateConnect(msg as ConnectMsg, model, adapterResolver);
+  };
 }
 
 function connectLayout(
@@ -323,13 +343,16 @@ function connectLayout(
   });
 }
 
-export function connectPage(ctx: BijouContext): FramePage<ConnectModel, ConnectMsg> {
+export function connectPage(
+  ctx: BijouContext,
+  adapterResolver: ConnectAdapterResolver = resolveAdapter
+): FramePage<ConnectModel, ConnectMsg> {
   return {
     id: "connect",
     title: "Connect",
     init: () => [initialConnectModel(), []],
     keyMap: connectKeyMap(),
-    update: updateConnectPage,
+    update: connectUpdate(adapterResolver),
     layout: connectLayout(ctx),
   };
 }
