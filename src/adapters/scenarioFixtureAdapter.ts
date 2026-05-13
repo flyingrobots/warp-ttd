@@ -328,7 +328,10 @@ function storeFrameData(
 function populateFrameData(args: PopulateFrameDataArgs): void {
   const { scenario, counters, worldlineIdByLaneId, maps } = args;
 
-  for (const [fi, sf] of scenario.frames.entries()) {
+  for (let fi = 0; fi < scenario.frames.length; fi++) {
+    const sf = scenario.frames[fi];
+    if (sf === undefined) continue;
+
     const prev = scenario.frames[fi - 1];
     const prevTick = prev === undefined ? 0 : prev.tick;
     const data = buildFrameData({

@@ -69,6 +69,9 @@ This project will use [Semantic Versioning](https://semver.org/) starting at
 - **Connect flow handshake**: the TUI connect page now reuses the
   `DebuggerSession` HostHello when building session context instead of calling
   `adapter.hello()` a second time.
+- **Scenario fixture sparse frames**: sparse frame holes are skipped while
+  preserving explicit frame indexes, matching the original fixture builder
+  behavior.
 - **DebuggerSession capability handshakes**: host adapter capabilities are now
   cached at session creation and reused across navigation refreshes, avoiding
   repeated `hello()` calls on every step/seek.
