@@ -73,4 +73,4 @@ as distinct debugger facts.
 - `docs/WARP_DRIFT.md`
 - `docs/method/backlog/up-next/PROTO_debugger-native-vs-shared-family-boundary.md`
 - `docs/method/backlog/up-next/PROTO_generated-protocol-authority-cutover.md`
-- `docs/method/backlog/asap/DELIVERY_mcp-admission-chain-surface.md`
+- `docs/method/graveyard/DELIVERY_mcp-admission-chain-surface.md`

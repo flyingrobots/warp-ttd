@@ -1,8 +1,25 @@
 # MCP admission-chain surface
 
+**Status:** complete
+
 Promote the agent surface from "CLI JSON plus intention" to an explicit,
 read-only MCP delivery adapter over debugger readings and admission-chain
 posture.
+
+## Closure
+
+Cycle 0019 shipped the first read-only MCP stdio surface:
+
+- `warp_ttd.inspect_session`
+- `warp_ttd.inspect_adapter_capabilities`
+- `warp_ttd.inspect_readings`
+- `warp_ttd.inspect_admission_chain`
+
+The surface exposes session, adapter, reading, and admission-chain posture facts
+without adding authority issuance, grant construction, admission, mutation, or
+strand creation. Missing lawful optic facts are explicit absence facts. The
+follow-on work is the admission-chain read model, not another delivery-adapter
+bootstrap.
 
 ## Why
 

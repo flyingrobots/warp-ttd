@@ -1,6 +1,6 @@
 ---
 title: MCP Admission-Chain Surface Backlog Origin
-status: proposed
+status: landed
 ---
 
 # MCP Admission-Chain Surface
@@ -30,4 +30,4 @@ contract:
 
 ## Source Backlog
 
-- `docs/method/backlog/asap/DELIVERY_mcp-admission-chain-surface.md`
+- `docs/method/graveyard/DELIVERY_mcp-admission-chain-surface.md`

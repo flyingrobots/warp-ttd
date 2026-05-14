@@ -13,11 +13,22 @@ function repoPathExists(relativePath: string): boolean {
   return fs.existsSync(path.join(ROOT, relativePath));
 }
 
-test("MCP backlog exposes the admission chain instead of mirroring CLI", () => {
-  const content = readRepoText(
-    "docs/method/backlog/asap/DELIVERY_mcp-admission-chain-surface.md",
-  );
+test("MCP admission-chain surface is closed as a landed cycle", () => {
+  const graveyardPath = "docs/method/graveyard/DELIVERY_mcp-admission-chain-surface.md";
 
+  assert.equal(
+    repoPathExists("docs/method/backlog/asap/DELIVERY_mcp-admission-chain-surface.md"),
+    false,
+  );
+  assert.equal(repoPathExists(graveyardPath), true);
+
+  const design = readRepoText(
+    "docs/design/0019-mcp-admission-chain-surface/mcp-admission-chain-surface.md",
+  );
+  const content = readRepoText(graveyardPath);
+
+  assert.match(design, /status: landed/);
+  assert.match(content, /\*\*Status:\*\* complete/);
   assert.doesNotMatch(content, /mirror the current structured CLI/i);
   assert.match(content, /MCP should not mirror CLI\./);
   assert.match(content, /MCP should expose the lawful admission chain\./);
@@ -39,11 +50,7 @@ test("MCP backlog exposes the admission chain instead of mirroring CLI", () => {
   }
 });
 
-test("asap queue promotes MCP before strand speculation", () => {
-  assert.equal(
-    repoPathExists("docs/method/backlog/asap/DELIVERY_mcp-admission-chain-surface.md"),
-    true,
-  );
+test("bearing promotes admission-chain read model before strand speculation", () => {
   assert.equal(
     repoPathExists("docs/method/backlog/asap/D-strand-speculation.md"),
     false,
@@ -56,7 +63,15 @@ test("asap queue promotes MCP before strand speculation", () => {
   const bearing = readRepoText("docs/BEARING.md");
   const strand = readRepoText("docs/method/backlog/up-next/D-strand-speculation.md");
 
-  assert.match(bearing, /MCP Admission-Chain Surface/);
+  assert.match(bearing, /Admission-Chain Read Model/);
+  assert.match(
+    bearing,
+    /docs\/method\/backlog\/up-next\/PROTO_admission-chain-inspector\.md/,
+  );
+  assert.doesNotMatch(
+    bearing,
+    /docs\/method\/backlog\/asap\/DELIVERY_mcp-admission-chain-surface\.md/,
+  );
   assert.match(
     bearing,
     /MCP is not authority, admission, grant issuance, or\s+mutation\./,
