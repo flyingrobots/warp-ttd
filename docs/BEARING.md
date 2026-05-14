@@ -12,7 +12,17 @@ timeline
 
 ## Active Gravity
 
-### 1. Admission-Chain Read Model
+### 1. Dual Live App Debugging
+
+- Making `jedit`, a live Echo app, and `graft`, a live git-warp app, the two
+  concrete debugger acceptance targets.
+- Proving the same host-neutral session, CLI, and MCP vocabulary can inspect
+  both apps without becoming either app's domain model.
+- Keeping host-specific richness capability-gated: Echo pressures lawful optic
+  admission and witness posture; git-warp pressures causal history, receipts,
+  lanes, and materialized readings.
+
+### 2. Admission-Chain Read Model
 
 - Treating the landed MCP surface as transport and inspection over
   `DebuggerSession`, host adapter facts, readings, and admission-chain posture.
@@ -22,12 +32,12 @@ timeline
 - Keeping MCP out of authority issuance, grant construction, runtime admission,
   mutation, and local strand creation.
 
-### 2. Neighborhood & Site Catalog
+### 3. Neighborhood & Site Catalog
 
 - Refinement of the `NeighborhoodFocusSummary` to share focus across disparate debugger pages.
 - Hardening site-driven worldline cursor recomputation for consistent navigation.
 
-### 3. DebuggerSession Maturity
+### 4. DebuggerSession Maturity
 
 - Implementation of the `DebuggerSession` investigation object to track speculative result handles and investigator context.
 - Scaling the window-based read model to handle high-density causal worldlines.
@@ -47,12 +57,16 @@ timeline
 
 ## Next Target
 
-The immediate focus is the **Admission-Chain Read Model**: protocol and read
-model representation for artifact registration, registration descriptors,
-Echo-owned handles, grant posture, capability presentations, admission tickets,
+The product goal is **Dual Live App Debugging**: WARP TTD debugs `jedit`, a
+live Echo app, and `graft`, a live git-warp app. The immediate protocol focus
+is still the **Admission-Chain Read Model**: protocol and read model
+representation for artifact registration, registration descriptors, Echo-owned
+handles, grant posture, capability presentations, admission tickets,
 obstructions, witnesses, receipts, and reading envelopes.
 
 MCP is not authority, admission, grant issuance, or mutation. The read-model
 target is
 `docs/method/backlog/up-next/PROTO_admission-chain-inspector.md`
 ([open backlog](./method/backlog/up-next/PROTO_admission-chain-inspector.md)).
+The live app delivery target is
+[`docs/method/backlog/up-next/DELIVERY_dual-live-app-debugging.md`](./method/backlog/up-next/DELIVERY_dual-live-app-debugging.md).

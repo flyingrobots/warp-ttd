@@ -2,6 +2,9 @@
 
 Implement `TtdHostAdapter` for Echo substrates.
 
+The first concrete target is `jedit`, a live Echo app. The adapter should make
+that app debuggable without importing editor-domain semantics into WARP TTD.
+
 Echo exposes a WASM/browser host boundary with observation and settlement
 publication. The adapter should wrap that boundary and map it into
 `warp-ttd` through Wesley-generated TypeScript family artifacts where the

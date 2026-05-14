@@ -32,6 +32,17 @@ WARP TTD can display artifact registration, registration descriptor, handle,
 grant presentation, admission ticket, law witness, receipt, and reading posture
 as distinct debugger facts.
 
+## Live Targets
+
+- `jedit`, a live Echo app, is the first pressure test for real admission-chain
+  representation.
+- `graft`, a live git-warp app, is the paired pressure test that proves the
+  same debugger can inspect causal history and graph-shaped readings without
+  pretending every host has Echo admission facts.
+
+The read model must let CLI and MCP explain both targets through one
+host-neutral debugger vocabulary.
+
 ## Playback Questions
 
 - Can an operator see which `OpticArtifact` or artifact hash was invoked?
@@ -73,4 +84,5 @@ as distinct debugger facts.
 - `docs/WARP_DRIFT.md`
 - `docs/method/backlog/up-next/PROTO_debugger-native-vs-shared-family-boundary.md`
 - `docs/method/backlog/up-next/PROTO_generated-protocol-authority-cutover.md`
+- `docs/method/backlog/up-next/DELIVERY_dual-live-app-debugging.md`
 - `docs/method/graveyard/DELIVERY_mcp-admission-chain-surface.md`

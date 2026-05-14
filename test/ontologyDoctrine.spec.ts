@@ -88,6 +88,23 @@ test("admission-chain backlog keeps registration and handle as primary facts", (
   assert.match(content, /artifact registration, registration descriptor, handle/);
 });
 
+test("bearing names jedit and graft as live debugger targets", () => {
+  const bearing = readRepoText("docs/BEARING.md");
+  const backlog = readRepoText("docs/method/backlog/up-next/DELIVERY_dual-live-app-debugging.md");
+
+  for (const content of [bearing, backlog]) {
+    assert.match(content, /jedit/i);
+    assert.match(content, /live Echo app/i);
+    assert.match(content, /graft/i);
+    assert.match(content, /live git-warp app/i);
+  }
+
+  assert.match(
+    backlog,
+    /same debugger surface can inspect both apps without becoming either app's\s+domain model/i,
+  );
+});
+
 test("README documents the Wesley sibling checkout needed by generation", () => {
   const content = readRepoText("README.md");
 
