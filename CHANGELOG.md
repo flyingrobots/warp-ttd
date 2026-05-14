@@ -45,6 +45,10 @@ This project will use [Semantic Versioning](https://semver.org/) starting at
 
 ### Changed
 
+- **Cycle bearing**: closed the initial MCP admission-chain surface delivery
+  backlog and promoted the admission-chain read model as the next target. The
+  next work is protocol/read-model representation of registration, grant,
+  ticket, witness, receipt, and reading-envelope facts, not strand mutation.
 - **Lint ratchet**: Cleared the remaining structural ESLint debt in the TUI
   shell, CLI, adapter registry, scenario fixture, and test helpers. The lint
   ceiling is now zero; both `npm run lint` and `npm run lint:check` are clean.

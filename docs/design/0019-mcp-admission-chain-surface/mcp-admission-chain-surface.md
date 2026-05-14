@@ -1,6 +1,6 @@
 ---
 title: MCP Admission-Chain Surface
-status: active
+status: landed
 ---
 
 # MCP Admission-Chain Surface
@@ -100,3 +100,11 @@ The shipped first implementation adds:
   requirement, grant, ticket, witness, receipt, and reading envelope facts.
 - Add MCP resource URIs if agents need stable bookmarkable readings.
 - Add browser and TUI consumers only after MCP facts are stable.
+
+## Closure
+
+The initial read-only MCP stdio surface has landed. The next work is not more
+delivery plumbing or strand control; it is the admission-chain read model that
+lets MCP, CLI, and later TUI surfaces inspect registration, grant, ticket,
+witness, receipt, and reading-envelope facts without inventing authority,
+admission, or mutation paths.

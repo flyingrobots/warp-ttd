@@ -2,7 +2,7 @@
 
 > **Status: initial read-only stdio surface implemented.** See
 > [cycle 0019](./design/0019-mcp-admission-chain-surface/mcp-admission-chain-surface.md)
-> and [backlog item](./method/backlog/asap/DELIVERY_mcp-admission-chain-surface.md).
+> and [completed backlog item](./method/graveyard/DELIVERY_mcp-admission-chain-surface.md).
 
 WARP TTD is a tool-native participant in the agentic workstation via the Model
 Context Protocol (MCP).

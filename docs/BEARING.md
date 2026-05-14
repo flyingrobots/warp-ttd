@@ -12,12 +12,13 @@ timeline
 
 ## Active Gravity
 
-### 1. MCP Admission-Chain Surface
+### 1. Admission-Chain Read Model
 
-- Promoting MCP from speculative experiment to the next explicit delivery
-  adapter.
-- Treating MCP as transport and inspection over `DebuggerSession`, host adapter
-  facts, readings, and admission-chain posture.
+- Treating the landed MCP surface as transport and inspection over
+  `DebuggerSession`, host adapter facts, readings, and admission-chain posture.
+- Promoting the admission-chain read model as the next protocol target, so
+  artifact registration, handles, grant posture, admission tickets, witnesses,
+  receipts, and reading envelopes become distinct facts instead of blobs.
 - Keeping MCP out of authority issuance, grant construction, runtime admission,
   mutation, and local strand creation.
 
@@ -46,9 +47,12 @@ timeline
 
 ## Next Target
 
-The immediate focus is the **MCP Admission-Chain Surface**: a read-only
-agent-facing transport and inspection layer for session, worldline, reading,
-adapter capability, artifact, grant posture, admission ticket, obstruction,
-witness, and receipt facts. MCP is not authority, admission, grant issuance, or
-mutation. See
-[`docs/method/backlog/asap/DELIVERY_mcp-admission-chain-surface.md`](./method/backlog/asap/DELIVERY_mcp-admission-chain-surface.md).
+The immediate focus is the **Admission-Chain Read Model**: protocol and read
+model representation for artifact registration, registration descriptors,
+Echo-owned handles, grant posture, capability presentations, admission tickets,
+obstructions, witnesses, receipts, and reading envelopes.
+
+MCP is not authority, admission, grant issuance, or mutation. The read-model
+target is
+`docs/method/backlog/up-next/PROTO_admission-chain-inspector.md`
+([open backlog](./method/backlog/up-next/PROTO_admission-chain-inspector.md)).
