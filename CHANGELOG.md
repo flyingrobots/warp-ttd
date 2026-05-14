@@ -45,6 +45,10 @@ This project will use [Semantic Versioning](https://semver.org/) starting at
 
 ### Changed
 
+- **Live debugger target**: named `jedit` as the live Echo app target and
+  `graft` as the live git-warp app target. The next delivery proof is a single
+  debugger surface that can inspect both without becoming either app's domain
+  model.
 - **Cycle bearing**: closed the initial MCP admission-chain surface delivery
   backlog and promoted the admission-chain read model as the next target. The
   next work is protocol/read-model representation of registration, grant,
