@@ -82,6 +82,9 @@ This project will use [Semantic Versioning](https://semver.org/) starting at
 
 ### Fixed
 
+- **Live target evidence posture isolation**: repeated live-target inspections
+  now return fresh runtime-boundary evidence facts so an in-process consumer
+  cannot mutate one result and contaminate later inspections.
 - **CLI flags**: Unknown flags now fail even when no positional command is
   provided; the default `demo` command no longer bypasses flag validation.
 - **Connect flow handshake**: the TUI connect page now reuses the

@@ -59,16 +59,6 @@ export interface LiveTargetRoots {
 const DEFAULT_JEDIT_ROOT = "../jedit";
 const DEFAULT_GRAFT_ROOT = "../graft";
 const GRAFT_GRAPH_NAME = "graft-ast";
-const UNAVAILABLE_RUNTIME_BOUNDARY_EVIDENCE: LiveTargetRuntimeBoundaryEvidence = {
-  posture: "UNAVAILABLE",
-  nativeContinuumWitness: false
-};
-const GRAFT_TRANSLATED_SUBSTRATE_EVIDENCE: LiveTargetRuntimeBoundaryEvidence = {
-  posture: "TRANSLATED_SUBSTRATE",
-  nativeContinuumWitness: false,
-  substrate: "git-warp",
-  evidenceKind: "warp-index"
-};
 
 function resolveRoot(envName: string, fallback: string): string {
   return path.resolve(process.env[envName] ?? fallback);
@@ -85,6 +75,22 @@ export function liveTargetRootsFromEnv(): LiveTargetRoots {
   };
 }
 
+function unavailableRuntimeBoundaryEvidence(): LiveTargetRuntimeBoundaryEvidence {
+  return {
+    posture: "UNAVAILABLE",
+    nativeContinuumWitness: false
+  };
+}
+
+function graftTranslatedSubstrateEvidence(): LiveTargetRuntimeBoundaryEvidence {
+  return {
+    posture: "TRANSLATED_SUBSTRATE",
+    nativeContinuumWitness: false,
+    substrate: "git-warp",
+    evidenceKind: "warp-index"
+  };
+}
+
 function inspectJeditTarget(roots: LiveTargetRoots): LiveTargetInspection {
   return {
     target: "jedit",
@@ -94,7 +100,7 @@ function inspectJeditTarget(roots: LiveTargetRoots): LiveTargetInspection {
     rootPosture: rootPosture(roots.jeditRoot),
     adapterPosture: "UNAVAILABLE",
     admissionChainPosture: "UNAVAILABLE",
-    runtimeBoundaryEvidence: UNAVAILABLE_RUNTIME_BOUNDARY_EVIDENCE,
+    runtimeBoundaryEvidence: unavailableRuntimeBoundaryEvidence(),
     readOnly: true,
     reason: "Echo live adapter, admission-chain publication, and native Continuum evidence are not wired into WARP TTD yet."
   };
@@ -109,7 +115,7 @@ function inspectGraftTarget(roots: LiveTargetRoots): LiveTargetInspection {
     rootPosture: rootPosture(roots.graftRoot),
     adapterPosture: "CONFIGURED",
     admissionChainPosture: "UNAVAILABLE",
-    runtimeBoundaryEvidence: GRAFT_TRANSLATED_SUBSTRATE_EVIDENCE,
+    runtimeBoundaryEvidence: graftTranslatedSubstrateEvidence(),
     readOnly: true,
     graphName: GRAFT_GRAPH_NAME,
     reason: "graft uses the existing git-warp adapter path; git-warp facts are translated substrate evidence, not native Continuum witnesshood."

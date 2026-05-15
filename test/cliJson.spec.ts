@@ -10,6 +10,8 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import path from "node:path";
 
+import { inspectLiveTargets } from "../src/app/liveTargetInspection.ts";
+
 const exec = promisify(execFile);
 
 const CLI = "./src/cli.ts";
@@ -241,6 +243,27 @@ test("targets --json never reports native Continuum evidence without native witn
       assert.equal(evidence["nativeContinuumWitness"], false);
     }
   }
+});
+
+test("live target evidence posture cannot be poisoned by mutating a prior inspection", () => {
+  const roots = {
+    jeditRoot: path.join(process.cwd(), "test", "missing-jedit"),
+    graftRoot: path.join(process.cwd(), "test", "missing-graft")
+  };
+  const firstGraft = inspectLiveTargets(roots)
+    .find((target) => target.target === "graft");
+  assert.ok(firstGraft !== undefined, "graft target must be present");
+
+  Object.assign(firstGraft.runtimeBoundaryEvidence, {
+    posture: "CONTINUUM_NATIVE",
+    nativeContinuumWitness: true
+  });
+
+  const secondGraft = inspectLiveTargets(roots)
+    .find((target) => target.target === "graft");
+  assert.ok(secondGraft !== undefined, "graft target must be present");
+  assert.equal(secondGraft.runtimeBoundaryEvidence.posture, "TRANSLATED_SUBSTRATE");
+  assert.equal(secondGraft.runtimeBoundaryEvidence.nativeContinuumWitness, false);
 });
 
 test("invalid command --json writes JSON error to stderr", async () => {
