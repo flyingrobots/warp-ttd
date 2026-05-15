@@ -43,6 +43,40 @@ test("repo doctrine makes WARP TTD agent-native and agent-first", () => {
   );
 });
 
+test("MCP parity design declares missing surface, tools, diagrams, examples, and schemas", () => {
+  const designPath = "docs/design/0022-mcp-agent-parity/mcp-agent-parity.md";
+  assert.equal(repoPathExists(designPath), true);
+
+  const content = readRepoText(designPath);
+
+  for (const heading of [
+    "## What's Missing",
+    "## What This Adds",
+    "## Mermaid Class Diagram",
+    "## Entity Relationship Diagram",
+    "## Flow Diagrams",
+    "## MCP API",
+    "## Versioned JSON Schemas",
+  ]) {
+    assert.match(content, new RegExp(heading.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  }
+
+  for (const tool of [
+    "warp_ttd.open_session",
+    "warp_ttd.inspect_worldline",
+    "warp_ttd.inspect_neighborhood_focus",
+    "warp_ttd.pin_observation",
+    "warp_ttd.seek_frame",
+  ]) {
+    assert.match(content, new RegExp(tool.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  }
+
+  assert.match(content, /```mermaid\nclassDiagram/);
+  assert.match(content, /```mermaid\nerDiagram/);
+  assert.match(content, /"schemaVersion": "warp-ttd\.mcp\.v1"/);
+  assert.match(content, /"\$id": "https:\/\/warp-ttd\.local\/schemas\/mcp\/v1\/McpToolResult\.schema\.json"/);
+});
+
 test("MCP admission-chain surface is closed as a landed cycle", () => {
   const graveyardPath = "docs/method/graveyard/DELIVERY_mcp-admission-chain-surface.md";
 

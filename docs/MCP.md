@@ -3,6 +3,8 @@
 > **Status: initial read-only stdio surface implemented.** See
 > [cycle 0019](./design/0019-mcp-admission-chain-surface/mcp-admission-chain-surface.md)
 > and [completed backlog item](./method/graveyard/DELIVERY_mcp-admission-chain-surface.md).
+> Agent parity is designed in
+> [cycle 0022](./design/0022-mcp-agent-parity/mcp-agent-parity.md).
 
 WARP TTD is a tool-native participant in the agentic workstation via the Model
 Context Protocol (MCP).
