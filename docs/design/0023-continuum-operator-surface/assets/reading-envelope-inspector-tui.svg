@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="760" viewBox="0 0 1280 760" role="img" aria-labelledby="title desc">
+  <title id="title">Reading envelope inspector TUI mockup</title>
+  <desc id="desc">Terminal-style mockup focused on observer plan, observation request, reading envelope, and evidence status.</desc>
+  <rect width="1280" height="760" fill="#111417"/>
+  <rect x="24" y="24" width="1232" height="712" rx="8" fill="#151a20" stroke="#596978" stroke-width="2"/>
+  <rect x="24" y="24" width="1232" height="44" rx="8" fill="#28323c"/>
+  <text x="48" y="53" fill="#f2f7ff" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="18">Reading Envelope Inspector</text>
+  <text x="1048" y="53" fill="#a9b8c6" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="14">source: jedit / Echo</text>
+
+  <rect x="48" y="96" width="360" height="600" rx="6" fill="#0f1419" stroke="#40505f"/>
+  <text x="68" y="130" fill="#7bdcff" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="16">Observer Plan</text>
+  <text x="68" y="174" fill="#d7e3ef" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="14">planId: plan:window</text>
+  <text x="68" y="204" fill="#d7e3ef" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="14">apertureKey: visible-text</text>
+  <text x="68" y="234" fill="#d7e3ef" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="14">basisKey: head:main@42</text>
+  <text x="68" y="264" fill="#d7e3ef" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="14">stateKind: STATELESS</text>
+  <text x="68" y="294" fill="#d7e3ef" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="14">emissionKind: text.window</text>
+  <line x1="68" y1="330" x2="388" y2="330" stroke="#40505f"/>
+  <text x="68" y="366" fill="#7bdcff" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="16">Observation Request</text>
+  <text x="68" y="410" fill="#d7e3ef" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="14">requestId: req:42</text>
+  <text x="68" y="440" fill="#d7e3ef" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="14">sourceKind: COORDINATE</text>
+  <text x="68" y="470" fill="#d7e3ef" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="14">laneId: buffer:main</text>
+  <text x="68" y="500" fill="#d7e3ef" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="14">frameIndex: 42</text>
+  <text x="68" y="548" fill="#ffcc66" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="13">request is not the reading</text>
+  <text x="68" y="578" fill="#ffcc66" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="13">plan is not observer instance</text>
+
+  <rect x="436" y="96" width="396" height="600" rx="6" fill="#0f1419" stroke="#40505f"/>
+  <text x="456" y="130" fill="#7bdcff" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="16">Reading Envelope</text>
+  <rect x="456" y="156" width="156" height="34" rx="4" fill="#193029" stroke="#5bd4a8"/>
+  <text x="474" y="178" fill="#bfffe6" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="13">PRESENT</text>
+  <text x="456" y="226" fill="#d7e3ef" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="14">envelopeId: env:42</text>
+  <text x="456" y="256" fill="#d7e3ef" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="14">requestId: req:42</text>
+  <text x="456" y="286" fill="#d7e3ef" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="14">planId: plan:window</text>
+  <text x="456" y="316" fill="#d7e3ef" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="14">readingDigest: sha256:8a7...</text>
+  <text x="456" y="346" fill="#d7e3ef" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="14">witnessRef: witness:42</text>
+  <text x="456" y="376" fill="#d7e3ef" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="14">hologramRef: null</text>
+  <rect x="456" y="424" width="336" height="180" rx="4" fill="#141d24" stroke="#40505f"/>
+  <text x="476" y="456" fill="#edf5ff" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="14">Payload Summary</text>
+  <text x="476" y="492" fill="#d7e3ef" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="13">text window: lines 10..36</text>
+  <text x="476" y="522" fill="#d7e3ef" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="13">selection: none</text>
+  <text x="476" y="552" fill="#d7e3ef" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="13">residual: COMPLETE</text>
+
+  <rect x="860" y="96" width="364" height="600" rx="6" fill="#0f1419" stroke="#40505f"/>
+  <text x="880" y="130" fill="#7bdcff" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="16">Evidence Status</text>
+  <rect x="880" y="158" width="310" height="64" rx="4" fill="#143026" stroke="#5bd4a8"/>
+  <text x="900" y="184" fill="#bfffe6" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="14">ContinuumNativeEvidence</text>
+  <text x="900" y="208" fill="#d7e3ef" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="13">witnessed suffix shell present</text>
+  <rect x="880" y="246" width="310" height="110" rx="4" fill="#2c2415" stroke="#ffcc66"/>
+  <text x="900" y="274" fill="#ffcc66" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="14">TranslatedSubstrateEvidence</text>
+  <text x="900" y="302" fill="#d7e3ef" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="13">substrate: git-warp</text>
+  <text x="900" y="328" fill="#d7e3ef" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="13">nativeContinuumWitness: false</text>
+  <rect x="880" y="392" width="310" height="212" rx="4" fill="#24171a" stroke="#ff9f9f"/>
+  <text x="900" y="424" fill="#ff9f9f" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="14">Invariants</text>
+  <text x="900" y="460" fill="#d7e3ef" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="13">translated != native</text>
+  <text x="900" y="490" fill="#d7e3ef" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="13">reading != graph substrate</text>
+  <text x="900" y="520" fill="#d7e3ef" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="13">observer plan != observer</text>
+  <text x="900" y="550" fill="#d7e3ef" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="13">witness shell != receipt shell</text>
+</svg>

@@ -13,6 +13,10 @@ This project will use [Semantic Versioning](https://semver.org/) starting at
 - **MCP agent parity design**: added cycle 0022 design packet defining missing
   MCP parity against CLI/TUI, proposed API tools, examples, Mermaid diagrams,
   and versioned `warp-ttd.mcp.v1` JSON output schemas.
+- **Continuum operator surface design**: added cycle 0023 design packet for
+  near-future MCP and TUI support around runtime-boundary families, reading
+  envelopes, evidence status, and witnessed suffix sync, including SVG TUI
+  mockups.
 - **Live target smoke inspection**: added `targets --json` / `npm run targets`
   to report read-only posture for `jedit` as the live Echo app and `graft` as
   the live git-warp app. The command records root presence, adapter readiness,

@@ -13,6 +13,23 @@ function repoPathExists(relativePath: string): boolean {
   return fs.existsSync(path.join(ROOT, relativePath));
 }
 
+function escapedPattern(value: string): RegExp {
+  return new RegExp(value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+}
+
+function assertAllTextPresent(content: string, values: readonly string[]): void {
+  for (const value of values) {
+    assert.match(content, escapedPattern(value));
+  }
+}
+
+function assertContinuumMockupsExist(mockups: readonly string[]): void {
+  for (const mockup of mockups) {
+    assert.equal(repoPathExists(mockup), true);
+    assert.match(readRepoText(mockup), /<svg/);
+  }
+}
+
 test("repo doctrine makes WARP TTD agent-native and agent-first", () => {
   const agents = readRepoText("AGENTS.md");
   const method = readRepoText("METHOD.md");
@@ -58,7 +75,7 @@ test("MCP parity design declares missing surface, tools, diagrams, examples, and
     "## MCP API",
     "## Versioned JSON Schemas",
   ]) {
-    assert.match(content, new RegExp(heading.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+    assert.match(content, escapedPattern(heading));
   }
 
   for (const tool of [
@@ -68,13 +85,63 @@ test("MCP parity design declares missing surface, tools, diagrams, examples, and
     "warp_ttd.pin_observation",
     "warp_ttd.seek_frame",
   ]) {
-    assert.match(content, new RegExp(tool.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+    assert.match(content, escapedPattern(tool));
   }
 
   assert.match(content, /```mermaid\nclassDiagram/);
   assert.match(content, /```mermaid\nerDiagram/);
   assert.match(content, /"schemaVersion": "warp-ttd\.mcp\.v1"/);
   assert.match(content, /"\$id": "https:\/\/warp-ttd\.local\/schemas\/mcp\/v1\/McpToolResult\.schema\.json"/);
+});
+
+test("Continuum near-future design declares MCP and TUI surfaces with SVG mockups", () => {
+  const designPath = "docs/design/0023-continuum-operator-surface/continuum-operator-surface.md";
+  const mockups = [
+    "docs/design/0023-continuum-operator-surface/assets/continuum-overview-tui.svg",
+    "docs/design/0023-continuum-operator-surface/assets/reading-envelope-inspector-tui.svg",
+    "docs/design/0023-continuum-operator-surface/assets/suffix-sync-inspector-tui.svg",
+  ];
+
+  assert.equal(repoPathExists(designPath), true);
+  assertContinuumMockupsExist(mockups);
+
+  const content = readRepoText(designPath);
+  assertAllTextPresent(content, [
+    "## Continuum Takeaways",
+    "## Near-Future Additions",
+    "## Agent MCP Surface",
+    "## TUI Surface",
+    "## Mock TUI Layouts",
+    "## Mermaid Class Diagram",
+    "## Entity Relationship Diagram",
+    "## Sequence Diagrams",
+  ]);
+
+  assertAllTextPresent(content, [
+    "IntentEnvelope",
+    "TickResult",
+    "ObserverPlan",
+    "ObservationRequest",
+    "ReadingEnvelope",
+    "ContinuumEvidenceStatus",
+    "WitnessedSuffixShell",
+    "CausalSuffixBundle",
+    "ImportOutcome",
+  ]);
+
+  assertAllTextPresent(content, [
+    "warp_ttd.inspect_runtime_boundary",
+    "warp_ttd.inspect_reading_envelopes",
+    "warp_ttd.inspect_evidence_status",
+    "warp_ttd.inspect_witnessed_suffix_shells",
+    "warp_ttd.inspect_import_outcomes",
+    "warp_ttd.trace_continuum_chain",
+  ]);
+
+  assert.match(content, /!\[Continuum overview TUI mockup\]/);
+  assert.match(content, /```mermaid\nclassDiagram/);
+  assert.match(content, /```mermaid\nerDiagram/);
+  assert.match(content, /```mermaid\nsequenceDiagram/);
 });
 
 test("MCP admission-chain surface is closed as a landed cycle", () => {

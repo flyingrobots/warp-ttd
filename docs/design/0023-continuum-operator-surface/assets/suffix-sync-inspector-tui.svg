@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="760" viewBox="0 0 1280 760" role="img" aria-labelledby="title desc">
+  <title id="title">Witnessed suffix sync inspector TUI mockup</title>
+  <desc id="desc">Terminal-style mockup showing Echo to git-warp causal suffix bundle, admission response, and import outcome.</desc>
+  <rect width="1280" height="760" fill="#101317"/>
+  <rect x="24" y="24" width="1232" height="712" rx="8" fill="#151b22" stroke="#5b6775" stroke-width="2"/>
+  <rect x="24" y="24" width="1232" height="44" rx="8" fill="#27313b"/>
+  <text x="48" y="53" fill="#edf5ff" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="18">Witnessed Suffix Sync Inspector</text>
+  <text x="1026" y="53" fill="#a9b8c6" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="14">no state snapshot sync</text>
+
+  <rect x="58" y="110" width="260" height="170" rx="6" fill="#0f1419" stroke="#5bd4a8"/>
+  <text x="78" y="144" fill="#5bd4a8" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="16">Source Runtime</text>
+  <text x="78" y="186" fill="#edf5ff" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="14">Echo</text>
+  <text x="78" y="216" fill="#d7e3ef" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="13">worldline: wl:buffer</text>
+  <text x="78" y="244" fill="#d7e3ef" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="13">frontier: tick 42</text>
+
+  <rect x="962" y="110" width="260" height="170" rx="6" fill="#0f1419" stroke="#9bcbff"/>
+  <text x="982" y="144" fill="#9bcbff" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="16">Target Runtime</text>
+  <text x="982" y="186" fill="#edf5ff" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="14">git-warp</text>
+  <text x="982" y="216" fill="#d7e3ef" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="13">worldline: wl:buffer</text>
+  <text x="982" y="244" fill="#d7e3ef" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="13">basis: tick 39</text>
+
+  <line x1="330" y1="194" x2="950" y2="194" stroke="#7bdcff" stroke-width="4"/>
+  <polygon points="950,194 932,184 932,204" fill="#7bdcff"/>
+  <text x="456" y="176" fill="#7bdcff" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="14">CausalSuffixBundle</text>
+
+  <rect x="360" y="236" width="560" height="190" rx="6" fill="#0f1419" stroke="#40505f"/>
+  <text x="382" y="270" fill="#7bdcff" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="16">WitnessedSuffixShell</text>
+  <text x="382" y="310" fill="#d7e3ef" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="14">sourceWorldlineId: wl:buffer</text>
+  <text x="382" y="340" fill="#d7e3ef" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="14">sourceSuffixStartTick: 40</text>
+  <text x="382" y="370" fill="#d7e3ef" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="14">sourceSuffixEndTick: 42</text>
+  <text x="382" y="400" fill="#d7e3ef" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="14">witnessDigest: sha256:77e...</text>
+  <text x="658" y="310" fill="#ffcc66" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="13">compact suffix evidence</text>
+  <text x="658" y="340" fill="#ffcc66" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="13">not a patch list</text>
+  <text x="658" y="370" fill="#ffcc66" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="13">not a state snapshot</text>
+
+  <rect x="58" y="482" width="350" height="172" rx="6" fill="#0f1419" stroke="#40505f"/>
+  <text x="78" y="516" fill="#7bdcff" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="16">Bundle</text>
+  <text x="78" y="556" fill="#d7e3ef" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="14">baseFrontier: echo:39</text>
+  <text x="78" y="586" fill="#d7e3ef" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="14">targetFrontier: echo:42</text>
+  <text x="78" y="616" fill="#d7e3ef" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="14">bundleDigest: sha256:aa4...</text>
+
+  <rect x="464" y="482" width="350" height="172" rx="6" fill="#0f1419" stroke="#40505f"/>
+  <text x="484" y="516" fill="#7bdcff" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="16">Admission Response</text>
+  <text x="484" y="556" fill="#d7e3ef" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="14">kind: PLURAL</text>
+  <text x="484" y="586" fill="#d7e3ef" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="14">residual: PLURALITY_PRESERVED</text>
+  <text x="484" y="616" fill="#d7e3ef" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="14">basisReport: present</text>
+
+  <rect x="870" y="482" width="352" height="172" rx="6" fill="#0f1419" stroke="#40505f"/>
+  <text x="890" y="516" fill="#7bdcff" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="16">Import Outcome</text>
+  <text x="890" y="556" fill="#d7e3ef" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="14">novelty: NOVEL</text>
+  <text x="890" y="586" fill="#d7e3ef" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="14">receiptId: import:91</text>
+  <text x="890" y="616" fill="#ff9f9f" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="14">no last-write-wins</text>
+</svg>
