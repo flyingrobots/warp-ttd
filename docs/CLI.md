@@ -50,10 +50,26 @@ The TUI is a delivery adapter over the same `DebuggerSession` core. It follows t
 - `jedit`: live Echo app.
 - `graft`: live git-warp app.
 
-The command is read-only. It reports target-root posture and adapter readiness;
-it does not open a runtime, issue authority, admit invocations, create strands,
-or mutate either app. Missing admission-chain facts are reported as unavailable
-instead of inferred.
+The command is read-only. It reports target-root posture, adapter readiness, and
+runtime-boundary evidence posture; it does not open a runtime, issue authority,
+admit invocations, create strands, or mutate either app. Missing
+admission-chain facts are reported as unavailable instead of inferred.
+
+`runtimeBoundaryEvidence` is a nested fact:
+
+```ts
+{
+  posture: "UNAVAILABLE" | "TRANSLATED_SUBSTRATE" | "CONTINUUM_NATIVE";
+  nativeContinuumWitness: boolean;
+  substrate?: string;
+  evidenceKind?: string;
+}
+```
+
+`graft` currently reports `TRANSLATED_SUBSTRATE` with
+`nativeContinuumWitness: false` because git-warp adapter facts are not native
+Continuum witnesshood. `jedit` reports `UNAVAILABLE` until Echo/jedit publish
+native Continuum runtime-boundary evidence.
 
 By default, the command looks for sibling checkouts at `../jedit` and
 `../graft`. Override those paths with:

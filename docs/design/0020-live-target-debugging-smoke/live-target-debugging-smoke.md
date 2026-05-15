@@ -68,6 +68,8 @@ Both roots can be overridden with `WARP_TTD_JEDIT_ROOT` and
 4. Does `graft` advertise the existing git-warp adapter path and `graft-ast`
    graph name?
 5. Does the output avoid claiming admission-chain facts for git-warp targets?
+6. Does the output distinguish translated substrate evidence from native
+   Continuum witnesshood?
 
 ## Follow-On Work
 
@@ -75,4 +77,5 @@ Both roots can be overridden with `WARP_TTD_JEDIT_ROOT` and
   session/worldline/receipt facts.
 - Add the admission-chain read model before attempting a real `jedit` Echo
   adapter.
-- Teach MCP to expose the same live-target smoke posture.
+- Teach MCP to expose the same live-target smoke posture. Cycle 0021 adds that
+  surface with runtime-boundary evidence posture.
