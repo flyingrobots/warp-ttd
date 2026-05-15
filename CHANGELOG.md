@@ -15,6 +15,11 @@ This project will use [Semantic Versioning](https://semver.org/) starting at
   the live git-warp app. The command records root presence, adapter readiness,
   graft's `graft-ast` graph name, and explicit unavailable admission-chain
   posture without attaching, admitting, granting, creating strands, or mutating.
+- **Runtime-boundary evidence posture**: `targets --json` and
+  `warp_ttd.inspect_live_targets` now report `runtimeBoundaryEvidence` for each
+  live target. `graft` is marked as translated substrate evidence from
+  `git-warp` with `nativeContinuumWitness: false`; `jedit` remains unavailable
+  until Echo publishes native Continuum evidence.
 - **MCP admission-chain surface** (cycle 0019, initial) — read-only MCP stdio
   server using the official MCP TypeScript SDK. Adds inspection tools for
   session state, adapter capabilities, readings, and admission-chain posture.

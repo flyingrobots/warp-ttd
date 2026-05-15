@@ -21,6 +21,9 @@ timeline
 - Keeping host-specific richness capability-gated: Echo pressures lawful optic
   admission and witness posture; git-warp pressures causal history, receipts,
   lanes, and materialized readings.
+- Keeping runtime-boundary evidence posture explicit: configured adapters and
+  translated substrate facts must not be upgraded into native Continuum
+  witnesshood by inference.
 
 ### 2. Admission-Chain Read Model
 
@@ -72,3 +75,5 @@ The live app delivery target is
 [`docs/method/backlog/up-next/DELIVERY_dual-live-app-debugging.md`](./method/backlog/up-next/DELIVERY_dual-live-app-debugging.md).
 The first executable smoke surface is `npm run targets -- --json`, which
 reports read-only posture for both live targets without attaching or mutating.
+The active evidence-posture cycle is
+[`docs/design/0021-runtime-boundary-evidence-posture/runtime-boundary-evidence-posture.md`](./design/0021-runtime-boundary-evidence-posture/runtime-boundary-evidence-posture.md).

@@ -3,6 +3,7 @@ import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 
 import type { TtdHostAdapter } from "../adapter.ts";
 import { DebuggerSession } from "../app/debuggerSession.ts";
+import { inspectLiveTargets } from "../app/liveTargetInspection.ts";
 import type { AdapterCapability, ReceiptSummary } from "../protocol.ts";
 
 export type JsonPrimitive = string | number | boolean | null;
@@ -16,7 +17,8 @@ export const MCP_ADMISSION_TOOL_NAMES = {
   inspectSession: "warp_ttd.inspect_session",
   inspectAdapterCapabilities: "warp_ttd.inspect_adapter_capabilities",
   inspectReadings: "warp_ttd.inspect_readings",
-  inspectAdmissionChain: "warp_ttd.inspect_admission_chain"
+  inspectAdmissionChain: "warp_ttd.inspect_admission_chain",
+  inspectLiveTargets: "warp_ttd.inspect_live_targets"
 } as const;
 
 export type McpAdmissionToolName =
@@ -63,6 +65,10 @@ export interface AdmissionChainInspection extends JsonObject {
   lawWitness: AdmissionFact;
   receipts: AdmissionFact<JsonObject>;
   reading: AdmissionFact<ReadingInspection>;
+}
+
+export interface LiveTargetsInspection extends JsonObject {
+  targets: readonly JsonObject[];
 }
 
 export interface McpAdmissionChainServerOptions {
@@ -196,6 +202,12 @@ export function inspectAdmissionChain(session: DebuggerSession): AdmissionChainI
   };
 }
 
+export function inspectLiveTargetPosture(): LiveTargetsInspection {
+  return {
+    targets: inspectLiveTargets().map((target) => jsonObject(target))
+  };
+}
+
 function toolResult(data: JsonObject): CallToolResult {
   return {
     structuredContent: data,
@@ -274,6 +286,16 @@ function admissionChainTool(
   };
 }
 
+function liveTargetsTool(): ReadOnlyToolRegistration {
+  return {
+    name: MCP_ADMISSION_TOOL_NAMES.inspectLiveTargets,
+    title: "Inspect Live Targets",
+    description:
+      "Return read-only live target posture, including runtime-boundary evidence status.",
+    callback: () => inspectLiveTargetPosture()
+  };
+}
+
 function mcpToolRegistrations(
   getSession: () => Promise<DebuggerSession>
 ): readonly ReadOnlyToolRegistration[] {
@@ -281,7 +303,8 @@ function mcpToolRegistrations(
     sessionTool(getSession),
     capabilityTool(getSession),
     readingTool(getSession),
-    admissionChainTool(getSession)
+    admissionChainTool(getSession),
+    liveTargetsTool()
   ];
 }
 

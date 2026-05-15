@@ -15,6 +15,7 @@ import {
 import type { HostHello, PlaybackFrame } from "../src/protocol.ts";
 
 const HEAD_ID = "head:main";
+const MCP_INSPECT_LIVE_TARGETS_TOOL = "warp_ttd.inspect_live_targets";
 
 function requireRecord(
   value: JsonValue | object | undefined,
@@ -23,6 +24,19 @@ function requireRecord(
   assert.equal(typeof value, "object", `${label} must be an object`);
   assert.notEqual(value, null, `${label} must not be null`);
   return value as JsonObject;
+}
+
+function requireArray(
+  value: JsonValue | object | undefined,
+  label: string
+): readonly JsonValue[] {
+  assert.ok(Array.isArray(value), `${label} must be an array`);
+  return value as readonly JsonValue[];
+}
+
+function targetLabel(target: JsonObject): string {
+  const value = target["target"];
+  return typeof value === "string" ? value : "target";
 }
 
 async function connectMcp(
@@ -124,6 +138,48 @@ test("MCP admission tools are read-only inspection tools", async () => {
       assert.equal(annotations.destructiveHint, false, tool.name);
       assert.equal(annotations.openWorldHint, false, tool.name);
       assert.doesNotMatch(tool.name, /step|seek|fork|grant|admit|mutat|present/i);
+    }
+  } finally {
+    await closeMcp(client, server);
+  }
+});
+
+test("MCP live-target inspection exposes runtime-boundary evidence posture", async () => {
+  const { client, server } = await connectMcp();
+
+  try {
+    const result = structuredContent(
+      await client.callTool({
+        name: MCP_INSPECT_LIVE_TARGETS_TOOL,
+        arguments: {}
+      })
+    );
+    const targets = requireArray(result["targets"], "targets");
+
+    const graft = targets
+      .map((target) => requireRecord(target, "target"))
+      .find((target) => target["target"] === "graft");
+    assert.ok(graft !== undefined, "graft target must be present");
+
+    const graftEvidence = requireRecord(
+      graft["runtimeBoundaryEvidence"],
+      "graft.runtimeBoundaryEvidence"
+    );
+    assert.equal(graftEvidence["posture"], "TRANSLATED_SUBSTRATE");
+    assert.equal(graftEvidence["substrate"], "git-warp");
+    assert.equal(graftEvidence["evidenceKind"], "warp-index");
+    assert.equal(graftEvidence["nativeContinuumWitness"], false);
+
+    for (const target of targets.map((entry) => requireRecord(entry, "target"))) {
+      const evidence = requireRecord(
+        target["runtimeBoundaryEvidence"],
+        `${targetLabel(target)}.runtimeBoundaryEvidence`
+      );
+      if (evidence["posture"] === "CONTINUUM_NATIVE") {
+        assert.equal(evidence["nativeContinuumWitness"], true);
+      } else {
+        assert.equal(evidence["nativeContinuumWitness"], false);
+      }
     }
   } finally {
     await closeMcp(client, server);

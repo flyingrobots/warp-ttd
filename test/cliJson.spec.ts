@@ -15,9 +15,16 @@ const exec = promisify(execFile);
 const CLI = "./src/cli.ts";
 const NODE_ARGS = ["--experimental-strip-types", CLI];
 
+type JsonPrimitive = string | number | boolean | null;
+type JsonValue = JsonPrimitive | JsonObject | readonly JsonValue[];
+
+interface JsonObject {
+  readonly [key: string]: JsonValue;
+}
+
 interface EnvelopeLine {
   envelope: string;
-  data?: Record<string, string | number | boolean | null>;
+  data?: JsonObject;
   label?: string;
 }
 
@@ -45,6 +52,17 @@ function requireLine(lines: string[], index: number): string {
   const line = lines[index];
   assert.ok(line !== undefined, `Expected line at index ${index.toString()}`);
   return line;
+}
+
+function requireRecord(value: JsonValue | object | undefined, label: string): JsonObject {
+  assert.equal(typeof value, "object", `${label} must be an object`);
+  assert.notEqual(value, null, `${label} must not be null`);
+  return value as JsonObject;
+}
+
+function targetLabel(target: JsonObject): string {
+  const value = target["target"];
+  return typeof value === "string" ? value : "target";
 }
 
 test("hello --json outputs a single HostHello JSONL line", async () => {
@@ -178,6 +196,12 @@ test("targets --json names jedit and graft as read-only live target inspections"
   assert.equal(jedit["rootPosture"], "MISSING");
   assert.equal(jedit["adapterPosture"], "UNAVAILABLE");
   assert.equal(jedit["admissionChainPosture"], "UNAVAILABLE");
+  const jeditEvidence = requireRecord(
+    jedit["runtimeBoundaryEvidence"],
+    "jedit.runtimeBoundaryEvidence"
+  );
+  assert.equal(jeditEvidence["posture"], "UNAVAILABLE");
+  assert.equal(jeditEvidence["nativeContinuumWitness"], false);
 
   assert.equal(graft["target"], "graft");
   assert.equal(graft["hostKind"], "GIT_WARP");
@@ -187,6 +211,36 @@ test("targets --json names jedit and graft as read-only live target inspections"
   assert.equal(graft["adapterPosture"], "CONFIGURED");
   assert.equal(graft["graphName"], "graft-ast");
   assert.equal(graft["admissionChainPosture"], "UNAVAILABLE");
+  const graftEvidence = requireRecord(
+    graft["runtimeBoundaryEvidence"],
+    "graft.runtimeBoundaryEvidence"
+  );
+  assert.equal(graftEvidence["posture"], "TRANSLATED_SUBSTRATE");
+  assert.equal(graftEvidence["substrate"], "git-warp");
+  assert.equal(graftEvidence["evidenceKind"], "warp-index");
+  assert.equal(graftEvidence["nativeContinuumWitness"], false);
+});
+
+test("targets --json never reports native Continuum evidence without native witnesshood", async () => {
+  const lines = await runJsonWithEnv("targets", {
+    WARP_TTD_JEDIT_ROOT: path.join(process.cwd(), "test", "missing-jedit"),
+    WARP_TTD_GRAFT_ROOT: path.join(process.cwd(), "test", "missing-graft")
+  });
+  const parsed = lines.map((line) => parseLine(line));
+
+  for (const entry of parsed) {
+    const data = requireRecord(entry.data, `${entry.envelope}.data`);
+    const evidence = requireRecord(
+      data["runtimeBoundaryEvidence"],
+      `${targetLabel(data)}.runtimeBoundaryEvidence`
+    );
+
+    if (evidence["posture"] === "CONTINUUM_NATIVE") {
+      assert.equal(evidence["nativeContinuumWitness"], true);
+    } else {
+      assert.equal(evidence["nativeContinuumWitness"], false);
+    }
+  }
 });
 
 test("invalid command --json writes JSON error to stderr", async () => {

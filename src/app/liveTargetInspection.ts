@@ -5,6 +5,37 @@ export type LiveTargetName = "jedit" | "graft";
 export type LiveTargetRootPosture = "PRESENT" | "MISSING";
 export type LiveTargetAdapterPosture = "CONFIGURED" | "UNAVAILABLE";
 export type LiveTargetAdmissionChainPosture = "UNAVAILABLE";
+export type LiveTargetRuntimeBoundaryEvidencePosture =
+  | "UNAVAILABLE"
+  | "TRANSLATED_SUBSTRATE"
+  | "CONTINUUM_NATIVE";
+export type LiveTargetRuntimeBoundaryEvidenceSubstrate =
+  | "git-warp"
+  | "echo"
+  | (string & {});
+export type LiveTargetRuntimeBoundaryEvidenceKind =
+  | "git-commit"
+  | "git-range"
+  | "warp-index"
+  | (string & {});
+
+export type LiveTargetRuntimeBoundaryEvidence =
+  | {
+    posture: "UNAVAILABLE";
+    nativeContinuumWitness: false;
+  }
+  | {
+    posture: "TRANSLATED_SUBSTRATE";
+    nativeContinuumWitness: false;
+    substrate: LiveTargetRuntimeBoundaryEvidenceSubstrate;
+    evidenceKind?: LiveTargetRuntimeBoundaryEvidenceKind;
+  }
+  | {
+    posture: "CONTINUUM_NATIVE";
+    nativeContinuumWitness: true;
+    substrate?: LiveTargetRuntimeBoundaryEvidenceSubstrate;
+    evidenceKind?: LiveTargetRuntimeBoundaryEvidenceKind;
+  };
 
 export interface LiveTargetInspection {
   target: LiveTargetName;
@@ -14,6 +45,7 @@ export interface LiveTargetInspection {
   rootPosture: LiveTargetRootPosture;
   adapterPosture: LiveTargetAdapterPosture;
   admissionChainPosture: LiveTargetAdmissionChainPosture;
+  runtimeBoundaryEvidence: LiveTargetRuntimeBoundaryEvidence;
   readOnly: true;
   graphName?: string;
   reason: string;
@@ -27,6 +59,16 @@ export interface LiveTargetRoots {
 const DEFAULT_JEDIT_ROOT = "../jedit";
 const DEFAULT_GRAFT_ROOT = "../graft";
 const GRAFT_GRAPH_NAME = "graft-ast";
+const UNAVAILABLE_RUNTIME_BOUNDARY_EVIDENCE: LiveTargetRuntimeBoundaryEvidence = {
+  posture: "UNAVAILABLE",
+  nativeContinuumWitness: false
+};
+const GRAFT_TRANSLATED_SUBSTRATE_EVIDENCE: LiveTargetRuntimeBoundaryEvidence = {
+  posture: "TRANSLATED_SUBSTRATE",
+  nativeContinuumWitness: false,
+  substrate: "git-warp",
+  evidenceKind: "warp-index"
+};
 
 function resolveRoot(envName: string, fallback: string): string {
   return path.resolve(process.env[envName] ?? fallback);
@@ -43,32 +85,42 @@ export function liveTargetRootsFromEnv(): LiveTargetRoots {
   };
 }
 
+function inspectJeditTarget(roots: LiveTargetRoots): LiveTargetInspection {
+  return {
+    target: "jedit",
+    hostKind: "ECHO",
+    appKind: "live Echo app",
+    rootPath: roots.jeditRoot,
+    rootPosture: rootPosture(roots.jeditRoot),
+    adapterPosture: "UNAVAILABLE",
+    admissionChainPosture: "UNAVAILABLE",
+    runtimeBoundaryEvidence: UNAVAILABLE_RUNTIME_BOUNDARY_EVIDENCE,
+    readOnly: true,
+    reason: "Echo live adapter, admission-chain publication, and native Continuum evidence are not wired into WARP TTD yet."
+  };
+}
+
+function inspectGraftTarget(roots: LiveTargetRoots): LiveTargetInspection {
+  return {
+    target: "graft",
+    hostKind: "GIT_WARP",
+    appKind: "live git-warp app",
+    rootPath: roots.graftRoot,
+    rootPosture: rootPosture(roots.graftRoot),
+    adapterPosture: "CONFIGURED",
+    admissionChainPosture: "UNAVAILABLE",
+    runtimeBoundaryEvidence: GRAFT_TRANSLATED_SUBSTRATE_EVIDENCE,
+    readOnly: true,
+    graphName: GRAFT_GRAPH_NAME,
+    reason: "graft uses the existing git-warp adapter path; git-warp facts are translated substrate evidence, not native Continuum witnesshood."
+  };
+}
+
 export function inspectLiveTargets(
   roots: LiveTargetRoots = liveTargetRootsFromEnv()
 ): LiveTargetInspection[] {
   return [
-    {
-      target: "jedit",
-      hostKind: "ECHO",
-      appKind: "live Echo app",
-      rootPath: roots.jeditRoot,
-      rootPosture: rootPosture(roots.jeditRoot),
-      adapterPosture: "UNAVAILABLE",
-      admissionChainPosture: "UNAVAILABLE",
-      readOnly: true,
-      reason: "Echo live adapter and admission-chain publication are not wired into WARP TTD yet."
-    },
-    {
-      target: "graft",
-      hostKind: "GIT_WARP",
-      appKind: "live git-warp app",
-      rootPath: roots.graftRoot,
-      rootPosture: rootPosture(roots.graftRoot),
-      adapterPosture: "CONFIGURED",
-      admissionChainPosture: "UNAVAILABLE",
-      readOnly: true,
-      graphName: GRAFT_GRAPH_NAME,
-      reason: "graft uses the existing git-warp adapter path; Echo admission-chain facts are not invented for git-warp targets."
-    }
+    inspectJeditTarget(roots),
+    inspectGraftTarget(roots)
   ];
 }

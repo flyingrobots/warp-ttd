@@ -33,12 +33,17 @@ perform admission, mutate host state, or create local strands.
 ## Tool Groups
 
 - **Inspection**: `warp_ttd.inspect_session`,
-  `warp_ttd.inspect_adapter_capabilities`, `warp_ttd.inspect_readings`.
+  `warp_ttd.inspect_adapter_capabilities`, `warp_ttd.inspect_readings`, and
+  `warp_ttd.inspect_live_targets`.
 - **Capabilities**: adapter support reported as `AdapterCapability` facts.
 - **Admission Chain**: `warp_ttd.inspect_admission_chain` reports registered
   artifact facts, requirement posture, grant posture, admission ticket or
   obstruction posture, witness facts, receipt facts, and reading envelope facts
   when present.
+- **Live Targets**: `warp_ttd.inspect_live_targets` reports the same read-only
+  target posture as `targets --json`, including runtime-boundary evidence
+  posture. Adapter readiness is not upgraded into Continuum evidence
+  availability.
 
 ## Running
 
@@ -62,6 +67,9 @@ is intentionally read-only.
   mutation paths.
 - **Honest Absence**: Missing Echo/Wesley admission-chain facts are returned as
   explicit `ABSENT` posture until host adapters provide them.
+- **Evidence Honesty**: Translated substrate evidence is not native Continuum
+  witnesshood. A tool must not report `CONTINUUM_NATIVE` unless
+  `nativeContinuumWitness` is true.
 
 ---
 **The goal is tool-native inspection. TUI work follows explicit MCP capability,
