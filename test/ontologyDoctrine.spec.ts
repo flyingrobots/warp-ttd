@@ -13,6 +13,36 @@ function repoPathExists(relativePath: string): boolean {
   return fs.existsSync(path.join(ROOT, relativePath));
 }
 
+test("repo doctrine makes WARP TTD agent-native and agent-first", () => {
+  const agents = readRepoText("AGENTS.md");
+  const method = readRepoText("METHOD.md");
+  const bearing = readRepoText("docs/BEARING.md");
+  const mcp = readRepoText("docs/MCP.md");
+  const doctrine = readRepoText("docs/design/doctrine.md");
+
+  assert.match(agents, /AGENT-NATIVE/);
+  assert.match(agents, /AGENT-FIRST/);
+  assert.match(agents, /LLM agents are primary users/);
+
+  assert.match(method, /AGENT-NATIVE, AGENT-FIRST/);
+  assert.match(method, /structured MCP\/CLI\/read-model surface before TUI/i);
+
+  assert.match(bearing, /Agent-Native \/ Agent-First/);
+  assert.match(
+    bearing,
+    /primary way for LLMs to inspect and interact with\s+Continuum apps/i,
+  );
+
+  assert.match(mcp, /preferred LLM-facing interface/);
+  assert.match(mcp, /TUI.*must not be the first or only implementation/i);
+
+  assert.match(doctrine, /Agent-Native \/ Agent-First/);
+  assert.match(
+    doctrine,
+    /If an LLM agent cannot use a feature through structured outputs/i,
+  );
+});
+
 test("MCP admission-chain surface is closed as a landed cycle", () => {
   const graveyardPath = "docs/method/graveyard/DELIVERY_mcp-admission-chain-surface.md";
 

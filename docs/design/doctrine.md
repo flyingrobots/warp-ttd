@@ -21,6 +21,22 @@ The highest-level rule is simple:
 If a change makes the debugger less honest, less deterministic, more
 magical, or more host-specific, it is probably the wrong change.
 
+## Agent-Native / Agent-First
+
+WARP TTD is AGENT-NATIVE and AGENT-FIRST. LLM agents are primary operators of
+the debugger, especially when inspecting live Continuum apps. The product should
+be useful to agents before it is polished for humans.
+
+If an LLM agent cannot use a feature through structured outputs, the feature is
+incomplete. New behavior should land first as MCP tools, CLI `--json` / JSONL,
+generated protocol artifacts, or deterministic read models. TUI and browser
+views may make those facts pleasant for humans, but they must not become the
+only implementation of debugger behavior.
+
+This does not grant ambient control authority. Agent-native interaction still
+flows through explicit admission-chain designs: authority, admission, mutation,
+tickets, witnesses, receipts, and reading posture must remain visible facts.
+
 ## Development Philosophy
 
 This project prefers:
@@ -39,6 +55,7 @@ In practice, that means:
 - keep adapters honest about host differences
 - keep Wesley/GraphQL scoped to what it can actually own
 - keep every future CLI surface machine-readable through `--json`
+- keep every future MCP surface typed, deterministic, and inspectable by agents
 
 ## Architectural Principles
 
@@ -48,7 +65,7 @@ The product should have clear boundaries between:
 
 - domain behavior
 - application/use-case orchestration
-- ingress adapters such as CLI, TUI, or browser UI
+- ingress adapters such as MCP, CLI, TUI, or browser UI
 - infrastructure such as host adapters, storage, and code generation
 
 Do not let UI concerns leak into protocol truth.

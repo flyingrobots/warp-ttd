@@ -55,6 +55,9 @@ This project will use [Semantic Versioning](https://semver.org/) starting at
 
 ### Changed
 
+- **Agent-native doctrine**: AGENTS, METHOD, BEARING, MCP, CLI, and project
+  doctrine now require agent-first MCP/CLI/read-model surfaces before TUI or
+  browser implementation for Continuum app debugging.
 - **Live debugger target**: named `jedit` as the live Echo app target and
   `graft` as the live git-warp app target. The next delivery proof is a single
   debugger surface that can inspect both without becoming either app's domain

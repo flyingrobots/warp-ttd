@@ -2,6 +2,23 @@
 
 This guide is for AI agents and human operators recovering context in the WARP TTD repository.
 
+## Agent-Native / Agent-First Doctrine
+
+- WARP TTD is **AGENT-NATIVE** and **AGENT-FIRST**. LLM agents are primary users,
+  not afterthoughts.
+- Implement new debugger features for agents first through structured surfaces:
+  MCP tools, CLI `--json` / JSONL, generated protocol artifacts, and
+  deterministic read models.
+- Human TUI, browser, and text views follow those same surfaces. They may render
+  or compose agent-visible facts, but they must not become the only
+  implementation of new debugger behavior.
+- For Continuum apps, WARP TTD should be the primary LLM inspection and
+  lawful-interaction surface. If an agent must screen-scrape human UI text to use
+  a feature, that feature is incomplete.
+- Interaction still respects the admission chain. Agent-facing tools do not issue
+  authority, perform admission, or mutate host state unless an explicit
+  witnessed/admitted control design says so.
+
 ## Git Rules
 
 - **NEVER** amend commits.

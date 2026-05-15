@@ -4,7 +4,12 @@ The WARP TTD work doctrine: A backlog, a loop, and honest bookkeeping.
 
 ## Principles
 
-- **The agent and the human sit at the same table.** Both matter. Both are named in every design. Default to building the agent surface first.
+- **AGENT-NATIVE, AGENT-FIRST.** LLM agents are primary users, not an
+  afterthought. Default to a structured MCP/CLI/read-model surface before TUI or
+  browser rendering; human views compose those surfaces instead of becoming the
+  first implementation.
+- **The agent and the human sit at the same table.** Both matter. Both are named
+  in every design.
 - **Tests are the executable spec.** Design names the hill and the playback questions. Tests prove the answers.
 - **The filesystem is the database.** A directory is a priority. A filename is an identity. Moving a file is a decision.
 - **Process is calm.** No sprints or velocity theater. A backlog tiered by judgment, and a loop for doing it well.
@@ -45,7 +50,9 @@ stateDiagram-v2
 
 1. **Pull**: Move an item from `asap/` to `docs/design/`.
 2. **Branch**: Create `cycle/<cycle_name>`.
-3. **Red**: Write failing tests based on the design's playback questions.
+3. **Red**: Write failing tests based on the design's playback questions,
+   starting with the agent-facing contract when the feature has any inspection
+   or interaction surface.
 4. **Green**: Implement the solution until tests pass.
 5. **Retro**: Document findings and follow-on debt in the cycle doc.
 6. **Ship**: Open a PR to `main`. Update `docs/BEARING.md` after merge.

@@ -12,7 +12,18 @@ timeline
 
 ## Active Gravity
 
-### 1. Dual Live App Debugging
+### 1. Agent-Native / Agent-First
+
+- WARP TTD should be the primary way for LLMs to inspect and interact with
+  Continuum apps.
+- New debugger facts and lawful interactions land first as MCP tools, CLI
+  `--json` / JSONL, generated protocol artifacts, or deterministic read models.
+- TUI and browser views render those agent-visible facts after the structured
+  surface exists; they are not the first proof of a feature.
+- The agent surface must keep absence, authority, admission, mutation, and
+  evidence posture explicit instead of inferring optimistic runtime truth.
+
+### 2. Dual Live App Debugging
 
 - Making `jedit`, a live Echo app, and `graft`, a live git-warp app, the two
   concrete debugger acceptance targets.
@@ -25,7 +36,7 @@ timeline
   translated substrate facts must not be upgraded into native Continuum
   witnesshood by inference.
 
-### 2. Admission-Chain Read Model
+### 3. Admission-Chain Read Model
 
 - Treating the landed MCP surface as transport and inspection over
   `DebuggerSession`, host adapter facts, readings, and admission-chain posture.
@@ -35,12 +46,12 @@ timeline
 - Keeping MCP out of authority issuance, grant construction, runtime admission,
   mutation, and local strand creation.
 
-### 3. Neighborhood & Site Catalog
+### 4. Neighborhood & Site Catalog
 
 - Refinement of the `NeighborhoodFocusSummary` to share focus across disparate debugger pages.
 - Hardening site-driven worldline cursor recomputation for consistent navigation.
 
-### 4. DebuggerSession Maturity
+### 5. DebuggerSession Maturity
 
 - Implementation of the `DebuggerSession` investigation object to track speculative result handles and investigator context.
 - Scaling the window-based read model to handle high-density causal worldlines.
