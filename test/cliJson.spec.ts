@@ -8,6 +8,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
+import path from "node:path";
 
 const exec = promisify(execFile);
 
@@ -22,6 +23,14 @@ interface EnvelopeLine {
 
 async function runJson(command: string): Promise<string[]> {
   const { stdout } = await exec("node", [...NODE_ARGS, command, "--json"]);
+  const lines = stdout.trim().split("\n").filter((l) => l.length > 0);
+  return lines;
+}
+
+async function runJsonWithEnv(command: string, env: NodeJS.ProcessEnv): Promise<string[]> {
+  const { stdout } = await exec("node", [...NODE_ARGS, command, "--json"], {
+    env: { ...process.env, ...env }
+  });
   const lines = stdout.trim().split("\n").filter((l) => l.length > 0);
   return lines;
 }
@@ -144,6 +153,40 @@ test("session --json outputs a single SerializedSession line", async () => {
   assert.equal(obj.data["activeHeadId"], "head:main");
   assert.ok(obj.data["snapshot"] !== undefined);
   assert.ok(Array.isArray(obj.data["pins"]));
+});
+
+test("targets --json names jedit and graft as read-only live target inspections", async () => {
+  const lines = await runJsonWithEnv("targets", {
+    WARP_TTD_JEDIT_ROOT: path.join(process.cwd(), "test", "missing-jedit"),
+    WARP_TTD_GRAFT_ROOT: path.join(process.cwd(), "test", "missing-graft")
+  });
+  assert.equal(lines.length, 2);
+
+  const parsed = lines.map((line) => parseLine(line));
+  assert.deepEqual(parsed.map((entry) => entry.envelope), [
+    "LiveTargetInspection",
+    "LiveTargetInspection"
+  ]);
+
+  const [jedit, graft] = parsed.map((entry) => entry.data);
+  assert.ok(jedit !== undefined);
+  assert.ok(graft !== undefined);
+  assert.equal(jedit["target"], "jedit");
+  assert.equal(jedit["hostKind"], "ECHO");
+  assert.equal(jedit["appKind"], "live Echo app");
+  assert.equal(jedit["readOnly"], true);
+  assert.equal(jedit["rootPosture"], "MISSING");
+  assert.equal(jedit["adapterPosture"], "UNAVAILABLE");
+  assert.equal(jedit["admissionChainPosture"], "UNAVAILABLE");
+
+  assert.equal(graft["target"], "graft");
+  assert.equal(graft["hostKind"], "GIT_WARP");
+  assert.equal(graft["appKind"], "live git-warp app");
+  assert.equal(graft["readOnly"], true);
+  assert.equal(graft["rootPosture"], "MISSING");
+  assert.equal(graft["adapterPosture"], "CONFIGURED");
+  assert.equal(graft["graphName"], "graft-ast");
+  assert.equal(graft["admissionChainPosture"], "UNAVAILABLE");
 });
 
 test("invalid command --json writes JSON error to stderr", async () => {

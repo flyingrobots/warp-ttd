@@ -9,6 +9,7 @@ flowchart LR
     A --> D[Control]
     B --> B1[hello]
     B --> B2[catalog]
+    B --> B3[targets]
     C --> C1[frame]
     C --> C2[effects]
     C --> C3[deliveries]
@@ -24,6 +25,11 @@ For agent use, `--json` is the primary contract. Every command emits a versioned
   ```bash
   npm run hello -- --json
   ```
+- **Live Targets**: Inspect the named live app targets without attaching,
+  admitting, or mutating.
+  ```bash
+  npm run targets -- --json
+  ```
 - **Inspect**: Read the current playback frame and receipts.
   ```bash
   npm run frame -- --json
@@ -36,6 +42,27 @@ For agent use, `--json` is the primary contract. Every command emits a versioned
 ## Relationship to the TUI
 
 The TUI is a delivery adapter over the same `DebuggerSession` core. It follows the explicit adapter capabilities proven by the CLI surface. New inspection logic must land in the CLI before the TUI depends on it.
+
+## Live Target Discovery
+
+`targets --json` reports the two current live app targets:
+
+- `jedit`: live Echo app.
+- `graft`: live git-warp app.
+
+The command is read-only. It reports target-root posture and adapter readiness;
+it does not open a runtime, issue authority, admit invocations, create strands,
+or mutate either app. Missing admission-chain facts are reported as unavailable
+instead of inferred.
+
+By default, the command looks for sibling checkouts at `../jedit` and
+`../graft`. Override those paths with:
+
+```bash
+WARP_TTD_JEDIT_ROOT=/path/to/jedit \
+WARP_TTD_GRAFT_ROOT=/path/to/graft \
+  npm run targets -- --json
+```
 
 ---
 **The goal is structured truth. Human-only text must not appear on stdout in `--json` mode.**
