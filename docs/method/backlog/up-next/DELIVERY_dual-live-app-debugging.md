@@ -41,12 +41,15 @@ host-neutral session, CLI, and MCP vocabulary.
 
 1. Keep the admission-chain read model as the protocol target before strand
    creation.
-2. Define the minimum live Echo adapter evidence needed to debug `jedit`.
-3. Validate the existing git-warp adapter against `graft` as a real app target,
+2. Expose `targets --json` as a read-only smoke command that names `jedit` and
+   `graft`, reports sibling-root posture, and keeps missing admission-chain
+   facts explicit.
+3. Define the minimum live Echo adapter evidence needed to debug `jedit`.
+4. Validate the existing git-warp adapter against `graft` as a real app target,
    not only synthetic integration fixtures.
-4. Expose the first live-target facts through CLI and MCP before adding TUI
+5. Expose the first live-target facts through CLI and MCP before adding TUI
    controls.
-5. Treat unavailable host-specific facts as explicit absence, not inferred
+6. Treat unavailable host-specific facts as explicit absence, not inferred
    truth.
 
 ## Non-Goals
@@ -62,5 +65,6 @@ host-neutral session, CLI, and MCP vocabulary.
 - `docs/BEARING.md`
 - `docs/method/backlog/up-next/PROTO_admission-chain-inspector.md`
 - `docs/method/backlog/up-next/PROTO_echo-host-adapter.md`
+- `docs/design/0020-live-target-debugging-smoke/live-target-debugging-smoke.md`
 - `src/adapters/gitWarpAdapter.ts`
 - `src/mcp/admissionChainSurface.ts`

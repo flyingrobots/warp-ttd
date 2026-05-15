@@ -1,5 +1,6 @@
 import { EchoFixtureAdapter } from "./adapters/echoFixtureAdapter.ts";
 import { DebuggerSession } from "./app/debuggerSession.ts";
+import { inspectLiveTargets } from "./app/liveTargetInspection.ts";
 import { buildTickRows } from "./tui/worldlineLayout.ts";
 import type { FrameData } from "./tui/worldlineLayout.ts";
 import {
@@ -8,18 +9,21 @@ import {
   UnsupportedCommandError
 } from "./errors.ts";
 
-type Command = "demo" | "hello" | "catalog" | "frame" | "step" | "effects" | "deliveries" | "context" | "session" | "worldline";
+type Command = "demo" | "hello" | "catalog" | "frame" | "step" | "effects" | "deliveries" | "context" | "session" | "worldline" | "targets";
 type PrintableValue = object | string | number | boolean | null | undefined;
 type PrintFn = (envelope: string, data: PrintableValue, label?: string) => void;
 type CliHandler = (ctx: CliContext) => Promise<void>;
 
-const VALID_COMMANDS = new Set<Command>(["demo", "hello", "catalog", "frame", "step", "effects", "deliveries", "context", "session", "worldline"]);
+const VALID_COMMANDS = new Set<Command>(["demo", "hello", "catalog", "frame", "step", "effects", "deliveries", "context", "session", "worldline", "targets"]);
 
-interface CliContext {
-  adapter: EchoFixtureAdapter;
-  headId: string;
+interface PrintContext {
   json: boolean;
   print: PrintFn;
+}
+
+interface CliContext extends PrintContext {
+  adapter: EchoFixtureAdapter;
+  headId: string;
 }
 
 function isValidCommand(cmd: string): cmd is Command {
@@ -99,7 +103,7 @@ async function handleFrame(ctx: CliContext): Promise<void> {
 }
 
 function printList(
-  ctx: CliContext,
+  ctx: PrintContext,
   envelope: string,
   items: PrintableValue[]
 ): void {
@@ -131,6 +135,11 @@ async function handleSession(ctx: CliContext): Promise<void> {
     return;
   }
   printSection("Session", session.toJSON());
+}
+
+function handleTargets(ctx: PrintContext): Promise<void> {
+  printList(ctx, "LiveTargetInspection", inspectLiveTargets());
+  return Promise.resolve();
 }
 
 async function collectWorldlineFrames(ctx: CliContext): Promise<FrameData[]> {
@@ -218,16 +227,24 @@ const COMMAND_HANDLERS: Record<Command, CliHandler> = {
   hello: handleHello,
   session: handleSession,
   step: handleStep,
+  targets: handleTargets,
   worldline: handleWorldline
 };
 
 async function main(): Promise<void> {
   const { command, json } = parseArgs(process.argv);
+  const print = createPrintFn(json);
+
+  if (command === "targets") {
+    await handleTargets({ json, print });
+    return;
+  }
+
   const ctx: CliContext = {
     adapter: new EchoFixtureAdapter(),
     headId: "head:main",
     json,
-    print: createPrintFn(json)
+    print
   };
 
   await COMMAND_HANDLERS[command](ctx);

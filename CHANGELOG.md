@@ -10,6 +10,11 @@ This project will use [Semantic Versioning](https://semver.org/) starting at
 
 ### Added
 
+- **Live target smoke inspection**: added `targets --json` / `npm run targets`
+  to report read-only posture for `jedit` as the live Echo app and `graft` as
+  the live git-warp app. The command records root presence, adapter readiness,
+  graft's `graft-ast` graph name, and explicit unavailable admission-chain
+  posture without attaching, admitting, granting, creating strands, or mutating.
 - **MCP admission-chain surface** (cycle 0019, initial) — read-only MCP stdio
   server using the official MCP TypeScript SDK. Adds inspection tools for
   session state, adapter capabilities, readings, and admission-chain posture.

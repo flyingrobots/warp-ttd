@@ -70,3 +70,5 @@ target is
 ([open backlog](./method/backlog/up-next/PROTO_admission-chain-inspector.md)).
 The live app delivery target is
 [`docs/method/backlog/up-next/DELIVERY_dual-live-app-debugging.md`](./method/backlog/up-next/DELIVERY_dual-live-app-debugging.md).
+The first executable smoke surface is `npm run targets -- --json`, which
+reports read-only posture for both live targets without attaching or mutating.
