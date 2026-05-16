@@ -3,9 +3,26 @@
 > **Status: initial read-only stdio surface implemented.** See
 > [cycle 0019](./design/0019-mcp-admission-chain-surface/mcp-admission-chain-surface.md)
 > and [completed backlog item](./method/graveyard/DELIVERY_mcp-admission-chain-surface.md).
+> Agent parity is designed in
+> [cycle 0022](./design/0022-mcp-agent-parity/mcp-agent-parity.md).
 
 WARP TTD is a tool-native participant in the agentic workstation via the Model
 Context Protocol (MCP).
+
+## Agent-Native Contract
+
+MCP is the preferred LLM-facing interface for WARP TTD inspection of Continuum
+apps, and it is the first place new structured debugger facts should become
+available. CLI `--json` remains the deterministic shell and audit surface; TUI
+and browser views are downstream renderers over the same facts.
+
+TUI and browser views must not be the first or only implementation of a debugger
+feature. If an LLM agent cannot inspect the feature without screen-scraping
+human UI output, the feature is incomplete.
+
+Interaction through MCP must still be lawful: read-only inspection remains the
+default, and any future control path must be explicit about authority,
+admission, mutation, ticketing, witnesses, receipts, and reading posture.
 
 ```mermaid
 sequenceDiagram
@@ -72,5 +89,5 @@ is intentionally read-only.
   `nativeContinuumWitness` is true.
 
 ---
-**The goal is tool-native inspection. TUI work follows explicit MCP capability,
-not the other way around.**
+**The goal is tool-native inspection. TUI work follows the explicit MCP
+structured surface, not the other way around.**

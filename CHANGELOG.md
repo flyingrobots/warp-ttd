@@ -10,6 +10,13 @@ This project will use [Semantic Versioning](https://semver.org/) starting at
 
 ### Added
 
+- **MCP agent parity design**: added cycle 0022 design packet defining missing
+  MCP parity against CLI/TUI, proposed API tools, examples, Mermaid diagrams,
+  and versioned `warp-ttd.mcp.v1` JSON output schemas.
+- **Continuum operator surface design**: added cycle 0023 design packet for
+  near-future MCP and TUI support around runtime-boundary families, reading
+  envelopes, evidence status, and witnessed suffix sync, including SVG TUI
+  mockups.
 - **Live target smoke inspection**: added `targets --json` / `npm run targets`
   to report read-only posture for `jedit` as the live Echo app and `graft` as
   the live git-warp app. The command records root presence, adapter readiness,
@@ -55,6 +62,22 @@ This project will use [Semantic Versioning](https://semver.org/) starting at
 
 ### Changed
 
+- **MCP parity obstruction vocabulary**: proposed MCP playback obstruction
+  outputs now use `missingAdapterCapability` and reserve `CapabilityGrant` /
+  `CapabilityPresentation` language for authority facts. Playback control
+  obstruction is modeled as a `PlaybackControlResult` variant instead of a
+  separate result schema. The acceptance checklist now requires the
+  capability-vocabulary regression guard explicitly.
+- **Agent doctrine capability vocabulary**: top-level agent-first docs now avoid
+  ambiguous lowercase capability phrasing for adapter support, using
+  `AdapterCapability`, `CapabilityPresentation`, or explicit authority/admission
+  language instead.
+- **Agent doctrine explicitness vocabulary**: project doctrine now maps
+  admission-chain visible facts back to BEARING's canonical agent-surface
+  obligations: absence, authority, admission, mutation, and evidence posture.
+- **Agent-native doctrine**: AGENTS, METHOD, BEARING, MCP, CLI, and project
+  doctrine now require agent-first MCP/CLI/read-model surfaces before TUI or
+  browser implementation for Continuum app debugging.
 - **Live debugger target**: named `jedit` as the live Echo app target and
   `graft` as the live git-warp app target. The next delivery proof is a single
   debugger surface that can inspect both without becoming either app's domain

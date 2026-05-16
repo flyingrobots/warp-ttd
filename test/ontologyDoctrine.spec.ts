@@ -13,6 +13,237 @@ function repoPathExists(relativePath: string): boolean {
   return fs.existsSync(path.join(ROOT, relativePath));
 }
 
+function escapeRegexLiteral(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function escapedPattern(value: string): RegExp {
+  return new RegExp(escapeRegexLiteral(value));
+}
+
+function mermaidFencePattern(firstStatement: string): RegExp {
+  return new RegExp("```mermaid\\r?\\n" + escapeRegexLiteral(firstStatement));
+}
+
+function assertMermaidFencePresent(
+  content: string,
+  firstStatement: string,
+): void {
+  assert.match(content, mermaidFencePattern(firstStatement));
+}
+
+function assertAllTextPresent(content: string, values: readonly string[]): void {
+  for (const value of values) {
+    assert.match(content, escapedPattern(value));
+  }
+}
+
+function assertContinuumMockupsExist(mockups: readonly string[]): void {
+  for (const mockup of mockups) {
+    assert.equal(repoPathExists(mockup), true);
+    assert.match(readRepoText(mockup), /<svg/);
+  }
+}
+
+test("Mermaid fence assertions tolerate CRLF line endings", () => {
+  for (const firstStatement of ["classDiagram", "erDiagram", "sequenceDiagram"]) {
+    const content = "```mermaid\r\n" + firstStatement + "\r\n";
+
+    assertMermaidFencePresent(content, firstStatement);
+  }
+});
+
+test("repo doctrine makes WARP TTD agent-native and agent-first", () => {
+  const agents = readRepoText("AGENTS.md");
+  const method = readRepoText("METHOD.md");
+  const bearing = readRepoText("docs/BEARING.md");
+  const mcp = readRepoText("docs/MCP.md");
+  const doctrine = readRepoText("docs/design/doctrine.md");
+
+  assert.match(agents, /AGENT-NATIVE/);
+  assert.match(agents, /AGENT-FIRST/);
+  assert.match(agents, /LLM agents are primary users/);
+
+  assert.match(method, /AGENT-NATIVE, AGENT-FIRST/);
+  assert.match(method, /structured MCP\/CLI\/read-model surface before TUI/i);
+
+  assert.match(bearing, /Agent-Native \/ Agent-First/);
+  assert.match(
+    bearing,
+    /primary way for LLMs to inspect and interact with\s+Continuum apps/i,
+  );
+
+  assert.match(mcp, /preferred LLM-facing interface/);
+  assert.match(mcp, /TUI.*must not be the first or only implementation/i);
+
+  assert.match(doctrine, /Agent-Native \/ Agent-First/);
+  assert.match(
+    doctrine,
+    /If an LLM agent cannot use a feature through structured outputs/i,
+  );
+});
+
+test("top-level agent doctrine avoids ambiguous capability vocabulary", () => {
+  const topLevelDoctrine = [
+    "AGENTS.md",
+    "METHOD.md",
+    "docs/BEARING.md",
+    "docs/MCP.md",
+    "docs/CLI.md",
+    "docs/design/doctrine.md",
+  ].map((relativePath) => readRepoText(relativePath).replace(/\r\n/g, "\n"));
+
+  for (const content of topLevelDoctrine) {
+    assert.doesNotMatch(content, /\bcapability-gated\b/i);
+    assert.doesNotMatch(content, /\bMCP capability\b/i);
+    assert.doesNotMatch(content, /\badapter capability\b/i);
+    assert.doesNotMatch(content, /\bcapability presentations\b/i);
+  }
+});
+
+test("agent doctrine maps admission-chain facts to bearing obligations", () => {
+  const doctrine = readRepoText("docs/design/doctrine.md").replace(/\s+/g, " ");
+
+  assert.match(
+    doctrine,
+    /agent surface obligations are: absence, authority, admission, mutation, and evidence posture/i,
+  );
+  assert.match(
+    doctrine,
+    /Admission-chain visible facts refine those obligations/i,
+  );
+  assert.match(
+    doctrine,
+    /tickets, witnesses, and receipts are evidence posture/i,
+  );
+  assert.match(
+    doctrine,
+    /reading posture is evidence posture for observer-relative outputs/i,
+  );
+});
+
+test("MCP parity design declares missing surface, tools, diagrams, examples, and schemas", () => {
+  const designPath = "docs/design/0022-mcp-agent-parity/mcp-agent-parity.md";
+  assert.equal(repoPathExists(designPath), true);
+
+  const content = readRepoText(designPath);
+
+  for (const heading of [
+    "## What's Missing",
+    "## What This Adds",
+    "## Mermaid Class Diagram",
+    "## Entity Relationship Diagram",
+    "## Flow Diagrams",
+    "## MCP API",
+    "## Versioned JSON Schemas",
+  ]) {
+    assert.match(content, escapedPattern(heading));
+  }
+
+  for (const tool of [
+    "warp_ttd.open_session",
+    "warp_ttd.inspect_worldline",
+    "warp_ttd.inspect_neighborhood_focus",
+    "warp_ttd.pin_observation",
+    "warp_ttd.seek_frame",
+  ]) {
+    assert.match(content, escapedPattern(tool));
+  }
+
+  assertMermaidFencePresent(content, "classDiagram");
+  assertMermaidFencePresent(content, "erDiagram");
+  assert.match(content, /"schemaVersion": "warp-ttd\.mcp\.v1"/);
+  assert.match(content, /"\$id": "https:\/\/warp-ttd\.local\/schemas\/mcp\/v1\/McpToolResult\.schema\.json"/);
+});
+
+test("MCP parity design reserves capability vocabulary for authority objects", () => {
+  const content = readRepoText(
+    "docs/design/0022-mcp-agent-parity/mcp-agent-parity.md",
+  );
+
+  assert.doesNotMatch(content, /\bcapability-gated\b/i);
+  assert.doesNotMatch(content, /\bcapability present\b/i);
+  assert.doesNotMatch(content, /\bcapability absent\b/i);
+  assert.doesNotMatch(content, /\bmissing capability\b/i);
+  assert.doesNotMatch(content, /\badapter capability\b/i);
+  assert.doesNotMatch(content, /\bcapability grant\b/i);
+  assert.doesNotMatch(content, /\bcapability presentation\b/i);
+  assert.doesNotMatch(content, /\bmissingCapability\b/);
+  assert.match(content, /\bmissingAdapterCapability\b/);
+  assert.match(content, /\bCapabilityGrant\b/);
+  assert.match(content, /\bCapabilityPresentation\b/);
+  assert.match(
+    content,
+    /Acceptance Checklist[\s\S]*reject ambiguous\s+adapter-support\s+phrasing[\s\S]*CapabilityGrant[\s\S]*CapabilityPresentation/,
+  );
+});
+
+test("MCP parity design keeps playback obstruction inside PlaybackControlResult", () => {
+  const content = readRepoText(
+    "docs/design/0022-mcp-agent-parity/mcp-agent-parity.md",
+  );
+
+  assert.doesNotMatch(content, /\bObstructedResult\b/);
+  assert.doesNotMatch(content, /Output schema: `PlaybackControlResult`\./);
+  assert.match(
+    content,
+    /Output schema: `PlaybackControlResult` \(OK or OBSTRUCTED by top-level `posture`\)\./,
+  );
+  assert.match(content, /"oneOf": \[/);
+  assert.match(content, /"title": "PlaybackControlObstructed"/);
+  assert.match(content, /"required": \["reason", "missingAdapterCapability"\]/);
+});
+
+test("Continuum near-future design declares MCP and TUI surfaces with SVG mockups", () => {
+  const designPath = "docs/design/0023-continuum-operator-surface/continuum-operator-surface.md";
+  const mockups = [
+    "docs/design/0023-continuum-operator-surface/assets/continuum-overview-tui.svg",
+    "docs/design/0023-continuum-operator-surface/assets/reading-envelope-inspector-tui.svg",
+    "docs/design/0023-continuum-operator-surface/assets/suffix-sync-inspector-tui.svg",
+  ];
+
+  assert.equal(repoPathExists(designPath), true);
+  assertContinuumMockupsExist(mockups);
+
+  const content = readRepoText(designPath);
+  assertAllTextPresent(content, [
+    "## Continuum Takeaways",
+    "## Near-Future Additions",
+    "## Agent MCP Surface",
+    "## TUI Surface",
+    "## Mock TUI Layouts",
+    "## Mermaid Class Diagram",
+    "## Entity Relationship Diagram",
+    "## Sequence Diagrams",
+  ]);
+
+  assertAllTextPresent(content, [
+    "IntentEnvelope",
+    "TickResult",
+    "ObserverPlan",
+    "ObservationRequest",
+    "ReadingEnvelope",
+    "ContinuumEvidenceStatus",
+    "WitnessedSuffixShell",
+    "CausalSuffixBundle",
+    "ImportOutcome",
+  ]);
+
+  assertAllTextPresent(content, [
+    "warp_ttd.inspect_runtime_boundary",
+    "warp_ttd.inspect_reading_envelopes",
+    "warp_ttd.inspect_evidence_status",
+    "warp_ttd.inspect_witnessed_suffix_shells",
+    "warp_ttd.inspect_import_outcomes",
+    "warp_ttd.trace_continuum_chain",
+  ]);
+
+  assert.match(content, /!\[Continuum overview TUI mockup\]/);
+  assertMermaidFencePresent(content, "classDiagram");
+  assertMermaidFencePresent(content, "erDiagram");
+  assertMermaidFencePresent(content, "sequenceDiagram");
+});
+
 test("MCP admission-chain surface is closed as a landed cycle", () => {
   const graveyardPath = "docs/method/graveyard/DELIVERY_mcp-admission-chain-surface.md";
 

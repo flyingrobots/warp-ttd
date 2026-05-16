@@ -1,6 +1,7 @@
 # CLI
 
-The WARP TTD CLI is the canonical agent-facing surface for structured debugger access.
+The WARP TTD CLI is the canonical shell-native agent surface for structured
+debugger access.
 
 ```mermaid
 flowchart LR
@@ -20,6 +21,9 @@ flowchart LR
 ## Agent Contract
 
 For agent use, `--json` is the primary contract. Every command emits a versioned, machine-readable JSONL envelope.
+MCP is the preferred LLM-facing integration surface, while CLI `--json` remains
+the deterministic audit, scripting, and local recovery interface. New debugger
+facts should be usable by agents here before they become human-only TUI affordances.
 
 - **Handshake**: Handshake with a host to inspect adapter capabilities.
   ```bash
