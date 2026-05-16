@@ -297,6 +297,10 @@ test("bearing promotes admission-chain read model before strand speculation", ()
   assert.match(bearing, /Admission-Chain Read Model/);
   assert.match(
     bearing,
+    /docs\/design\/0024-admission-chain-read-model\/admission-chain-read-model\.md/,
+  );
+  assert.match(
+    bearing,
     /docs\/method\/backlog\/up-next\/PROTO_admission-chain-inspector\.md/,
   );
   assert.doesNotMatch(
@@ -317,6 +321,20 @@ test("admission-chain backlog keeps registration and handle as primary facts", (
   assert.match(content, /- `OpticRegistrationDescriptor`/);
   assert.match(content, /- Echo-owned `OpticArtifactHandle`/);
   assert.match(content, /artifact registration, registration descriptor, handle/);
+});
+
+test("admission-chain read model cycle defines versioned ordered facts", () => {
+  const content = readRepoText(
+    "docs/design/0024-admission-chain-read-model/admission-chain-read-model.md",
+  );
+
+  assert.match(content, /schemaVersion: "warp-ttd\.admission-chain\.v1"/);
+  assert.match(content, /The `facts` list is canonical order for agents/);
+  assert.match(
+    content,
+    /`OpticArtifactHandle` remains a runtime registration handle, not authority/,
+  );
+  assert.match(content, /No Echo runtime admission/);
 });
 
 test("bearing names jedit and graft as live debugger targets", () => {

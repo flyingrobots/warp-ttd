@@ -80,8 +80,10 @@ obstructions, witnesses, receipts, and reading envelopes.
 
 MCP is not authority, admission, grant issuance, or mutation. The read-model
 target is
-`docs/method/backlog/up-next/PROTO_admission-chain-inspector.md`
-([open backlog](./method/backlog/up-next/PROTO_admission-chain-inspector.md)).
+[`docs/design/0024-admission-chain-read-model/admission-chain-read-model.md`](./design/0024-admission-chain-read-model/admission-chain-read-model.md).
+The originating backlog remains
+[`docs/method/backlog/up-next/PROTO_admission-chain-inspector.md`](./method/backlog/up-next/PROTO_admission-chain-inspector.md)
+until the live Echo facts land.
 The live app delivery target is
 [`docs/method/backlog/up-next/DELIVERY_dual-live-app-debugging.md`](./method/backlog/up-next/DELIVERY_dual-live-app-debugging.md).
 The first executable smoke surface is `npm run targets -- --json`, which

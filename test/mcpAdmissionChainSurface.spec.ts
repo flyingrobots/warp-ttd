@@ -39,6 +39,42 @@ function targetLabel(target: JsonObject): string {
   return typeof value === "string" ? value : "target";
 }
 
+function assertAdmissionChainFactOrder(chain: JsonObject): void {
+  const facts = requireArray(chain["facts"], "facts").map((fact) =>
+    requireRecord(fact, "fact")
+  );
+  const basisFact = facts[0];
+  const artifactRegistrationFact = facts[1];
+
+  assert.ok(basisFact !== undefined);
+  assert.ok(artifactRegistrationFact !== undefined);
+  assert.deepEqual(
+    facts.map((fact) => fact["key"]),
+    [
+      "basis",
+      "artifactRegistration",
+      "opticArtifactHandle",
+      "opticAdmissionRequirements",
+      "capabilityGrant",
+      "capabilityPresentation",
+      "admissionTicket",
+      "lawWitness",
+      "receipts",
+      "reading"
+    ]
+  );
+  assert.equal(basisFact["posture"], "PRESENT");
+  assert.equal(artifactRegistrationFact["posture"], "ABSENT");
+  assert.equal(
+    requireRecord(artifactRegistrationFact["value"], "artifactRegistration.value")["field"],
+    "artifactRegistration"
+  );
+  assert.deepEqual(
+    requireRecord(chain["artifactRegistration"], "artifactRegistration"),
+    requireRecord(artifactRegistrationFact["value"], "artifactRegistration fact value")
+  );
+}
+
 async function connectMcp(
   adapter = new EchoFixtureAdapter()
 ): Promise<{ client: Client; server: McpServer }> {
@@ -264,6 +300,8 @@ test("MCP admission-chain tool exposes absent posture for unavailable facts", as
       requireRecord(chain["artifactRegistration"], "artifactRegistration")["posture"],
       "ABSENT"
     );
+    assert.equal(chain["schemaVersion"], "warp-ttd.admission-chain.v1");
+    assertAdmissionChainFactOrder(chain);
     assert.equal(
       requireRecord(chain["capabilityGrant"], "capabilityGrant")["posture"],
       "ABSENT"
