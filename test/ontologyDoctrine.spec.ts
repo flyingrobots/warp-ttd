@@ -13,8 +13,23 @@ function repoPathExists(relativePath: string): boolean {
   return fs.existsSync(path.join(ROOT, relativePath));
 }
 
+function escapeRegexLiteral(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 function escapedPattern(value: string): RegExp {
-  return new RegExp(value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  return new RegExp(escapeRegexLiteral(value));
+}
+
+function mermaidFencePattern(firstStatement: string): RegExp {
+  return new RegExp("```mermaid\\r?\\n" + escapeRegexLiteral(firstStatement));
+}
+
+function assertMermaidFencePresent(
+  content: string,
+  firstStatement: string,
+): void {
+  assert.match(content, mermaidFencePattern(firstStatement));
 }
 
 function assertAllTextPresent(content: string, values: readonly string[]): void {
@@ -29,6 +44,14 @@ function assertContinuumMockupsExist(mockups: readonly string[]): void {
     assert.match(readRepoText(mockup), /<svg/);
   }
 }
+
+test("Mermaid fence assertions tolerate CRLF line endings", () => {
+  for (const firstStatement of ["classDiagram", "erDiagram", "sequenceDiagram"]) {
+    const content = "```mermaid\r\n" + firstStatement + "\r\n";
+
+    assertMermaidFencePresent(content, firstStatement);
+  }
+});
 
 test("repo doctrine makes WARP TTD agent-native and agent-first", () => {
   const agents = readRepoText("AGENTS.md");
@@ -88,8 +111,8 @@ test("MCP parity design declares missing surface, tools, diagrams, examples, and
     assert.match(content, escapedPattern(tool));
   }
 
-  assert.match(content, /```mermaid\nclassDiagram/);
-  assert.match(content, /```mermaid\nerDiagram/);
+  assertMermaidFencePresent(content, "classDiagram");
+  assertMermaidFencePresent(content, "erDiagram");
   assert.match(content, /"schemaVersion": "warp-ttd\.mcp\.v1"/);
   assert.match(content, /"\$id": "https:\/\/warp-ttd\.local\/schemas\/mcp\/v1\/McpToolResult\.schema\.json"/);
 });
@@ -139,9 +162,9 @@ test("Continuum near-future design declares MCP and TUI surfaces with SVG mockup
   ]);
 
   assert.match(content, /!\[Continuum overview TUI mockup\]/);
-  assert.match(content, /```mermaid\nclassDiagram/);
-  assert.match(content, /```mermaid\nerDiagram/);
-  assert.match(content, /```mermaid\nsequenceDiagram/);
+  assertMermaidFencePresent(content, "classDiagram");
+  assertMermaidFencePresent(content, "erDiagram");
+  assertMermaidFencePresent(content, "sequenceDiagram");
 });
 
 test("MCP admission-chain surface is closed as a landed cycle", () => {
