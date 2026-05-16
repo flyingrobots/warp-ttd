@@ -83,6 +83,24 @@ test("repo doctrine makes WARP TTD agent-native and agent-first", () => {
   );
 });
 
+test("top-level agent doctrine avoids ambiguous capability vocabulary", () => {
+  const topLevelDoctrine = [
+    "AGENTS.md",
+    "METHOD.md",
+    "docs/BEARING.md",
+    "docs/MCP.md",
+    "docs/CLI.md",
+    "docs/design/doctrine.md",
+  ].map((relativePath) => readRepoText(relativePath).replace(/\r\n/g, "\n"));
+
+  for (const content of topLevelDoctrine) {
+    assert.doesNotMatch(content, /\bcapability-gated\b/i);
+    assert.doesNotMatch(content, /\bMCP capability\b/i);
+    assert.doesNotMatch(content, /\badapter capability\b/i);
+    assert.doesNotMatch(content, /\bcapability presentations\b/i);
+  }
+});
+
 test("MCP parity design declares missing surface, tools, diagrams, examples, and schemas", () => {
   const designPath = "docs/design/0022-mcp-agent-parity/mcp-agent-parity.md";
   assert.equal(repoPathExists(designPath), true);
@@ -127,6 +145,8 @@ test("MCP parity design reserves capability vocabulary for authority objects", (
   assert.doesNotMatch(content, /\bcapability absent\b/i);
   assert.doesNotMatch(content, /\bmissing capability\b/i);
   assert.doesNotMatch(content, /\badapter capability\b/i);
+  assert.doesNotMatch(content, /\bcapability grant\b/i);
+  assert.doesNotMatch(content, /\bcapability presentation\b/i);
   assert.doesNotMatch(content, /\bmissingCapability\b/);
   assert.match(content, /\bmissingAdapterCapability\b/);
   assert.match(content, /\bCapabilityGrant\b/);

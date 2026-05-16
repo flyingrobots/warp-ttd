@@ -68,6 +68,10 @@ This project will use [Semantic Versioning](https://semver.org/) starting at
   obstruction is modeled as a `PlaybackControlResult` variant instead of a
   separate result schema. The acceptance checklist now requires the
   capability-vocabulary regression guard explicitly.
+- **Agent doctrine capability vocabulary**: top-level agent-first docs now avoid
+  ambiguous lowercase capability phrasing for adapter support, using
+  `AdapterCapability`, `CapabilityPresentation`, or explicit authority/admission
+  language instead.
 - **Agent-native doctrine**: AGENTS, METHOD, BEARING, MCP, CLI, and project
   doctrine now require agent-first MCP/CLI/read-model surfaces before TUI or
   browser implementation for Continuum app debugging.

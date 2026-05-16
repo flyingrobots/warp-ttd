@@ -107,7 +107,8 @@ TTD should remain:
 - explainer
 - comparator
 
-Speculation may exist, but it must remain explicit and capability-gated.
+Speculation may exist, but it must remain explicit and gated by named authority,
+admission posture, and debugger-local scope.
 
 ## Wesley / GraphQL Guardrails
 

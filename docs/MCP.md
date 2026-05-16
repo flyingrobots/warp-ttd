@@ -89,5 +89,5 @@ is intentionally read-only.
   `nativeContinuumWitness` is true.
 
 ---
-**The goal is tool-native inspection. TUI work follows explicit MCP capability,
-not the other way around.**
+**The goal is tool-native inspection. TUI work follows the explicit MCP
+structured surface, not the other way around.**
