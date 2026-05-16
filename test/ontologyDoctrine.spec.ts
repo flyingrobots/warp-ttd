@@ -117,6 +117,20 @@ test("MCP parity design declares missing surface, tools, diagrams, examples, and
   assert.match(content, /"\$id": "https:\/\/warp-ttd\.local\/schemas\/mcp\/v1\/McpToolResult\.schema\.json"/);
 });
 
+test("MCP parity design reserves capability vocabulary for authority objects", () => {
+  const content = readRepoText(
+    "docs/design/0022-mcp-agent-parity/mcp-agent-parity.md",
+  );
+
+  assert.doesNotMatch(content, /\bcapability-gated\b/i);
+  assert.doesNotMatch(content, /\bcapability present\b/i);
+  assert.doesNotMatch(content, /\bcapability absent\b/i);
+  assert.doesNotMatch(content, /\bmissing capability\b/i);
+  assert.doesNotMatch(content, /\badapter capability\b/i);
+  assert.doesNotMatch(content, /\bmissingCapability\b/);
+  assert.match(content, /\bmissingAdapterCapability\b/);
+});
+
 test("Continuum near-future design declares MCP and TUI surfaces with SVG mockups", () => {
   const designPath = "docs/design/0023-continuum-operator-surface/continuum-operator-surface.md";
   const mockups = [

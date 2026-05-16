@@ -62,6 +62,9 @@ This project will use [Semantic Versioning](https://semver.org/) starting at
 
 ### Changed
 
+- **MCP parity obstruction vocabulary**: proposed MCP playback obstruction
+  outputs now use `missingAdapterCapability` and reserve `CapabilityGrant` /
+  `CapabilityPresentation` language for authority facts.
 - **Agent-native doctrine**: AGENTS, METHOD, BEARING, MCP, CLI, and project
   doctrine now require agent-first MCP/CLI/read-model surfaces before TUI or
   browser implementation for Continuum app debugging.

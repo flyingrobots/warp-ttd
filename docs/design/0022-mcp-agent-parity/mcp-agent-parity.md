@@ -19,8 +19,8 @@ commands to inspect Continuum apps.
 
 LLM agent debugging `jedit`, a live Echo app, and `graft`, a live git-warp app.
 Needs MCP tools that expose the same debugger facts and safe debugger actions as
-CLI/TUI, with deterministic JSON outputs and explicit absence, capability,
-authority, admission, mutation, and evidence posture.
+CLI/TUI, with deterministic JSON outputs and explicit absence,
+AdapterCapability support, authority, admission, mutation, and evidence posture.
 
 ## Hill
 
@@ -29,8 +29,8 @@ WARP TTD exposes an MCP API with semantic parity against the current CLI and TUI
 - CLI `--json` facts are available as targeted MCP tools.
 - TUI read models are available as structured MCP facts.
 - Debugger-local state changes, such as pins, are explicit MCP state changes.
-- Playback control, such as step and seek, is capability-gated and distinguished
-  from host/application mutation.
+- Playback control, such as step and seek, is gated by AdapterCapability and
+  distinguished from host/application mutation.
 - Host/application mutation, grant issuance, admission, and strand creation stay
   out of scope until a separate admitted-control design exists.
 
@@ -51,7 +51,7 @@ The current MCP surface is a narrow read-only seed:
 | TUI worldline read model | Missing | Lane tree, selected lane/tick, and worldline focus facts. |
 | TUI neighborhood inspector | Missing as first-class MCP facts | Neighborhood core, sites, focus, reintegration detail, and receipt shell. |
 | Debugger-local pins | Serialized only | Inspect/add/remove pin tools. |
-| Playback controls | Missing by doctrine | Step forward, step backward, seek frame, capability-gated and non-host-mutating. |
+| Playback controls | Missing by doctrine | Step forward, step backward, seek frame, AdapterCapability-gated and non-host-mutating. |
 | Output schemas | Implicit TypeScript shapes | Versioned JSON Schema for every MCP output. |
 
 ## What This Adds
@@ -253,12 +253,12 @@ sequenceDiagram
     Agent->>MCP: warp_ttd.seek_frame(sessionId, frameIndex)
     MCP->>Store: get(sessionId)
     MCP->>Session: adapterCapabilities includes CONTROL_SEEK?
-    alt capability present
+    alt AdapterCapability present
         Session->>Adapter: seekToFrame(headId, frameIndex)
         Session->>Adapter: refresh snapshot reads
-        MCP-->>Agent: PlaybackControlResult admitted by adapter capability
-    else capability absent
-        MCP-->>Agent: ObstructedResult with missing capability
+        MCP-->>Agent: PlaybackControlResult admitted by AdapterCapability
+    else AdapterCapability absent
+        MCP-->>Agent: ObstructedResult with missing AdapterCapability
     end
 ```
 
@@ -271,7 +271,7 @@ flowchart TD
     B -->|debugger-local state| D[Mutate WARP TTD session state only]
     B -->|playback control| E[Check AdapterCapability]
     B -->|host/app mutation| F[Reject: separate admission design required]
-    E --> G{Capability present?}
+    E --> G{AdapterCapability present?}
     G -->|yes| H[Move debugger playback cursor]
     G -->|no| I[Return OBSTRUCTED]
     C --> J[McpToolResult]
@@ -486,7 +486,7 @@ Example output:
 
 ### `warp_ttd.inspect_adapter_capabilities`
 
-Returns `HostHello` plus the cached adapter capability list.
+Returns `HostHello` plus the cached AdapterCapability list.
 
 Kind: read-only.
 
@@ -1447,7 +1447,7 @@ Example output:
 }
 ```
 
-If capability is missing, output uses the common obstruction shape:
+If AdapterCapability is missing, output uses the common obstruction shape:
 
 ```json
 {
@@ -1456,7 +1456,7 @@ If capability is missing, output uses the common obstruction shape:
   "posture": "OBSTRUCTED",
   "result": {
     "reason": "Adapter does not advertise CONTROL_SEEK.",
-    "missingCapability": "CONTROL_SEEK"
+    "missingAdapterCapability": "CONTROL_SEEK"
   },
   "warnings": []
 }
@@ -2065,7 +2065,7 @@ Every tool-specific result is embedded as `McpToolResult.result`.
   "required": ["reason"],
   "properties": {
     "reason": { "type": "string" },
-    "missingCapability": { "type": "string" },
+    "missingAdapterCapability": { "type": "string" },
     "sessionId": { "type": "string" }
   },
   "additionalProperties": false
@@ -2079,7 +2079,7 @@ Every tool-specific result is embedded as `McpToolResult.result`.
 | Inspection tools | `true` | `false` | `true` | No session or host mutation. |
 | Session lifecycle open/close | `false` | `false` | `false` | Mutates MCP server session store only. |
 | Pin/unpin | `false` | `false` | `false` | Mutates debugger-local pins only. |
-| Playback control | `false` | `false` | `false` | Moves debugger playback cursor only after adapter capability check. |
+| Playback control | `false` | `false` | `false` | Moves debugger playback cursor only after AdapterCapability check. |
 | Host/application mutation | not registered | not registered | not registered | Requires future admission design. |
 
 ## Implementation Slices
@@ -2104,8 +2104,8 @@ Every tool-specific result is embedded as `McpToolResult.result`.
 
 4. **Debugger-local state and playback control**
    - Add pins first.
-   - Add step/back/seek with adapter capability checks.
-   - Return structured `OBSTRUCTED` results when a capability is missing.
+   - Add step/back/seek with AdapterCapability checks.
+   - Return structured `OBSTRUCTED` results when an AdapterCapability is missing.
 
 ## Playback Questions
 
@@ -2115,7 +2115,7 @@ Every tool-specific result is embedded as `McpToolResult.result`.
 4. Can an agent inspect neighborhood focus, reintegration detail, and receipt
    shell facts without reading TUI text?
 5. Can an agent pin and unpin observations without mutating the host app?
-6. Do playback controls refuse to run when the adapter capability is absent?
+6. Do playback controls refuse to run when the AdapterCapability is absent?
 7. Do playback controls identify themselves as debugger playback control, not
    host/application mutation?
 8. Does every MCP tool output include `schemaVersion: "warp-ttd.mcp.v1"`?
