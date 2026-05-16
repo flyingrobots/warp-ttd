@@ -12,8 +12,9 @@ This project will use [Semantic Versioning](https://semver.org/) starting at
 
 - **Admission-chain read model**: started cycle 0024 with a versioned
   `warp-ttd.admission-chain.v1` read model behind
-  `warp_ttd.inspect_admission_chain`. The MCP output now includes a canonical
-  ordered `facts` list while preserving existing named admission-chain fields.
+  `warp_ttd.inspect_admission_chain` and `admission-chain --json`. MCP and CLI
+  output now include a canonical ordered `facts` list while preserving existing
+  named admission-chain fields.
 - **MCP agent parity design**: added cycle 0022 design packet defining missing
   MCP parity against CLI/TUI, proposed API tools, examples, Mermaid diagrams,
   and versioned `warp-ttd.mcp.v1` JSON output schemas.

@@ -73,8 +73,9 @@ remain compatibility affordances and direct lookup handles.
 The initial slice is intentionally conservative:
 
 - Add `src/app/admissionChainReadModel.ts`.
-- Give MCP `warp_ttd.inspect_admission_chain` a
-  `schemaVersion: "warp-ttd.admission-chain.v1"` field.
+- Give MCP `warp_ttd.inspect_admission_chain` and CLI
+  `admission-chain --json` a `schemaVersion:
+  "warp-ttd.admission-chain.v1"` field.
 - Add a canonical ordered `facts` array for agents.
 - Preserve existing named fields for compatibility.
 - Keep Echo-specific artifact, handle, grant, ticket, and witness facts
@@ -94,11 +95,12 @@ The initial slice is intentionally conservative:
 ## Playback Questions
 
 1. Does MCP expose the admission-chain read model with a versioned schema name?
-2. Does the read model provide a deterministic ordered fact list?
-3. Are Echo-only facts still explicit `ABSENT` posture when unavailable?
-4. Are receipts and current readings exposed as `PRESENT` facts when available?
-5. Does the existing named-field MCP contract remain compatible?
-6. Does the surface remain read-only and avoid control, grant, admission,
+2. Does CLI `admission-chain --json` expose the same versioned read model?
+3. Does the read model provide a deterministic ordered fact list?
+4. Are Echo-only facts still explicit `ABSENT` posture when unavailable?
+5. Are receipts and current readings exposed as `PRESENT` facts when available?
+6. Does the existing named-field MCP contract remain compatible?
+7. Does the surface remain read-only and avoid control, grant, admission,
    mutation, or strand behavior?
 
 ## Follow-On Work

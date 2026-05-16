@@ -1,4 +1,5 @@
 import { EchoFixtureAdapter } from "./adapters/echoFixtureAdapter.ts";
+import { buildAdmissionChainReadModel } from "./app/admissionChainReadModel.ts";
 import { DebuggerSession } from "./app/debuggerSession.ts";
 import { inspectLiveTargets } from "./app/liveTargetInspection.ts";
 import { buildTickRows } from "./tui/worldlineLayout.ts";
@@ -9,12 +10,25 @@ import {
   UnsupportedCommandError
 } from "./errors.ts";
 
-type Command = "demo" | "hello" | "catalog" | "frame" | "step" | "effects" | "deliveries" | "context" | "session" | "worldline" | "targets";
+type Command = "demo" | "hello" | "catalog" | "frame" | "step" | "effects" | "deliveries" | "context" | "session" | "worldline" | "targets" | "admission-chain";
 type PrintableValue = object | string | number | boolean | null | undefined;
 type PrintFn = (envelope: string, data: PrintableValue, label?: string) => void;
 type CliHandler = (ctx: CliContext) => Promise<void>;
 
-const VALID_COMMANDS = new Set<Command>(["demo", "hello", "catalog", "frame", "step", "effects", "deliveries", "context", "session", "worldline", "targets"]);
+const VALID_COMMANDS = new Set<Command>([
+  "admission-chain",
+  "catalog",
+  "context",
+  "deliveries",
+  "demo",
+  "effects",
+  "frame",
+  "hello",
+  "session",
+  "step",
+  "targets",
+  "worldline"
+]);
 
 interface PrintContext {
   json: boolean;
@@ -137,6 +151,11 @@ async function handleSession(ctx: CliContext): Promise<void> {
   printSection("Session", session.toJSON());
 }
 
+async function handleAdmissionChain(ctx: CliContext): Promise<void> {
+  const session = await DebuggerSession.create(ctx.adapter, ctx.headId);
+  ctx.print("AdmissionChainReadModel", buildAdmissionChainReadModel(session));
+}
+
 function handleTargets(ctx: PrintContext): Promise<void> {
   printList(ctx, "LiveTargetInspection", inspectLiveTargets());
   return Promise.resolve();
@@ -218,6 +237,7 @@ async function handleDemo(ctx: CliContext): Promise<void> {
 }
 
 const COMMAND_HANDLERS: Record<Command, CliHandler> = {
+  "admission-chain": handleAdmissionChain,
   catalog: handleCatalog,
   context: handleContext,
   deliveries: handleDeliveries,

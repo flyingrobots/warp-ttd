@@ -62,6 +62,11 @@ function requireRecord(value: JsonValue | object | undefined, label: string): Js
   return value as JsonObject;
 }
 
+function requireArray(value: JsonValue | object | undefined, label: string): readonly JsonValue[] {
+  assert.ok(Array.isArray(value), `${label} must be an array`);
+  return value as readonly JsonValue[];
+}
+
 function targetLabel(target: JsonObject): string {
   const value = target["target"];
   return typeof value === "string" ? value : "target";
@@ -173,6 +178,38 @@ test("session --json outputs a single SerializedSession line", async () => {
   assert.equal(obj.data["activeHeadId"], "head:main");
   assert.ok(obj.data["snapshot"] !== undefined);
   assert.ok(Array.isArray(obj.data["pins"]));
+});
+
+test("admission-chain --json outputs the versioned read model", async () => {
+  const lines = await runJson("admission-chain");
+  assert.equal(lines.length, 1);
+
+  const obj = parseLine(requireLine(lines, 0));
+  assert.equal(obj.envelope, "AdmissionChainReadModel");
+  const data = requireRecord(obj.data, "AdmissionChainReadModel.data");
+  assert.equal(data["schemaVersion"], "warp-ttd.admission-chain.v1");
+
+  const facts = requireArray(data["facts"], "facts");
+  assert.deepEqual(
+    facts.map((fact) => requireRecord(fact, "AdmissionChainFact")["key"]),
+    [
+      "basis",
+      "artifactRegistration",
+      "opticArtifactHandle",
+      "opticAdmissionRequirements",
+      "capabilityGrant",
+      "capabilityPresentation",
+      "admissionTicket",
+      "lawWitness",
+      "receipts",
+      "reading"
+    ]
+  );
+  assert.equal(
+    requireRecord(data["artifactRegistration"], "artifactRegistration")["posture"],
+    "ABSENT"
+  );
+  assert.equal(requireRecord(data["reading"], "reading")["posture"], "PRESENT");
 });
 
 test("targets --json names jedit and graft as read-only live target inspections", async () => {
