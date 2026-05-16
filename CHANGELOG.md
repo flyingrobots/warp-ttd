@@ -64,7 +64,9 @@ This project will use [Semantic Versioning](https://semver.org/) starting at
 
 - **MCP parity obstruction vocabulary**: proposed MCP playback obstruction
   outputs now use `missingAdapterCapability` and reserve `CapabilityGrant` /
-  `CapabilityPresentation` language for authority facts.
+  `CapabilityPresentation` language for authority facts. Playback control
+  obstruction is modeled as a `PlaybackControlResult` variant instead of a
+  separate result schema.
 - **Agent-native doctrine**: AGENTS, METHOD, BEARING, MCP, CLI, and project
   doctrine now require agent-first MCP/CLI/read-model surfaces before TUI or
   browser implementation for Continuum app debugging.

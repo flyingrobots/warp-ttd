@@ -258,7 +258,7 @@ sequenceDiagram
         Session->>Adapter: refresh snapshot reads
         MCP-->>Agent: PlaybackControlResult admitted by AdapterCapability
     else AdapterCapability absent
-        MCP-->>Agent: ObstructedResult with missing AdapterCapability
+        MCP-->>Agent: PlaybackControlResult OBSTRUCTED variant with missing AdapterCapability
     end
 ```
 
@@ -1355,7 +1355,7 @@ Input:
 }
 ```
 
-Output schema: `PlaybackControlResult`.
+Output schema: `PlaybackControlResult` (OK or OBSTRUCTED by top-level `posture`).
 
 Example output:
 
@@ -1390,7 +1390,7 @@ Input:
 }
 ```
 
-Output schema: `PlaybackControlResult`.
+Output schema: `PlaybackControlResult` (OK or OBSTRUCTED by top-level `posture`).
 
 Example output:
 
@@ -1426,7 +1426,7 @@ Input:
 }
 ```
 
-Output schema: `PlaybackControlResult`.
+Output schema: `PlaybackControlResult` (OK or OBSTRUCTED by top-level `posture`).
 
 Example output:
 
@@ -1447,7 +1447,8 @@ Example output:
 }
 ```
 
-If AdapterCapability is missing, output uses the common obstruction shape:
+If AdapterCapability is missing, `PlaybackControlResult` uses its OBSTRUCTED
+variant:
 
 ```json
 {
@@ -2026,49 +2027,50 @@ Every tool-specific result is embedded as `McpToolResult.result`.
   "$id": "https://warp-ttd.local/schemas/mcp/v1/PlaybackControlResult.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "PlaybackControlResult",
-  "type": "object",
-  "required": ["sessionId", "action", "admittedByAdapterCapability", "before", "after", "snapshot"],
-  "properties": {
-    "sessionId": { "type": "string" },
-    "action": { "type": "string", "enum": ["STEP_FORWARD", "STEP_BACKWARD", "SEEK_FRAME"] },
-    "admittedByAdapterCapability": { "type": "boolean" },
-    "before": {
+  "oneOf": [
+    {
+      "title": "PlaybackControlAdmitted",
       "type": "object",
-      "required": ["headId", "frameIndex"],
+      "required": ["sessionId", "action", "admittedByAdapterCapability", "before", "after", "snapshot"],
       "properties": {
-        "headId": { "type": "string" },
-        "frameIndex": { "type": "integer", "minimum": 0 }
+        "sessionId": { "type": "string" },
+        "action": { "type": "string", "enum": ["STEP_FORWARD", "STEP_BACKWARD", "SEEK_FRAME"] },
+        "admittedByAdapterCapability": { "const": true },
+        "before": {
+          "type": "object",
+          "required": ["headId", "frameIndex"],
+          "properties": {
+            "headId": { "type": "string" },
+            "frameIndex": { "type": "integer", "minimum": 0 }
+          },
+          "additionalProperties": false
+        },
+        "after": {
+          "type": "object",
+          "required": ["headId", "frameIndex"],
+          "properties": {
+            "headId": { "type": "string" },
+            "frameIndex": { "type": "integer", "minimum": 0 }
+          },
+          "additionalProperties": false
+        },
+        "snapshot": { "$ref": "McpToolResult.schema.json#/$defs/ProtocolObject" }
       },
       "additionalProperties": false
     },
-    "after": {
+    {
+      "title": "PlaybackControlObstructed",
       "type": "object",
-      "required": ["headId", "frameIndex"],
+      "required": ["reason", "missingAdapterCapability"],
       "properties": {
-        "headId": { "type": "string" },
-        "frameIndex": { "type": "integer", "minimum": 0 }
+        "reason": { "type": "string" },
+        "missingAdapterCapability": { "type": "string" },
+        "sessionId": { "type": "string" },
+        "action": { "type": "string", "enum": ["STEP_FORWARD", "STEP_BACKWARD", "SEEK_FRAME"] }
       },
       "additionalProperties": false
-    },
-    "snapshot": { "$ref": "McpToolResult.schema.json#/$defs/ProtocolObject" }
-  },
-  "additionalProperties": false
-}
-```
-
-```json
-{
-  "$id": "https://warp-ttd.local/schemas/mcp/v1/ObstructedResult.schema.json",
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "ObstructedResult",
-  "type": "object",
-  "required": ["reason"],
-  "properties": {
-    "reason": { "type": "string" },
-    "missingAdapterCapability": { "type": "string" },
-    "sessionId": { "type": "string" }
-  },
-  "additionalProperties": false
+    }
+  ]
 }
 ```
 

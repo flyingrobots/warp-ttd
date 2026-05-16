@@ -131,6 +131,22 @@ test("MCP parity design reserves capability vocabulary for authority objects", (
   assert.match(content, /\bmissingAdapterCapability\b/);
 });
 
+test("MCP parity design keeps playback obstruction inside PlaybackControlResult", () => {
+  const content = readRepoText(
+    "docs/design/0022-mcp-agent-parity/mcp-agent-parity.md",
+  );
+
+  assert.doesNotMatch(content, /\bObstructedResult\b/);
+  assert.doesNotMatch(content, /Output schema: `PlaybackControlResult`\./);
+  assert.match(
+    content,
+    /Output schema: `PlaybackControlResult` \(OK or OBSTRUCTED by top-level `posture`\)\./,
+  );
+  assert.match(content, /"oneOf": \[/);
+  assert.match(content, /"title": "PlaybackControlObstructed"/);
+  assert.match(content, /"required": \["reason", "missingAdapterCapability"\]/);
+});
+
 test("Continuum near-future design declares MCP and TUI surfaces with SVG mockups", () => {
   const designPath = "docs/design/0023-continuum-operator-surface/continuum-operator-surface.md";
   const mockups = [
