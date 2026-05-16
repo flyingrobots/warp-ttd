@@ -21,6 +21,8 @@ LLM agent debugging `jedit`, a live Echo app, and `graft`, a live git-warp app.
 Needs MCP tools that expose the same debugger facts and safe debugger actions as
 CLI/TUI, with deterministic JSON outputs and explicit absence,
 AdapterCapability support, authority, admission, mutation, and evidence posture.
+Authority vocabulary is reserved for `CapabilityGrant` and
+`CapabilityPresentation`; adapter support remains `AdapterCapability`.
 
 ## Hill
 
@@ -2127,8 +2129,8 @@ Every tool-specific result is embedded as `McpToolResult.result`.
 
 ## Non-Goals
 
-- No grant issuance.
-- No capability presentation construction.
+- No `CapabilityGrant` issuance.
+- No `CapabilityPresentation` construction.
 - No Echo runtime admission.
 - No strand creation.
 - No host or application mutation.
@@ -2145,5 +2147,8 @@ Every tool-specific result is embedded as `McpToolResult.result`.
   available as structured MCP outputs.
 - Pin/unpin tools mutate only debugger-local session state.
 - Step/back/seek tools check `AdapterCapability` before calling the adapter.
+- The capability-vocabulary regression guard must reject ambiguous adapter-support
+  phrasing while permitting explicit authority nouns:
+  `CapabilityGrant` and `CapabilityPresentation`.
 - All tool outputs carry `schemaVersion: "warp-ttd.mcp.v1"`.
 - Tests assert schemas, tool annotations, and parity against fixture CLI output.

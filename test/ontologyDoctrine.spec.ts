@@ -129,6 +129,12 @@ test("MCP parity design reserves capability vocabulary for authority objects", (
   assert.doesNotMatch(content, /\badapter capability\b/i);
   assert.doesNotMatch(content, /\bmissingCapability\b/);
   assert.match(content, /\bmissingAdapterCapability\b/);
+  assert.match(content, /\bCapabilityGrant\b/);
+  assert.match(content, /\bCapabilityPresentation\b/);
+  assert.match(
+    content,
+    /Acceptance Checklist[\s\S]*reject ambiguous\s+adapter-support\s+phrasing[\s\S]*CapabilityGrant[\s\S]*CapabilityPresentation/,
+  );
 });
 
 test("MCP parity design keeps playback obstruction inside PlaybackControlResult", () => {
