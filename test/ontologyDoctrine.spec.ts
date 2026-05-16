@@ -101,6 +101,27 @@ test("top-level agent doctrine avoids ambiguous capability vocabulary", () => {
   }
 });
 
+test("agent doctrine maps admission-chain facts to bearing obligations", () => {
+  const doctrine = readRepoText("docs/design/doctrine.md").replace(/\s+/g, " ");
+
+  assert.match(
+    doctrine,
+    /agent surface obligations are: absence, authority, admission, mutation, and evidence posture/i,
+  );
+  assert.match(
+    doctrine,
+    /Admission-chain visible facts refine those obligations/i,
+  );
+  assert.match(
+    doctrine,
+    /tickets, witnesses, and receipts are evidence posture/i,
+  );
+  assert.match(
+    doctrine,
+    /reading posture is evidence posture for observer-relative outputs/i,
+  );
+});
+
 test("MCP parity design declares missing surface, tools, diagrams, examples, and schemas", () => {
   const designPath = "docs/design/0022-mcp-agent-parity/mcp-agent-parity.md";
   assert.equal(repoPathExists(designPath), true);

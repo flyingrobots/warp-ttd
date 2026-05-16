@@ -33,9 +33,12 @@ generated protocol artifacts, or deterministic read models. TUI and browser
 views may make those facts pleasant for humans, but they must not become the
 only implementation of debugger behavior.
 
-This does not grant ambient control authority. Agent-native interaction still
-flows through explicit admission-chain designs: authority, admission, mutation,
-tickets, witnesses, receipts, and reading posture must remain visible facts.
+This does not grant ambient control authority. The canonical agent surface
+obligations are: absence, authority, admission, mutation, and evidence posture.
+Admission-chain visible facts refine those obligations: tickets, witnesses, and
+receipts are evidence posture; reading posture is evidence posture for
+observer-relative outputs; absence names when a host cannot provide one of those
+facts instead of letting the surface infer optimistic runtime truth.
 
 ## Development Philosophy
 

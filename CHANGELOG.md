@@ -72,6 +72,9 @@ This project will use [Semantic Versioning](https://semver.org/) starting at
   ambiguous lowercase capability phrasing for adapter support, using
   `AdapterCapability`, `CapabilityPresentation`, or explicit authority/admission
   language instead.
+- **Agent doctrine explicitness vocabulary**: project doctrine now maps
+  admission-chain visible facts back to BEARING's canonical agent-surface
+  obligations: absence, authority, admission, mutation, and evidence posture.
 - **Agent-native doctrine**: AGENTS, METHOD, BEARING, MCP, CLI, and project
   doctrine now require agent-first MCP/CLI/read-model surfaces before TUI or
   browser implementation for Continuum app debugging.
