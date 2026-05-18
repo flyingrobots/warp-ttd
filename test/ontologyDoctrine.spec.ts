@@ -244,6 +244,51 @@ test("Continuum near-future design declares MCP and TUI surfaces with SVG mockup
   assertMermaidFencePresent(content, "sequenceDiagram");
 });
 
+test("WARP app debugging intents stay debugger-local", () => {
+  const designPath = "docs/design/0025-warp-app-debugging-intents/warp-app-debugging-intents.md";
+
+  assert.equal(repoPathExists(designPath), true);
+
+  const content = readRepoText(designPath);
+
+  assertAllTextPresent(content, [
+    "## Answer",
+    "## Product Feel",
+    "## Investigation Intent Model",
+    "## Core Intents",
+    "## What The User Can Do",
+    "## Agent Surface",
+    "## Playback Questions",
+    "## Non-Goals",
+  ]);
+
+  assertAllTextPresent(content, [
+    "InvestigationIntent",
+    "Echo `IntentEnvelope` is a runtime/app fact",
+    "WARP TTD `InvestigationIntent` is a debugger-session fact",
+    "hostMutation: false",
+    "admissionRequired: false",
+    "ORIENT_TARGET",
+    "TRACE_READING",
+    "INSPECT_ADMISSION",
+    "REQUEST_SPECULATION",
+    "warp_ttd.resolve_investigation_intent",
+    "warp_ttd.explain_outcome",
+    "warp_ttd.compare_coordinates",
+  ]);
+
+  assertAllTextPresent(content, [
+    "No Echo `IntentEnvelope` authoring.",
+    "No grant issuance.",
+    "No Echo runtime admission.",
+    "No app mutation.",
+    "No strand creation.",
+    "No TUI-only investigation behavior.",
+  ]);
+
+  assertMermaidFencePresent(content, "sequenceDiagram");
+});
+
 test("MCP admission-chain surface is closed as a landed cycle", () => {
   const graveyardPath = "docs/method/graveyard/DELIVERY_mcp-admission-chain-surface.md";
 
