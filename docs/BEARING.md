@@ -58,6 +58,17 @@ timeline
 - Exposing read-only session, worldline, reading, `AdapterCapability`, and
   admission-chain facts before adding speculative lifecycle controls.
 
+### 6. Optic Admission Role Clarity
+
+- Treat Wesley-compiled artifacts and registration descriptors as inputs to the
+  admission-chain read model, not as debugger-owned authority.
+- Echo owns runtime-local handles, admission, obstruction, access
+  instrumentation, witnesses, receipts, and readings.
+- Authority layers issue grants and capability presentations; applications hide
+  handles, basis references, and runtime coordinates behind adapters.
+- WARP TTD should inspect these facts through protocol/read-model surfaces
+  without issuing authority or mutating host state.
+
 ## Tensions
 
 - **TUI-Lead Inertia**: Breaking the habit of implementing new inspection
@@ -72,8 +83,8 @@ timeline
 ## Next Target
 
 The product goal is **Dual Live App Debugging**: WARP TTD debugs `jedit`, a
-live Echo app, and `graft`, a live git-warp app. The immediate protocol focus
-is still the **Admission-Chain Read Model**: protocol and read model
+live Echo app, and `graft`, a live git-warp app. The immediate protocol
+focus is still the **Admission-Chain Read Model**: protocol and read model
 representation for artifact registration, registration descriptors, Echo-owned
 handles, grant posture, `CapabilityPresentation` posture, admission tickets,
 obstructions, witnesses, receipts, and reading envelopes.
