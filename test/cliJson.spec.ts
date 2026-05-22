@@ -323,6 +323,27 @@ test("targets --json never reports native Continuum evidence without native witn
   }
 });
 
+test("target-session --json reports graft session obstruction when the root is missing", async () => {
+  const lines = await runJsonWithEnv("target-session", {
+    WARP_TTD_JEDIT_ROOT: path.join(process.cwd(), "test", "missing-jedit"),
+    WARP_TTD_GRAFT_ROOT: path.join(process.cwd(), "test", "missing-graft")
+  });
+  assert.equal(lines.length, 1);
+
+  const obj = parseLine(requireLine(lines, 0));
+  assert.equal(obj.envelope, "LiveTargetSessionInspection");
+
+  const data = requireRecord(obj.data, "LiveTargetSessionInspection.data");
+  assert.equal(data["target"], "graft");
+  assert.equal(data["hostKind"], "GIT_WARP");
+  assert.equal(data["readOnly"], true);
+  assert.equal(data["rootPosture"], "MISSING");
+  assert.equal(data["adapterPosture"], "CONFIGURED");
+  assert.equal(data["sessionPosture"], "OBSTRUCTED");
+  assert.equal(typeof data["reason"], "string");
+  assert.equal("session" in data, false);
+});
+
 test("live target evidence posture cannot be poisoned by mutating a prior inspection", () => {
   const roots = {
     jeditRoot: path.join(process.cwd(), "test", "missing-jedit"),

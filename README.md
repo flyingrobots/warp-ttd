@@ -36,6 +36,7 @@ npm run hello -- --json
 npm run frame -- --json
 npm run admission-chain -- --json
 npm run targets -- --json
+npm run target-session -- --json
 ```
 
 ### 3. Protocol First

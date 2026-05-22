@@ -2,6 +2,7 @@ import { EchoFixtureAdapter } from "./adapters/echoFixtureAdapter.ts";
 import { buildAdmissionChainReadModel } from "./app/admissionChainReadModel.ts";
 import { DebuggerSession } from "./app/debuggerSession.ts";
 import { inspectLiveTargets } from "./app/liveTargetInspection.ts";
+import { inspectLiveTargetSessions } from "./app/liveTargetSessionInspection.ts";
 import { buildTickRows } from "./tui/worldlineLayout.ts";
 import type { FrameData } from "./tui/worldlineLayout.ts";
 import {
@@ -10,7 +11,8 @@ import {
   UnsupportedCommandError
 } from "./errors.ts";
 
-type Command = "demo" | "hello" | "catalog" | "frame" | "step" | "effects" | "deliveries" | "context" | "session" | "worldline" | "targets" | "admission-chain";
+type Command = "demo" | "hello" | "catalog" | "frame" | "step" | "effects" | "deliveries" | "context" | "session" | "worldline" | "targets" | "target-session" | "admission-chain";
+type AdapterCommand = Exclude<Command, "targets" | "target-session">;
 type PrintableValue = object | string | number | boolean | null | undefined;
 type PrintFn = (envelope: string, data: PrintableValue, label?: string) => void;
 type CliHandler = (ctx: CliContext) => Promise<void>;
@@ -27,6 +29,7 @@ const VALID_COMMANDS = new Set<Command>([
   "session",
   "step",
   "targets",
+  "target-session",
   "worldline"
 ]);
 
@@ -161,6 +164,10 @@ function handleTargets(ctx: PrintContext): Promise<void> {
   return Promise.resolve();
 }
 
+async function handleTargetSession(ctx: PrintContext): Promise<void> {
+  printList(ctx, "LiveTargetSessionInspection", await inspectLiveTargetSessions());
+}
+
 async function collectWorldlineFrames(ctx: CliContext): Promise<FrameData[]> {
   const maxFrame = await ctx.adapter.seekToFrame(ctx.headId, Number.MAX_SAFE_INTEGER);
   const frames: FrameData[] = [];
@@ -236,7 +243,7 @@ async function handleDemo(ctx: CliContext): Promise<void> {
   printSection("ReceiptSummary[] (after step)", await ctx.adapter.receipts(ctx.headId));
 }
 
-const COMMAND_HANDLERS: Record<Command, CliHandler> = {
+const COMMAND_HANDLERS: Record<AdapterCommand, CliHandler> = {
   "admission-chain": handleAdmissionChain,
   catalog: handleCatalog,
   context: handleContext,
@@ -247,7 +254,6 @@ const COMMAND_HANDLERS: Record<Command, CliHandler> = {
   hello: handleHello,
   session: handleSession,
   step: handleStep,
-  targets: handleTargets,
   worldline: handleWorldline
 };
 
@@ -257,6 +263,11 @@ async function main(): Promise<void> {
 
   if (command === "targets") {
     await handleTargets({ json, print });
+    return;
+  }
+
+  if (command === "target-session") {
+    await handleTargetSession({ json, print });
     return;
   }
 

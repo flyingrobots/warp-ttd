@@ -11,6 +11,7 @@ flowchart LR
     B --> B1[hello]
     B --> B2[catalog]
     B --> B3[targets]
+    B --> B4[target-session]
     C --> C1[frame]
     C --> C2[effects]
     C --> C3[deliveries]
@@ -37,6 +38,13 @@ facts should be usable by agents here before they become human-only TUI affordan
 
   ```bash
   npm run targets -- --json
+  ```
+
+- **Live Target Session**: Open configured live targets read-only and emit
+  session facts when an adapter is available.
+
+  ```bash
+  npm run target-session -- --json
   ```
 
 - **Inspect**: Read the current playback frame and receipts.
@@ -98,6 +106,13 @@ WARP_TTD_JEDIT_ROOT=/path/to/jedit \
 WARP_TTD_GRAFT_ROOT=/path/to/graft \
   npm run targets -- --json
 ```
+
+`target-session --json` keeps the same read-only boundary but opens configured
+live targets through their adapter when possible. The first supported live
+session is `graft`, using the `graft-ast` git-warp graph. If the root is
+missing or the graph cannot be opened, the command emits
+`sessionPosture: "OBSTRUCTED"` with a reason instead of mutating or inferring
+facts.
 
 ---
 **The goal is structured truth. Human-only text must not appear on stdout in `--json` mode.**
