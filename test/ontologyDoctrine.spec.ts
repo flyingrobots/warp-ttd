@@ -154,8 +154,12 @@ function assertGeneratedFamilyIngressManual(content: string): void {
     "## The Seam",
     "## Ownership Rule",
     "## First Ingress Shape",
+    "## Landed Implementation",
     "## Fallback Discipline",
+    "src/app/generatedFamilyIngress.ts",
+    "origin: \"LOCAL_FALLBACK\"",
     "GeneratedFamilyFact",
+    "GeneratedFamilyOrigin",
     "ABSENT",
     "PRESENT",
     "OBSTRUCTED",
@@ -167,12 +171,16 @@ function assertGeneratedFamilyIngressManual(content: string): void {
 
 function assertGeneratedFamilyIngressDesign(content: string): void {
   assertAllTextPresent(content, [
+    "status: landed",
     "# Generated Family Ingress Seam",
     "## Manual Chapter",
     "## Hill",
+    "## Implementation Witness",
     "## Playback Questions",
     "../../manual/001-generated-family-ingress-seam.md",
     "GeneratedFamilyPosture",
+    "GeneratedFamilyOrigin",
+    "src/app/admissionChainReadModel.ts",
     "source-family metadata",
     "No replacement of `src/protocol.ts`.",
   ]);

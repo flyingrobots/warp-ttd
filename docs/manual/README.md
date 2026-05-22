@@ -22,4 +22,4 @@ decisions that should survive beyond an individual cycle.
 
 | Manual chapter | Source design cycle | Status |
 | :--- | :--- | :--- |
-| [Generated Family Ingress Seam](./001-generated-family-ingress-seam.md) | [0027-generated-family-ingress-seam](../design/0027-generated-family-ingress-seam/generated-family-ingress-seam.md) | proposed |
+| [Generated Family Ingress Seam](./001-generated-family-ingress-seam.md) | [0027-generated-family-ingress-seam](../design/0027-generated-family-ingress-seam/generated-family-ingress-seam.md) | landed |

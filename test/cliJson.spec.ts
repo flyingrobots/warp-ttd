@@ -60,6 +60,11 @@ function targetLabel(target: JsonObject): string {
   return typeof value === "string" ? value : "target";
 }
 
+function requireString(value: JsonValue | object | undefined, label: string): string {
+  assert.equal(typeof value, "string", `${label} must be a string`);
+  return value as string;
+}
+
 function assertAdmissionFact(value: JsonValue | object | undefined, label: string): JsonObject {
   const fact = requireRecord(value, label);
   assert.equal(typeof fact["field"], "string", `${label}.field`);
@@ -92,7 +97,106 @@ function assertAdmissionChainFact(
 
   const nested = assertAdmissionFact(fact["value"], `${label}.value`);
   assert.equal(nested["field"], fact["key"], `${label}.value.field`);
+  assertGeneratedFamilyFact(fact["sourceFamily"], `${label}.sourceFamily`);
   return fact;
+}
+
+function assertGeneratedFamilyFact(
+  value: JsonValue | object | undefined,
+  label: string
+): JsonObject {
+  const fact = requireRecord(value, label);
+  const posture = requireString(fact["posture"], `${label}.posture`);
+  const origin = requireString(fact["origin"], `${label}.origin`);
+  const scope = requireString(fact["scope"], `${label}.scope`);
+  assert.ok(
+    ["ABSENT", "PRESENT", "OBSTRUCTED"].includes(posture),
+    `${label}.posture`
+  );
+  assert.ok(
+    ["GENERATED_PAYLOAD", "HOST_PUBLISHED", "TRANSLATED_SUBSTRATE", "LOCAL_FALLBACK", "UNAVAILABLE"]
+      .includes(origin),
+    `${label}.origin`
+  );
+  assert.ok(["SESSION", "COORDINATE", "TARGET"].includes(scope));
+  const source = requireRecord(fact["source"], `${label}.source`);
+  assert.equal(typeof source["family"], "string", `${label}.source.family`);
+  if (posture === "PRESENT") return fact;
+  assert.equal(typeof fact["reason"], "string", `${label}.reason`);
+  return fact;
+}
+
+function assertAdmissionChainKeys(factRecords: readonly JsonObject[]): void {
+  assert.deepEqual(
+    factRecords.map((fact) => fact["key"]),
+    [
+      "basis",
+      "artifactRegistration",
+      "opticArtifactHandle",
+      "opticAdmissionRequirements",
+      "capabilityGrant",
+      "capabilityPresentation",
+      "admissionTicket",
+      "lawWitness",
+      "receipts",
+      "reading"
+    ]
+  );
+}
+
+function assertAdmissionChainPostures(factRecords: readonly JsonObject[]): void {
+  assert.deepEqual(
+    factRecords.map((fact) => requireRecord(fact["value"], "AdmissionChainFact.value")["posture"]),
+    [
+      "PRESENT",
+      "ABSENT",
+      "ABSENT",
+      "ABSENT",
+      "ABSENT",
+      "ABSENT",
+      "ABSENT",
+      "ABSENT",
+      "ABSENT",
+      "PRESENT"
+    ]
+  );
+}
+
+function assertSourceFamilyFacts(
+  data: JsonObject,
+  factRecords: readonly JsonObject[]
+): void {
+  const sourceFamilyFacts = requireArray(data["sourceFamilyFacts"], "sourceFamilyFacts");
+  assert.deepEqual(
+    sourceFamilyFacts.map((fact) =>
+      requireRecord(fact, "AdmissionChainSourceFamilyFact")["field"]
+    ),
+    factRecords.map((fact) => fact["key"])
+  );
+}
+
+function assertAdmissionChainSourceFamilies(
+  data: JsonObject,
+  factRecords: readonly JsonObject[]
+): void {
+  assertSourceFamilyFacts(data, factRecords);
+  const capabilityGrantSource = assertGeneratedFamilyFact(
+    factRecords[4]?.["sourceFamily"],
+    "capabilityGrant.sourceFamily"
+  );
+  assert.equal(
+    requireRecord(capabilityGrantSource["source"], "capabilityGrant.source")["family"],
+    "authority"
+  );
+  assert.equal(capabilityGrantSource["posture"], "ABSENT");
+  assert.equal(capabilityGrantSource["origin"], "UNAVAILABLE");
+  const readingSource = assertGeneratedFamilyFact(
+    factRecords[9]?.["sourceFamily"],
+    "reading.sourceFamily"
+  );
+  assert.equal(requireRecord(readingSource["source"], "reading.source")["artifact"], "ReadingEnvelope");
+  assert.equal(readingSource["posture"], "PRESENT");
+  assert.equal(readingSource["origin"], "LOCAL_FALLBACK");
 }
 
 test("hello --json outputs a single HostHello JSONL line", async () => {
@@ -216,36 +320,9 @@ test("admission-chain --json outputs the versioned read model", async () => {
   const factRecords = facts.map((fact, index) =>
     assertAdmissionChainFact(fact, `AdmissionChainFact[${index.toString()}]`)
   );
-  assert.deepEqual(
-    factRecords.map((fact) => fact["key"]),
-    [
-      "basis",
-      "artifactRegistration",
-      "opticArtifactHandle",
-      "opticAdmissionRequirements",
-      "capabilityGrant",
-      "capabilityPresentation",
-      "admissionTicket",
-      "lawWitness",
-      "receipts",
-      "reading"
-    ]
-  );
-  assert.deepEqual(
-    factRecords.map((fact) => requireRecord(fact["value"], "AdmissionChainFact.value")["posture"]),
-    [
-      "PRESENT",
-      "ABSENT",
-      "ABSENT",
-      "ABSENT",
-      "ABSENT",
-      "ABSENT",
-      "ABSENT",
-      "ABSENT",
-      "ABSENT",
-      "PRESENT"
-    ]
-  );
+  assertAdmissionChainKeys(factRecords);
+  assertAdmissionChainPostures(factRecords);
+  assertAdmissionChainSourceFamilies(data, factRecords);
   assert.equal(
     requireRecord(data["artifactRegistration"], "artifactRegistration")["posture"],
     "ABSENT"
