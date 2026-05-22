@@ -19,6 +19,7 @@ The WARP TTD work doctrine: A backlog, a loop, and honest bookkeeping.
 | Signpost | Role |
 | :--- | :--- |
 | **`README.md`** | Public front door and project identity. |
+| **`MANUAL.md`** | Durable operator and maintainer manual compiled from design cycles. |
 | **`GUIDE.md`** | Orientation and productive-fast path. |
 | **`VISION.md`** | Core tenets and the observer geometry mission. |
 | **`ARCHITECTURE.md`** | Authoritative structural reference. |
@@ -43,7 +44,8 @@ stateDiagram-v2
     Pull --> Branch: cycle/
     Branch --> Red: failing tests
     Red --> Green: passing tests
-    Green --> Retro: findings/debt
+    Green --> Manualize: manual chapter
+    Manualize --> Retro: findings/debt
     Retro --> Ship: PR to main
     Ship --> [*]
 ```
@@ -54,8 +56,11 @@ stateDiagram-v2
    starting with the agent-facing contract when the feature has any inspection
    or interaction surface.
 4. **Green**: Implement the solution until tests pass.
-5. **Retro**: Document findings and follow-on debt in the cycle doc.
-6. **Ship**: Open a PR to `main`. Update `docs/BEARING.md` after merge.
+5. **Manualize**: Add or update a `MANUAL.md` chapter when the cycle introduces
+   durable doctrine, architecture, protocol boundary, operator workflow, or
+   agent contract knowledge.
+6. **Retro**: Document findings and follow-on debt in the cycle doc.
+7. **Ship**: Open a PR to `main`. Update `docs/BEARING.md` after merge.
 
 ## Naming Convention
 
