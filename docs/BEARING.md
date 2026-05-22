@@ -69,6 +69,18 @@ timeline
 - WARP TTD should inspect these facts through protocol/read-model surfaces
   without issuing authority or mutating host state.
 
+### 7. Debugger / Shared-Family Boundary
+
+- WARP TTD owns debugger-native investigation surfaces: sessions, playback,
+  frame windows, posture wrappers, pins, summaries, CLI JSONL, and MCP result
+  envelopes.
+- Continuum, Echo, Wesley, and authority-family artifacts own shared facts such
+  as `ReadingEnvelope`, `ObserverPlan`, `OpticRegistrationDescriptor`,
+  `CapabilityGrant`, `CapabilityPresentation`, `AdmissionTicket`, and
+  `LawWitness`.
+- Host substrate details remain adapter residue unless WARP TTD deliberately
+  projects them into debugger summaries with visible evidence posture.
+
 ## Tensions
 
 - **TUI-Lead Inertia**: Breaking the habit of implementing new inspection
@@ -97,6 +109,8 @@ The originating backlog remains
 until the live Echo facts land.
 The live app delivery target is
 [`docs/method/backlog/up-next/DELIVERY_dual-live-app-debugging.md`](./method/backlog/up-next/DELIVERY_dual-live-app-debugging.md).
+The debugger/shared-family boundary packet is
+[`docs/design/0026-debugger-native-shared-family-boundary/debugger-native-shared-family-boundary.md`](./design/0026-debugger-native-shared-family-boundary/debugger-native-shared-family-boundary.md).
 The first executable smoke surface is `npm run targets -- --json`, which
 reports read-only posture for both live targets without attaching or mutating.
 The active evidence-posture cycle is

@@ -1,5 +1,25 @@
 # Debugger-native vs shared-family boundary
 
+**Status:** complete
+
+## Closure
+
+Cycle 0026 landed the boundary packet at
+`docs/design/0026-debugger-native-shared-family-boundary/debugger-native-shared-family-boundary.md`.
+
+The packet freezes three buckets:
+
+- debugger-native protocol families owned by WARP TTD
+- shared-family projections consumed from Continuum, Echo, Wesley, or authority
+  artifacts
+- host-specific adapter residue that must stay behind adapter boundaries unless
+  deliberately projected into debugger summaries
+
+Future protocol work should use that packet before adding new nouns to the
+authored schema, local protocol mirror, CLI JSON, MCP results, or TUI models.
+
+## Original Prompt
+
 `warp-ttd` should not drift into either of two bad extremes:
 
 - blindly mirror every runtime/shared-family noun into the debugger
@@ -46,4 +66,3 @@ which should become projections over shared families.
 - `docs/design/glossary.md`
 - `docs/design/doctrine.md`
 - `docs/design/invariants.md`
-

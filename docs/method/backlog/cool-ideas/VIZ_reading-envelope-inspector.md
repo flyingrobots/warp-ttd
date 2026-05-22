@@ -34,5 +34,5 @@ payload blob.
 ## Repo Evidence
 
 - `docs/design/doctrine.md`
-- `docs/method/backlog/up-next/PROTO_debugger-native-vs-shared-family-boundary.md`
+- `docs/design/0026-debugger-native-shared-family-boundary/debugger-native-shared-family-boundary.md`
 - `docs/method/backlog/up-next/PROTO_wesley-generated-echo-family-consumption.md`
