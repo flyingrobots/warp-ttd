@@ -111,10 +111,14 @@ The live app delivery target is
 [`docs/method/backlog/up-next/DELIVERY_dual-live-app-debugging.md`](./method/backlog/up-next/DELIVERY_dual-live-app-debugging.md).
 The debugger/shared-family boundary packet is
 [`docs/design/0026-debugger-native-shared-family-boundary/debugger-native-shared-family-boundary.md`](./design/0026-debugger-native-shared-family-boundary/debugger-native-shared-family-boundary.md).
-The next-cycle manual chapter is
+The landed generated-family ingress seam is now the Manual-backed path for
+bringing shared-family payload posture into WARP TTD:
 [`docs/manual/001-generated-family-ingress-seam.md`](./manual/001-generated-family-ingress-seam.md),
 paired with
 [`docs/design/0027-generated-family-ingress-seam/generated-family-ingress-seam.md`](./design/0027-generated-family-ingress-seam/generated-family-ingress-seam.md).
+The next pressure is replacing local fallback facts with host-published
+neighborhood, reading, Echo admission, and authority payloads as those families
+become available.
 The first executable smoke surface is `npm run targets -- --json`, which
 reports read-only posture for both live targets without attaching or mutating.
 The active evidence-posture cycle is

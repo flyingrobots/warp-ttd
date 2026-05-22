@@ -44,10 +44,41 @@ function assertAdmissionChainFactOrder(chain: JsonObject): void {
       "reading"
     ]
   );
+  assertAdmissionChainSourceFamilyOrder(chain, facts);
+  assertAdmissionChainNestedFactShape(chain, facts);
+}
+
+function assertAdmissionChainSourceFamilyOrder(
+  chain: JsonObject,
+  facts: readonly JsonObject[]
+): void {
+  const sourceFamilyFacts = requireArray(
+    chain["sourceFamilyFacts"],
+    "sourceFamilyFacts"
+  ).map((fact) => requireRecord(fact, "sourceFamilyFact"));
+
+  assert.deepEqual(
+    sourceFamilyFacts.map((fact) => fact["field"]),
+    facts.map((fact) => fact["key"])
+  );
+}
+
+function assertAdmissionChainNestedFactShape(
+  chain: JsonObject,
+  facts: readonly JsonObject[]
+): void {
   const basisFact = requireRecord(facts[0], "basis fact");
   const artifactRegistrationFact = requireRecord(facts[1], "artifactRegistration fact");
+  const readingSourceFamily = requireRecord(facts[9]?.["sourceFamily"], "reading source");
+
   assert.equal("posture" in basisFact, false);
   assert.equal("posture" in artifactRegistrationFact, false);
+  assert.equal(readingSourceFamily["posture"], "PRESENT");
+  assert.equal(readingSourceFamily["origin"], "LOCAL_FALLBACK");
+  assert.equal(
+    requireRecord(readingSourceFamily["source"], "reading source family")["family"],
+    "continuum"
+  );
   assert.equal(requireRecord(basisFact["value"], "basis.value")["posture"], "PRESENT");
   assert.equal(
     requireRecord(artifactRegistrationFact["value"], "artifactRegistration.value")["posture"],

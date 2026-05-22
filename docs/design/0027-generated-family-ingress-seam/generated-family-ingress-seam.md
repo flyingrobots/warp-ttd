@@ -1,6 +1,6 @@
 ---
 title: Generated Family Ingress Seam
-status: proposed
+status: landed
 ---
 
 # Generated Family Ingress Seam
@@ -58,6 +58,12 @@ generated artifact replacement.
 
 ```ts
 type GeneratedFamilyPosture = "ABSENT" | "PRESENT" | "OBSTRUCTED";
+type GeneratedFamilyOrigin =
+  | "GENERATED_PAYLOAD"
+  | "HOST_PUBLISHED"
+  | "TRANSLATED_SUBSTRATE"
+  | "LOCAL_FALLBACK"
+  | "UNAVAILABLE";
 
 type GeneratedFamilyRef = {
   family: "warp-ttd-protocol" | "continuum" | "echo" | "authority" | "git-warp";
@@ -68,6 +74,7 @@ type GeneratedFamilyRef = {
 type GeneratedFamilyFact<TPayload> = {
   posture: GeneratedFamilyPosture;
   source: GeneratedFamilyRef;
+  origin: GeneratedFamilyOrigin;
   scope: "SESSION" | "COORDINATE" | "TARGET";
   target?: string;
   payload?: TPayload;
@@ -87,6 +94,26 @@ or future TUI views.
    behavior.
 4. Keep generated payload identity visible in structured outputs when exposed.
 5. Leave full generated protocol authority cutover for a later cycle.
+
+## Implementation Witness
+
+This cycle landed the first data-only seam:
+
+- `src/app/generatedFamilyIngress.ts` defines source-family refs and
+  `PRESENT`, `ABSENT`, and `OBSTRUCTED` generated-family facts.
+- `src/app/admissionChainReadModel.ts` threads source-family facts through the
+  admission-chain read model as both `sourceFamilyFacts` and nested
+  `facts[].sourceFamily`.
+- `warp-ttd admission-chain --json` and MCP
+  `warp_ttd.inspect_admission_chain` expose the same source-family metadata
+  through existing structured read-only surfaces.
+- Local basis, receipt, and reading derivations are labeled
+  `origin: "LOCAL_FALLBACK"`; missing Echo and authority payloads are labeled
+  `origin: "UNAVAILABLE"` with absent posture.
+
+No adapter behavior changed, no generated protocol authority cutover happened,
+and the seam still performs no authority issuance, runtime admission, host
+mutation, or strand creation.
 
 ## Playback Questions
 
@@ -125,3 +152,8 @@ or future TUI views.
 - `docs/method/backlog/up-next/PROTO_wesley-generated-echo-family-consumption.md`
 - `src/protocol.ts`
 - `src/generated/warp-ttd-protocol.wesley.generated.ts`
+- `src/app/generatedFamilyIngress.ts`
+- `src/app/admissionChainReadModel.ts`
+- `test/generatedFamilyIngress.spec.ts`
+- `test/cliJson.spec.ts`
+- `test/mcpAdmissionChainSurface.spec.ts`

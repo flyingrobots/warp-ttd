@@ -80,6 +80,12 @@ existing protocol types yet.
 
 ```ts
 type GeneratedFamilyPosture = "ABSENT" | "PRESENT" | "OBSTRUCTED";
+type GeneratedFamilyOrigin =
+  | "GENERATED_PAYLOAD"
+  | "HOST_PUBLISHED"
+  | "TRANSLATED_SUBSTRATE"
+  | "LOCAL_FALLBACK"
+  | "UNAVAILABLE";
 
 type GeneratedFamilyRef = {
   family: "warp-ttd-protocol" | "continuum" | "echo" | "authority" | "git-warp";
@@ -90,6 +96,7 @@ type GeneratedFamilyRef = {
 type GeneratedFamilyFact<TPayload> = {
   posture: GeneratedFamilyPosture;
   source: GeneratedFamilyRef;
+  origin: GeneratedFamilyOrigin;
   scope: "SESSION" | "COORDINATE" | "TARGET";
   target?: string;
   payload?: TPayload;
@@ -104,6 +111,32 @@ and app code to say:
 - the generated payload is absent because the host does not publish it yet
 - the generated payload is obstructed because a source artifact or runtime read
   failed
+
+## Landed Implementation
+
+Cycle 0027 landed the seam as `src/app/generatedFamilyIngress.ts`. The module is
+data-only: it builds generated-family refs and present, absent, or obstructed
+facts with explicit source family, origin, scope, optional target, optional
+payload, and reason metadata.
+
+The first consumer is the admission-chain read model. `AdmissionChainReadModel`
+now carries:
+
+- `sourceFamilyFacts`: canonical source-family posture facts in admission-chain
+  order
+- `facts[].sourceFamily`: the same source-family fact nested beside each
+  debugger admission fact
+
+The first exposed surfaces are still read-only:
+
+- `warp-ttd admission-chain --json`
+- MCP `warp_ttd.inspect_admission_chain`
+
+Fixture-derived basis, receipt, and reading facts are marked
+`origin: "LOCAL_FALLBACK"`. Echo and authority facts that are not host-published
+yet are marked `origin: "UNAVAILABLE"` and `posture: "ABSENT"`. This makes the
+debugger's local summary useful without implying that Continuum, Echo, or an
+authority layer already published native facts.
 
 ## First Consumers
 

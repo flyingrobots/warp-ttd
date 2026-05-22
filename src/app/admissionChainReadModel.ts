@@ -1,4 +1,13 @@
 import type { DebuggerSession } from "./debuggerSession.ts";
+import {
+  absentGeneratedFamilyFact,
+  obstructedGeneratedFamilyFact,
+  presentGeneratedFamilyFact,
+  type GeneratedFamilyFact,
+  type GeneratedFamilyOrigin,
+  type GeneratedFamilyRef,
+  type GeneratedFamilyScope
+} from "./generatedFamilyIngress.ts";
 import type { ReceiptSummary } from "../protocol.ts";
 
 export type JsonPrimitive = string | number | boolean | null;
@@ -76,7 +85,12 @@ export interface AdmissionChainFact extends JsonObject {
   key: AdmissionChainFactKey;
   label: string;
   value: AdmissionFact;
+  sourceFamily: AdmissionChainSourceFamilyFact;
 }
+
+export type AdmissionChainSourceFamilyFact = GeneratedFamilyFact & {
+  readonly field: AdmissionChainFactKey;
+};
 
 interface AdmissionChainFields {
   basis: AdmissionFact<JsonObject>;
@@ -102,9 +116,16 @@ type UnavailableAdmissionFields = Pick<
   | "lawWitness"
 >;
 
+interface SourceFamilyFactArgs {
+  readonly source: GeneratedFamilyRef;
+  readonly origin: GeneratedFamilyOrigin;
+  readonly scope: GeneratedFamilyScope;
+}
+
 export interface AdmissionChainReadModel extends AdmissionChainFields, JsonObject {
   schemaVersion: typeof ADMISSION_CHAIN_SCHEMA_VERSION;
   facts: readonly AdmissionChainFact[];
+  sourceFamilyFacts: readonly AdmissionChainSourceFamilyFact[];
 }
 
 const FACT_LABELS: Record<AdmissionChainFactKey, string> = {
@@ -133,6 +154,25 @@ const ABSENT_REASONS = {
     "Host adapter did not provide admission ticket or obstruction posture.",
   lawWitness: "Host adapter did not provide law witness posture."
 } as const;
+
+const SHARED_FAMILY_SOURCES: Record<AdmissionChainFactKey, GeneratedFamilyRef> = {
+  admissionTicket: { family: "echo", artifact: "AdmissionTicket" },
+  artifactRegistration: { family: "echo", artifact: "OpticRegistrationDescriptor" },
+  basis: protocolSource("PlaybackFrame"),
+  capabilityGrant: { family: "authority", artifact: "CapabilityGrant" },
+  capabilityPresentation: {
+    family: "authority",
+    artifact: "CapabilityPresentation"
+  },
+  lawWitness: { family: "echo", artifact: "LawWitness" },
+  opticAdmissionRequirements: {
+    family: "echo",
+    artifact: "OpticAdmissionRequirements"
+  },
+  opticArtifactHandle: { family: "echo", artifact: "OpticArtifactHandle" },
+  reading: { family: "continuum", artifact: "ReadingEnvelope" },
+  receipts: protocolSource("ReceiptSummary")
+};
 
 function absent(
   field: AdmissionChainFactKey,
@@ -190,15 +230,121 @@ function unavailableAdmissionFields(): UnavailableAdmissionFields {
   };
 }
 
-function factsFor(model: AdmissionChainFields): AdmissionChainFact[] {
-  return ADMISSION_CHAIN_FACT_KEYS.map((key) => {
+function factsFor(
+  model: AdmissionChainFields,
+  sourceFamilyFacts: readonly AdmissionChainSourceFamilyFact[]
+): AdmissionChainFact[] {
+  return ADMISSION_CHAIN_FACT_KEYS.map((key, index) => {
     const value = model[key];
+    const sourceFamily = sourceFamilyFacts[index] ?? sourceFamilyFactFor(key, value);
+
     return {
       key,
       label: FACT_LABELS[key],
-      value
+      value,
+      sourceFamily
     };
   });
+}
+
+function protocolSource(
+  artifact: string
+): GeneratedFamilyRef {
+  return {
+    family: "warp-ttd-protocol",
+    artifact,
+    schemaVersion: "0.6.0"
+  };
+}
+
+function sharedFamilySource(key: AdmissionChainFactKey): GeneratedFamilyRef {
+  return SHARED_FAMILY_SOURCES[key];
+}
+
+function sourceFamilyScope(key: AdmissionChainFactKey): GeneratedFamilyScope {
+  return ["basis", "receipts", "reading"].includes(key) ? "COORDINATE" : "SESSION";
+}
+
+function sourceFamilyOrigin(
+  key: AdmissionChainFactKey,
+  fact: AdmissionFact
+): GeneratedFamilyOrigin {
+  if (fact.posture !== "PRESENT") return "UNAVAILABLE";
+  if (["basis", "receipts", "reading"].includes(key)) return "LOCAL_FALLBACK";
+  return "HOST_PUBLISHED";
+}
+
+function presentPayload(fact: AdmissionFact): JsonObject | undefined {
+  if (fact.posture !== "PRESENT") return undefined;
+  return typeof fact.value === "object" && fact.value !== null
+    ? (fact.value as JsonObject)
+    : { value: fact.value };
+}
+
+function sourceFamilyFactFor(
+  key: AdmissionChainFactKey,
+  fact: AdmissionFact
+): AdmissionChainSourceFamilyFact {
+  const args = {
+    source: sharedFamilySource(key),
+    origin: sourceFamilyOrigin(key, fact),
+    scope: sourceFamilyScope(key)
+  };
+
+  if (fact.posture === "PRESENT") {
+    return presentSourceFamilyFact(key, args, fact);
+  }
+
+  if (fact.posture === "OBSTRUCTED") {
+    return obstructedSourceFamilyFact(key, args, fact.reason);
+  }
+
+  return absentSourceFamilyFact(key, args, fact.reason);
+}
+
+function presentSourceFamilyFact(
+  key: AdmissionChainFactKey,
+  args: SourceFamilyFactArgs,
+  fact: PresentFact
+): AdmissionChainSourceFamilyFact {
+  const payload = presentPayload(fact);
+
+  return {
+    field: key,
+    ...(payload === undefined
+      ? presentGeneratedFamilyFact(args)
+      : presentGeneratedFamilyFact({ ...args, payload }))
+  };
+}
+
+function absentSourceFamilyFact(
+  key: AdmissionChainFactKey,
+  args: SourceFamilyFactArgs,
+  reason: string
+): AdmissionChainSourceFamilyFact {
+  return {
+    field: key,
+    ...absentGeneratedFamilyFact({ ...args, reason })
+  };
+}
+
+function obstructedSourceFamilyFact(
+  key: AdmissionChainFactKey,
+  args: SourceFamilyFactArgs,
+  reason: string
+): AdmissionChainSourceFamilyFact {
+  return {
+    field: key,
+    ...obstructedGeneratedFamilyFact({ ...args, reason })
+  };
+}
+
+function sourceFamilyFactsFor(
+  model: AdmissionChainFields
+): AdmissionChainSourceFamilyFact[] {
+  return ADMISSION_CHAIN_FACT_KEYS.map((key) =>
+    sourceFamilyFactFor(key, model[key])
+  );
 }
 
 export function buildReadingInspection(session: DebuggerSession): ReadingInspection {
@@ -241,10 +387,12 @@ export function buildAdmissionChainReadModel(
   session: DebuggerSession
 ): AdmissionChainReadModel {
   const fields = buildAdmissionChainFields(session);
+  const sourceFamilyFacts = sourceFamilyFactsFor(fields);
 
   return {
     schemaVersion: ADMISSION_CHAIN_SCHEMA_VERSION,
-    facts: factsFor(fields),
+    facts: factsFor(fields, sourceFamilyFacts),
+    sourceFamilyFacts,
     ...fields
   };
 }
