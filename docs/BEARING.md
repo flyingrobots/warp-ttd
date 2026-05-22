@@ -64,7 +64,7 @@ timeline
   admission-chain read model, not as debugger-owned authority.
 - Echo owns runtime-local handles, admission, obstruction, access
   instrumentation, witnesses, receipts, and readings.
-- Authority layers issue grants and capability presentations; applications hide
+- Authority layers issue `CapabilityGrant` and `CapabilityPresentation` objects; applications hide
   handles, basis references, and runtime coordinates behind adapters.
 - WARP TTD should inspect these facts through protocol/read-model surfaces
   without issuing authority or mutating host state.

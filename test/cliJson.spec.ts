@@ -11,18 +11,17 @@ import { promisify } from "node:util";
 import path from "node:path";
 
 import { inspectLiveTargets } from "../src/app/liveTargetInspection.ts";
+import {
+  requireArray,
+  requireRecord,
+  type JsonObject,
+  type JsonValue
+} from "./helpers/jsonTestUtils.ts";
 
 const exec = promisify(execFile);
 
 const CLI = "./src/cli.ts";
 const NODE_ARGS = ["--experimental-strip-types", CLI];
-
-type JsonPrimitive = string | number | boolean | null;
-type JsonValue = JsonPrimitive | JsonObject | readonly JsonValue[];
-
-interface JsonObject {
-  readonly [key: string]: JsonValue;
-}
 
 interface EnvelopeLine {
   envelope: string;
@@ -56,20 +55,44 @@ function requireLine(lines: string[], index: number): string {
   return line;
 }
 
-function requireRecord(value: JsonValue | object | undefined, label: string): JsonObject {
-  assert.equal(typeof value, "object", `${label} must be an object`);
-  assert.notEqual(value, null, `${label} must not be null`);
-  return value as JsonObject;
-}
-
-function requireArray(value: JsonValue | object | undefined, label: string): readonly JsonValue[] {
-  assert.ok(Array.isArray(value), `${label} must be an array`);
-  return value as readonly JsonValue[];
-}
-
 function targetLabel(target: JsonObject): string {
   const value = target["target"];
   return typeof value === "string" ? value : "target";
+}
+
+function assertAdmissionFact(value: JsonValue | object | undefined, label: string): JsonObject {
+  const fact = requireRecord(value, label);
+  assert.equal(typeof fact["field"], "string", `${label}.field`);
+  const posture = fact["posture"];
+  if (typeof posture !== "string") {
+    assert.fail(`${label}.posture must be a string`);
+  }
+  assert.ok(
+    ["ABSENT", "PRESENT", "OBSTRUCTED"].includes(posture),
+    `${label}.posture must be a known posture`
+  );
+
+  if (posture === "PRESENT") {
+    assert.ok("value" in fact, `${label}.value must be present`);
+  } else {
+    assert.equal(typeof fact["reason"], "string", `${label}.reason`);
+  }
+
+  return fact;
+}
+
+function assertAdmissionChainFact(
+  value: JsonValue | object | undefined,
+  label: string
+): JsonObject {
+  const fact = requireRecord(value, label);
+  assert.equal(typeof fact["key"], "string", `${label}.key`);
+  assert.equal(typeof fact["label"], "string", `${label}.label`);
+  assert.equal("posture" in fact, false, `${label}.posture must be nested on value`);
+
+  const nested = assertAdmissionFact(fact["value"], `${label}.value`);
+  assert.equal(nested["field"], fact["key"], `${label}.value.field`);
+  return fact;
 }
 
 test("hello --json outputs a single HostHello JSONL line", async () => {
@@ -190,8 +213,11 @@ test("admission-chain --json outputs the versioned read model", async () => {
   assert.equal(data["schemaVersion"], "warp-ttd.admission-chain.v1");
 
   const facts = requireArray(data["facts"], "facts");
+  const factRecords = facts.map((fact, index) =>
+    assertAdmissionChainFact(fact, `AdmissionChainFact[${index.toString()}]`)
+  );
   assert.deepEqual(
-    facts.map((fact) => requireRecord(fact, "AdmissionChainFact")["key"]),
+    factRecords.map((fact) => fact["key"]),
     [
       "basis",
       "artifactRegistration",
@@ -203,6 +229,21 @@ test("admission-chain --json outputs the versioned read model", async () => {
       "lawWitness",
       "receipts",
       "reading"
+    ]
+  );
+  assert.deepEqual(
+    factRecords.map((fact) => requireRecord(fact["value"], "AdmissionChainFact.value")["posture"]),
+    [
+      "PRESENT",
+      "ABSENT",
+      "ABSENT",
+      "ABSENT",
+      "ABSENT",
+      "ABSENT",
+      "ABSENT",
+      "ABSENT",
+      "ABSENT",
+      "PRESENT"
     ]
   );
   assert.equal(

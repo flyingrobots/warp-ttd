@@ -27,12 +27,28 @@ export type AdmissionChainFactKey = typeof ADMISSION_CHAIN_FACT_KEYS[number];
 
 export type AdmissionFactPosture = "ABSENT" | "PRESENT" | "OBSTRUCTED";
 
-export interface AdmissionFact<T extends JsonValue = JsonValue> extends JsonObject {
+export interface AbsentFact extends JsonObject {
   field: AdmissionChainFactKey;
-  posture: AdmissionFactPosture;
-  reason?: string;
-  value?: T;
+  posture: "ABSENT";
+  reason: string;
 }
+
+export interface PresentFact<T extends JsonValue = JsonValue> extends JsonObject {
+  field: AdmissionChainFactKey;
+  posture: "PRESENT";
+  value: T;
+}
+
+export interface ObstructedFact extends JsonObject {
+  field: AdmissionChainFactKey;
+  posture: "OBSTRUCTED";
+  reason: string;
+}
+
+export type AdmissionFact<T extends JsonValue = JsonValue> =
+  | AbsentFact
+  | PresentFact<T>
+  | ObstructedFact;
 
 export interface AdapterCapabilitiesInspection extends JsonObject {
   hostHello: JsonObject;
@@ -59,7 +75,6 @@ export interface ReadingInspection extends JsonObject {
 export interface AdmissionChainFact extends JsonObject {
   key: AdmissionChainFactKey;
   label: string;
-  posture: AdmissionFactPosture;
   value: AdmissionFact;
 }
 
@@ -119,17 +134,17 @@ const ABSENT_REASONS = {
   lawWitness: "Host adapter did not provide law witness posture."
 } as const;
 
-function absent<T extends JsonValue = JsonValue>(
+function absent(
   field: AdmissionChainFactKey,
   reason: string
-): AdmissionFact<T> {
+): AbsentFact {
   return { field, posture: "ABSENT", reason };
 }
 
 function present<T extends JsonValue>(
   field: AdmissionChainFactKey,
   value: T
-): AdmissionFact<T> {
+): PresentFact<T> {
   return { field, posture: "PRESENT", value };
 }
 
@@ -181,7 +196,6 @@ function factsFor(model: AdmissionChainFields): AdmissionChainFact[] {
     return {
       key,
       label: FACT_LABELS[key],
-      posture: value.posture,
       value
     };
   });

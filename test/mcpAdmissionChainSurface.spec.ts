@@ -8,31 +8,17 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { EchoFixtureAdapter } from "../src/adapters/echoFixtureAdapter.ts";
 import {
   MCP_ADMISSION_TOOL_NAMES,
-  createMcpAdmissionChainServer,
-  type JsonObject,
-  type JsonValue
+  createMcpAdmissionChainServer
 } from "../src/mcp/admissionChainSurface.ts";
 import type { HostHello, PlaybackFrame } from "../src/protocol.ts";
+import {
+  requireArray,
+  requireRecord,
+  type JsonObject
+} from "./helpers/jsonTestUtils.ts";
 
 const HEAD_ID = "head:main";
 const MCP_INSPECT_LIVE_TARGETS_TOOL = "warp_ttd.inspect_live_targets";
-
-function requireRecord(
-  value: JsonValue | object | undefined,
-  label: string
-): JsonObject {
-  assert.equal(typeof value, "object", `${label} must be an object`);
-  assert.notEqual(value, null, `${label} must not be null`);
-  return value as JsonObject;
-}
-
-function requireArray(
-  value: JsonValue | object | undefined,
-  label: string
-): readonly JsonValue[] {
-  assert.ok(Array.isArray(value), `${label} must be an array`);
-  return value as readonly JsonValue[];
-}
 
 function targetLabel(target: JsonObject): string {
   const value = target["target"];
@@ -43,11 +29,6 @@ function assertAdmissionChainFactOrder(chain: JsonObject): void {
   const facts = requireArray(chain["facts"], "facts").map((fact) =>
     requireRecord(fact, "fact")
   );
-  const basisFact = facts[0];
-  const artifactRegistrationFact = facts[1];
-
-  assert.ok(basisFact !== undefined);
-  assert.ok(artifactRegistrationFact !== undefined);
   assert.deepEqual(
     facts.map((fact) => fact["key"]),
     [
@@ -63,8 +44,15 @@ function assertAdmissionChainFactOrder(chain: JsonObject): void {
       "reading"
     ]
   );
-  assert.equal(basisFact["posture"], "PRESENT");
-  assert.equal(artifactRegistrationFact["posture"], "ABSENT");
+  const basisFact = requireRecord(facts[0], "basis fact");
+  const artifactRegistrationFact = requireRecord(facts[1], "artifactRegistration fact");
+  assert.equal("posture" in basisFact, false);
+  assert.equal("posture" in artifactRegistrationFact, false);
+  assert.equal(requireRecord(basisFact["value"], "basis.value")["posture"], "PRESENT");
+  assert.equal(
+    requireRecord(artifactRegistrationFact["value"], "artifactRegistration.value")["posture"],
+    "ABSENT"
+  );
   assert.equal(
     requireRecord(artifactRegistrationFact["value"], "artifactRegistration.value")["field"],
     "artifactRegistration"
