@@ -15,6 +15,7 @@ flowchart LR
     C --> C2[effects]
     C --> C3[deliveries]
     C --> C4[worldline]
+    C --> C5[admission-chain]
     D --> D1[step]
 ```
 
@@ -26,19 +27,33 @@ the deterministic audit, scripting, and local recovery interface. New debugger
 facts should be usable by agents here before they become human-only TUI affordances.
 
 - **Handshake**: Handshake with a host to inspect adapter capabilities.
+
   ```bash
   npm run hello -- --json
   ```
+
 - **Live Targets**: Inspect the named live app targets without attaching,
   admitting, or mutating.
+
   ```bash
   npm run targets -- --json
   ```
+
 - **Inspect**: Read the current playback frame and receipts.
+
   ```bash
   npm run frame -- --json
   ```
+
+- **Admission Chain**: Read the versioned admission-chain posture model without
+  granting, admitting, presenting authority, or mutating.
+
+  ```bash
+  npm run admission-chain -- --json
+  ```
+
 - **Step**: Advance the playback head by one tick.
+
   ```bash
   npm run step -- --json
   ```

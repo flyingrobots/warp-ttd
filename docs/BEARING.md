@@ -58,6 +58,17 @@ timeline
 - Exposing read-only session, worldline, reading, `AdapterCapability`, and
   admission-chain facts before adding speculative lifecycle controls.
 
+### 6. Optic Admission Role Clarity
+
+- Treat Wesley-compiled artifacts and registration descriptors as inputs to the
+  admission-chain read model, not as debugger-owned authority.
+- Echo owns runtime-local handles, admission, obstruction, access
+  instrumentation, witnesses, receipts, and readings.
+- Authority layers issue `CapabilityGrant` and `CapabilityPresentation` objects; applications hide
+  handles, basis references, and runtime coordinates behind adapters.
+- WARP TTD should inspect these facts through protocol/read-model surfaces
+  without issuing authority or mutating host state.
+
 ## Tensions
 
 - **TUI-Lead Inertia**: Breaking the habit of implementing new inspection
@@ -72,16 +83,18 @@ timeline
 ## Next Target
 
 The product goal is **Dual Live App Debugging**: WARP TTD debugs `jedit`, a
-live Echo app, and `graft`, a live git-warp app. The immediate protocol focus
-is still the **Admission-Chain Read Model**: protocol and read model
+live Echo app, and `graft`, a live git-warp app. The immediate protocol
+focus is still the **Admission-Chain Read Model**: protocol and read model
 representation for artifact registration, registration descriptors, Echo-owned
 handles, grant posture, `CapabilityPresentation` posture, admission tickets,
 obstructions, witnesses, receipts, and reading envelopes.
 
 MCP is not authority, admission, grant issuance, or mutation. The read-model
 target is
-`docs/method/backlog/up-next/PROTO_admission-chain-inspector.md`
-([open backlog](./method/backlog/up-next/PROTO_admission-chain-inspector.md)).
+[`docs/design/0024-admission-chain-read-model/admission-chain-read-model.md`](./design/0024-admission-chain-read-model/admission-chain-read-model.md).
+The originating backlog remains
+[`docs/method/backlog/up-next/PROTO_admission-chain-inspector.md`](./method/backlog/up-next/PROTO_admission-chain-inspector.md)
+until the live Echo facts land.
 The live app delivery target is
 [`docs/method/backlog/up-next/DELIVERY_dual-live-app-debugging.md`](./method/backlog/up-next/DELIVERY_dual-live-app-debugging.md).
 The first executable smoke surface is `npm run targets -- --json`, which

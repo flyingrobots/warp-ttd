@@ -34,6 +34,7 @@ Handshake with a host or inspect the current playback frame.
 ```bash
 npm run hello -- --json
 npm run frame -- --json
+npm run admission-chain -- --json
 npm run targets -- --json
 ```
 
