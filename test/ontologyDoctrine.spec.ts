@@ -45,6 +45,65 @@ function assertContinuumMockupsExist(mockups: readonly string[]): void {
   }
 }
 
+const SHARED_FAMILY_BOUNDARY_DESIGN =
+  "docs/design/0026-debugger-native-shared-family-boundary/debugger-native-shared-family-boundary.md";
+const SHARED_FAMILY_BOUNDARY_BACKLOG =
+  "docs/method/backlog/up-next/PROTO_debugger-native-vs-shared-family-boundary.md";
+const SHARED_FAMILY_BOUNDARY_GRAVEYARD =
+  "docs/method/graveyard/PROTO_debugger-native-vs-shared-family-boundary.md";
+
+function assertSharedFamilyBoundaryLifecycle(): void {
+  assert.equal(repoPathExists(SHARED_FAMILY_BOUNDARY_DESIGN), true);
+  assert.equal(repoPathExists(SHARED_FAMILY_BOUNDARY_BACKLOG), false);
+  assert.equal(repoPathExists(SHARED_FAMILY_BOUNDARY_GRAVEYARD), true);
+}
+
+function assertSharedFamilyBoundaryHeadings(content: string): void {
+  assertAllTextPresent(content, [
+    "## Ownership Matrix",
+    "## Debugger-Native Protocol Families",
+    "## Shared-Family Projections",
+    "## Host-Specific Adapter Residue",
+    "## Promotion Rules",
+    "## Schema Decision",
+    "## Acceptance Checklist",
+  ]);
+}
+
+function assertSharedFamilyBoundaryTerms(content: string): void {
+  assertAllTextPresent(content, [
+    "DebuggerSession",
+    "InvestigationIntent",
+    "playback cursor",
+    "admission-chain read-model posture wrappers",
+    "OpticRegistrationDescriptor",
+    "CapabilityGrant",
+    "CapabilityPresentation",
+    "AdmissionTicket",
+    "LawWitness",
+    "ReadingEnvelope",
+    "ObserverPlan",
+    "ContinuumEvidenceStatus",
+    "patch SHA",
+    "graph name",
+  ]);
+}
+
+function assertSharedFamilyBoundaryRules(content: string): void {
+  assert.match(
+    content,
+    /WARP TTD owns the act of investigation\. It does not own the app, authority,\s+admission, witness, or shared semantic family being investigated\./,
+  );
+  assert.match(
+    content,
+    /Keep `AdapterCapability` distinct from `CapabilityGrant` and\s+`CapabilityPresentation`\./,
+  );
+  assert.match(
+    content,
+    /Reject new control paths that issue grants, present authority, admit runtime\s+invocations, mutate apps, or create strands\./,
+  );
+}
+
 test("Mermaid fence assertions tolerate CRLF line endings", () => {
   for (const firstStatement of ["classDiagram", "erDiagram", "sequenceDiagram"]) {
     const content = "```mermaid\r\n" + firstStatement + "\r\n";
@@ -287,6 +346,15 @@ test("WARP app debugging intents stay debugger-local", () => {
   ]);
 
   assertMermaidFencePresent(content, "sequenceDiagram");
+});
+
+test("debugger shared-family boundary classifies protocol ownership", () => {
+  const content = readRepoText(SHARED_FAMILY_BOUNDARY_DESIGN);
+
+  assertSharedFamilyBoundaryLifecycle();
+  assertSharedFamilyBoundaryHeadings(content);
+  assertSharedFamilyBoundaryTerms(content);
+  assertSharedFamilyBoundaryRules(content);
 });
 
 test("MCP admission-chain surface is closed as a landed cycle", () => {

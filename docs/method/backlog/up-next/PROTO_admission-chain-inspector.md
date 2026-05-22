@@ -82,7 +82,7 @@ host-neutral debugger vocabulary.
 ## Repo Evidence
 
 - `docs/WARP_DRIFT.md`
-- `docs/method/backlog/up-next/PROTO_debugger-native-vs-shared-family-boundary.md`
+- `docs/design/0026-debugger-native-shared-family-boundary/debugger-native-shared-family-boundary.md`
 - `docs/method/backlog/up-next/PROTO_generated-protocol-authority-cutover.md`
 - `docs/method/backlog/up-next/DELIVERY_dual-live-app-debugging.md`
 - `docs/method/graveyard/DELIVERY_mcp-admission-chain-surface.md`
