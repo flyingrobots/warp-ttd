@@ -59,6 +59,7 @@ script invokes `../wesley/crates/wesley-cli/Cargo.toml`.
 ## Documentation
 
 - **[Guide](./GUIDE.md)**: Orientation, the fast path, and TUI navigation.
+- **[Manual](./MANUAL.md)**: Durable operator and maintainer chapters compiled from design cycles.
 - **[Advanced Guide](./ADVANCED_GUIDE.md)**: Theoretical foundations, Wesley integration, and custom adapters.
 - **[Architecture](./ARCHITECTURE.md)**: The authoritative system map (Hexagonal, Ports, DebuggerSession).
 - **[Vision](./VISION.md)**: Core tenets and the observer geometry mission.

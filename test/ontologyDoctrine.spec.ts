@@ -51,6 +51,12 @@ const SHARED_FAMILY_BOUNDARY_BACKLOG =
   "docs/method/backlog/up-next/PROTO_debugger-native-vs-shared-family-boundary.md";
 const SHARED_FAMILY_BOUNDARY_GRAVEYARD =
   "docs/method/graveyard/PROTO_debugger-native-vs-shared-family-boundary.md";
+const MANUAL = "MANUAL.md";
+const MANUAL_INDEX = "docs/manual/README.md";
+const GENERATED_FAMILY_INGRESS_MANUAL =
+  "docs/manual/001-generated-family-ingress-seam.md";
+const GENERATED_FAMILY_INGRESS_DESIGN =
+  "docs/design/0027-generated-family-ingress-seam/generated-family-ingress-seam.md";
 
 function assertSharedFamilyBoundaryLifecycle(): void {
   assert.equal(repoPathExists(SHARED_FAMILY_BOUNDARY_DESIGN), true);
@@ -102,6 +108,74 @@ function assertSharedFamilyBoundaryRules(content: string): void {
     content,
     /Reject new control paths that issue grants, present authority, admit runtime\s+invocations, mutate apps, or create strands\./,
   );
+}
+
+function assertManualFilesExist(): void {
+  assert.equal(repoPathExists(MANUAL), true);
+  assert.equal(repoPathExists(MANUAL_INDEX), true);
+  assert.equal(repoPathExists(GENERATED_FAMILY_INGRESS_MANUAL), true);
+  assert.equal(repoPathExists(GENERATED_FAMILY_INGRESS_DESIGN), true);
+}
+
+function assertManualFrontDoors(): void {
+  assertAllTextPresent(readRepoText("README.md"), [
+    "[Manual](./MANUAL.md)",
+    "Durable operator and maintainer chapters compiled from design cycles.",
+  ]);
+  assertAllTextPresent(readRepoText("GUIDE.md"), [
+    "[MANUAL.md](./MANUAL.md)",
+    "compiled manual for durable design knowledge",
+  ]);
+  assertAllTextPresent(readRepoText("METHOD.md"), [
+    "**`MANUAL.md`**",
+    "Green --> Manualize: manual chapter",
+    "**Manualize**",
+  ]);
+}
+
+function assertManualIndexContent(): void {
+  assertAllTextPresent(readRepoText(MANUAL), [
+    "# WARP TTD Manual",
+    "## Manual Rule",
+    "001. Generated Family Ingress Seam",
+  ]);
+  assertAllTextPresent(readRepoText(MANUAL_INDEX), [
+    "# WARP TTD Manual Index",
+    "## Chapters",
+    "## Source Design Cycles",
+    "0027-generated-family-ingress-seam",
+  ]);
+}
+
+function assertGeneratedFamilyIngressManual(content: string): void {
+  assertAllTextPresent(content, [
+    "# Generated Family Ingress Seam",
+    "## Reader Contract",
+    "## The Seam",
+    "## Ownership Rule",
+    "## First Ingress Shape",
+    "## Fallback Discipline",
+    "GeneratedFamilyFact",
+    "ABSENT",
+    "PRESENT",
+    "OBSTRUCTED",
+    "No grant issuance.",
+    "No runtime admission.",
+    "No strand creation.",
+  ]);
+}
+
+function assertGeneratedFamilyIngressDesign(content: string): void {
+  assertAllTextPresent(content, [
+    "# Generated Family Ingress Seam",
+    "## Manual Chapter",
+    "## Hill",
+    "## Playback Questions",
+    "../../manual/001-generated-family-ingress-seam.md",
+    "GeneratedFamilyPosture",
+    "source-family metadata",
+    "No replacement of `src/protocol.ts`.",
+  ]);
 }
 
 test("Mermaid fence assertions tolerate CRLF line endings", () => {
@@ -355,6 +429,14 @@ test("debugger shared-family boundary classifies protocol ownership", () => {
   assertSharedFamilyBoundaryHeadings(content);
   assertSharedFamilyBoundaryTerms(content);
   assertSharedFamilyBoundaryRules(content);
+});
+
+test("manual starts generated family ingress cycle", () => {
+  assertManualFilesExist();
+  assertManualFrontDoors();
+  assertManualIndexContent();
+  assertGeneratedFamilyIngressManual(readRepoText(GENERATED_FAMILY_INGRESS_MANUAL));
+  assertGeneratedFamilyIngressDesign(readRepoText(GENERATED_FAMILY_INGRESS_DESIGN));
 });
 
 test("MCP admission-chain surface is closed as a landed cycle", () => {

@@ -2,7 +2,10 @@
 
 This is the developer-level operator guide for WARP TTD. Use it for orientation, the productive-fast path, and to understand how the debugger orchestrates wide-aperture observation.
 
-For deep-track doctrine, theoretical foundations (*Observer Geometry*), and custom host adapter development, use [ADVANCED_GUIDE.md](./ADVANCED_GUIDE.md).
+For durable operator and maintainer chapters compiled from design cycles, use
+[MANUAL.md](./MANUAL.md). For deep-track doctrine, theoretical foundations
+(*Observer Geometry*), and custom host adapter development, use
+[ADVANCED_GUIDE.md](./ADVANCED_GUIDE.md).
 
 ## Choose Your Lane
 
@@ -47,6 +50,9 @@ WARP TTD is a *tiered observer*. You choose your depth based on the task:
 ## Rule of Thumb
 
 If you need a comprehensive command reference, use [docs/CLI.md](./docs/CLI.md).
+
+If you need the compiled manual for durable design knowledge, use
+[MANUAL.md](./MANUAL.md).
 
 If you need to know "what's true right now," use [docs/BEARING.md](./docs/BEARING.md).
 
