@@ -62,7 +62,7 @@ interface MaterializeSummaryArgs<TSummary> {
   readonly field: SessionFamilyFactKey;
   readonly hostFacts: readonly SessionFamilyFact[];
   readonly hydrate: (payload: JsonObject) => TSummary;
-  readonly local: TSummary;
+  readonly localFactory: () => TSummary;
   readonly serialize: (summary: TSummary) => JsonObject;
   readonly target: string;
 }
@@ -73,35 +73,40 @@ function isPayloadObject(payload: JsonObject[keyof JsonObject] | undefined): pay
 
 function isHostPublishedFact(
   fact: SessionFamilyFact,
-  field: SessionFamilyFactKey
+  field: SessionFamilyFactKey,
+  target: string
 ): fact is SessionFamilyFact & { readonly posture: "PRESENT"; readonly payload: JsonObject } {
   if (fact.field !== field || fact.posture !== "PRESENT") return false;
+  if (fact.target !== target) return false;
   if (fact.origin !== "HOST_PUBLISHED") return false;
   return isPayloadObject(fact.payload);
 }
 
 function findHostPublishedFact(
   field: SessionFamilyFactKey,
-  facts: readonly SessionFamilyFact[]
+  facts: readonly SessionFamilyFact[],
+  target: string
 ): (SessionFamilyFact & { readonly posture: "PRESENT"; readonly payload: JsonObject }) | undefined {
-  return facts.find((fact) => isHostPublishedFact(fact, field));
+  return facts.find((fact) => isHostPublishedFact(fact, field, target));
 }
 
 function materializeSummary<TSummary>(
   args: MaterializeSummaryArgs<TSummary>
 ): MaterializedSummary<TSummary> {
-  const hostFact = findHostPublishedFact(args.field, args.hostFacts);
+  const hostFact = findHostPublishedFact(args.field, args.hostFacts, args.target);
 
   if (hostFact !== undefined) {
     return { value: args.hydrate(hostFact.payload), fact: hostFact };
   }
 
+  const local = args.localFactory();
+
   return {
-    value: args.local,
+    value: local,
     fact: localFallbackSessionFamilyFact({
       field: args.field,
       target: args.target,
-      payload: args.serialize(args.local)
+      payload: args.serialize(local)
     })
   };
 }
@@ -134,7 +139,7 @@ function materializeCore(
     field: "neighborhoodCore",
     hostFacts: args.hostFacts ?? [],
     hydrate: hydrateNeighborhoodCore,
-    local: localNeighborhoodCore(args.frame, args.receipts, args.emissions),
+    localFactory: () => localNeighborhoodCore(args.frame, args.receipts, args.emissions),
     serialize: (summary) => sessionFamilyPayload(summary.toJSON()),
     target
   });
@@ -149,7 +154,7 @@ function materializeDetail(
     field: "reintegrationDetail",
     hostFacts: args.hostFacts ?? [],
     hydrate: hydrateReintegrationDetail,
-    local: ReintegrationDetailSummary.fromSnapshot(args.frame, core, args.receipts),
+    localFactory: () => ReintegrationDetailSummary.fromSnapshot(args.frame, core, args.receipts),
     serialize: (summary) => sessionFamilyPayload(summary.toJSON()),
     target
   });
@@ -164,7 +169,7 @@ function materializeShell(
     field: "receiptShell",
     hostFacts: args.hostFacts ?? [],
     hydrate: hydrateReceiptShell,
-    local: ReceiptShellSummary.fromReceipts(core, args.receipts),
+    localFactory: () => ReceiptShellSummary.fromReceipts(core, args.receipts),
     serialize: (summary) => sessionFamilyPayload(summary.toJSON()),
     target
   });

@@ -308,9 +308,13 @@ test("session --json outputs a single SerializedSession line", async () => {
     snapshot["sessionFamilyFacts"],
     "SerializedSession.snapshot.sessionFamilyFacts"
   );
+  const neighborhoodFact = sessionFamilyFacts
+    .map((fact) => requireRecord(fact, "sessionFamilyFact"))
+    .find((fact) => fact["field"] === "neighborhoodCore");
+  assert.ok(neighborhoodFact !== undefined);
   const neighborhoodCore = assertGeneratedFamilyFact(
-    sessionFamilyFacts[0],
-    "sessionFamilyFacts[0]"
+    neighborhoodFact,
+    "sessionFamilyFacts.neighborhoodCore"
   );
   assert.equal(neighborhoodCore["origin"], "HOST_PUBLISHED");
   assert.ok(Array.isArray(obj.data["pins"]));

@@ -49,7 +49,7 @@ enum AdapterCapability {
 type HostHello
   @wes_codec(format: "cbor", canonical: true)
   @wes_registry(id: 1)
-  @wes_version(major: 0, minor: 6)
+  @wes_version(major: 0, minor: 7)
 {
   hostKind: HostKind!
   hostVersion: String!
