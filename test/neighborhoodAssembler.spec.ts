@@ -33,10 +33,18 @@ test("buildNeighborhoodState produces all four neighborhood summaries from proto
 
   const emissions: EffectEmissionSummary[] = [];
 
-  const state = buildNeighborhoodState(frame, receipts, emissions);
+  const state = buildNeighborhoodState({ frame, receipts, emissions });
 
   assert.equal(state.neighborhoodCore.outcome, "LAWFUL");
   assert.ok(state.neighborhoodSites.activeSiteId.startsWith("site:"));
   assert.ok(state.reintegrationDetail.summary.length > 0);
   assert.ok(state.receiptShell.summary.length > 0);
+  assert.deepEqual(
+    state.sessionFamilyFacts.map((fact) => [fact.field, fact.origin]),
+    [
+      ["neighborhoodCore", "LOCAL_FALLBACK"],
+      ["reintegrationDetail", "LOCAL_FALLBACK"],
+      ["receiptShell", "LOCAL_FALLBACK"]
+    ]
+  );
 });

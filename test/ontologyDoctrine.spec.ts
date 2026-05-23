@@ -57,6 +57,10 @@ const GENERATED_FAMILY_INGRESS_MANUAL =
   "docs/manual/001-generated-family-ingress-seam.md";
 const GENERATED_FAMILY_INGRESS_DESIGN =
   "docs/design/0027-generated-family-ingress-seam/generated-family-ingress-seam.md";
+const HOST_PUBLISHED_FAMILY_FACTS_MANUAL =
+  "docs/manual/002-host-published-family-facts.md";
+const HOST_PUBLISHED_FAMILY_FACTS_DESIGN =
+  "docs/design/0028-host-published-family-facts/host-published-family-facts.md";
 
 function assertSharedFamilyBoundaryLifecycle(): void {
   assert.equal(repoPathExists(SHARED_FAMILY_BOUNDARY_DESIGN), true);
@@ -115,6 +119,8 @@ function assertManualFilesExist(): void {
   assert.equal(repoPathExists(MANUAL_INDEX), true);
   assert.equal(repoPathExists(GENERATED_FAMILY_INGRESS_MANUAL), true);
   assert.equal(repoPathExists(GENERATED_FAMILY_INGRESS_DESIGN), true);
+  assert.equal(repoPathExists(HOST_PUBLISHED_FAMILY_FACTS_MANUAL), true);
+  assert.equal(repoPathExists(HOST_PUBLISHED_FAMILY_FACTS_DESIGN), true);
 }
 
 function assertManualFrontDoors(): void {
@@ -138,12 +144,14 @@ function assertManualIndexContent(): void {
     "# WARP TTD Manual",
     "## Manual Rule",
     "001. Generated Family Ingress Seam",
+    "002. Host-Published Family Facts",
   ]);
   assertAllTextPresent(readRepoText(MANUAL_INDEX), [
     "# WARP TTD Manual Index",
     "## Chapters",
     "## Source Design Cycles",
     "0027-generated-family-ingress-seam",
+    "0028-host-published-family-facts",
   ]);
 }
 
@@ -183,6 +191,36 @@ function assertGeneratedFamilyIngressDesign(content: string): void {
     "src/app/admissionChainReadModel.ts",
     "source-family metadata",
     "No replacement of `src/protocol.ts`.",
+  ]);
+}
+
+function assertHostPublishedFamilyFactsManual(content: string): void {
+  assertAllTextPresent(content, [
+    "# Host-Published Family Facts",
+    "## Reader Contract",
+    "## Port Rule",
+    "## Session Rule",
+    "## First Landed Cut",
+    "READ_SESSION_FAMILY_FACTS",
+    "sessionFamilyFacts",
+    "origin: \"HOST_PUBLISHED\"",
+    "origin: \"LOCAL_FALLBACK\"",
+    "No runtime admission.",
+    "No strand creation.",
+  ]);
+}
+
+function assertHostPublishedFamilyFactsDesign(content: string): void {
+  assertAllTextPresent(content, [
+    "status: landed",
+    "# Host-Published Family Facts",
+    "## Manual Chapter",
+    "## Hill",
+    "## Implementation Witness",
+    "../../manual/002-host-published-family-facts.md",
+    "TtdHostAdapter.sessionFamilyFacts",
+    "DebuggerSession.snapshot.sessionFamilyFacts",
+    "READ_SESSION_FAMILY_FACTS",
   ]);
 }
 
@@ -445,6 +483,8 @@ test("manual starts generated family ingress cycle", () => {
   assertManualIndexContent();
   assertGeneratedFamilyIngressManual(readRepoText(GENERATED_FAMILY_INGRESS_MANUAL));
   assertGeneratedFamilyIngressDesign(readRepoText(GENERATED_FAMILY_INGRESS_DESIGN));
+  assertHostPublishedFamilyFactsManual(readRepoText(HOST_PUBLISHED_FAMILY_FACTS_MANUAL));
+  assertHostPublishedFamilyFactsDesign(readRepoText(HOST_PUBLISHED_FAMILY_FACTS_DESIGN));
 });
 
 test("MCP admission-chain surface is closed as a landed cycle", () => {

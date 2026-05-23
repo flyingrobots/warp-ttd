@@ -253,7 +253,7 @@ test("MCP tools expose cached session and reading facts", async () => {
       })
     );
     const hostHello = requireRecord(capabilities["hostHello"], "hostHello");
-    assert.equal(hostHello["protocolVersion"], "0.6.0");
+    assert.equal(hostHello["protocolVersion"], "0.7.0");
     assert.ok(Array.isArray(capabilities["capabilities"]));
 
     const readings = structuredContent(

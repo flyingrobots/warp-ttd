@@ -116,8 +116,12 @@ bringing shared-family payload posture into WARP TTD:
 [`docs/manual/001-generated-family-ingress-seam.md`](./manual/001-generated-family-ingress-seam.md),
 paired with
 [`docs/design/0027-generated-family-ingress-seam/generated-family-ingress-seam.md`](./design/0027-generated-family-ingress-seam/generated-family-ingress-seam.md).
-The next pressure is replacing local fallback facts with host-published
-neighborhood, reading, Echo admission, and authority payloads as those families
+The first host-published family fact path is also Manual-backed:
+[`docs/manual/002-host-published-family-facts.md`](./manual/002-host-published-family-facts.md),
+paired with
+[`docs/design/0028-host-published-family-facts/host-published-family-facts.md`](./design/0028-host-published-family-facts/host-published-family-facts.md).
+The next pressure is replacing Echo fixture publication with live Echo
+neighborhood, reading, admission, and authority payloads as those families
 become available.
 The first executable smoke surface is `npm run targets -- --json`, which
 reports read-only posture for both live targets without attaching or mutating.

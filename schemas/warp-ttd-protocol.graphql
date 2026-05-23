@@ -7,7 +7,7 @@
 # Local files such as `src/protocol.ts` are convenience mirrors, not peer
 # authorities.
 #
-# Protocol version: 0.6.0 (renames adapter support enum to AdapterCapability)
+# Protocol version: 0.7.0 (adds read-only session family fact capability)
 #
 # Doctrine:
 #   - warp-ttd is read-mostly and receipt-centric
@@ -40,6 +40,7 @@ enum AdapterCapability {
   READ_EFFECT_EMISSIONS
   READ_DELIVERY_OBSERVATIONS
   READ_EXECUTION_CONTEXT
+  READ_SESSION_FAMILY_FACTS
   CONTROL_STEP_FORWARD
   CONTROL_STEP_BACKWARD
   CONTROL_SEEK
@@ -229,6 +230,8 @@ type ExecutionContext
 # v4 is a breaking change from v2: added required worldlineId fields and
 # renamed writerId to writer: WriterRef. Semver 0.5.0 adds optional
 # WriterRef.headId; semver 0.6.0 names adapter support as AdapterCapability.
+# Semver 0.7.0 adds READ_SESSION_FAMILY_FACTS for host-published
+# shared-family facts surfaced through app-layer read models.
 
 type TtdProtocolChannel
   @wes_channel(name: "ttd.protocol", version: 4, ordered: true)

@@ -206,7 +206,7 @@ test("hello --json outputs a single HostHello JSONL line", async () => {
   const obj = parseLine(requireLine(lines, 0));
   assert.equal(obj.envelope, "HostHello");
   assert.ok(obj.data !== undefined);
-  assert.equal(obj.data["protocolVersion"], "0.6.0");
+  assert.equal(obj.data["protocolVersion"], "0.7.0");
 });
 
 test("catalog --json outputs a single LaneCatalog JSONL line", async () => {
@@ -303,7 +303,16 @@ test("session --json outputs a single SerializedSession line", async () => {
   assert.ok(obj.data !== undefined);
   assert.equal(typeof obj.data["sessionId"], "string");
   assert.equal(obj.data["activeHeadId"], "head:main");
-  assert.ok(obj.data["snapshot"] !== undefined);
+  const snapshot = requireRecord(obj.data["snapshot"], "SerializedSession.snapshot");
+  const sessionFamilyFacts = requireArray(
+    snapshot["sessionFamilyFacts"],
+    "SerializedSession.snapshot.sessionFamilyFacts"
+  );
+  const neighborhoodCore = assertGeneratedFamilyFact(
+    sessionFamilyFacts[0],
+    "sessionFamilyFacts[0]"
+  );
+  assert.equal(neighborhoodCore["origin"], "HOST_PUBLISHED");
   assert.ok(Array.isArray(obj.data["pins"]));
 });
 

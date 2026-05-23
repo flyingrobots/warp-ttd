@@ -8,6 +8,7 @@ import type {
   PlaybackHeadSnapshot,
   ReceiptSummary
 } from "./protocol.ts";
+import type { SessionFamilyFact } from "./app/sessionFamilyFacts.ts";
 
 export interface TtdHostAdapter {
   readonly adapterName: string;
@@ -22,4 +23,5 @@ export interface TtdHostAdapter {
   effectEmissions(headId: string, frameIndex?: number): Promise<EffectEmissionSummary[]>;
   deliveryObservations(headId: string, frameIndex?: number): Promise<DeliveryObservationSummary[]>;
   executionContext(): Promise<ExecutionContext>;
+  sessionFamilyFacts(headId: string, frameIndex?: number): Promise<SessionFamilyFact[]>;
 }

@@ -129,6 +129,7 @@ function makeSnap(overrides: Partial<SessionSnapshot> = {}): SessionSnapshot {
     neighborhoodSites,
     reintegrationDetail,
     receiptShell,
+    sessionFamilyFacts: [],
     ...overrides
   };
 }

@@ -26,3 +26,4 @@ Manual chapters should:
 
 - [Manual Index](./docs/manual/README.md)
 - [001. Generated Family Ingress Seam](./docs/manual/001-generated-family-ingress-seam.md)
+- [002. Host-Published Family Facts](./docs/manual/002-host-published-family-facts.md)

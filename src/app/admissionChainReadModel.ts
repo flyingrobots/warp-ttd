@@ -253,7 +253,7 @@ function protocolSource(
   return {
     family: "warp-ttd-protocol",
     artifact,
-    schemaVersion: "0.6.0"
+    schemaVersion: "0.7.0"
   };
 }
 

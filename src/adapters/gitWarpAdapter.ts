@@ -7,6 +7,7 @@
  */
 import type { WarpCore } from "@git-stunts/git-warp";
 import type { TtdHostAdapter } from "../adapter.ts";
+import type { SessionFamilyFact } from "../app/sessionFamilyFacts.ts";
 import {
   FrameOutOfRangeError,
   InternalIndexError,
@@ -336,7 +337,7 @@ export class GitWarpAdapter<TMaterializedState, TNodeProps extends GitWarpNodePr
     return Promise.resolve({
       hostKind: "GIT_WARP",
       hostVersion: GIT_WARP_HOST_VERSION,
-      protocolVersion: "0.6.0",
+      protocolVersion: "0.7.0",
       schemaId: "ttd-protocol-git-warp-v1",
       capabilities: [
         "READ_HELLO",
@@ -499,5 +500,10 @@ export class GitWarpAdapter<TMaterializedState, TNodeProps extends GitWarpNodePr
   // (LIVE would imply real-time event stream, REPLAY implies deterministic re-execution)
   public executionContext(): Promise<ExecutionContext> {
     return Promise.resolve({ mode: "DEBUG" });
+  }
+
+  public sessionFamilyFacts(headId: string): Promise<SessionFamilyFact[]> {
+    requireHead(this.#headStates, headId);
+    return Promise.resolve([]);
   }
 }
