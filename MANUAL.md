@@ -27,3 +27,6 @@ Manual chapters should:
 - [Manual Index](./docs/manual/README.md)
 - [001. Generated Family Ingress Seam](./docs/manual/001-generated-family-ingress-seam.md)
 - [002. Host-Published Family Facts](./docs/manual/002-host-published-family-facts.md)
+- [003. Live Echo Family Intake](./docs/manual/003-live-echo-family-intake.md)
+- [004. Generated Family Consumption Boundary](./docs/manual/004-generated-family-consumption.md)
+- [005. Jedit Echo Smoke](./docs/manual/005-jedit-echo-smoke.md)

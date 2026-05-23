@@ -44,10 +44,15 @@ test("inspectLiveTargetSessions opens graft through a read-only git-warp session
   const fixture = await createGraftAstFixture();
 
   try {
-    const [inspection] = await inspectLiveTargetSessions({
+    const [jeditInspection, inspection] = await inspectLiveTargetSessions({
       jeditRoot: `${fixture.tempDir}/missing-jedit`,
       graftRoot: fixture.tempDir
     });
+
+    assert.ok(jeditInspection !== undefined);
+    assert.equal(jeditInspection.target, "jedit");
+    assert.equal(jeditInspection.readOnly, true);
+    assert.equal(jeditInspection.sessionPosture, "OBSTRUCTED");
 
     assert.ok(inspection !== undefined);
     assert.equal(inspection.target, "graft");

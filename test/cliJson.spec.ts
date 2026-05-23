@@ -8,9 +8,12 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
+import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 
 import { inspectLiveTargets } from "../src/app/liveTargetInspection.ts";
+import { LIVE_ECHO_FAMILY_FACTS_MANIFEST } from "../src/app/liveEchoFamilyIntake.ts";
 import {
   requireArray,
   requireRecord,
@@ -124,6 +127,40 @@ function assertGeneratedFamilyFact(
   if (posture === "PRESENT") return fact;
   assert.equal(typeof fact["reason"], "string", `${label}.reason`);
   return fact;
+}
+
+function assertJeditFamilyIntake(
+  value: JsonValue | object | undefined,
+  expectedPosture: string
+): JsonObject {
+  const intake = requireRecord(value, "jedit.sessionFamilyIntake");
+  assert.equal(intake["schemaVersion"], "warp-ttd.live-echo-family-intake.v1");
+  assert.equal(intake["target"], "jedit");
+  assert.equal(intake["readOnly"], true);
+  assert.equal(intake["intakePosture"], expectedPosture);
+  const facts = requireArray(intake["facts"], "jedit.sessionFamilyIntake.facts");
+  assert.deepEqual(
+    facts.map((fact) => requireRecord(fact, "intakeFact")["field"]),
+    ["neighborhoodCore", "reintegrationDetail", "receiptShell"]
+  );
+  const generated = requireRecord(
+    intake["generatedFamilyConsumption"],
+    "jedit.sessionFamilyIntake.generatedFamilyConsumption"
+  );
+  assert.equal(generated["consumerPosture"], "LOCAL_MIRROR_FALLBACK");
+  return intake;
+}
+
+function writeJeditManifest(rootPath: string, publishedFields: readonly string[]): void {
+  const manifestPath = path.join(rootPath, LIVE_ECHO_FAMILY_FACTS_MANIFEST);
+  fs.mkdirSync(path.dirname(manifestPath), { recursive: true });
+  fs.writeFileSync(
+    manifestPath,
+    JSON.stringify({
+      schemaVersion: "warp-ttd.live-echo-family-intake.v1",
+      publishedFields
+    })
+  );
 }
 
 function assertAdmissionChainKeys(factRecords: readonly JsonObject[]): void {
@@ -372,6 +409,7 @@ test("targets --json names jedit and graft as read-only live target inspections"
   );
   assert.equal(jeditEvidence["posture"], "UNAVAILABLE");
   assert.equal(jeditEvidence["nativeContinuumWitness"], false);
+  assertJeditFamilyIntake(jedit["sessionFamilyIntake"], "UNAVAILABLE");
 
   assert.equal(graft["target"], "graft");
   assert.equal(graft["hostKind"], "GIT_WARP");
@@ -389,6 +427,31 @@ test("targets --json names jedit and graft as read-only live target inspections"
   assert.equal(graftEvidence["substrate"], "git-warp");
   assert.equal(graftEvidence["evidenceKind"], "warp-index");
   assert.equal(graftEvidence["nativeContinuumWitness"], false);
+});
+
+test("targets --json reports jedit live Echo family intake manifest", async () => {
+  const jeditRoot = fs.mkdtempSync(path.join(os.tmpdir(), "warp-ttd-jedit-"));
+
+  try {
+    writeJeditManifest(jeditRoot, ["neighborhoodCore"]);
+    const lines = await runJsonWithEnv("targets", {
+      WARP_TTD_JEDIT_ROOT: jeditRoot,
+      WARP_TTD_GRAFT_ROOT: path.join(process.cwd(), "test", "missing-graft")
+    });
+    const jedit = lines
+      .map((line) => requireRecord(parseLine(line).data, "target"))
+      .find((target) => target["target"] === "jedit");
+
+    assert.ok(jedit !== undefined);
+    assert.equal(jedit["rootPosture"], "PRESENT");
+    const intake = assertJeditFamilyIntake(jedit["sessionFamilyIntake"], "PRESENT");
+    const facts = requireArray(intake["facts"], "jedit.sessionFamilyIntake.facts")
+      .map((fact) => requireRecord(fact, "intakeFact"));
+    assert.equal(facts[0]?.["posture"], "PRESENT");
+    assert.equal(facts[1]?.["posture"], "ABSENT");
+  } finally {
+    fs.rmSync(jeditRoot, { recursive: true, force: true });
+  }
 });
 
 test("targets --json never reports native Continuum evidence without native witnesshood", async () => {
@@ -413,14 +476,24 @@ test("targets --json never reports native Continuum evidence without native witn
   }
 });
 
-test("target-session --json reports graft session obstruction when the root is missing", async () => {
+test("target-session --json reports live target session posture", async () => {
   const lines = await runJsonWithEnv("target-session", {
     WARP_TTD_JEDIT_ROOT: path.join(process.cwd(), "test", "missing-jedit"),
     WARP_TTD_GRAFT_ROOT: path.join(process.cwd(), "test", "missing-graft")
   });
-  assert.equal(lines.length, 1);
+  assert.equal(lines.length, 2);
 
-  const obj = parseLine(requireLine(lines, 0));
+  const jeditObj = parseLine(requireLine(lines, 0));
+  assert.equal(jeditObj.envelope, "LiveTargetSessionInspection");
+  const jedit = requireRecord(jeditObj.data, "jedit LiveTargetSessionInspection.data");
+  assert.equal(jedit["target"], "jedit");
+  assert.equal(jedit["hostKind"], "ECHO");
+  assert.equal(jedit["readOnly"], true);
+  assert.equal(jedit["adapterPosture"], "UNAVAILABLE");
+  assert.equal(jedit["sessionPosture"], "OBSTRUCTED");
+  assertJeditFamilyIntake(jedit["sessionFamilyIntake"], "UNAVAILABLE");
+
+  const obj = parseLine(requireLine(lines, 1));
   assert.equal(obj.envelope, "LiveTargetSessionInspection");
 
   const data = requireRecord(obj.data, "LiveTargetSessionInspection.data");

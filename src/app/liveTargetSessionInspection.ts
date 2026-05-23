@@ -8,11 +8,30 @@ import {
   type LiveTargetRuntimeBoundaryEvidence,
   type LiveTargetRootPosture
 } from "./liveTargetInspection.ts";
+import type { LiveEchoFamilyIntakeInspection } from "./liveEchoFamilyIntake.ts";
 import type { HostHello } from "../protocol.ts";
 
 export type LiveTargetSessionPosture = "PRESENT" | "OBSTRUCTED";
 
-export interface LiveTargetSessionInspection {
+export type LiveTargetSessionInspection =
+  | LiveEchoTargetSessionInspection
+  | GraftLiveTargetSessionInspection;
+
+export interface LiveEchoTargetSessionInspection {
+  target: "jedit";
+  hostKind: "ECHO";
+  appKind: "live Echo app";
+  rootPath: string;
+  rootPosture: LiveTargetRootPosture;
+  adapterPosture: "UNAVAILABLE";
+  runtimeBoundaryEvidence: LiveTargetRuntimeBoundaryEvidence;
+  readOnly: true;
+  sessionPosture: "OBSTRUCTED";
+  sessionFamilyIntake: LiveEchoFamilyIntakeInspection;
+  reason: string;
+}
+
+export interface GraftLiveTargetSessionInspection {
   target: "graft";
   hostKind: "GIT_WARP";
   appKind: "live git-warp app";
@@ -47,6 +66,45 @@ function configuredGraftTarget(roots: LiveTargetRoots): LiveTargetInspection {
   }
 
   return target;
+}
+
+function configuredJeditTarget(roots: LiveTargetRoots): LiveTargetInspection {
+  const target = inspectLiveTargets(roots)
+    .find((entry) => entry.target === "jedit");
+
+  if (target?.hostKind !== "ECHO") {
+    throw new MissingLiveTargetRegistrationError("jedit");
+  }
+
+  return target;
+}
+
+function jeditSessionFamilyIntake(
+  target: LiveTargetInspection
+): LiveEchoFamilyIntakeInspection {
+  if (target.sessionFamilyIntake === undefined) {
+    throw new MissingLiveTargetRegistrationError("jedit family intake");
+  }
+
+  return target.sessionFamilyIntake;
+}
+
+function obstructedJeditSession(
+  target: LiveTargetInspection
+): LiveEchoTargetSessionInspection {
+  return {
+    target: "jedit",
+    hostKind: "ECHO",
+    appKind: "live Echo app",
+    rootPath: target.rootPath,
+    rootPosture: target.rootPosture,
+    adapterPosture: "UNAVAILABLE",
+    runtimeBoundaryEvidence: target.runtimeBoundaryEvidence,
+    readOnly: true,
+    sessionPosture: "OBSTRUCTED",
+    sessionFamilyIntake: jeditSessionFamilyIntake(target),
+    reason: "jedit live Echo session adapter is not wired yet; only read-only family intake posture was inspected."
+  };
 }
 
 function obstructedGraftSession(
@@ -121,8 +179,15 @@ async function inspectGraftSession(
   }
 }
 
+function inspectJeditSession(roots: LiveTargetRoots): LiveEchoTargetSessionInspection {
+  return obstructedJeditSession(configuredJeditTarget(roots));
+}
+
 export async function inspectLiveTargetSessions(
   roots: LiveTargetRoots = liveTargetRootsFromEnv()
 ): Promise<LiveTargetSessionInspection[]> {
-  return [await inspectGraftSession(roots)];
+  return [
+    inspectJeditSession(roots),
+    await inspectGraftSession(roots)
+  ];
 }
