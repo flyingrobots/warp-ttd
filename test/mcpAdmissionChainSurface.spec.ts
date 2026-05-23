@@ -94,6 +94,20 @@ function assertAdmissionChainNestedFactShape(
   );
 }
 
+function assertJeditLiveTargetIntake(targets: readonly object[]): void {
+  const jedit = targets
+    .map((target) => requireRecord(target, "target"))
+    .find((target) => target["target"] === "jedit");
+  assert.ok(jedit !== undefined, "jedit target must be present");
+
+  const jeditIntake = requireRecord(
+    jedit["sessionFamilyIntake"],
+    "jedit.sessionFamilyIntake"
+  );
+  assert.equal(jeditIntake["schemaVersion"], "warp-ttd.live-echo-family-intake.v1");
+  assert.equal(jeditIntake["intakePosture"], "UNAVAILABLE");
+}
+
 async function connectMcp(
   adapter = new EchoFixtureAdapter()
 ): Promise<{ client: Client; server: McpServer }> {
@@ -210,6 +224,8 @@ test("MCP live-target inspection exposes runtime-boundary evidence posture", asy
       })
     );
     const targets = requireArray(result["targets"], "targets");
+
+    assertJeditLiveTargetIntake(targets.map((entry) => requireRecord(entry, "target")));
 
     const graft = targets
       .map((target) => requireRecord(target, "target"))

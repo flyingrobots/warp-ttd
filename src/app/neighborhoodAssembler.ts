@@ -7,17 +7,19 @@
  */
 import {
   NeighborhoodCoreSummary,
-  type SerializedNeighborhoodCoreSummary
 } from "./NeighborhoodCoreSummary.ts";
 import { NeighborhoodSiteCatalog } from "./NeighborhoodSiteCatalog.ts";
 import {
   ReintegrationDetailSummary,
-  type SerializedReintegrationDetailSummary
 } from "./ReintegrationDetailSummary.ts";
 import {
   ReceiptShellSummary,
-  type SerializedReceiptShellSummary
 } from "./ReceiptShellSummary.ts";
+import {
+  hydrateNeighborhoodCoreSummary,
+  hydrateReceiptShellSummary,
+  hydrateReintegrationDetailSummary
+} from "./sharedFamilyHydration.ts";
 import {
   localFallbackSessionFamilyFact,
   obstructedSessionFamilyFact,
@@ -152,18 +154,6 @@ function materializeSummary<TSummary>(
   return materializeLocalSummary(args);
 }
 
-function hydrateNeighborhoodCore(payload: JsonObject): NeighborhoodCoreSummary {
-  return new NeighborhoodCoreSummary(payload as object as SerializedNeighborhoodCoreSummary);
-}
-
-function hydrateReintegrationDetail(payload: JsonObject): ReintegrationDetailSummary {
-  return new ReintegrationDetailSummary(payload as object as SerializedReintegrationDetailSummary);
-}
-
-function hydrateReceiptShell(payload: JsonObject): ReceiptShellSummary {
-  return new ReceiptShellSummary(payload as object as SerializedReceiptShellSummary);
-}
-
 function localNeighborhoodCore(
   frame: PlaybackFrame,
   receipts: readonly ReceiptSummary[],
@@ -179,7 +169,7 @@ function materializeCore(
   return materializeSummary({
     field: "neighborhoodCore",
     hostFacts: args.hostFacts ?? [],
-    hydrate: hydrateNeighborhoodCore,
+    hydrate: hydrateNeighborhoodCoreSummary,
     localFactory: () => localNeighborhoodCore(args.frame, args.receipts, args.emissions),
     serialize: (summary) => sessionFamilyPayload(summary.toJSON()),
     target
@@ -194,7 +184,7 @@ function materializeDetail(
   return materializeSummary({
     field: "reintegrationDetail",
     hostFacts: args.hostFacts ?? [],
-    hydrate: hydrateReintegrationDetail,
+    hydrate: hydrateReintegrationDetailSummary,
     localFactory: () => ReintegrationDetailSummary.fromSnapshot(args.frame, core, args.receipts),
     serialize: (summary) => sessionFamilyPayload(summary.toJSON()),
     target
@@ -209,7 +199,7 @@ function materializeShell(
   return materializeSummary({
     field: "receiptShell",
     hostFacts: args.hostFacts ?? [],
-    hydrate: hydrateReceiptShell,
+    hydrate: hydrateReceiptShellSummary,
     localFactory: () => ReceiptShellSummary.fromReceipts(core, args.receipts),
     serialize: (summary) => sessionFamilyPayload(summary.toJSON()),
     target

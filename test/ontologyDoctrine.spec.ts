@@ -61,6 +61,18 @@ const HOST_PUBLISHED_FAMILY_FACTS_MANUAL =
   "docs/manual/002-host-published-family-facts.md";
 const HOST_PUBLISHED_FAMILY_FACTS_DESIGN =
   "docs/design/0028-host-published-family-facts/host-published-family-facts.md";
+const LIVE_ECHO_FAMILY_INTAKE_MANUAL =
+  "docs/manual/003-live-echo-family-intake.md";
+const LIVE_ECHO_FAMILY_INTAKE_DESIGN =
+  "docs/design/0029-live-echo-family-intake/live-echo-family-intake.md";
+const GENERATED_FAMILY_CONSUMPTION_MANUAL =
+  "docs/manual/004-generated-family-consumption.md";
+const GENERATED_FAMILY_CONSUMPTION_DESIGN =
+  "docs/design/0030-generated-family-consumption/generated-family-consumption.md";
+const JEDIT_ECHO_SMOKE_MANUAL =
+  "docs/manual/005-jedit-echo-smoke.md";
+const JEDIT_ECHO_SMOKE_DESIGN =
+  "docs/design/0031-jedit-echo-smoke/jedit-echo-smoke.md";
 
 function assertSharedFamilyBoundaryLifecycle(): void {
   assert.equal(repoPathExists(SHARED_FAMILY_BOUNDARY_DESIGN), true);
@@ -121,6 +133,12 @@ function assertManualFilesExist(): void {
   assert.equal(repoPathExists(GENERATED_FAMILY_INGRESS_DESIGN), true);
   assert.equal(repoPathExists(HOST_PUBLISHED_FAMILY_FACTS_MANUAL), true);
   assert.equal(repoPathExists(HOST_PUBLISHED_FAMILY_FACTS_DESIGN), true);
+  assert.equal(repoPathExists(LIVE_ECHO_FAMILY_INTAKE_MANUAL), true);
+  assert.equal(repoPathExists(LIVE_ECHO_FAMILY_INTAKE_DESIGN), true);
+  assert.equal(repoPathExists(GENERATED_FAMILY_CONSUMPTION_MANUAL), true);
+  assert.equal(repoPathExists(GENERATED_FAMILY_CONSUMPTION_DESIGN), true);
+  assert.equal(repoPathExists(JEDIT_ECHO_SMOKE_MANUAL), true);
+  assert.equal(repoPathExists(JEDIT_ECHO_SMOKE_DESIGN), true);
 }
 
 function assertManualFrontDoors(): void {
@@ -145,6 +163,9 @@ function assertManualIndexContent(): void {
     "## Manual Rule",
     "001. Generated Family Ingress Seam",
     "002. Host-Published Family Facts",
+    "003. Live Echo Family Intake",
+    "004. Generated Family Consumption Boundary",
+    "005. Jedit Echo Smoke",
   ]);
   assertAllTextPresent(readRepoText(MANUAL_INDEX), [
     "# WARP TTD Manual Index",
@@ -152,6 +173,9 @@ function assertManualIndexContent(): void {
     "## Source Design Cycles",
     "0027-generated-family-ingress-seam",
     "0028-host-published-family-facts",
+    "0029-live-echo-family-intake",
+    "0030-generated-family-consumption",
+    "0031-jedit-echo-smoke",
   ]);
 }
 
@@ -221,6 +245,62 @@ function assertHostPublishedFamilyFactsDesign(content: string): void {
     "TtdHostAdapter.sessionFamilyFacts",
     "DebuggerSession.snapshot.sessionFamilyFacts",
     "READ_SESSION_FAMILY_FACTS",
+  ]);
+}
+
+function assertLiveEchoFamilyIntakeManual(content: string): void {
+  assertAllTextPresent(content, [
+    "# Live Echo Family Intake",
+    "## Manifest Rule",
+    ".warp-ttd/live-echo-family-facts.json",
+    "intakePosture: \"UNAVAILABLE\"",
+    "intakePosture: \"PRESENT\"",
+    "intakePosture: \"OBSTRUCTED\"",
+    "No runtime admission.",
+    "No strand creation.",
+  ]);
+}
+
+function assertGeneratedFamilyConsumptionManual(content: string): void {
+  assertAllTextPresent(content, [
+    "# Generated Family Consumption Boundary",
+    "src/app/sharedFamilyHydration.ts",
+    "consumerPosture: \"LOCAL_MIRROR_FALLBACK\"",
+    "Continuum owns",
+    "Do not extend `src/protocol.ts`",
+    "No runtime admission.",
+  ]);
+}
+
+function assertJeditEchoSmokeManual(content: string): void {
+  assertAllTextPresent(content, [
+    "# Jedit Echo Smoke",
+    "target-session --json",
+    "adapterPosture: \"UNAVAILABLE\"",
+    "sessionPosture: \"OBSTRUCTED\"",
+    "sessionFamilyIntake",
+    "No host mutation.",
+  ]);
+}
+
+function assertNextThreeDesigns(): void {
+  assertAllTextPresent(readRepoText(LIVE_ECHO_FAMILY_INTAKE_DESIGN), [
+    "status: landed",
+    "../../manual/003-live-echo-family-intake.md",
+    "LiveTargetInspection.sessionFamilyIntake",
+    "No runtime admission.",
+  ]);
+  assertAllTextPresent(readRepoText(GENERATED_FAMILY_CONSUMPTION_DESIGN), [
+    "status: landed",
+    "../../manual/004-generated-family-consumption.md",
+    "src/app/sharedFamilyHydration.ts",
+    "LOCAL_MIRROR_FALLBACK",
+  ]);
+  assertAllTextPresent(readRepoText(JEDIT_ECHO_SMOKE_DESIGN), [
+    "status: landed",
+    "../../manual/005-jedit-echo-smoke.md",
+    "LiveEchoTargetSessionInspection",
+    "sessionPosture: \"OBSTRUCTED\"",
   ]);
 }
 
@@ -485,6 +565,10 @@ test("manual starts generated family ingress cycle", () => {
   assertGeneratedFamilyIngressDesign(readRepoText(GENERATED_FAMILY_INGRESS_DESIGN));
   assertHostPublishedFamilyFactsManual(readRepoText(HOST_PUBLISHED_FAMILY_FACTS_MANUAL));
   assertHostPublishedFamilyFactsDesign(readRepoText(HOST_PUBLISHED_FAMILY_FACTS_DESIGN));
+  assertLiveEchoFamilyIntakeManual(readRepoText(LIVE_ECHO_FAMILY_INTAKE_MANUAL));
+  assertGeneratedFamilyConsumptionManual(readRepoText(GENERATED_FAMILY_CONSUMPTION_MANUAL));
+  assertJeditEchoSmokeManual(readRepoText(JEDIT_ECHO_SMOKE_MANUAL));
+  assertNextThreeDesigns();
 });
 
 test("MCP admission-chain surface is closed as a landed cycle", () => {

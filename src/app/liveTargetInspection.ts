@@ -1,6 +1,11 @@
 import fs from "node:fs";
 import path from "node:path";
 
+import {
+  inspectLiveEchoFamilyIntake,
+  type LiveEchoFamilyIntakeInspection
+} from "./liveEchoFamilyIntake.ts";
+
 export type LiveTargetName = "jedit" | "graft";
 export type LiveTargetRootPosture = "PRESENT" | "MISSING";
 export type LiveTargetAdapterPosture = "CONFIGURED" | "UNAVAILABLE";
@@ -47,6 +52,7 @@ export interface LiveTargetInspection {
   admissionChainPosture: LiveTargetAdmissionChainPosture;
   runtimeBoundaryEvidence: LiveTargetRuntimeBoundaryEvidence;
   readOnly: true;
+  sessionFamilyIntake?: LiveEchoFamilyIntakeInspection;
   graphName?: string;
   reason: string;
 }
@@ -92,16 +98,22 @@ function graftTranslatedSubstrateEvidence(): LiveTargetRuntimeBoundaryEvidence {
 }
 
 function inspectJeditTarget(roots: LiveTargetRoots): LiveTargetInspection {
+  const posture = rootPosture(roots.jeditRoot);
+
   return {
     target: "jedit",
     hostKind: "ECHO",
     appKind: "live Echo app",
     rootPath: roots.jeditRoot,
-    rootPosture: rootPosture(roots.jeditRoot),
+    rootPosture: posture,
     adapterPosture: "UNAVAILABLE",
     admissionChainPosture: "UNAVAILABLE",
     runtimeBoundaryEvidence: unavailableRuntimeBoundaryEvidence(),
     readOnly: true,
+    sessionFamilyIntake: inspectLiveEchoFamilyIntake({
+      rootPath: roots.jeditRoot,
+      rootPosture: posture
+    }),
     reason: "Echo live adapter, admission-chain publication, and native Continuum evidence are not wired into WARP TTD yet."
   };
 }

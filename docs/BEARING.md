@@ -120,10 +120,24 @@ The first host-published family fact path is also Manual-backed:
 [`docs/manual/002-host-published-family-facts.md`](./manual/002-host-published-family-facts.md),
 paired with
 [`docs/design/0028-host-published-family-facts/host-published-family-facts.md`](./design/0028-host-published-family-facts/host-published-family-facts.md).
-The next pressure is replacing Echo fixture publication with live Echo
-neighborhood, reading, admission, and authority payloads as those families
-become available.
+The live Echo intake path is now Manual-backed:
+[`docs/manual/003-live-echo-family-intake.md`](./manual/003-live-echo-family-intake.md),
+paired with
+[`docs/design/0029-live-echo-family-intake/live-echo-family-intake.md`](./design/0029-live-echo-family-intake/live-echo-family-intake.md).
+The generated-family consumption boundary is also Manual-backed:
+[`docs/manual/004-generated-family-consumption.md`](./manual/004-generated-family-consumption.md),
+paired with
+[`docs/design/0030-generated-family-consumption/generated-family-consumption.md`](./design/0030-generated-family-consumption/generated-family-consumption.md).
+The first jedit target-session smoke is Manual-backed:
+[`docs/manual/005-jedit-echo-smoke.md`](./manual/005-jedit-echo-smoke.md),
+paired with
+[`docs/design/0031-jedit-echo-smoke/jedit-echo-smoke.md`](./design/0031-jedit-echo-smoke/jedit-echo-smoke.md).
+The next pressure is replacing the jedit intake manifest with a real Echo
+adapter path for neighborhood, reading, admission, and authority payloads as
+those families become available.
 The first executable smoke surface is `npm run targets -- --json`, which
 reports read-only posture for both live targets without attaching or mutating.
+The paired session smoke surface is `npm run target-session -- --json`, which
+now reports both jedit obstruction and graft session posture.
 The active evidence-posture cycle is
 [`docs/design/0021-runtime-boundary-evidence-posture/runtime-boundary-evidence-posture.md`](./design/0021-runtime-boundary-evidence-posture/runtime-boundary-evidence-posture.md).
