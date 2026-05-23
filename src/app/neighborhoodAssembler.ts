@@ -20,6 +20,7 @@ import {
 } from "./ReceiptShellSummary.ts";
 import {
   localFallbackSessionFamilyFact,
+  obstructedSessionFamilyFact,
   sessionFamilyPayload,
   sessionFamilyTarget,
   type SessionFamilyFact,
@@ -90,15 +91,20 @@ function findHostPublishedFact(
   return facts.find((fact) => isHostPublishedFact(fact, field, target));
 }
 
-function materializeSummary<TSummary>(
+function hostHydrationFailureReason(
+  field: SessionFamilyFactKey,
+  error: Error | undefined
+): string {
+  const detail = error !== undefined && error.message.length > 0
+    ? `: ${error.message}`
+    : "";
+
+  return `Host-published ${field} payload failed hydration; using local fallback${detail}`;
+}
+
+function materializeLocalSummary<TSummary>(
   args: MaterializeSummaryArgs<TSummary>
 ): MaterializedSummary<TSummary> {
-  const hostFact = findHostPublishedFact(args.field, args.hostFacts, args.target);
-
-  if (hostFact !== undefined) {
-    return { value: args.hydrate(hostFact.payload), fact: hostFact };
-  }
-
   const local = args.localFactory();
 
   return {
@@ -109,6 +115,41 @@ function materializeSummary<TSummary>(
       payload: args.serialize(local)
     })
   };
+}
+
+function materializeObstructedHostSummary<TSummary>(
+  args: MaterializeSummaryArgs<TSummary>,
+  error: Error | undefined
+): MaterializedSummary<TSummary> {
+  const local = args.localFactory();
+
+  return {
+    value: local,
+    fact: obstructedSessionFamilyFact({
+      field: args.field,
+      target: args.target,
+      reason: hostHydrationFailureReason(args.field, error)
+    })
+  };
+}
+
+function materializeSummary<TSummary>(
+  args: MaterializeSummaryArgs<TSummary>
+): MaterializedSummary<TSummary> {
+  const hostFact = findHostPublishedFact(args.field, args.hostFacts, args.target);
+
+  if (hostFact !== undefined) {
+    try {
+      return { value: args.hydrate(hostFact.payload), fact: hostFact };
+    } catch (error) {
+      return materializeObstructedHostSummary(
+        args,
+        error instanceof Error ? error : undefined
+      );
+    }
+  }
+
+  return materializeLocalSummary(args);
 }
 
 function hydrateNeighborhoodCore(payload: JsonObject): NeighborhoodCoreSummary {

@@ -41,6 +41,9 @@ that do not publish those summaries yet.
   a source-family fact.
 - Local fallback derivation remains legal only when labeled
   `origin: "LOCAL_FALLBACK"`.
+- Matching host-published facts that fail hydration are host obstructions, not
+  session-fatal errors; WARP TTD may keep the debugger usable by deriving the
+  visible summary locally while recording `posture: "OBSTRUCTED"`.
 - The adapter port is read-only and capability-gated by
   `READ_SESSION_FAMILY_FACTS`.
 - No host-published fact path may issue authority, construct a presentation,
@@ -69,6 +72,8 @@ This cycle landed:
 - `DebuggerSession.snapshot.sessionFamilyFacts`
 - host-published Continuum summary facts in `EchoFixtureAdapter`
 - local fallback session-family facts when adapter capability is absent
+- obstructed host facts plus local summary derivation when a matching
+  host-published payload cannot be hydrated
 - CLI JSON visibility through `SerializedSession.snapshot.sessionFamilyFacts`
 
 The implementation leaves git-warp and scenario fixtures on fallback. It does

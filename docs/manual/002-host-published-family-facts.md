@@ -51,10 +51,13 @@ the session's neighborhood, reintegration, and receipt-shell summaries.
 
 For each supported field:
 
-- `origin: "HOST_PUBLISHED"` means the host supplied the payload used by the
-  session summary
+- `posture: "PRESENT"` with `origin: "HOST_PUBLISHED"` means the host supplied
+  the payload used by the session summary
+- `posture: "OBSTRUCTED"` with `origin: "HOST_PUBLISHED"` means a matching host
+  payload existed but could not be hydrated, so WARP TTD used a local fallback
+  summary and recorded the host obstruction
 - `origin: "LOCAL_FALLBACK"` means WARP TTD derived the summary locally from
-  protocol facts
+  protocol facts because no usable host payload was selected
 - missing adapter capability means local fallback, not inferred host truth
 
 The summary objects remain the same debugger read models. The source-family
@@ -70,6 +73,9 @@ Cycle 0028 landed the first host-published path:
   and receipt-shell facts
 - `DebuggerSession` prefers host-published payloads when the capability is
   present
+- malformed host-published payloads do not crash session construction; they are
+  recorded as obstructed host facts while WARP TTD derives the visible summary
+  locally
 - adapters without the capability continue using local fallback derivation
 - `SerializedSession.snapshot.sessionFamilyFacts` exposes the result to CLI JSON
   and future MCP/TUI surfaces

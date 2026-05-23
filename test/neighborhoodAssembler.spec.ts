@@ -6,6 +6,7 @@ import { buildNeighborhoodState } from "../src/app/neighborhoodAssembler.ts";
 import {
   hostPublishedSessionFamilyFact,
   sessionFamilyPayload,
+  sessionFamilyTarget,
   type SessionFamilyFact
 } from "../src/app/sessionFamilyFacts.ts";
 import type { PlaybackFrame, ReceiptSummary, EffectEmissionSummary } from "../src/protocol.ts";
@@ -65,6 +66,14 @@ function staleNeighborhoodCoreFact(inputs: NeighborhoodInputs): SessionFamilyFac
   });
 }
 
+function malformedNeighborhoodCoreFact(inputs: NeighborhoodInputs): SessionFamilyFact {
+  return hostPublishedSessionFamilyFact({
+    field: "neighborhoodCore",
+    target: sessionFamilyTarget(inputs.frame.headId, inputs.frame.frameIndex),
+    payload: { summary: "malformed host payload" }
+  });
+}
+
 test("buildNeighborhoodState produces all four neighborhood summaries from protocol data", () => {
   const { emissions, frame, receipts } = makeNeighborhoodInputs();
   const state = buildNeighborhoodState({ frame, receipts, emissions });
@@ -96,4 +105,25 @@ test("buildNeighborhoodState ignores host facts for another target", () => {
   assert.ok(firstFact !== undefined);
   assert.equal(firstFact.field, "neighborhoodCore");
   assert.equal(firstFact.origin, "LOCAL_FALLBACK");
+});
+
+test("buildNeighborhoodState obstructs malformed host facts and uses local fallback", () => {
+  const inputs = makeNeighborhoodInputs();
+  const state = buildNeighborhoodState({
+    ...inputs,
+    hostFacts: [malformedNeighborhoodCoreFact(inputs)]
+  });
+
+  assert.equal(state.neighborhoodCore.summary, "1 lane(s), 0 alternative(s), lawful");
+  assert.equal(state.reintegrationDetail.summary.length > 0, true);
+  const firstFact = state.sessionFamilyFacts[0];
+  assert.ok(firstFact !== undefined);
+  assert.equal(firstFact.field, "neighborhoodCore");
+  assert.equal(firstFact.origin, "HOST_PUBLISHED");
+
+  if (firstFact.posture !== "OBSTRUCTED") {
+    assert.fail("expected malformed host fact to be obstructed");
+  }
+
+  assert.match(firstFact.reason, /failed hydration/);
 });
