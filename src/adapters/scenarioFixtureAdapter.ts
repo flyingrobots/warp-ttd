@@ -6,6 +6,7 @@
  * touching a real substrate.
  */
 import type { TtdHostAdapter } from "../adapter.ts";
+import type { SessionFamilyFact } from "../app/sessionFamilyFacts.ts";
 import { FrameOutOfRangeError, UnknownHeadError } from "../errors.ts";
 import type {
   AdapterCapability,
@@ -509,7 +510,7 @@ function scenarioHello(runtime: ScenarioRuntime): Promise<HostHello> {
   return Promise.resolve({
     hostKind: runtime.scenario.hostKind,
     hostVersion: "0.0.0-scenario",
-    protocolVersion: "0.6.0",
+    protocolVersion: "0.7.0",
     schemaId: "ttd-protocol-scenario-v1",
     capabilities: runtime.built.capabilities
   });
@@ -531,6 +532,7 @@ function buildScenarioAdapter(runtime: ScenarioRuntime): TtdHostAdapter {
     ),
     deliveryObservations: (hid, fi) => Promise.resolve(cloneFrameObservations(runtime, hid, fi)),
     executionContext: () => Promise.resolve({ mode: scenario.executionMode }),
+    sessionFamilyFacts: (hid) => Promise.resolve(emptySessionFamilyFacts(runtime, hid)),
     stepForward(headId: string): Promise<PlaybackFrame> {
       return Promise.resolve(moveRuntimeHead(runtime, headId, nextRuntimeFrame(runtime, headId)));
     },
@@ -541,6 +543,14 @@ function buildScenarioAdapter(runtime: ScenarioRuntime): TtdHostAdapter {
       return Promise.resolve(moveRuntimeHead(runtime, headId, clampedRuntimeFrame(runtime, frameIndex)));
     }
   };
+}
+
+function emptySessionFamilyFacts(
+  runtime: ScenarioRuntime,
+  headId: string
+): SessionFamilyFact[] {
+  requireRuntimeHead(runtime, headId);
+  return [];
 }
 
 export function buildScenario(scenario: Scenario): TtdHostAdapter {

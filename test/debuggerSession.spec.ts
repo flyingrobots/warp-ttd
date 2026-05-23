@@ -9,6 +9,7 @@ import assert from "node:assert/strict";
 
 import { DebuggerSession } from "../src/app/debuggerSession.ts";
 import { EchoFixtureAdapter } from "../src/adapters/echoFixtureAdapter.ts";
+import type { SessionFamilyFact } from "../src/app/sessionFamilyFacts.ts";
 import type {
   DeliveryObservationSummary,
   ExecutionContext,
@@ -41,7 +42,10 @@ class SparseCapabilityAdapter extends EchoFixtureAdapter {
     return {
       ...hello,
       capabilities: hello.capabilities.filter(
-        (cap) => cap !== "READ_DELIVERY_OBSERVATIONS" && cap !== "READ_EXECUTION_CONTEXT"
+        (cap) =>
+          cap !== "READ_DELIVERY_OBSERVATIONS"
+          && cap !== "READ_EXECUTION_CONTEXT"
+          && cap !== "READ_SESSION_FAMILY_FACTS"
       )
     };
   }
@@ -52,6 +56,10 @@ class SparseCapabilityAdapter extends EchoFixtureAdapter {
 
   public override executionContext(): Promise<ExecutionContext> {
     throw new UnsupportedAdapterMethodError("executionContext");
+  }
+
+  public override sessionFamilyFacts(): Promise<SessionFamilyFact[]> {
+    throw new UnsupportedAdapterMethodError("sessionFamilyFacts");
   }
 }
 
@@ -69,6 +77,15 @@ class TransientHelloAdapter extends EchoFixtureAdapter {
     }
     return super.hello();
   }
+}
+
+function sessionFamilyFact(
+  facts: readonly SessionFamilyFact[],
+  field: SessionFamilyFact["field"]
+): SessionFamilyFact {
+  const fact = facts.find((candidate) => candidate.field === field);
+  assert.ok(fact !== undefined, `Expected session family fact for ${field}`);
+  return fact;
 }
 
 // --- Creation ---
@@ -95,6 +112,10 @@ test("create() produces a valid initial snapshot at frame 0", async () => {
   assert.equal(snap.neighborhoodSites.sites.length, 1);
   assert.equal(snap.reintegrationDetail.siteId, snap.neighborhoodCore.siteId);
   assert.equal(snap.receiptShell.siteId, snap.neighborhoodCore.siteId);
+  assert.deepEqual(
+    snap.sessionFamilyFacts.map((fact) => fact.field),
+    ["neighborhoodCore", "reintegrationDetail", "receiptShell"]
+  );
 });
 
 test("create() starts with no pins", async () => {
@@ -107,6 +128,24 @@ test("create() skips adapter methods when capabilities are absent", async () => 
 
   assert.deepEqual(session.snapshot.observations, []);
   assert.deepEqual(session.snapshot.execCtx, { mode: "DEBUG" });
+  assert.equal(
+    sessionFamilyFact(session.snapshot.sessionFamilyFacts, "neighborhoodCore").origin,
+    "LOCAL_FALLBACK"
+  );
+});
+
+test("create() prefers host-published session family facts when available", async () => {
+  const session = await DebuggerSession.create(createAdapter(), HEAD_ID);
+  const coreFact = sessionFamilyFact(
+    session.snapshot.sessionFamilyFacts,
+    "neighborhoodCore"
+  );
+
+  assert.equal(coreFact.posture, "PRESENT");
+  assert.equal(coreFact.origin, "HOST_PUBLISHED");
+  assert.equal(coreFact.source.family, "continuum");
+  assert.equal(coreFact.source.artifact, "NeighborhoodCoreSummary");
+  assert.equal(session.snapshot.neighborhoodCore.summary, "Host-published neighborhood core");
 });
 
 // --- Navigation ---
@@ -261,6 +300,8 @@ test("toJSON() returns a serializable representation", async () => {
   assert.equal(Array.isArray(json.snapshot.neighborhoodSites.sites), true);
   assert.equal(typeof json.snapshot.reintegrationDetail.summary, "string");
   assert.equal(typeof json.snapshot.receiptShell.summary, "string");
+  assert.equal(json.snapshot.sessionFamilyFacts.length, 3);
+  assert.equal(json.snapshot.sessionFamilyFacts[0]?.origin, "HOST_PUBLISHED");
 
   // Must survive a full JSON round-trip as stable plain data
   const serialized = JSON.stringify(json);

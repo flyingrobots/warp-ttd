@@ -8,7 +8,7 @@ test("hello exposes the minimal host handshake contract", async () => {
   const hello = await adapter.hello();
 
   assert.equal(hello.hostKind, "ECHO");
-  assert.equal(hello.protocolVersion, "0.6.0");
+  assert.equal(hello.protocolVersion, "0.7.0");
   assert.equal(hello.schemaId, "ttd-protocol-fixture-v1");
   assert.deepEqual(hello.capabilities, [
     "READ_HELLO",
@@ -19,6 +19,7 @@ test("hello exposes the minimal host handshake contract", async () => {
     "READ_EFFECT_EMISSIONS",
     "READ_DELIVERY_OBSERVATIONS",
     "READ_EXECUTION_CONTEXT",
+    "READ_SESSION_FAMILY_FACTS",
     "CONTROL_STEP_FORWARD",
     "CONTROL_STEP_BACKWARD",
     "CONTROL_SEEK"
@@ -133,4 +134,24 @@ test("explicit frame lookup allows receipt-bearing speculative frames to be insp
         "Accepted one speculative rewrite and captured one counterfactual."
     }
   ]);
+});
+
+test("sessionFamilyFacts publishes Continuum summary facts", async () => {
+  const adapter = new EchoFixtureAdapter();
+  const facts = await adapter.sessionFamilyFacts("head:main", 1);
+
+  assert.deepEqual(facts.map((fact) => fact.field), [
+    "neighborhoodCore",
+    "reintegrationDetail",
+    "receiptShell"
+  ]);
+  assert.deepEqual(facts.map((fact) => fact.origin), [
+    "HOST_PUBLISHED",
+    "HOST_PUBLISHED",
+    "HOST_PUBLISHED"
+  ]);
+  const firstFact = facts[0];
+  assert.ok(firstFact !== undefined);
+  assert.equal(firstFact.source.family, "continuum");
+  assert.equal(firstFact.source.artifact, "NeighborhoodCoreSummary");
 });

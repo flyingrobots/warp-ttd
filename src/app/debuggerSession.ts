@@ -25,6 +25,7 @@ import type {
   SerializedReceiptShellSummary
 } from "./ReceiptShellSummary.ts";
 import { buildNeighborhoodState } from "./neighborhoodAssembler.ts";
+import type { SessionFamilyFact } from "./sessionFamilyFacts.ts";
 import type {
   AdapterCapability,
   DeliveryObservationSummary,
@@ -51,6 +52,7 @@ export interface SessionSnapshot {
   neighborhoodSites: NeighborhoodSiteCatalog;
   reintegrationDetail: ReintegrationDetailSummary;
   receiptShell: ReceiptShellSummary;
+  sessionFamilyFacts: readonly SessionFamilyFact[];
 }
 
 export interface PinnedObservation {
@@ -70,6 +72,7 @@ export interface SerializedSessionSnapshot {
   neighborhoodSites: SerializedNeighborhoodSiteCatalog;
   reintegrationDetail: SerializedReintegrationDetailSummary;
   receiptShell: SerializedReceiptShellSummary;
+  sessionFamilyFacts: readonly SessionFamilyFact[];
 }
 
 export interface SerializedSession {
@@ -86,6 +89,22 @@ interface DebuggerSessionInit {
   snapshot: SessionSnapshot;
 }
 
+interface FetchSessionFamilyFactsArgs {
+  readonly adapter: TtdHostAdapter;
+  readonly capabilities: readonly AdapterCapability[];
+  readonly frameIndex: number;
+  readonly headId: string;
+}
+
+interface SnapshotProtocolFacts {
+  readonly emissions: EffectEmissionSummary[];
+  readonly execCtx: ExecutionContext;
+  readonly frame: PlaybackFrame;
+  readonly head: PlaybackHeadSnapshot;
+  readonly observations: DeliveryObservationSummary[];
+  readonly receipts: ReceiptSummary[];
+}
+
 function serializeSnapshot(
   snapshot: SessionSnapshot
 ): SerializedSessionSnapshot {
@@ -99,7 +118,8 @@ function serializeSnapshot(
     neighborhoodCore: snapshot.neighborhoodCore.toJSON(),
     neighborhoodSites: snapshot.neighborhoodSites.toJSON(),
     reintegrationDetail: snapshot.reintegrationDetail.toJSON(),
-    receiptShell: snapshot.receiptShell.toJSON()
+    receiptShell: snapshot.receiptShell.toJSON(),
+    sessionFamilyFacts: structuredClone(snapshot.sessionFamilyFacts)
   };
 }
 
@@ -275,18 +295,24 @@ async function fetchExecutionContext(
   return adapter.executionContext();
 }
 
-async function fetchSnapshot(
+async function fetchSessionFamilyFacts(
+  args: FetchSessionFamilyFactsArgs
+): Promise<SessionFamilyFact[]> {
+  if (!hasAdapterCapability(args.capabilities, "READ_SESSION_FAMILY_FACTS")) return [];
+  return args.adapter.sessionFamilyFacts(args.headId, args.frameIndex);
+}
+
+async function fetchSnapshotProtocolFacts(
   adapter: TtdHostAdapter,
   headId: string,
   capabilities: readonly AdapterCapability[]
-): Promise<SessionSnapshot> {
+): Promise<SnapshotProtocolFacts> {
   const head = await adapter.playbackHead(headId);
   const frame = await adapter.frame(headId);
   const receipts = await fetchReceipts(adapter, headId, capabilities);
   const emissions = await fetchEmissions(adapter, headId, capabilities);
   const observations = await fetchObservations(adapter, headId, capabilities);
   const execCtx = await fetchExecutionContext(adapter, capabilities);
-  const neighborhoodState = buildNeighborhoodState(frame, receipts, emissions);
 
   return {
     head,
@@ -294,7 +320,26 @@ async function fetchSnapshot(
     receipts,
     emissions,
     observations,
-    execCtx,
+    execCtx
+  };
+}
+
+async function fetchSnapshot(
+  adapter: TtdHostAdapter,
+  headId: string,
+  capabilities: readonly AdapterCapability[]
+): Promise<SessionSnapshot> {
+  const facts = await fetchSnapshotProtocolFacts(adapter, headId, capabilities);
+  const hostFacts = await fetchSessionFamilyFacts({
+    adapter,
+    capabilities,
+    frameIndex: facts.frame.frameIndex,
+    headId
+  });
+  const neighborhoodState = buildNeighborhoodState({ ...facts, hostFacts });
+
+  return {
+    ...facts,
     ...neighborhoodState
   };
 }

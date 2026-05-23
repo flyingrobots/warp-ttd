@@ -1,4 +1,13 @@
 import type { TtdHostAdapter } from "../adapter.ts";
+import { NeighborhoodCoreSummary } from "../app/NeighborhoodCoreSummary.ts";
+import { ReceiptShellSummary } from "../app/ReceiptShellSummary.ts";
+import { ReintegrationDetailSummary } from "../app/ReintegrationDetailSummary.ts";
+import {
+  hostPublishedSessionFamilyFact,
+  sessionFamilyPayload,
+  sessionFamilyTarget,
+  type SessionFamilyFact
+} from "../app/sessionFamilyFacts.ts";
 import {
   FrameResolutionError,
   NoFramesConfiguredError,
@@ -26,11 +35,18 @@ interface FixtureState {
   readonly executionContext: ExecutionContext;
 }
 
+interface PublishedFactsFromSummariesArgs {
+  readonly core: NeighborhoodCoreSummary;
+  readonly detail: ReintegrationDetailSummary;
+  readonly frame: PlaybackFrame;
+  readonly shell: ReceiptShellSummary;
+}
+
 const FIXTURE: FixtureState = {
   hello: {
     hostKind: "ECHO",
     hostVersion: "0.0.0-fixture",
-    protocolVersion: "0.6.0",
+    protocolVersion: "0.7.0",
     schemaId: "ttd-protocol-fixture-v1",
     capabilities: [
       "READ_HELLO",
@@ -41,6 +57,7 @@ const FIXTURE: FixtureState = {
       "READ_EFFECT_EMISSIONS",
       "READ_DELIVERY_OBSERVATIONS",
       "READ_EXECUTION_CONTEXT",
+      "READ_SESSION_FAMILY_FACTS",
       "CONTROL_STEP_FORWARD",
       "CONTROL_STEP_BACKWARD",
       "CONTROL_SEEK"
@@ -255,6 +272,54 @@ function cloneValue<T>(value: T): T {
   return structuredClone(value);
 }
 
+function hostSummary(summary: string): string {
+  return `Host-published ${summary}`;
+}
+
+function publishedSessionFamilyFacts(
+  frame: PlaybackFrame,
+  receipts: readonly ReceiptSummary[],
+  emissions: readonly EffectEmissionSummary[]
+): SessionFamilyFact[] {
+  const core = new NeighborhoodCoreSummary({
+    ...NeighborhoodCoreSummary.fromFrame(frame, receipts, emissions).toJSON(),
+    summary: hostSummary("neighborhood core")
+  });
+  const detail = new ReintegrationDetailSummary({
+    ...ReintegrationDetailSummary.fromSnapshot(frame, core, receipts).toJSON(),
+    summary: hostSummary("reintegration detail")
+  });
+  const shell = new ReceiptShellSummary({
+    ...ReceiptShellSummary.fromReceipts(core, receipts).toJSON(),
+    summary: hostSummary("receipt shell")
+  });
+
+  return publishedFactsFromSummaries({ core, detail, frame, shell });
+}
+
+function publishedFactsFromSummaries(
+  args: PublishedFactsFromSummariesArgs
+): SessionFamilyFact[] {
+  const target = sessionFamilyTarget(args.frame.headId, args.frame.frameIndex);
+
+  return [
+    hostPublishedSessionFamilyFact({
+      field: "neighborhoodCore",
+      target,
+      payload: sessionFamilyPayload(args.core.toJSON())
+    }),
+    hostPublishedSessionFamilyFact({
+      field: "reintegrationDetail",
+      target,
+      payload: sessionFamilyPayload(args.detail.toJSON())
+    }),
+    hostPublishedSessionFamilyFact({
+      field: "receiptShell",
+      target,
+      payload: sessionFamilyPayload(args.shell.toJSON())
+    })
+  ];
+}
 
 function requireHeadState(
   heads: Map<string, PlaybackHeadSnapshot>,
@@ -405,5 +470,16 @@ export class EchoFixtureAdapter implements TtdHostAdapter {
 
   public executionContext(): Promise<ExecutionContext> {
     return Promise.resolve(cloneValue(FIXTURE.executionContext));
+  }
+
+  public async sessionFamilyFacts(
+    headId: string,
+    frameIndex?: number
+  ): Promise<SessionFamilyFact[]> {
+    const frame = await this.frame(headId, frameIndex);
+    const receipts = await this.receipts(headId, frame.frameIndex);
+    const emissions = await this.effectEmissions(headId, frame.frameIndex);
+
+    return publishedSessionFamilyFacts(frame, receipts, emissions);
   }
 }

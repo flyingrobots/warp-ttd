@@ -41,7 +41,7 @@ npm run target-session -- --json
 
 ### 3. Protocol First
 
-The TTD protocol is defined via a single **GraphQL schema** (protocol v0.6.0 schema; names adapter support as `AdapterCapability`). Protocol changes start here.
+The TTD protocol is defined via a single **GraphQL schema** (protocol v0.7.0 schema; adds read-only session family fact support). Protocol changes start here.
 
 ```text
 schemas/warp-ttd-protocol.graphql

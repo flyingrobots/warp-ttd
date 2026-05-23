@@ -17,9 +17,11 @@ decisions that should survive beyond an individual cycle.
 ## Chapters
 
 1. [Generated Family Ingress Seam](./001-generated-family-ingress-seam.md)
+2. [Host-Published Family Facts](./002-host-published-family-facts.md)
 
 ## Source Design Cycles
 
 | Manual chapter | Source design cycle | Status |
 | :--- | :--- | :--- |
 | [Generated Family Ingress Seam](./001-generated-family-ingress-seam.md) | [0027-generated-family-ingress-seam](../design/0027-generated-family-ingress-seam/generated-family-ingress-seam.md) | landed |
+| [Host-Published Family Facts](./002-host-published-family-facts.md) | [0028-host-published-family-facts](../design/0028-host-published-family-facts/host-published-family-facts.md) | landed |
