@@ -141,3 +141,123 @@ The paired session smoke surface is `npm run target-session -- --json`, which
 now reports both jedit obstruction and graft session posture.
 The active evidence-posture cycle is
 [`docs/design/0021-runtime-boundary-evidence-posture/runtime-boundary-evidence-posture.md`](./design/0021-runtime-boundary-evidence-posture/runtime-boundary-evidence-posture.md).
+
+## Next Ten Slice Queue
+
+As of 2026-05-23, the next execution queue continues from the landed
+Manual-backed `0031-jedit-echo-smoke` cycle. Each slice should follow the cycle
+loop in `METHOD.md`: design packet, failing tests, implementation, Manual
+chapter or Manual update, retro/follow-on debt, validation, and PR.
+
+1. **0032 Echo Adapter Probe Boundary**
+   - Add the first real read-only `EchoHostAdapter` probe path for `jedit`.
+   - Replace pure manifest-only smoke with explicit adapter probe posture:
+     bridge absent, bridge present, ABI unsupported, or session obstructed.
+   - Keep `targets --json`, `target-session --json`, and MCP read-only.
+   - Non-goals: no browser attachment, no session open, no admission, no host
+     mutation.
+
+2. **0033 Wesley-Generated Echo Family Consumer**
+   - Teach the Echo path to consume Wesley-generated Continuum/Echo proof-family
+     TypeScript artifacts when they are available.
+   - Keep `LOCAL_MIRROR_FALLBACK` explicit for git-warp, fixtures, and missing
+     generated packages.
+   - Advance
+     [`PROTO_wesley-generated-echo-family-consumption.md`](./method/backlog/up-next/PROTO_wesley-generated-echo-family-consumption.md).
+
+3. **0034 Jedit Neighborhood Core Host Facts**
+   - Move `jedit` neighborhood intake from target-scope manifest posture toward
+     actual Echo adapter/session facts.
+   - First live payload: `NeighborhoodCoreSummary`.
+   - CLI and MCP must expose source refs and evidence posture without upgrading
+     translated substrate evidence into native Continuum witnesshood.
+
+4. **0035 Jedit Reintegration Detail And Receipt Shell**
+   - Add Echo-published `ReintegrationDetailSummary` and optional
+     `ReceiptShellSummary` intake.
+   - Preserve the three-layer order: neighborhood core first, seam detail
+     second, explanatory receipt shell last.
+   - Receipt shell must never redefine neighborhood core.
+
+5. **0036 Admission Registration And Handle Facts**
+   - Add real Echo/jedit admission-chain facts for artifact registration and
+     runtime handle posture.
+   - Represent artifact hash, `OpticRegistrationDescriptor`, admission
+     requirements digest, and Echo-owned `OpticArtifactHandle` distinctly.
+   - Keep grant, ticket, and witness facts `ABSENT` or `OBSTRUCTED` until Echo
+     exposes them.
+
+6. **0037 Grant, Presentation, Ticket, Witness Posture**
+   - Extend Echo inspection to report `CapabilityGrant`,
+     `CapabilityPresentation`, `AdmissionTicket`, and `LawWitness` posture.
+   - The read model must distinguish no grant, invalid or obstructed grant, no
+     ticket, obstructed admission, and present witness.
+   - Non-goals remain strict: no grant issuance, no presentation construction,
+     no runtime admission, no mutation.
+
+7. **0038 ReadingEnvelope Intake And Materialized Reading Smoke**
+   - Add the first Echo `ReadingEnvelope` inspection path.
+   - The agent surface must name `basisRef`, `observerPlanRef`,
+     `readingEnvelopeRef`, `readingPosture`, witness or receipt backing,
+     runtime source, aperture, and budget posture.
+   - This starts the materialized reading inspector by treating graph-shaped
+     payloads as readings, not substrate truth.
+
+8. **0039 Graft Live Parity Hardening**
+   - Pressure-test `graft` as a real live git-warp target, not only a synthetic
+     fixture path.
+   - Keep the same target, session, CLI, and MCP vocabulary used for `jedit`.
+   - Echo-specific admission facts should remain explicit absence or
+     non-applicable posture for git-warp targets.
+
+9. **0040 Generated Protocol Authority Cutover, Second Cut**
+   - Promote stabilized admission-chain, session-family, and reading facts into
+     authored schema / Wesley-generated artifacts where they belong.
+   - Reduce `src/protocol.ts` toward debugger-local wrappers and compatibility
+     helpers instead of a peer contract authority.
+   - Advance
+     [`PROTO_generated-protocol-authority-cutover.md`](./method/backlog/up-next/PROTO_generated-protocol-authority-cutover.md).
+
+10. **0041 Neighborhood-Scoped Worldline And Core Reading Agent Surface**
+    - Start the core-view arc through structured surfaces before TUI/browser
+      rendering.
+    - Default worldline inspection should be scoped to the current local
+      Kairotic neighborhood instead of dumping every known lane.
+    - Minimal materialized-reading inspection should preserve basis and witness
+      posture.
+
+## Echo And Jedit Dependency Boundary
+
+The queue is intentionally staged so WARP TTD can land honest inspection
+contracts before Echo or `jedit` are ready to publish every live fact.
+
+- `0032` and `0033` can begin mostly in WARP TTD. They may still report
+  `UNAVAILABLE`, `ABSENT`, or `OBSTRUCTED` until Echo and `jedit` expose the
+  required runtime surfaces.
+- `0034` through `0038` require Echo-side support to become fully present live
+  facts. WARP TTD can define inspection contracts, posture handling, CLI, MCP,
+  fixtures, and Manual chapters, but Echo owns runtime handles, admission,
+  obstruction, access instrumentation, witnesses, receipts, and readings.
+- `jedit` changes should stay integration-shaped: publish app/session identity,
+  register the relevant optic artifacts, and expose one or more useful reading
+  surfaces through Echo. `jedit` should not become a source of debugger
+  ontology or editor-domain semantics inside WARP TTD.
+- `0039` is mostly WARP TTD plus live `graft` / git-warp parity work.
+- `0040` may need Wesley and generated shared-family artifact coordination, but
+  should not require `jedit` editor-domain changes.
+- `0041` can start with existing WARP TTD read models, but live fidelity
+  improves as the Echo-published facts from `0034` through `0038` become
+  available.
+
+The healthy execution order is:
+
+1. Land WARP TTD support first with explicit absence and obstruction posture.
+2. Add companion Echo changes that publish the runtime facts.
+3. Add narrow `jedit` wiring only where needed to publish or register those
+   facts.
+4. Return to WARP TTD and flip live acceptance from obstructed smoke to present
+   host-published facts.
+
+Strand and speculative lifecycle work remains blocked until the
+admission-chain facts above are inspectable as distinct facts instead of local
+UI mutation.
