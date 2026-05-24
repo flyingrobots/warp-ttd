@@ -255,6 +255,68 @@ chapter or Manual update, retro/follow-on debt, validation, and PR.
     - Non-goals: no raw WAL parsing, no WAL recovery, no tail truncation, no
       Echo runtime mutation, and no jedit editor nouns in the debugger model.
 
+## Immediate Slice Plan: 0032 Echo Adapter Probe Boundary
+
+The next cycle should be `0032-echo-adapter-probe-boundary`. Its purpose is to
+move `jedit` from manifest-only smoke toward a real, read-only Echo adapter
+probe without claiming a full Echo session, browser attachment, runtime
+admission, or mutation.
+
+The probe should let WARP TTD report deterministic Echo adapter posture for
+`jedit`:
+
+- Echo bridge or root unavailable
+- Echo bridge present
+- Echo ABI or configuration unsupported
+- Echo adapter probe obstructed
+- Echo session still not openable
+
+This is the right next step because later slices need a real adapter-shaped
+seam before WARP TTD can truthfully inspect Echo-published neighborhood facts,
+registration handles, grants, tickets, witnesses, or readings.
+
+Suggested execution shape:
+
+1. Create branch `cycle/echo-adapter-probe-boundary`.
+2. Add design packet
+   `docs/design/0032-echo-adapter-probe-boundary/echo-adapter-probe-boundary.md`.
+3. Add Manual chapter `docs/manual/006-echo-adapter-probe-boundary.md` and
+   update `MANUAL.md` plus `docs/manual/README.md`.
+4. Add failing tests around `targets --json`, `target-session --json`, and MCP
+   live-target inspection for the new Echo probe posture.
+5. Implement the smallest Echo adapter probe boundary, keeping it separate from
+   live family manifest intake so "Echo adapter exists" is not conflated with
+   "family facts manifest exists."
+6. Keep current `jedit` output obstructed unless the adapter probe can
+   truthfully see a supported bridge.
+7. Validate with the full suite and open a PR.
+
+Likely WARP TTD files involved:
+
+- `src/app/liveTargetInspection.ts`
+- `src/app/liveTargetSessionInspection.ts`
+- `src/app/liveEchoFamilyIntake.ts`
+- a new Echo probe module, for example `src/app/echoAdapterProbe.ts` or a
+  narrow adapter-side module if the repo shape calls for it
+- MCP live-target inspection coverage
+- `test/liveEchoFamilyIntake.spec.ts`
+- `test/cliJson.spec.ts`
+- `test/mcpAdmissionChainSurface.spec.ts`
+
+Acceptance stays strict:
+
+- `jedit` appears in live target surfaces
+- `jedit` has explicit Echo adapter probe posture
+- `jedit` remains read-only
+- `jedit` does not claim an open session
+- `jedit` does not claim admission-chain facts
+- `jedit` does not mutate host state
+- `graft` behavior is unchanged
+
+The following slice remains `0033 Wesley-Generated Echo Family Consumer`.
+Do not start it before 0032 gives generated-family consumption a real Echo path
+to hang from.
+
 ## Echo And Jedit Dependency Boundary
 
 The queue is intentionally staged so WARP TTD can land honest inspection
