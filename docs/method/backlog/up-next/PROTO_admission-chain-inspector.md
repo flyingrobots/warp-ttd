@@ -18,6 +18,8 @@ collapse:
 - `CapabilityPresentation` - how authority is presented for an invocation
 - `AdmissionTicket` - this exact invocation is authorized
 - `LawWitness` - what was checked and what happened
+- `CausalCommitEvidence` - whether the runtime can prove durable causal commit
+  or recovery posture for the accepted or decided event
 - receipt or `ReadingEnvelope` - what causal or observer-relative result came
   back
 
@@ -58,6 +60,8 @@ host-neutral debugger vocabulary.
 - Can an operator see what basis, aperture, budget, and support were admitted?
 - Can an operator inspect `LawWitness` verdicts without collapsing them into a
   boolean?
+- Can an operator distinguish a present receipt from unavailable durable commit
+  evidence?
 - Can an operator link witnesses to receipts or `ReadingEnvelope` outputs?
 - Can the CLI/MCP surface expose the same chain without TUI-only parsing?
 
@@ -67,6 +71,7 @@ host-neutral debugger vocabulary.
 - No policy verification in `warp-ttd`.
 - No artifact compilation in `warp-ttd`.
 - No runtime admission in `warp-ttd`.
+- No raw WAL parsing or recovery in `warp-ttd`.
 - No app-domain semantics owned by `warp-ttd`.
 
 ## First Cut

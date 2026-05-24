@@ -57,6 +57,7 @@ That means:
 | Shared Continuum/Echo family | Continuum, Echo, or authority owner, compiled by Wesley when available | Consume generated types and wrap with posture | `ReadingEnvelope`, `ObserverPlan`, `OpticRegistrationDescriptor`, `LawWitness` |
 | Authority family | User, host, quorum, or policy authority | Inspect and display; never issue by implication | `CapabilityGrant`, `CapabilityPresentation` |
 | Runtime admission family | Echo or another runtime | Inspect tickets, witnesses, and obstruction posture | `OpticArtifactHandle`, `AdmissionTicket`, runtime admission obstruction |
+| Runtime durability family | Echo or another runtime | Inspect commit anchors and recovery posture; never recover or mutate | `CausalCommitEvidence`, recovery certificate, durability posture |
 | git-warp substrate residue | git-warp adapter | Translate into debugger summaries only when useful | git refs, patch SHA, Lamport receipt details, graph name |
 | App-domain residue | The app target | Keep out of the debugger core | jedit editor commands, graft domain graph ontology |
 
@@ -94,6 +95,9 @@ handwritten semantic authority.
 - `CapabilityPresentation`
 - `AdmissionTicket`
 - `LawWitness`
+- `CausalCommitEvidence`
+- `RecoveryEvidence`
+- `RecoveryCertificate`
 - `ReadingEnvelope`
 - `ObserverPlan`
 - `ObservationRequest`
@@ -127,6 +131,7 @@ For Echo or jedit:
 - app command names
 - editor buffer semantics
 - runtime-local storage IDs
+- raw WAL segment paths or object-store locations
 - app-private observer defaults
 - Echo implementation diagnostics that are not published as shared-family facts
 
@@ -170,7 +175,9 @@ boundary.
 
 - `jedit` should publish Echo and Continuum facts for artifact registration,
   handles, authority posture, admission tickets, witnesses, receipts, and
-  readings. WARP TTD consumes those facts.
+  readings. Once Echo exposes WAL-backed durability evidence, `jedit` should
+  also surface causal commit evidence and recovery posture through Echo adapter
+  or shared-family facts. WARP TTD consumes those facts.
 - `graft` should publish causal history, receipts, materialized readings, and
   translated substrate evidence. WARP TTD translates those facts into debugger
   summaries without pretending they are native Continuum witnesshood.
@@ -202,7 +209,9 @@ Agent-facing surfaces should name the boundary in their outputs:
    `LawWitness` are debugger-owned?
 5. Can live target work explain why git-warp translated substrate evidence is
    not native Continuum witnesshood?
-6. Can future TUI work render the same boundary without introducing TUI-only
+6. Can future Echo WAL evidence work stay limited to commit anchors and
+   recovery posture without raw WAL parsing or recovery behavior?
+7. Can future TUI work render the same boundary without introducing TUI-only
    facts?
 
 ## Acceptance Checklist
@@ -213,6 +222,9 @@ Agent-facing surfaces should name the boundary in their outputs:
   authority.
 - Keep `ReadingEnvelope`, `ObserverPlan`, and `ContinuumEvidenceStatus` in the
   shared-family projection bucket.
+- Keep `READ_CAUSAL_COMMIT_EVIDENCE` distinct from raw WAL access.
+- Reject debugger-owned WAL parsing, recovery, tail truncation, or clean
+  recovery marking.
 - Keep git-warp graph details as adapter residue unless projected into a
   debugger summary.
 - Reject new host-neutral protocol nouns that are really app-domain semantics.
@@ -224,6 +236,9 @@ Agent-facing surfaces should name the boundary in their outputs:
 - No generated protocol authority cutover in this slice.
 - No new shared-family schemas.
 - No Echo adapter implementation.
+- No WAL parser.
+- No Echo runtime recovery.
+- No WAL tail truncation.
 - No jedit app semantics in WARP TTD.
 - No git-warp graph ontology in WARP TTD core.
 - No grant issuance.

@@ -81,6 +81,21 @@ timeline
 - Host substrate details remain adapter residue unless WARP TTD deliberately
   projects them into debugger summaries with visible evidence posture.
 
+### 8. Echo WAL Evidence Boundary
+
+- Echo owns WAL truth: segment format, append authority, commit-marker
+  validation, recovery, truncation, runtime admission, and scheduler decisions.
+- WARP TTD may become WAL-evidence-aware only through Echo-projected causal
+  commit evidence, recovery certificates, and durability posture supplied by an
+  adapter or generated shared-family artifact.
+- WARP TTD must not parse raw Echo WAL segments, truncate WAL tails, validate
+  commit markers, recover Echo runtime state, or mark recovery clean.
+- The debugger concept is `READ_CAUSAL_COMMIT_EVIDENCE`, not `READ_WAL`.
+- Missing durable commit evidence must be explicit absence or obstruction, not
+  inferred from a present receipt.
+- This boundary is future-facing. The immediate `0032` Echo adapter probe still
+  remains a read-only bridge/probe posture, not a WAL evidence surface.
+
 ## Tensions
 
 - **TUI-Lead Inertia**: Breaking the habit of implementing new inspection
@@ -111,6 +126,10 @@ The live app delivery target is
 [`docs/method/backlog/up-next/DELIVERY_dual-live-app-debugging.md`](./method/backlog/up-next/DELIVERY_dual-live-app-debugging.md).
 The debugger/shared-family boundary packet is
 [`docs/design/0026-debugger-native-shared-family-boundary/debugger-native-shared-family-boundary.md`](./design/0026-debugger-native-shared-family-boundary/debugger-native-shared-family-boundary.md).
+The future Echo causal commit evidence boundary is
+[`docs/design/0042-echo-causal-commit-evidence-read-model/echo-causal-commit-evidence-read-model.md`](./design/0042-echo-causal-commit-evidence-read-model/echo-causal-commit-evidence-read-model.md),
+tracked by
+[`docs/method/backlog/up-next/PROTO_echo-causal-commit-evidence-read-model.md`](./method/backlog/up-next/PROTO_echo-causal-commit-evidence-read-model.md).
 The landed generated-family ingress seam is now the Manual-backed path for
 bringing shared-family payload posture into WARP TTD:
 [`docs/manual/001-generated-family-ingress-seam.md`](./manual/001-generated-family-ingress-seam.md),
@@ -225,6 +244,16 @@ chapter or Manual update, retro/follow-on debt, validation, and PR.
       Kairotic neighborhood instead of dumping every known lane.
     - Minimal materialized-reading inspection should preserve basis and witness
       posture.
+
+11. **0042 Echo Causal Commit Evidence Read Model**
+    - Do not start this until Echo exposes stable WAL-backed causal commit
+      evidence or fixtures are needed to lock the read-model contract.
+    - Add `READ_CAUSAL_COMMIT_EVIDENCE`, not `READ_WAL`.
+    - Project Echo-provided commit anchors, recovery certificates, durability
+      mode, recovery posture, and obstruction posture through CLI JSON and MCP
+      before TUI.
+    - Non-goals: no raw WAL parsing, no WAL recovery, no tail truncation, no
+      Echo runtime mutation, and no jedit editor nouns in the debugger model.
 
 ## Echo And Jedit Dependency Boundary
 

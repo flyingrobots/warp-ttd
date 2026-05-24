@@ -45,6 +45,11 @@ WARP TTD exposes a versioned admission-chain read model:
 The `facts` list is canonical order for agents and renderers. The named fields
 remain compatibility affordances and direct lookup handles.
 
+Future Echo WAL-backed durability adds another evidence dimension to this
+chain: causal commit evidence. WARP TTD should inspect Echo-projected commit
+anchors and recovery posture when Echo exposes them, but it must not parse WAL
+segments or become a second Echo recovery engine.
+
 ## Canonical Fact Order
 
 1. `basis`
@@ -58,6 +63,11 @@ remain compatibility affordances and direct lookup handles.
 9. `receipts`
 10. `reading`
 
+Future `causalCommitEvidence` / `recoveryEvidence` belongs between
+`lawWitness` and `receipts` once Echo exposes it. It is not in the current
+read model. The extension is tracked by
+[`0042-echo-causal-commit-evidence-read-model`](../0042-echo-causal-commit-evidence-read-model/echo-causal-commit-evidence-read-model.md).
+
 ## Doctrine
 
 - The read model inspects facts; it does not compile artifacts.
@@ -65,6 +75,8 @@ remain compatibility affordances and direct lookup handles.
   `CapabilityGrant` or `CapabilityPresentation` objects.
 - The read model reports admission posture; it does not perform Echo admission.
 - The read model reports witnesses, receipts, and readings as evidence posture.
+- The future read model reports durability posture as adapter-provided evidence,
+  not as raw WAL ownership.
 - Missing host facts are explicit `ABSENT` posture, not inferred truth.
 - `OpticArtifactHandle` remains a runtime registration handle, not authority.
 
@@ -110,5 +122,8 @@ The initial slice is intentionally conservative:
   values when jedit/Echo publish them.
 - Add `CapabilityGrant`, `CapabilityPresentation`, `AdmissionTicket`, and
   `LawWitness` posture once the runtime can expose them as inspection facts.
+- Add optional commit evidence references and causal commit evidence facts once
+  Echo exposes WAL-backed evidence through a read-only adapter/shared-family
+  surface.
 - Promote the read model into the authored protocol schema after the host
   vocabulary stabilizes against live `jedit`.
