@@ -13,6 +13,10 @@ import os from "node:os";
 import path from "node:path";
 
 import { inspectLiveTargets } from "../src/app/liveTargetInspection.ts";
+import {
+  LIVE_ECHO_ADAPTER_PROBE_MANIFEST,
+  LIVE_ECHO_ADAPTER_PROBE_SCHEMA_VERSION
+} from "../src/app/echoAdapterProbe.ts";
 import { LIVE_ECHO_FAMILY_FACTS_MANIFEST } from "../src/app/liveEchoFamilyIntake.ts";
 import {
   requireArray,
@@ -151,6 +155,23 @@ function assertJeditFamilyIntake(
   return intake;
 }
 
+function assertEchoAdapterProbe(
+  value: JsonValue | object | undefined,
+  expectedBridgePosture: string,
+  expectedProbePosture: string
+): JsonObject {
+  const probe = requireRecord(value, "jedit.echoAdapterProbe");
+  assert.equal(probe["schemaVersion"], LIVE_ECHO_ADAPTER_PROBE_SCHEMA_VERSION);
+  assert.equal(probe["target"], "jedit");
+  assert.equal(probe["hostKind"], "ECHO");
+  assert.equal(probe["readOnly"], true);
+  assert.equal(probe["bridgePosture"], expectedBridgePosture);
+  assert.equal(probe["probePosture"], expectedProbePosture);
+  assert.equal(Array.isArray(probe["supportedAbiVersions"]), true);
+  assert.equal(typeof probe["reason"], "string");
+  return probe;
+}
+
 function writeJeditManifest(rootPath: string, publishedFields: readonly string[]): void {
   const manifestPath = path.join(rootPath, LIVE_ECHO_FAMILY_FACTS_MANIFEST);
   fs.mkdirSync(path.dirname(manifestPath), { recursive: true });
@@ -159,6 +180,20 @@ function writeJeditManifest(rootPath: string, publishedFields: readonly string[]
     JSON.stringify({
       schemaVersion: "warp-ttd.live-echo-family-intake.v1",
       publishedFields
+    })
+  );
+}
+
+function writeEchoAdapterProbeManifest(rootPath: string): void {
+  const manifestPath = path.join(rootPath, LIVE_ECHO_ADAPTER_PROBE_MANIFEST);
+  fs.mkdirSync(path.dirname(manifestPath), { recursive: true });
+  fs.writeFileSync(
+    manifestPath,
+    JSON.stringify({
+      schemaVersion: LIVE_ECHO_ADAPTER_PROBE_SCHEMA_VERSION,
+      bridgeKind: "echo",
+      abiVersion: 1,
+      transport: "wasm"
     })
   );
 }
@@ -403,6 +438,7 @@ test("targets --json names jedit and graft as read-only live target inspections"
   assert.equal(jedit["rootPosture"], "MISSING");
   assert.equal(jedit["adapterPosture"], "UNAVAILABLE");
   assert.equal(jedit["admissionChainPosture"], "UNAVAILABLE");
+  assertEchoAdapterProbe(jedit["echoAdapterProbe"], "ROOT_UNAVAILABLE", "UNAVAILABLE");
   const jeditEvidence = requireRecord(
     jedit["runtimeBoundaryEvidence"],
     "jedit.runtimeBoundaryEvidence"
@@ -444,11 +480,41 @@ test("targets --json reports jedit live Echo family intake manifest", async () =
 
     assert.ok(jedit !== undefined);
     assert.equal(jedit["rootPosture"], "PRESENT");
+    assert.equal(jedit["adapterPosture"], "UNAVAILABLE");
+    assertEchoAdapterProbe(jedit["echoAdapterProbe"], "BRIDGE_ABSENT", "UNAVAILABLE");
     const intake = assertJeditFamilyIntake(jedit["sessionFamilyIntake"], "PRESENT");
     const facts = requireArray(intake["facts"], "jedit.sessionFamilyIntake.facts")
       .map((fact) => requireRecord(fact, "intakeFact"));
     assert.equal(facts[0]?.["posture"], "PRESENT");
     assert.equal(facts[1]?.["posture"], "ABSENT");
+  } finally {
+    fs.rmSync(jeditRoot, { recursive: true, force: true });
+  }
+});
+
+test("targets --json reports supported jedit Echo adapter probe separately from family intake", async () => {
+  const jeditRoot = fs.mkdtempSync(path.join(os.tmpdir(), "warp-ttd-jedit-"));
+
+  try {
+    writeEchoAdapterProbeManifest(jeditRoot);
+    const lines = await runJsonWithEnv("targets", {
+      WARP_TTD_JEDIT_ROOT: jeditRoot,
+      WARP_TTD_GRAFT_ROOT: path.join(process.cwd(), "test", "missing-graft")
+    });
+    const jedit = lines
+      .map((line) => requireRecord(parseLine(line).data, "target"))
+      .find((target) => target["target"] === "jedit");
+
+    assert.ok(jedit !== undefined);
+    assert.equal(jedit["rootPosture"], "PRESENT");
+    assert.equal(jedit["adapterPosture"], "CONFIGURED");
+    const probe = assertEchoAdapterProbe(
+      jedit["echoAdapterProbe"],
+      "BRIDGE_PRESENT",
+      "PRESENT"
+    );
+    assert.equal(probe["sessionProbePosture"], "SESSION_OBSTRUCTED");
+    assertJeditFamilyIntake(jedit["sessionFamilyIntake"], "UNAVAILABLE");
   } finally {
     fs.rmSync(jeditRoot, { recursive: true, force: true });
   }
@@ -491,6 +557,7 @@ test("target-session --json reports live target session posture", async () => {
   assert.equal(jedit["readOnly"], true);
   assert.equal(jedit["adapterPosture"], "UNAVAILABLE");
   assert.equal(jedit["sessionPosture"], "OBSTRUCTED");
+  assertEchoAdapterProbe(jedit["echoAdapterProbe"], "ROOT_UNAVAILABLE", "UNAVAILABLE");
   assertJeditFamilyIntake(jedit["sessionFamilyIntake"], "UNAVAILABLE");
 
   const obj = parseLine(requireLine(lines, 1));
@@ -505,6 +572,33 @@ test("target-session --json reports live target session posture", async () => {
   assert.equal(data["sessionPosture"], "OBSTRUCTED");
   assert.equal(typeof data["reason"], "string");
   assert.equal("session" in data, false);
+});
+
+test("target-session --json keeps jedit session obstructed when Echo bridge probe is present", async () => {
+  const jeditRoot = fs.mkdtempSync(path.join(os.tmpdir(), "warp-ttd-jedit-"));
+
+  try {
+    writeEchoAdapterProbeManifest(jeditRoot);
+    const lines = await runJsonWithEnv("target-session", {
+      WARP_TTD_JEDIT_ROOT: jeditRoot,
+      WARP_TTD_GRAFT_ROOT: path.join(process.cwd(), "test", "missing-graft")
+    });
+    const jeditObj = parseLine(requireLine(lines, 0));
+    const jedit = requireRecord(jeditObj.data, "jedit LiveTargetSessionInspection.data");
+
+    assert.equal(jedit["target"], "jedit");
+    assert.equal(jedit["adapterPosture"], "CONFIGURED");
+    assert.equal(jedit["sessionPosture"], "OBSTRUCTED");
+    const probe = assertEchoAdapterProbe(
+      jedit["echoAdapterProbe"],
+      "BRIDGE_PRESENT",
+      "PRESENT"
+    );
+    assert.equal(probe["sessionProbePosture"], "SESSION_OBSTRUCTED");
+    assert.match(requireString(jedit["reason"], "jedit.reason"), /session adapter is not wired/);
+  } finally {
+    fs.rmSync(jeditRoot, { recursive: true, force: true });
+  }
 });
 
 test("live target evidence posture cannot be poisoned by mutating a prior inspection", () => {

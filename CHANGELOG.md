@@ -10,6 +10,12 @@ This project will use [Semantic Versioning](https://semver.org/) starting at
 
 ### Added
 
+- **Echo adapter probe boundary**: `targets --json`,
+  `target-session --json`, and `warp_ttd.inspect_live_targets` now expose
+  `jedit.echoAdapterProbe`, a read-only descriptor probe that distinguishes
+  missing root, absent bridge, supported bridge, unsupported ABI, and obstructed
+  descriptor without opening an Echo session, issuing authority, admitting, or
+  mutating `jedit`.
 - **Admission-chain read model**: started cycle 0024 with a versioned
   `warp-ttd.admission-chain.v1` read model behind
   `warp_ttd.inspect_admission_chain` and `admission-chain --json`. MCP and CLI

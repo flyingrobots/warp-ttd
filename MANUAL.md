@@ -30,3 +30,4 @@ Manual chapters should:
 - [003. Live Echo Family Intake](./docs/manual/003-live-echo-family-intake.md)
 - [004. Generated Family Consumption Boundary](./docs/manual/004-generated-family-consumption.md)
 - [005. Jedit Echo Smoke](./docs/manual/005-jedit-echo-smoke.md)
+- [006. Echo Adapter Probe Boundary](./docs/manual/006-echo-adapter-probe-boundary.md)

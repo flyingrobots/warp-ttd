@@ -59,8 +59,10 @@ perform admission, mutate host state, or create local strands.
   when present.
 - **Live Targets**: `warp_ttd.inspect_live_targets` reports the same read-only
   target posture as `targets --json`, including runtime-boundary evidence
-  posture. Adapter readiness is not upgraded into Continuum evidence
-  availability.
+  posture. For `jedit`, it also reports `echoAdapterProbe`, which distinguishes
+  missing root, absent bridge, supported bridge, unsupported ABI, and obstructed
+  descriptor. Adapter readiness is not upgraded into Continuum evidence
+  availability or an open Echo session.
 
 ## Running
 

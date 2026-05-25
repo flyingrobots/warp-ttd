@@ -73,6 +73,10 @@ const JEDIT_ECHO_SMOKE_MANUAL =
   "docs/manual/005-jedit-echo-smoke.md";
 const JEDIT_ECHO_SMOKE_DESIGN =
   "docs/design/0031-jedit-echo-smoke/jedit-echo-smoke.md";
+const ECHO_ADAPTER_PROBE_MANUAL =
+  "docs/manual/006-echo-adapter-probe-boundary.md";
+const ECHO_ADAPTER_PROBE_DESIGN =
+  "docs/design/0032-echo-adapter-probe-boundary/echo-adapter-probe-boundary.md";
 
 function assertSharedFamilyBoundaryLifecycle(): void {
   assert.equal(repoPathExists(SHARED_FAMILY_BOUNDARY_DESIGN), true);
@@ -139,6 +143,8 @@ function assertManualFilesExist(): void {
   assert.equal(repoPathExists(GENERATED_FAMILY_CONSUMPTION_DESIGN), true);
   assert.equal(repoPathExists(JEDIT_ECHO_SMOKE_MANUAL), true);
   assert.equal(repoPathExists(JEDIT_ECHO_SMOKE_DESIGN), true);
+  assert.equal(repoPathExists(ECHO_ADAPTER_PROBE_MANUAL), true);
+  assert.equal(repoPathExists(ECHO_ADAPTER_PROBE_DESIGN), true);
 }
 
 function assertManualFrontDoors(): void {
@@ -166,6 +172,7 @@ function assertManualIndexContent(): void {
     "003. Live Echo Family Intake",
     "004. Generated Family Consumption Boundary",
     "005. Jedit Echo Smoke",
+    "006. Echo Adapter Probe Boundary",
   ]);
   assertAllTextPresent(readRepoText(MANUAL_INDEX), [
     "# WARP TTD Manual Index",
@@ -176,6 +183,7 @@ function assertManualIndexContent(): void {
     "0029-live-echo-family-intake",
     "0030-generated-family-consumption",
     "0031-jedit-echo-smoke",
+    "0032-echo-adapter-probe-boundary",
   ]);
 }
 
@@ -283,7 +291,40 @@ function assertJeditEchoSmokeManual(content: string): void {
   ]);
 }
 
-function assertNextThreeDesigns(): void {
+function assertEchoAdapterProbeManual(content: string): void {
+  assertAllTextPresent(content, [
+    "# Echo Adapter Probe Boundary",
+    ".warp-ttd/echo-adapter-probe.json",
+    "echoAdapterProbe",
+    "bridgePosture: \"ROOT_UNAVAILABLE\"",
+    "bridgePosture: \"BRIDGE_ABSENT\"",
+    "bridgePosture: \"BRIDGE_PRESENT\"",
+    "bridgePosture: \"ABI_UNSUPPORTED\"",
+    "bridgePosture: \"PROBE_OBSTRUCTED\"",
+    "adapterPosture",
+    "sessionPosture: \"OBSTRUCTED\"",
+    "No Echo session open.",
+    "No runtime admission.",
+    "No host mutation.",
+  ]);
+}
+
+function assertEchoAdapterProbeDesign(content: string): void {
+  assertAllTextPresent(content, [
+    "status: landed",
+    "# Echo Adapter Probe Boundary",
+    "## Probe Contract",
+    "## Posture Rules",
+    "## Implementation Witness",
+    "../../manual/006-echo-adapter-probe-boundary.md",
+    "src/app/echoAdapterProbe.ts",
+    "LiveTargetInspection.echoAdapterProbe",
+    "LiveEchoTargetSessionInspection.echoAdapterProbe",
+    "No Echo session open.",
+  ]);
+}
+
+function assertNextFourDesigns(): void {
   assertAllTextPresent(readRepoText(LIVE_ECHO_FAMILY_INTAKE_DESIGN), [
     "status: landed",
     "../../manual/003-live-echo-family-intake.md",
@@ -302,6 +343,7 @@ function assertNextThreeDesigns(): void {
     "LiveEchoTargetSessionInspection",
     "sessionPosture: \"OBSTRUCTED\"",
   ]);
+  assertEchoAdapterProbeDesign(readRepoText(ECHO_ADAPTER_PROBE_DESIGN));
 }
 
 test("Mermaid fence assertions tolerate CRLF line endings", () => {
@@ -568,7 +610,8 @@ test("manual starts generated family ingress cycle", () => {
   assertLiveEchoFamilyIntakeManual(readRepoText(LIVE_ECHO_FAMILY_INTAKE_MANUAL));
   assertGeneratedFamilyConsumptionManual(readRepoText(GENERATED_FAMILY_CONSUMPTION_MANUAL));
   assertJeditEchoSmokeManual(readRepoText(JEDIT_ECHO_SMOKE_MANUAL));
-  assertNextThreeDesigns();
+  assertEchoAdapterProbeManual(readRepoText(ECHO_ADAPTER_PROBE_MANUAL));
+  assertNextFourDesigns();
 });
 
 test("MCP admission-chain surface is closed as a landed cycle", () => {

@@ -82,6 +82,18 @@ runtime-boundary evidence posture; it does not open a runtime, issue authority,
 admit invocations, create strands, or mutate either app. Missing
 admission-chain facts are reported as unavailable instead of inferred.
 
+For `jedit`, the command also reports `echoAdapterProbe`, a read-only probe of
+the root-local Echo adapter descriptor:
+
+```text
+<jedit root>/.warp-ttd/echo-adapter-probe.json
+```
+
+The probe distinguishes a missing root, absent bridge, supported bridge,
+unsupported ABI, and obstructed descriptor. A supported bridge changes
+`adapterPosture` to `CONFIGURED`, but it does not open an Echo session,
+perform admission, issue authority, or mutate `jedit`.
+
 `runtimeBoundaryEvidence` is a nested fact:
 
 ```ts
@@ -113,6 +125,10 @@ session is `graft`, using the `graft-ast` git-warp graph. If the root is
 missing or the graph cannot be opened, the command emits
 `sessionPosture: "OBSTRUCTED"` with a reason instead of mutating or inferring
 facts.
+
+For `jedit`, `target-session --json` includes the same `echoAdapterProbe` and
+`sessionFamilyIntake` objects, but still reports `sessionPosture:
+"OBSTRUCTED"` until the Echo host adapter session path exists.
 
 ---
 **The goal is structured truth. Human-only text must not appear on stdout in `--json` mode.**

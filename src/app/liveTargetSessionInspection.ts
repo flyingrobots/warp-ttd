@@ -4,10 +4,12 @@ import {
   inspectLiveTargets,
   liveTargetRootsFromEnv,
   type LiveTargetInspection,
+  type LiveTargetAdapterPosture,
   type LiveTargetRoots,
   type LiveTargetRuntimeBoundaryEvidence,
   type LiveTargetRootPosture
 } from "./liveTargetInspection.ts";
+import type { EchoAdapterProbeInspection } from "./echoAdapterProbe.ts";
 import type { LiveEchoFamilyIntakeInspection } from "./liveEchoFamilyIntake.ts";
 import type { HostHello } from "../protocol.ts";
 
@@ -23,10 +25,11 @@ export interface LiveEchoTargetSessionInspection {
   appKind: "live Echo app";
   rootPath: string;
   rootPosture: LiveTargetRootPosture;
-  adapterPosture: "UNAVAILABLE";
+  adapterPosture: LiveTargetAdapterPosture;
   runtimeBoundaryEvidence: LiveTargetRuntimeBoundaryEvidence;
   readOnly: true;
   sessionPosture: "OBSTRUCTED";
+  echoAdapterProbe: EchoAdapterProbeInspection;
   sessionFamilyIntake: LiveEchoFamilyIntakeInspection;
   reason: string;
 }
@@ -89,6 +92,16 @@ function jeditSessionFamilyIntake(
   return target.sessionFamilyIntake;
 }
 
+function jeditEchoAdapterProbe(
+  target: LiveTargetInspection
+): EchoAdapterProbeInspection {
+  if (target.echoAdapterProbe === undefined) {
+    throw new MissingLiveTargetRegistrationError("jedit Echo adapter probe");
+  }
+
+  return target.echoAdapterProbe;
+}
+
 function obstructedJeditSession(
   target: LiveTargetInspection
 ): LiveEchoTargetSessionInspection {
@@ -98,10 +111,11 @@ function obstructedJeditSession(
     appKind: "live Echo app",
     rootPath: target.rootPath,
     rootPosture: target.rootPosture,
-    adapterPosture: "UNAVAILABLE",
+    adapterPosture: target.adapterPosture,
     runtimeBoundaryEvidence: target.runtimeBoundaryEvidence,
     readOnly: true,
     sessionPosture: "OBSTRUCTED",
+    echoAdapterProbe: jeditEchoAdapterProbe(target),
     sessionFamilyIntake: jeditSessionFamilyIntake(target),
     reason: "jedit live Echo session adapter is not wired yet; only read-only family intake posture was inspected."
   };

@@ -6,6 +6,7 @@ import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
 import { EchoFixtureAdapter } from "../src/adapters/echoFixtureAdapter.ts";
+import { LIVE_ECHO_ADAPTER_PROBE_SCHEMA_VERSION } from "../src/app/echoAdapterProbe.ts";
 import {
   MCP_ADMISSION_TOOL_NAMES,
   createMcpAdmissionChainServer
@@ -106,6 +107,22 @@ function assertJeditLiveTargetIntake(targets: readonly object[]): void {
   );
   assert.equal(jeditIntake["schemaVersion"], "warp-ttd.live-echo-family-intake.v1");
   assert.equal(jeditIntake["intakePosture"], "UNAVAILABLE");
+
+  const jeditProbe = requireRecord(
+    jedit["echoAdapterProbe"],
+    "jedit.echoAdapterProbe"
+  );
+  assert.equal(jeditProbe["schemaVersion"], LIVE_ECHO_ADAPTER_PROBE_SCHEMA_VERSION);
+  const bridgePosture = jeditProbe["bridgePosture"];
+  if (typeof bridgePosture !== "string") {
+    assert.fail("jedit.echoAdapterProbe.bridgePosture must be a string");
+  }
+  assert.ok(
+    ["ROOT_UNAVAILABLE", "BRIDGE_ABSENT"].includes(bridgePosture),
+    "jedit probe should be unavailable without a supported bridge"
+  );
+  assert.equal(jeditProbe["probePosture"], "UNAVAILABLE");
+  assert.equal(jeditProbe["sessionProbePosture"], "NOT_OPENED");
 }
 
 async function connectMcp(
