@@ -521,9 +521,23 @@ function obstructDuplicateIds(
   ));
 }
 
+function targetsJsonObstruction(reason: string): ContinuumDebugTargetDescriptor {
+  return {
+    id: "warp-ttd-targets-json",
+    label: TARGETS_JSON_ENV,
+    connection: {
+      mode: "descriptor-only",
+      adapterPosture: "OBSTRUCTED",
+      reason
+    }
+  };
+}
+
 function descriptorsFromJson(value: string): readonly ContinuumDebugTargetDescriptor[] {
   const parsed = JSON.parse(value) as JsonValue;
-  if (!isJsonArray(parsed)) return [];
+  if (!isJsonArray(parsed)) {
+    return [targetsJsonObstruction(`${TARGETS_JSON_ENV} must be a JSON array.`)];
+  }
   return obstructDuplicateIds(parsed.map(descriptorFromJson));
 }
 
@@ -534,17 +548,7 @@ export function liveTargetDescriptorsFromEnv(): readonly ContinuumDebugTargetDes
     return descriptorsFromJson(configured);
   } catch (error) {
     const message = error instanceof Error ? error.message : "unknown JSON parse error";
-    return [
-      {
-        id: "warp-ttd-targets-json",
-        label: TARGETS_JSON_ENV,
-        connection: {
-          mode: "descriptor-only",
-          adapterPosture: "OBSTRUCTED",
-          reason: `${TARGETS_JSON_ENV} could not be parsed: ${message}.`
-        }
-      }
-    ];
+    return [targetsJsonObstruction(`${TARGETS_JSON_ENV} could not be parsed: ${message}.`)];
   }
 }
 

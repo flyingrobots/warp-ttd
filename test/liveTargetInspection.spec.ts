@@ -198,3 +198,27 @@ test("live target env descriptor parse errors are obstructed target facts", () =
     }
   }
 });
+
+test("live target env descriptor non-array JSON is an obstructed target fact", () => {
+  const previousTargetsJson = process.env["WARP_TTD_TARGETS_JSON"];
+  process.env["WARP_TTD_TARGETS_JSON"] = "{}";
+
+  try {
+    const targets = inspectLiveTargets(liveTargetDescriptorsFromEnv());
+
+    assert.equal(targets.length, 1);
+    const target = targets[0];
+    assert.ok(target !== undefined);
+    assert.equal(target.target, "warp-ttd-targets-json");
+    assert.equal(target.targetLabel, "WARP_TTD_TARGETS_JSON");
+    assert.equal(target.connectionMode, "descriptor-only");
+    assert.equal(target.adapterPosture, "OBSTRUCTED");
+    assert.match(target.reason, /must be a JSON array/);
+  } finally {
+    if (previousTargetsJson === undefined) {
+      delete process.env["WARP_TTD_TARGETS_JSON"];
+    } else {
+      process.env["WARP_TTD_TARGETS_JSON"] = previousTargetsJson;
+    }
+  }
+});
