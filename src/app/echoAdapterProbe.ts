@@ -34,7 +34,7 @@ export interface EchoAdapterBridgeDescriptor extends JsonObject {
 
 export interface EchoAdapterProbeInspection extends JsonObject {
   readonly schemaVersion: typeof LIVE_ECHO_ADAPTER_PROBE_SCHEMA_VERSION;
-  readonly target: "jedit";
+  readonly target: string;
   readonly hostKind: "ECHO";
   readonly rootPath: string;
   readonly rootPosture: EchoAdapterProbeRootPosture;
@@ -51,6 +51,7 @@ export interface EchoAdapterProbeInspection extends JsonObject {
 interface EchoAdapterProbeArgs {
   readonly rootPath: string;
   readonly rootPosture: EchoAdapterProbeRootPosture;
+  readonly targetId?: string;
 }
 
 interface ManifestRead {
@@ -134,7 +135,7 @@ function presentBridge(bridge: EchoAdapterBridgeDescriptor): ManifestRead {
     bridgePosture: "BRIDGE_PRESENT",
     probePosture: "PRESENT",
     reason:
-      "Supported jedit Echo adapter bridge descriptor is present; live Echo session open remains obstructed in WARP TTD."
+      "Supported Echo adapter bridge descriptor is present; live Echo session open remains obstructed in WARP TTD."
   };
 }
 
@@ -222,13 +223,17 @@ function readPresentManifest(pathname: string): ManifestRead {
   }
 }
 
+function targetId(args: EchoAdapterProbeArgs): string {
+  return args.targetId ?? "jedit";
+}
+
 function readManifest(args: EchoAdapterProbeArgs): ManifestRead {
   if (args.rootPosture === "MISSING") {
     return {
       bridge: null,
       bridgePosture: "ROOT_UNAVAILABLE",
       probePosture: "UNAVAILABLE",
-      reason: "jedit root is missing; no Echo adapter bridge was probed."
+      reason: `${targetId(args)} root is missing; no Echo adapter bridge was probed.`
     };
   }
 
@@ -238,7 +243,7 @@ function readManifest(args: EchoAdapterProbeArgs): ManifestRead {
       bridge: null,
       bridgePosture: "BRIDGE_ABSENT",
       probePosture: "UNAVAILABLE",
-      reason: "jedit Echo adapter bridge descriptor is not present."
+      reason: `${targetId(args)} Echo adapter bridge descriptor is not present.`
     };
   }
 
@@ -260,7 +265,7 @@ export function inspectLiveEchoAdapterProbe(
 
   return {
     schemaVersion: LIVE_ECHO_ADAPTER_PROBE_SCHEMA_VERSION,
-    target: "jedit",
+    target: targetId(args),
     hostKind: "ECHO",
     rootPath: args.rootPath,
     rootPosture: args.rootPosture,

@@ -23,12 +23,15 @@ timeline
 - The agent surface must keep absence, authority, admission, mutation, and
   evidence posture explicit instead of inferring optimistic runtime truth.
 
-### 2. Dual Live App Debugging
+### 2. Continuum-Compatible Target Debugging
 
-- Making `jedit`, a live Echo app, and `graft`, a live git-warp app, the two
-  concrete debugger acceptance targets.
+- WARP TTD should debug Continuum-compatible targets through descriptor,
+  capability, and evidence-posture contracts, not through hard-coded app names.
+- `jedit`, a live Echo app, and `graft`, a live git-warp app, remain the two
+  concrete debugger witness targets.
 - Proving the same host-neutral session, CLI, and MCP vocabulary can inspect
-  both apps without becoming either app's domain model.
+  those witnesses without becoming either app's domain model or either
+  substrate's runtime.
 - Keeping host-specific richness behind explicit `AdapterCapability` support:
   Echo pressures lawful optic admission and witness posture; git-warp pressures
   causal history, receipts, lanes, and materialized readings.
@@ -109,12 +112,12 @@ timeline
 
 ## Next Target
 
-The product goal is **Dual Live App Debugging**: WARP TTD debugs `jedit`, a
-live Echo app, and `graft`, a live git-warp app. The immediate protocol
-focus is still the **Admission-Chain Read Model**: protocol and read model
-representation for artifact registration, registration descriptors, Echo-owned
-handles, grant posture, `CapabilityPresentation` posture, admission tickets,
-obstructions, witnesses, receipts, and reading envelopes.
+The product goal is **Continuum-Compatible Target Debugging**: WARP TTD debugs
+targets that expose Continuum-compatible inspection contracts. `jedit`, a live
+Echo app, and `graft`, a live git-warp app, are default witness targets, not
+special debugger concepts. The immediate architectural correction is the
+**Continuum Target Discovery Contract** before the next neighborhood/admission
+slice deepens target assumptions.
 
 MCP is not authority, admission, grant issuance, or mutation. The read-model
 target is
@@ -155,15 +158,22 @@ The Echo adapter probe boundary is Manual-backed:
 [`docs/manual/006-echo-adapter-probe-boundary.md`](./manual/006-echo-adapter-probe-boundary.md),
 paired with
 [`docs/design/0032-echo-adapter-probe-boundary/echo-adapter-probe-boundary.md`](./design/0032-echo-adapter-probe-boundary/echo-adapter-probe-boundary.md).
-The Wesley-generated Echo family consumer is in flight:
+The Wesley-generated Echo family consumer is Manual-backed and landed:
 [`docs/manual/007-wesley-generated-echo-family-consumer.md`](./manual/007-wesley-generated-echo-family-consumer.md),
 paired with
 [`docs/design/0033-wesley-generated-echo-family-consumer/wesley-generated-echo-family-consumer.md`](./design/0033-wesley-generated-echo-family-consumer/wesley-generated-echo-family-consumer.md).
 It teaches the Echo path to report manifest-declared generated Continuum Echo
 inspect artifacts when available while preserving `LOCAL_MIRROR_FALLBACK` for
 fixtures, git-warp, and missing generated packages.
+The Continuum target discovery contract is in flight:
+[`docs/manual/008-continuum-target-discovery-contract.md`](./manual/008-continuum-target-discovery-contract.md),
+paired with
+[`docs/design/0076-continuum-target-discovery-contract/continuum-target-discovery-contract.md`](./design/0076-continuum-target-discovery-contract/continuum-target-discovery-contract.md).
+It makes app identity, runtime vendor, and substrate reported facts instead of
+target-dispatch boundaries.
 The first executable smoke surface is `npm run targets -- --json`, which
-reports read-only posture for both live targets without attaching or mutating.
+reports read-only posture for configured Continuum-compatible targets without
+attaching or mutating.
 The paired session smoke surface is `npm run target-session -- --json`, which
 now reports both jedit obstruction and graft session posture. Both surfaces
 include `jedit.echoAdapterProbe`, which distinguishes missing root, absent
@@ -174,23 +184,23 @@ The active evidence-posture cycle is
 
 ## Next Ten Slice Queue
 
-As of 2026-05-25, the next execution queue continues from the landed
-Manual-backed `0032-echo-adapter-probe-boundary` cycle. Each slice should
+As of 2026-06-03, the next execution queue continues from the landed
+Manual-backed `0033-wesley-generated-echo-family-consumer` cycle. Each slice should
 follow the cycle loop in `METHOD.md`: design packet, failing tests,
 implementation, Manual chapter or Manual update, retro/follow-on debt,
 validation, and PR.
 
-1. **0033 Wesley-Generated Echo Family Consumer**
-   - Teach the Echo path to consume Wesley-generated Continuum/Echo proof-family
-     TypeScript artifacts when they are available.
-   - Keep `LOCAL_MIRROR_FALLBACK` explicit for git-warp, fixtures, and missing
-     generated packages.
-   - Advance
-     [`PROTO_wesley-generated-echo-family-consumption.md`](./method/backlog/up-next/PROTO_wesley-generated-echo-family-consumption.md).
+1. **0076 Continuum Target Discovery Contract**
+   - Make configured Continuum-compatible targets descriptor-backed instead of
+     hard-coded as `jedit` and `graft`.
+   - Keep `jedit` and `graft` as default witness targets.
+   - Prove a synthetic third target appears through CLI JSON and MCP without
+     WARP TTD learning a new app name.
 
-2. **0034 Jedit Neighborhood Core Host Facts**
-   - Move `jedit` neighborhood intake from target-scope manifest posture toward
-     actual Echo adapter/session facts.
+2. **0034 Continuum Neighborhood Core Host Facts**
+   - Move neighborhood intake from target-scope manifest posture toward actual
+     adapter/session facts for any Continuum-compatible target that exposes the
+     capability.
    - First live payload: `NeighborhoodCoreSummary`.
    - CLI and MCP must expose source refs and evidence posture without upgrading
      translated substrate evidence into native Continuum witnesshood.

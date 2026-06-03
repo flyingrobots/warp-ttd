@@ -81,6 +81,10 @@ const WESLEY_GENERATED_ECHO_FAMILY_MANUAL =
   "docs/manual/007-wesley-generated-echo-family-consumer.md";
 const WESLEY_GENERATED_ECHO_FAMILY_DESIGN =
   "docs/design/0033-wesley-generated-echo-family-consumer/wesley-generated-echo-family-consumer.md";
+const CONTINUUM_TARGET_DISCOVERY_MANUAL =
+  "docs/manual/008-continuum-target-discovery-contract.md";
+const CONTINUUM_TARGET_DISCOVERY_DESIGN =
+  "docs/design/0076-continuum-target-discovery-contract/continuum-target-discovery-contract.md";
 
 function assertSharedFamilyBoundaryLifecycle(): void {
   assert.equal(repoPathExists(SHARED_FAMILY_BOUNDARY_DESIGN), true);
@@ -151,6 +155,8 @@ function assertManualFilesExist(): void {
   assert.equal(repoPathExists(ECHO_ADAPTER_PROBE_DESIGN), true);
   assert.equal(repoPathExists(WESLEY_GENERATED_ECHO_FAMILY_MANUAL), true);
   assert.equal(repoPathExists(WESLEY_GENERATED_ECHO_FAMILY_DESIGN), true);
+  assert.equal(repoPathExists(CONTINUUM_TARGET_DISCOVERY_MANUAL), true);
+  assert.equal(repoPathExists(CONTINUUM_TARGET_DISCOVERY_DESIGN), true);
 }
 
 function assertManualFrontDoors(): void {
@@ -180,6 +186,7 @@ function assertManualIndexContent(): void {
     "005. Jedit Echo Smoke",
     "006. Echo Adapter Probe Boundary",
     "007. Wesley-Generated Echo Family Consumer",
+    "008. Continuum Target Discovery Contract",
   ]);
   assertAllTextPresent(readRepoText(MANUAL_INDEX), [
     "# WARP TTD Manual Index",
@@ -192,6 +199,7 @@ function assertManualIndexContent(): void {
     "0031-jedit-echo-smoke",
     "0032-echo-adapter-probe-boundary",
     "0033-wesley-generated-echo-family-consumer",
+    "0076-continuum-target-discovery-contract",
   ]);
 }
 
@@ -362,7 +370,62 @@ function assertWesleyGeneratedEchoFamilyDesign(content: string): void {
   ]);
 }
 
-function assertNextFourDesigns(): void {
+function assertContinuumTargetDiscoveryManual(content: string): void {
+  assertAllTextPresent(content, [
+    "# Continuum Target Discovery Contract",
+    "WARP TTD debugs Continuum-compatible targets.",
+    "Target identity, app identity, runtime vendor, and substrate are facts.",
+    "jedit",
+    "graft",
+    "WARP_TTD_TARGETS_JSON",
+    "descriptor-only",
+    "adapterPosture: \"UNSUPPORTED\"",
+    "adapterPosture: \"OBSTRUCTED\"",
+    "duplicate ids",
+    "connectionMode",
+    "capabilities",
+    "No runtime control.",
+    "No authority issuance.",
+    "No runtime admission.",
+    "No host mutation.",
+    "No native Continuum witnesshood inferred from app names or descriptor",
+  ]);
+}
+
+function assertContinuumTargetDiscoveryInspectionFields(content: string): void {
+  const start = content.indexOf("## Agent Inspectability / Explainability Posture");
+  const end = content.indexOf("## Security / Redaction / Consent Posture");
+  const section = content.slice(start, end);
+  assertAllTextPresent(section, [
+    "hostKind",
+    "admissionChainPosture",
+    "graphName",
+    "echoAdapterProbe",
+    "sessionFamilyIntake",
+  ]);
+}
+
+function assertContinuumTargetDiscoveryDesign(content: string): void {
+  assertAllTextPresent(content, [
+    "format: \"warp-design-v1\"",
+    "# Continuum Target Discovery Contract",
+    "https://github.com/flyingrobots/warp-ttd/issues/76",
+    "ContinuumDebugTargetDescriptor",
+    "ContinuumDebugTargetInspection",
+    "descriptor-only",
+    "\"appKind\": \"live Echo app\"",
+    "\"appKind\": \"live git-warp app\"",
+    "{ mode: \"git-warp\"; rootPath: string; graphName: string }",
+    "Duplicate ids are obstructed deterministically.",
+    "unsupported, malformed, and duplicate-id",
+    "synthetic third target",
+    "target id, app label, runtime vendor, and substrate are reported facts",
+    "No generated modules are executed",
+  ]);
+  assertContinuumTargetDiscoveryInspectionFields(content);
+}
+
+function assertNextFiveDesigns(): void {
   assertAllTextPresent(readRepoText(LIVE_ECHO_FAMILY_INTAKE_DESIGN), [
     "status: landed",
     "../../manual/003-live-echo-family-intake.md",
@@ -383,6 +446,7 @@ function assertNextFourDesigns(): void {
   ]);
   assertEchoAdapterProbeDesign(readRepoText(ECHO_ADAPTER_PROBE_DESIGN));
   assertWesleyGeneratedEchoFamilyDesign(readRepoText(WESLEY_GENERATED_ECHO_FAMILY_DESIGN));
+  assertContinuumTargetDiscoveryDesign(readRepoText(CONTINUUM_TARGET_DISCOVERY_DESIGN));
 }
 
 test("Mermaid fence assertions tolerate CRLF line endings", () => {
@@ -651,7 +715,8 @@ test("manual starts generated family ingress cycle", () => {
   assertJeditEchoSmokeManual(readRepoText(JEDIT_ECHO_SMOKE_MANUAL));
   assertEchoAdapterProbeManual(readRepoText(ECHO_ADAPTER_PROBE_MANUAL));
   assertWesleyGeneratedEchoFamilyManual(readRepoText(WESLEY_GENERATED_ECHO_FAMILY_MANUAL));
-  assertNextFourDesigns();
+  assertContinuumTargetDiscoveryManual(readRepoText(CONTINUUM_TARGET_DISCOVERY_MANUAL));
+  assertNextFiveDesigns();
 });
 
 test("MCP admission-chain surface is closed as a landed cycle", () => {
@@ -747,9 +812,16 @@ test("admission-chain read model cycle defines versioned ordered facts", () => {
   assert.match(content, /No Echo runtime admission/);
 });
 
-test("bearing names jedit and graft as live debugger targets", () => {
+test("bearing keeps jedit and graft as witness targets, not debugger architecture", () => {
   const bearing = readRepoText("docs/BEARING.md");
   const backlog = readRepoText("docs/method/backlog/up-next/DELIVERY_dual-live-app-debugging.md");
+
+  assertAllTextPresent(bearing, [
+    "Continuum-Compatible Target Debugging",
+    "Continuum-compatible targets",
+    "default witness targets",
+    "special debugger concepts",
+  ]);
 
   for (const content of [bearing, backlog]) {
     assert.match(content, /jedit/i);

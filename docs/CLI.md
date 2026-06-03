@@ -33,8 +33,8 @@ facts should be usable by agents here before they become human-only TUI affordan
   npm run hello -- --json
   ```
 
-- **Live Targets**: Inspect the named live app targets without attaching,
-  admitting, or mutating.
+- **Live Targets**: Inspect configured Continuum-compatible targets without
+  attaching, admitting, or mutating.
 
   ```bash
   npm run targets -- --json
@@ -70,17 +70,32 @@ facts should be usable by agents here before they become human-only TUI affordan
 
 The TUI is a delivery adapter over the same `DebuggerSession` core. It follows the explicit adapter capabilities proven by the CLI surface. New inspection logic must land in the CLI before the TUI depends on it.
 
-## Live Target Discovery
+## Continuum Target Discovery
 
-`targets --json` reports the two current live app targets:
+`targets --json` reports configured Continuum-compatible debug targets. Target
+identity, app label, runtime vendor, and substrate are facts in the output; they
+are not WARP TTD app-layer dispatch boundaries.
 
-- `jedit`: live Echo app.
-- `graft`: live git-warp app.
+The default witnesses are:
+
+- `jedit`: local Echo-compatible witness.
+- `graft`: local git-warp-compatible witness.
 
 The command is read-only. It reports target-root posture, adapter readiness, and
 runtime-boundary evidence posture; it does not open a runtime, issue authority,
-admit invocations, create strands, or mutate either app. Missing
+admit invocations, create strands, or mutate any target. Missing
 admission-chain facts are reported as unavailable instead of inferred.
+
+Each target includes descriptor-derived fields:
+
+- `target`
+- `targetLabel`
+- `connectionMode`
+- `appKind`
+- `rootPosture`
+- `adapterPosture`
+- `capabilities`
+- `runtimeBoundaryEvidence`
 
 For `jedit`, the command also reports `echoAdapterProbe`, a read-only probe of
 the root-local Echo adapter descriptor:
@@ -119,12 +134,37 @@ WARP_TTD_GRAFT_ROOT=/path/to/graft \
   npm run targets -- --json
 ```
 
+For early descriptor-driven integration and tests, replace the default target
+list with `WARP_TTD_TARGETS_JSON`:
+
+```bash
+WARP_TTD_TARGETS_JSON='[
+  {
+    "id": "vendor-demo",
+    "label": "Vendor demo runtime",
+    "appKind": "Continuum-compatible app",
+    "connection": {
+      "mode": "descriptor-only",
+      "reason": "Vendor runtime handshake is not implemented in this slice."
+    }
+  }
+]' npm run targets -- --json
+```
+
+`descriptor-only` targets are reported as registered but unsupported for runtime
+handshake inspection in this slice. Unknown connection modes become visible
+`descriptor-only` records with `adapterPosture: "UNSUPPORTED"`. Malformed
+entries and duplicate ids become visible `descriptor-only` records with
+`adapterPosture: "OBSTRUCTED"` and a reason string. Env-configured `git-warp`
+descriptors must include `graphName`; otherwise they are obstructed instead of
+borrowing the default graft graph name.
+
 `target-session --json` keeps the same read-only boundary but opens configured
-live targets through their adapter when possible. The first supported live
-session is `graft`, using the `graft-ast` git-warp graph. If the root is
-missing or the graph cannot be opened, the command emits
-`sessionPosture: "OBSTRUCTED"` with a reason instead of mutating or inferring
-facts.
+targets through their adapter when possible. The first supported live session
+is the default `graft` witness, using the `graft-ast` git-warp graph. If the
+root is missing, the graph cannot be opened, or the descriptor has no runtime
+handshake yet, the command emits `sessionPosture: "OBSTRUCTED"` with a reason
+instead of mutating or inferring facts.
 
 For `jedit`, `target-session --json` includes the same `echoAdapterProbe` and
 `sessionFamilyIntake` objects, but still reports `sessionPosture:

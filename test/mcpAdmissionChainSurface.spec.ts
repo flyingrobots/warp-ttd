@@ -385,6 +385,52 @@ test("MCP live-target inspection exposes Wesley-generated Echo family artifact p
   }
 });
 
+test("MCP live-target inspection exposes descriptor-only Continuum targets", async () => {
+  const previousTargetsJson = process.env["WARP_TTD_TARGETS_JSON"];
+  const { client, server } = await connectMcp();
+
+  try {
+    process.env["WARP_TTD_TARGETS_JSON"] = JSON.stringify([
+      {
+        id: "vendor-demo",
+        label: "Vendor demo runtime",
+        appKind: "Continuum-compatible app",
+        connection: {
+          mode: "descriptor-only",
+          reason: "Vendor runtime handshake is not implemented in this slice."
+        }
+      }
+    ]);
+
+    const result = structuredContent(
+      await client.callTool({
+        name: MCP_INSPECT_LIVE_TARGETS_TOOL,
+        arguments: {}
+      })
+    );
+    const targets = requireArray(result["targets"], "targets")
+      .map((entry) => requireRecord(entry, "target"));
+
+    assert.equal(targets.length, 1);
+    const target = targets[0];
+    assert.ok(target !== undefined);
+    assert.equal(target["target"], "vendor-demo");
+    assert.equal(target["targetLabel"], "Vendor demo runtime");
+    assert.equal(target["connectionMode"], "descriptor-only");
+    assert.equal(target["hostKind"], "CONTINUUM");
+    assert.equal(target["rootPosture"], "NOT_APPLICABLE");
+    assert.equal(target["adapterPosture"], "UNSUPPORTED");
+    assert.deepEqual(target["capabilities"], ["DESCRIPTOR_ONLY"]);
+  } finally {
+    if (previousTargetsJson === undefined) {
+      delete process.env["WARP_TTD_TARGETS_JSON"];
+    } else {
+      process.env["WARP_TTD_TARGETS_JSON"] = previousTargetsJson;
+    }
+    await closeMcp(client, server);
+  }
+});
+
 test("MCP tools expose cached session and reading facts", async () => {
   const adapter = new TransientHelloAdapter();
   const { client, server } = await connectMcp(adapter);
