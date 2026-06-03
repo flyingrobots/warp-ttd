@@ -32,11 +32,12 @@ export type LiveEchoFamilyIntakePosture = "UNAVAILABLE" | "PRESENT" | "OBSTRUCTE
 export interface LiveEchoFamilyIntakeArgs {
   readonly rootPath: string;
   readonly rootPosture: LiveEchoFamilyRootPosture;
+  readonly targetId?: string;
 }
 
 export interface LiveEchoFamilyIntakeInspection extends JsonObject {
   readonly schemaVersion: typeof LIVE_ECHO_FAMILY_INTAKE_SCHEMA_VERSION;
-  readonly target: "jedit";
+  readonly target: string;
   readonly hostKind: "ECHO";
   readonly rootPath: string;
   readonly rootPosture: LiveEchoFamilyRootPosture;
@@ -201,14 +202,14 @@ function generatedArtifactsFrom(
   return artifacts;
 }
 
-function presentManifest(data: JsonObject): ManifestRead {
+function presentManifest(data: JsonObject, targetId: string): ManifestRead {
   const publishedFields = publishedFieldsFrom(data);
   if (publishedFields === undefined) {
     return {
       manifestPosture: "OBSTRUCTED",
       publishedFields: [],
       generatedArtifacts: [],
-      reason: "jedit live Echo family manifest must declare publishedFields."
+      reason: `${targetId} live Echo family manifest must declare publishedFields.`
     };
   }
   const generatedArtifacts = generatedArtifactsFrom(data);
@@ -218,7 +219,7 @@ function presentManifest(data: JsonObject): ManifestRead {
       publishedFields: [],
       generatedArtifacts: [],
       reason:
-        "jedit live Echo family manifest generatedFamilyArtifacts must use known families, known targets, non-empty requiredFiles, and target-root-relative paths."
+        `${targetId} live Echo family manifest generatedFamilyArtifacts must use known families, known targets, non-empty requiredFiles, and target-root-relative paths.`
     };
   }
 
@@ -226,23 +227,30 @@ function presentManifest(data: JsonObject): ManifestRead {
     manifestPosture: "PRESENT",
     publishedFields,
     generatedArtifacts,
-    reason: "jedit live Echo family manifest was read without attaching to Echo."
+    reason: `${targetId} live Echo family manifest was read without attaching to Echo.`
   };
 }
 
-function readPresentManifest(pathname: string): ManifestRead {
+function readPresentManifest(pathname: string, targetId: string): ManifestRead {
   try {
-    return presentManifest(JSON.parse(fs.readFileSync(pathname, "utf-8")) as JsonObject);
+    return presentManifest(
+      JSON.parse(fs.readFileSync(pathname, "utf-8")) as JsonObject,
+      targetId
+    );
   } catch (error) {
     return {
       manifestPosture: "OBSTRUCTED",
       publishedFields: [],
       generatedArtifacts: [],
-      reason: `jedit live Echo family manifest could not be read: ${errorMessage(
+      reason: `${targetId} live Echo family manifest could not be read: ${errorMessage(
         error instanceof Error ? error : undefined
       )}`
     };
   }
+}
+
+function targetId(args: LiveEchoFamilyIntakeArgs): string {
+  return args.targetId ?? "jedit";
 }
 
 function readManifest(args: LiveEchoFamilyIntakeArgs): ManifestRead {
@@ -251,7 +259,7 @@ function readManifest(args: LiveEchoFamilyIntakeArgs): ManifestRead {
       manifestPosture: "MISSING",
       publishedFields: [],
       generatedArtifacts: [],
-      reason: "jedit root is missing; no live Echo family manifest was read."
+      reason: `${targetId(args)} root is missing; no live Echo family manifest was read.`
     };
   }
 
@@ -260,62 +268,71 @@ function readManifest(args: LiveEchoFamilyIntakeArgs): ManifestRead {
       manifestPosture: "MISSING",
       publishedFields: [],
       generatedArtifacts: [],
-      reason: "jedit live Echo family manifest is not present."
+      reason: `${targetId(args)} live Echo family manifest is not present.`
     };
   }
 
-  return readPresentManifest(manifestPath(args.rootPath));
+  return readPresentManifest(manifestPath(args.rootPath), targetId(args));
 }
 
-function absentIntakeFact(field: SessionFamilyFactKey, reason: string): SessionFamilyFact {
+function absentIntakeFact(
+  target: string,
+  field: SessionFamilyFactKey,
+  reason: string
+): SessionFamilyFact {
   return {
     field,
     ...absentGeneratedFamilyFact({
       source: sharedFamilySourceFor(field),
       origin: "UNAVAILABLE",
       scope: "TARGET",
-      target: "jedit",
+      target,
       reason
     })
   };
 }
 
-function obstructedIntakeFact(field: SessionFamilyFactKey, reason: string): SessionFamilyFact {
+function obstructedIntakeFact(
+  target: string,
+  field: SessionFamilyFactKey,
+  reason: string
+): SessionFamilyFact {
   return {
     field,
     ...obstructedGeneratedFamilyFact({
       source: sharedFamilySourceFor(field),
       origin: "HOST_PUBLISHED",
       scope: "TARGET",
-      target: "jedit",
+      target,
       reason
     })
   };
 }
 
-function presentIntakeFact(field: SessionFamilyFactKey): SessionFamilyFact {
+function presentIntakeFact(target: string, field: SessionFamilyFactKey): SessionFamilyFact {
   return {
     field,
     ...presentGeneratedFamilyFact({
       source: sharedFamilySourceFor(field),
       origin: "HOST_PUBLISHED",
       scope: "TARGET",
-      target: "jedit"
+      target
     })
   };
 }
 
 function intakeFactFor(
+  target: string,
   field: SessionFamilyFactKey,
   manifest: ManifestRead
 ): SessionFamilyFact {
   if (manifest.manifestPosture === "OBSTRUCTED") {
-    return obstructedIntakeFact(field, manifest.reason);
+    return obstructedIntakeFact(target, field, manifest.reason);
   }
 
-  if (manifest.publishedFields.includes(field)) return presentIntakeFact(field);
+  if (manifest.publishedFields.includes(field)) return presentIntakeFact(target, field);
 
-  return absentIntakeFact(field, manifest.reason);
+  return absentIntakeFact(target, field, manifest.reason);
 }
 
 function intakePosture(manifest: ManifestRead): LiveEchoFamilyIntakePosture {
@@ -328,10 +345,11 @@ export function inspectLiveEchoFamilyIntake(
   args: LiveEchoFamilyIntakeArgs
 ): LiveEchoFamilyIntakeInspection {
   const manifest = readManifest(args);
+  const target = targetId(args);
 
   return {
     schemaVersion: LIVE_ECHO_FAMILY_INTAKE_SCHEMA_VERSION,
-    target: "jedit",
+    target,
     hostKind: "ECHO",
     rootPath: args.rootPath,
     rootPosture: args.rootPosture,
@@ -339,7 +357,7 @@ export function inspectLiveEchoFamilyIntake(
     manifestPosture: manifest.manifestPosture,
     intakePosture: intakePosture(manifest),
     expectedFields: SESSION_FAMILY_FACT_KEYS,
-    facts: SESSION_FAMILY_FACT_KEYS.map((field) => intakeFactFor(field, manifest)),
+    facts: SESSION_FAMILY_FACT_KEYS.map((field) => intakeFactFor(target, field, manifest)),
     generatedFamilyConsumption: inspectSharedFamilyConsumption({
       rootPath: args.rootPath,
       artifacts: manifest.generatedArtifacts

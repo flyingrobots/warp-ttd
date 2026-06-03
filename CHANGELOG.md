@@ -10,6 +10,13 @@ This project will use [Semantic Versioning](https://semver.org/) starting at
 
 ### Added
 
+- **Continuum target discovery contract**: `targets --json`,
+  `target-session --json`, and `warp_ttd.inspect_live_targets` now inspect
+  descriptor-backed Continuum-compatible targets. `jedit` and `graft` remain
+  default witness descriptors, while synthetic descriptor-only targets can be
+  reported without adding app-specific debugger code. Target labels, connection
+  modes, capabilities, and evidence posture are structured facts; app names and
+  runtime substrates are not dispatch boundaries.
 - **Echo adapter probe boundary**: `targets --json`,
   `target-session --json`, and `warp_ttd.inspect_live_targets` now expose
   `jedit.echoAdapterProbe`, a read-only descriptor probe that distinguishes

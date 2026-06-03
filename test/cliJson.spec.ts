@@ -193,12 +193,15 @@ function assertMissingGraftLiveTargetInspection(
 ): void {
   assert.ok(graft !== undefined);
   assert.equal(graft["target"], "graft");
+  assert.equal(graft["targetLabel"], "graft local witness");
+  assert.equal(graft["connectionMode"], "git-warp");
   assert.equal(graft["hostKind"], "GIT_WARP");
   assert.equal(graft["appKind"], "live git-warp app");
   assert.equal(graft["readOnly"], true);
   assert.equal(graft["rootPosture"], "MISSING");
   assert.equal(graft["adapterPosture"], "CONFIGURED");
   assert.equal(graft["graphName"], "graft-ast");
+  assert.deepEqual(graft["capabilities"], ["GIT_WARP_SESSION"]);
   assert.equal(graft["admissionChainPosture"], "UNAVAILABLE");
   const graftEvidence = requireRecord(
     graft["runtimeBoundaryEvidence"],
@@ -493,12 +496,18 @@ test("targets --json names jedit and graft as read-only live target inspections"
   assert.ok(jedit !== undefined);
   assert.ok(graft !== undefined);
   assert.equal(jedit["target"], "jedit");
+  assert.equal(jedit["targetLabel"], "jedit local witness");
+  assert.equal(jedit["connectionMode"], "echo-root");
   assert.equal(jedit["hostKind"], "ECHO");
   assert.equal(jedit["appKind"], "live Echo app");
   assert.equal(jedit["readOnly"], true);
   assert.equal(jedit["rootPosture"], "MISSING");
   assert.equal(jedit["adapterPosture"], "UNAVAILABLE");
   assert.equal(jedit["admissionChainPosture"], "UNAVAILABLE");
+  assert.deepEqual(jedit["capabilities"], [
+    "ECHO_ADAPTER_PROBE",
+    "SESSION_FAMILY_FACTS"
+  ]);
   assertEchoAdapterProbe(jedit["echoAdapterProbe"], "ROOT_UNAVAILABLE", "UNAVAILABLE");
   const jeditEvidence = requireRecord(
     jedit["runtimeBoundaryEvidence"],
@@ -511,6 +520,36 @@ test("targets --json names jedit and graft as read-only live target inspections"
   });
 
   assertMissingGraftLiveTargetInspection(graft);
+});
+
+test("targets --json reports a descriptor-only Continuum target", async () => {
+  const lines = await runJsonWithEnv("targets", {
+    WARP_TTD_TARGETS_JSON: JSON.stringify([
+      {
+        id: "vendor-demo",
+        label: "Vendor demo runtime",
+        appKind: "Continuum-compatible app",
+        connection: {
+          mode: "descriptor-only",
+          reason: "Vendor runtime handshake is not implemented in this slice."
+        }
+      }
+    ])
+  });
+  assert.equal(lines.length, 1);
+
+  const obj = parseLine(requireLine(lines, 0));
+  assert.equal(obj.envelope, "LiveTargetInspection");
+  const target = requireRecord(obj.data, "vendor-demo target");
+  assert.equal(target["target"], "vendor-demo");
+  assert.equal(target["targetLabel"], "Vendor demo runtime");
+  assert.equal(target["connectionMode"], "descriptor-only");
+  assert.equal(target["hostKind"], "CONTINUUM");
+  assert.equal(target["appKind"], "Continuum-compatible app");
+  assert.equal(target["rootPosture"], "NOT_APPLICABLE");
+  assert.equal(target["adapterPosture"], "UNSUPPORTED");
+  assert.deepEqual(target["capabilities"], ["DESCRIPTOR_ONLY"]);
+  assert.match(requireString(target["reason"], "vendor-demo.reason"), /Vendor runtime/);
 });
 
 test("targets --json reports jedit live Echo family intake manifest", async () => {
@@ -651,6 +690,8 @@ test("target-session --json reports live target session posture", async () => {
   assert.equal(jeditObj.envelope, "LiveTargetSessionInspection");
   const jedit = requireRecord(jeditObj.data, "jedit LiveTargetSessionInspection.data");
   assert.equal(jedit["target"], "jedit");
+  assert.equal(jedit["targetLabel"], "jedit local witness");
+  assert.equal(jedit["connectionMode"], "echo-root");
   assert.equal(jedit["hostKind"], "ECHO");
   assert.equal(jedit["readOnly"], true);
   assert.equal(jedit["adapterPosture"], "UNAVAILABLE");
@@ -665,6 +706,8 @@ test("target-session --json reports live target session posture", async () => {
 
   const data = requireRecord(obj.data, "LiveTargetSessionInspection.data");
   assert.equal(data["target"], "graft");
+  assert.equal(data["targetLabel"], "graft local witness");
+  assert.equal(data["connectionMode"], "git-warp");
   assert.equal(data["hostKind"], "GIT_WARP");
   assert.equal(data["readOnly"], true);
   assert.equal(data["rootPosture"], "MISSING");

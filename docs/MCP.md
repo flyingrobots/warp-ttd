@@ -58,11 +58,15 @@ perform admission, mutate host state, or create local strands.
   obstruction posture, witness facts, receipt facts, and reading envelope facts
   when present.
 - **Live Targets**: `warp_ttd.inspect_live_targets` reports the same read-only
-  target posture as `targets --json`, including runtime-boundary evidence
-  posture. For `jedit`, it also reports `echoAdapterProbe`, which distinguishes
-  missing root, absent bridge, supported bridge, unsupported ABI, and obstructed
-  descriptor. Adapter readiness is not upgraded into Continuum evidence
-  availability or an open Echo session.
+  descriptor-backed target posture as `targets --json`, including target id,
+  target label, connection mode, capabilities, and runtime-boundary evidence
+  posture. The default `jedit` witness also reports `echoAdapterProbe`, which
+  distinguishes missing root, absent bridge, supported bridge, unsupported ABI,
+  and obstructed descriptor. Adapter readiness is not upgraded into Continuum
+  evidence availability or an open runtime session. Descriptor-only targets are
+  reported as registered but unsupported for runtime handshake inspection in
+  this slice. Unknown connection modes, malformed entries, and duplicate ids
+  stay visible as unsupported or obstructed descriptor-only target records.
 
 ## Running
 
@@ -89,6 +93,9 @@ is intentionally read-only.
 - **Evidence Honesty**: Translated substrate evidence is not native Continuum
   witnesshood. A tool must not report `CONTINUUM_NATIVE` unless
   `nativeContinuumWitness` is true.
+- **Target Generality**: App names, runtime vendor names, and substrate names
+  are reported facts, not MCP tool dispatch boundaries. Agents should inspect
+  target capabilities and posture rather than infer compatibility from labels.
 
 ---
 **The goal is tool-native inspection. TUI work follows the explicit MCP

@@ -2,10 +2,10 @@ import { resolveAdapter } from "./adapterRegistry.ts";
 import { DebuggerSession, type SerializedSession } from "./debuggerSession.ts";
 import {
   inspectLiveTargets,
-  liveTargetRootsFromEnv,
+  liveTargetDescriptorsFromEnv,
   type LiveTargetInspection,
   type LiveTargetAdapterPosture,
-  type LiveTargetRoots,
+  type LiveTargetInspectionInput,
   type LiveTargetRuntimeBoundaryEvidence,
   type LiveTargetRootPosture
 } from "./liveTargetInspection.ts";
@@ -17,38 +17,44 @@ export type LiveTargetSessionPosture = "PRESENT" | "OBSTRUCTED";
 
 export type LiveTargetSessionInspection =
   | LiveEchoTargetSessionInspection
-  | GraftLiveTargetSessionInspection;
+  | GitWarpLiveTargetSessionInspection
+  | DescriptorOnlyLiveTargetSessionInspection;
 
-export interface LiveEchoTargetSessionInspection {
-  target: "jedit";
-  hostKind: "ECHO";
-  appKind: "live Echo app";
+interface LiveTargetSessionBase {
+  target: string;
+  targetLabel?: string;
+  connectionMode: string;
+  appKind: string;
   rootPath: string;
   rootPosture: LiveTargetRootPosture;
   adapterPosture: LiveTargetAdapterPosture;
   runtimeBoundaryEvidence: LiveTargetRuntimeBoundaryEvidence;
   readOnly: true;
-  sessionPosture: "OBSTRUCTED";
-  echoAdapterProbe: EchoAdapterProbeInspection;
-  sessionFamilyIntake: LiveEchoFamilyIntakeInspection;
-  reason: string;
-}
-
-export interface GraftLiveTargetSessionInspection {
-  target: "graft";
-  hostKind: "GIT_WARP";
-  appKind: "live git-warp app";
-  rootPath: string;
-  rootPosture: LiveTargetRootPosture;
-  adapterPosture: "CONFIGURED";
-  runtimeBoundaryEvidence: LiveTargetRuntimeBoundaryEvidence;
-  readOnly: true;
-  graphName: string;
   sessionPosture: LiveTargetSessionPosture;
   defaultHeadId?: string;
   hostHello?: HostHello;
   session?: SerializedSession;
   reason: string;
+}
+
+export interface LiveEchoTargetSessionInspection extends LiveTargetSessionBase {
+  hostKind: "ECHO";
+  sessionPosture: "OBSTRUCTED";
+  echoAdapterProbe: EchoAdapterProbeInspection;
+  sessionFamilyIntake: LiveEchoFamilyIntakeInspection;
+}
+
+export interface GitWarpLiveTargetSessionInspection extends LiveTargetSessionBase {
+  hostKind: "GIT_WARP";
+  adapterPosture: "CONFIGURED";
+  graphName: string;
+  defaultHeadId?: string;
+  hostHello?: HostHello;
+  session?: SerializedSession;
+}
+
+export interface DescriptorOnlyLiveTargetSessionInspection extends LiveTargetSessionBase {
+  hostKind: "CONTINUUM";
 }
 
 const GRAFT_GRAPH_NAME = "graft-ast";
@@ -60,118 +66,107 @@ class MissingLiveTargetRegistrationError extends Error {
   }
 }
 
-function configuredGraftTarget(roots: LiveTargetRoots): LiveTargetInspection {
-  const target = inspectLiveTargets(roots)
-    .find((entry) => entry.target === "graft");
-
-  if (target?.hostKind !== "GIT_WARP") {
-    throw new MissingLiveTargetRegistrationError("graft");
-  }
-
-  return target;
-}
-
-function configuredJeditTarget(roots: LiveTargetRoots): LiveTargetInspection {
-  const target = inspectLiveTargets(roots)
-    .find((entry) => entry.target === "jedit");
-
-  if (target?.hostKind !== "ECHO") {
-    throw new MissingLiveTargetRegistrationError("jedit");
-  }
-
-  return target;
-}
-
-function jeditSessionFamilyIntake(
+function targetLabelObject(
   target: LiveTargetInspection
-): LiveEchoFamilyIntakeInspection {
-  if (target.sessionFamilyIntake === undefined) {
-    throw new MissingLiveTargetRegistrationError("jedit family intake");
-  }
-
-  return target.sessionFamilyIntake;
+): Pick<LiveTargetSessionBase, "targetLabel"> | object {
+  return target.targetLabel === undefined ? {} : { targetLabel: target.targetLabel };
 }
 
-function jeditEchoAdapterProbe(
-  target: LiveTargetInspection
-): EchoAdapterProbeInspection {
-  if (target.echoAdapterProbe === undefined) {
-    throw new MissingLiveTargetRegistrationError("jedit Echo adapter probe");
-  }
-
-  return target.echoAdapterProbe;
-}
-
-function obstructedJeditSession(
-  target: LiveTargetInspection
-): LiveEchoTargetSessionInspection {
+function liveTargetSessionBase(
+  target: LiveTargetInspection,
+  sessionPosture: LiveTargetSessionPosture,
+  reason: string
+): LiveTargetSessionBase {
   return {
-    target: "jedit",
-    hostKind: "ECHO",
-    appKind: "live Echo app",
+    target: target.target,
+    ...targetLabelObject(target),
+    connectionMode: target.connectionMode,
+    appKind: target.appKind,
     rootPath: target.rootPath,
     rootPosture: target.rootPosture,
     adapterPosture: target.adapterPosture,
     runtimeBoundaryEvidence: target.runtimeBoundaryEvidence,
     readOnly: true,
-    sessionPosture: "OBSTRUCTED",
-    echoAdapterProbe: jeditEchoAdapterProbe(target),
-    sessionFamilyIntake: jeditSessionFamilyIntake(target),
-    reason: "jedit live Echo session adapter is not wired yet; only read-only family intake posture was inspected."
-  };
-}
-
-function obstructedGraftSession(
-  target: LiveTargetInspection,
-  reason: string
-): LiveTargetSessionInspection {
-  return {
-    target: "graft",
-    hostKind: "GIT_WARP",
-    appKind: "live git-warp app",
-    rootPath: target.rootPath,
-    rootPosture: target.rootPosture,
-    adapterPosture: "CONFIGURED",
-    runtimeBoundaryEvidence: target.runtimeBoundaryEvidence,
-    readOnly: true,
-    graphName: target.graphName ?? GRAFT_GRAPH_NAME,
-    sessionPosture: "OBSTRUCTED",
+    sessionPosture,
     reason
   };
 }
 
-function presentGraftSession(
-  target: LiveTargetInspection,
-  defaultHeadId: string,
-  session: DebuggerSession
-): LiveTargetSessionInspection {
+function targetSessionFamilyIntake(
+  target: LiveTargetInspection
+): LiveEchoFamilyIntakeInspection {
+  if (target.sessionFamilyIntake === undefined) {
+    throw new MissingLiveTargetRegistrationError(`${target.target} family intake`);
+  }
+
+  return target.sessionFamilyIntake;
+}
+
+function targetEchoAdapterProbe(
+  target: LiveTargetInspection
+): EchoAdapterProbeInspection {
+  if (target.echoAdapterProbe === undefined) {
+    throw new MissingLiveTargetRegistrationError(`${target.target} Echo adapter probe`);
+  }
+
+  return target.echoAdapterProbe;
+}
+
+function obstructedEchoSession(
+  target: LiveTargetInspection
+): LiveEchoTargetSessionInspection {
   return {
-    target: "graft",
-    hostKind: "GIT_WARP",
-    appKind: "live git-warp app",
-    rootPath: target.rootPath,
-    rootPosture: target.rootPosture,
-    adapterPosture: "CONFIGURED",
-    runtimeBoundaryEvidence: target.runtimeBoundaryEvidence,
-    readOnly: true,
-    graphName: target.graphName ?? GRAFT_GRAPH_NAME,
-    sessionPosture: "PRESENT",
-    defaultHeadId,
-    hostHello: session.hostHello,
-    session: session.toJSON(),
-    reason: "Opened graft through the git-warp adapter for read-only session inspection."
+    ...liveTargetSessionBase(
+      target,
+      "OBSTRUCTED",
+      `${target.target} live Echo session adapter is not wired yet; only read-only family intake posture was inspected.`
+    ),
+    hostKind: "ECHO",
+    sessionPosture: "OBSTRUCTED",
+    echoAdapterProbe: targetEchoAdapterProbe(target),
+    sessionFamilyIntake: targetSessionFamilyIntake(target)
   };
 }
 
-async function inspectGraftSession(
-  roots: LiveTargetRoots
-): Promise<LiveTargetSessionInspection> {
-  const target = configuredGraftTarget(roots);
+function obstructedGitWarpSession(
+  target: LiveTargetInspection,
+  reason: string
+): GitWarpLiveTargetSessionInspection {
+  return {
+    ...liveTargetSessionBase(target, "OBSTRUCTED", reason),
+    hostKind: "GIT_WARP",
+    adapterPosture: "CONFIGURED",
+    graphName: target.graphName ?? GRAFT_GRAPH_NAME
+  };
+}
 
-  if (target.rootPosture !== "PRESENT") {
-    return obstructedGraftSession(
+function presentGitWarpSession(
+  target: LiveTargetInspection,
+  defaultHeadId: string,
+  session: DebuggerSession
+): GitWarpLiveTargetSessionInspection {
+  return {
+    ...liveTargetSessionBase(
       target,
-      "graft root is missing; no git-warp session was opened."
+      "PRESENT",
+      `Opened ${target.target} through the git-warp adapter for read-only session inspection.`
+    ),
+    hostKind: "GIT_WARP",
+    adapterPosture: "CONFIGURED",
+    graphName: target.graphName ?? GRAFT_GRAPH_NAME,
+    defaultHeadId,
+    hostHello: session.hostHello,
+    session: session.toJSON()
+  };
+}
+
+async function inspectGitWarpSession(
+  target: LiveTargetInspection
+): Promise<LiveTargetSessionInspection> {
+  if (target.rootPosture !== "PRESENT") {
+    return obstructedGitWarpSession(
+      target,
+      `${target.target} root is missing; no git-warp session was opened.`
     );
   }
 
@@ -183,25 +178,45 @@ async function inspectGraftSession(
     });
     const session = await DebuggerSession.create(adapter, defaultHeadId);
 
-    return presentGraftSession(target, defaultHeadId, session);
+    return presentGitWarpSession(target, defaultHeadId, session);
   } catch (err) {
     const message = err instanceof Error ? err.message : "unknown error";
-    return obstructedGraftSession(
+    return obstructedGitWarpSession(
       target,
-      `graft git-warp session could not be opened: ${message}`
+      `${target.target} git-warp session could not be opened: ${message}`
     );
   }
 }
 
-function inspectJeditSession(roots: LiveTargetRoots): LiveEchoTargetSessionInspection {
-  return obstructedJeditSession(configuredJeditTarget(roots));
+function descriptorOnlySession(
+  target: LiveTargetInspection
+): DescriptorOnlyLiveTargetSessionInspection {
+  return {
+    ...liveTargetSessionBase(
+      target,
+      "OBSTRUCTED",
+      `${target.target} is registered, but runtime handshake session inspection is not implemented in this cycle.`
+    ),
+    hostKind: "CONTINUUM",
+    adapterPosture: target.adapterPosture
+  };
+}
+
+async function inspectLiveTargetSession(
+  target: LiveTargetInspection
+): Promise<LiveTargetSessionInspection> {
+  switch (target.hostKind) {
+    case "ECHO":
+      return obstructedEchoSession(target);
+    case "GIT_WARP":
+      return inspectGitWarpSession(target);
+    case "CONTINUUM":
+      return descriptorOnlySession(target);
+  }
 }
 
 export async function inspectLiveTargetSessions(
-  roots: LiveTargetRoots = liveTargetRootsFromEnv()
+  input: LiveTargetInspectionInput = liveTargetDescriptorsFromEnv()
 ): Promise<LiveTargetSessionInspection[]> {
-  return [
-    inspectJeditSession(roots),
-    await inspectGraftSession(roots)
-  ];
+  return Promise.all(inspectLiveTargets(input).map(inspectLiveTargetSession));
 }

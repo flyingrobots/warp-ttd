@@ -125,11 +125,16 @@ First-cut descriptor fields:
 interface ContinuumDebugTargetDescriptor {
   id: string;
   label?: string;
-  appKind: "Continuum-compatible app";
+  appKind?: string;
   connection:
     | { mode: "echo-root"; rootPath: string }
     | { mode: "git-warp"; rootPath: string; graphName?: string }
-    | { mode: "descriptor-only"; rootPath?: string; reason?: string };
+    | {
+        mode: "descriptor-only";
+        rootPath?: string;
+        reason?: string;
+        adapterPosture?: "UNSUPPORTED" | "OBSTRUCTED";
+      };
 }
 ```
 
@@ -163,6 +168,11 @@ Default descriptors preserve current behavior:
   }
 ]
 ```
+
+Tests and early integrations can replace the default descriptors with
+`WARP_TTD_TARGETS_JSON`. The parser keeps input order, generates deterministic
+obstruction records for malformed entries, marks unknown connection modes as
+`UNSUPPORTED`, and marks duplicate ids as `OBSTRUCTED`.
 
 ## Evidence / Authority / Mutation Boundary
 
@@ -342,28 +352,32 @@ hard-coded target refactor.
 
 ## Tests To Write First
 
-- [ ] [behavior] `inspectLiveTargets` emits default witness descriptors for
+- [x] [behavior] `inspectLiveTargets` emits default witness descriptors for
       `jedit` and `graft` with unchanged posture.
-- [ ] [behavior] `inspectLiveTargets` emits a synthetic descriptor-only target
+- [x] [behavior] `inspectLiveTargets` emits a synthetic descriptor-only target
       without a hard-coded app name.
-- [ ] [cli-json] `targets --json` exposes descriptor-derived target facts.
-- [ ] [mcp] `warp_ttd.inspect_live_targets` exposes the same target list.
-- [ ] [docs] Manual and design vocabulary reject treating app names as debugger
+- [x] [behavior] Env descriptors keep unsupported, malformed, and duplicate-id
+      entries visible as deterministic posture records.
+- [x] [cli-json] `targets --json` exposes descriptor-derived target facts.
+- [x] [mcp] `warp_ttd.inspect_live_targets` exposes the same target list.
+- [x] [docs] Manual and design vocabulary reject treating app names as debugger
       architecture.
 
 ## Acceptance Criteria
 
 The work is done when:
 
-- [ ] Behavior/runtime/tooling proof is green when required.
-- [ ] Documentation/process assertions are not the only proof for implementation
+- [x] Behavior/runtime/tooling proof is green when required.
+- [x] Documentation/process assertions are not the only proof for implementation
       work.
-- [ ] Default `jedit` and `graft` target output remains compatible.
-- [ ] A synthetic third target can be registered and inspected without a new
+- [x] Default `jedit` and `graft` target output remains compatible.
+- [x] A synthetic third target can be registered and inspected without a new
       hard-coded app branch.
-- [ ] Authority, admission, mutation, and native-witness boundaries remain
+- [x] Malformed, unsupported, and duplicate env descriptors are visible as
+      deterministic posture records.
+- [x] Authority, admission, mutation, and native-witness boundaries remain
       explicit.
-- [ ] Issue and PR are linked.
+- [x] Issue and PR are linked.
 - [ ] CI and local validation are green.
 
 ## Validation Plan
@@ -417,15 +431,18 @@ Mitigations:
 
 ## Follow-On Issues
 
-- Create a follow-on issue for vendor-neutral `continuum.debug.hello.v1`.
-- Create a follow-on issue for explicit `warp-ttd discover --json` and local
-  runtime registry discovery.
-- Create a follow-on issue for consent/auth posture when connecting to runtime
-  endpoints.
+- Vendor-neutral `continuum.debug.hello.v1`:
+  https://github.com/flyingrobots/warp-ttd/issues/80
+- Explicit `warp-ttd discover --json` and local runtime registry discovery:
+  https://github.com/flyingrobots/warp-ttd/issues/78
+- Consent/auth posture when connecting to runtime endpoints:
+  https://github.com/flyingrobots/warp-ttd/issues/79
 
 ## Closeout Links
 
 - Draft PR: Not used; `AGENTS.md` forbids draft pull requests in this repo.
-- Ready-for-review PR:
+- Ready-for-review PR: https://github.com/flyingrobots/warp-ttd/pull/77
 - Retro:
+  ../../method/retro/0076-continuum-target-discovery-contract/continuum-target-discovery-contract.md
 - Witness:
+  `node --experimental-strip-types --test test/liveTargetInspection.spec.ts test/cliJson.spec.ts test/mcpAdmissionChainSurface.spec.ts test/ontologyDoctrine.spec.ts`
