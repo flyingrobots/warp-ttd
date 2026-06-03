@@ -10,6 +10,13 @@ This project will use [Semantic Versioning](https://semver.org/) starting at
 
 ### Added
 
+- **Vendor-neutral Continuum runtime hello handshake design**: added cycle 0080
+  design packet defining `continuum.debug.hello.v1` as the next read-only
+  compatibility contract before local registry discovery, endpoint auth, or
+  debugger capability inspection. The design keeps Continuum as the shared
+  semantic owner, WARP TTD as the CLI/MCP/read-model consumer, Echo as the first
+  native runtime witness candidate, and git-warp/graft as translated-substrate
+  witnesses unless they publish native Continuum hello facts.
 - **Continuum causal debugger design thinking**: added cycle 0081 design
   packet and Manual chapter 009 defining WARP TTD as a Continuum causal
   debugger rather than a time-travel controller. The feature taxonomy covers

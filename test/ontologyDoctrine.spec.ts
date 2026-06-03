@@ -85,6 +85,8 @@ const CONTINUUM_TARGET_DISCOVERY_MANUAL =
   "docs/manual/008-continuum-target-discovery-contract.md";
 const CONTINUUM_TARGET_DISCOVERY_DESIGN =
   "docs/design/0076-continuum-target-discovery-contract/continuum-target-discovery-contract.md";
+const VENDOR_NEUTRAL_RUNTIME_HELLO_DESIGN =
+  "docs/design/0080-vendor-neutral-continuum-runtime-hello-handshake/vendor-neutral-continuum-runtime-hello-handshake.md";
 const CONTINUUM_CAUSAL_DEBUGGER_MANUAL =
   "docs/manual/009-continuum-causal-debugger-design-thinking.md";
 const CONTINUUM_CAUSAL_DEBUGGER_DESIGN =
@@ -496,6 +498,32 @@ function assertContinuumCausalDebuggerDesign(content: string): void {
   assertMermaidFencePresent(content, "classDiagram");
 }
 
+function assertVendorNeutralRuntimeHelloDesign(content: string): void {
+  assertAllTextPresent(content, [
+    "format: \"warp-design-v1\"",
+    "# Vendor-Neutral Continuum Runtime Hello Handshake",
+    "https://github.com/flyingrobots/warp-ttd/issues/80",
+    "continuum.debug.hello.v1",
+    "Continuum owns the shared semantic contract",
+    "read model, CLI/MCP inspection surface",
+    "## Research Notes",
+    "## Agent Interface",
+    "## Agent DX",
+    "ContinuumRuntimeHello",
+    "ContinuumRuntimeHelloInspection",
+    "runtime-hello --json",
+    "warp_ttd.inspect_runtime_hello",
+    "LiveTargetInspection.runtimeHello",
+    "LiveTargetSessionInspection.runtimeHello",
+    "admission: \"NOT_PERFORMED\"",
+    "native Continuum witnesshood",
+    "nativeContinuumWitness: false",
+    "Continuum owns `continuum.debug.hello.v1` semantics",
+    "### Lower Modes",
+  ]);
+  assertMermaidFencePresent(content, "flowchart TD");
+}
+
 function assertNextFiveDesigns(): void {
   assertAllTextPresent(readRepoText(LIVE_ECHO_FAMILY_INTAKE_DESIGN), [
     "status: landed",
@@ -518,6 +546,7 @@ function assertNextFiveDesigns(): void {
   assertEchoAdapterProbeDesign(readRepoText(ECHO_ADAPTER_PROBE_DESIGN));
   assertWesleyGeneratedEchoFamilyDesign(readRepoText(WESLEY_GENERATED_ECHO_FAMILY_DESIGN));
   assertContinuumTargetDiscoveryDesign(readRepoText(CONTINUUM_TARGET_DISCOVERY_DESIGN));
+  assertVendorNeutralRuntimeHelloDesign(readRepoText(VENDOR_NEUTRAL_RUNTIME_HELLO_DESIGN));
   assertContinuumCausalDebuggerDesign(readRepoText(CONTINUUM_CAUSAL_DEBUGGER_DESIGN));
 }
 
