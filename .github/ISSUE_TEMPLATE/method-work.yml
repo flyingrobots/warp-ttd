@@ -1,0 +1,83 @@
+name: Method work
+description: Track WARP TTD feature, protocol, process, or maintenance work.
+title: "<short, branch-safe title>"
+labels:
+  - lane:inbox
+body:
+  - type: markdown
+    attributes:
+      value: |
+        GitHub Issues are the live WARP TTD work tracker. Repo docs are the evidence ledger.
+        Keep the issue short enough to triage; design-level detail belongs in `docs/design/**`.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What is wrong, missing, risky, or unclear?
+    validations:
+      required: true
+  - type: textarea
+    id: desired-outcome
+    attributes:
+      label: Desired Outcome
+      description: What should be true when this is done?
+    validations:
+      required: true
+  - type: textarea
+    id: current-truth
+    attributes:
+      label: Current Truth
+      description: Link concrete files, commands, issues, PRs, or observed failures.
+    validations:
+      required: true
+  - type: textarea
+    id: scope-sketch
+    attributes:
+      label: Scope Sketch
+      description: What is likely in scope?
+      value: |
+        - 
+    validations:
+      required: true
+  - type: textarea
+    id: non-goals
+    attributes:
+      label: Non-Goals
+      description: What should not silently enter this cycle?
+      value: |
+        - 
+    validations:
+      required: true
+  - type: textarea
+    id: agent-first-surface
+    attributes:
+      label: Agent-First Surface
+      description: Name the structured surface an agent can inspect without scraping human UI.
+      value: |
+        - MCP:
+        - CLI JSON / JSONL:
+        - read model:
+        - schema / generated artifact:
+        - fixture / witness:
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance-sketch
+    attributes:
+      label: Acceptance Sketch
+      description: What proof would make this issue honestly done?
+      value: |
+        - [ ] 
+    validations:
+      required: true
+  - type: textarea
+    id: design-evidence
+    attributes:
+      label: Design / Evidence
+      description: Add links once available.
+      value: |
+        - Design doc:
+        - Related issues:
+        - Related PRs:
+    validations:
+      required: false

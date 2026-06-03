@@ -1,0 +1,39 @@
+name: Spike
+description: Track a bounded learning or proof cycle.
+title: "<short spike title>"
+labels:
+  - lane:inbox
+  - type:spike
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+      description: What uncertainty is this spike meant to resolve?
+    validations:
+      required: true
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Constraints
+      description: Time, target app, runtime, fixture, safety, or integration constraints.
+      value: |
+        - 
+    validations:
+      required: true
+  - type: textarea
+    id: proof
+    attributes:
+      label: Proof Artifact
+      description: What witness, demo, transcript, or test will prove the spike answered the question?
+      value: |
+        - 
+    validations:
+      required: true
+  - type: textarea
+    id: adoption
+    attributes:
+      label: Adoption / Retirement Rule
+      description: How will the repo decide whether to adopt, adapt, or retire the spike?
+    validations:
+      required: true

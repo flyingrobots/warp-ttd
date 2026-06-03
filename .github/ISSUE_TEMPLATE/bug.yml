@@ -1,0 +1,57 @@
+name: Bug
+description: Report a defect, regression, or broken invariant in WARP TTD.
+title: "<short bug title>"
+labels:
+  - lane:inbox
+  - type:bug
+  - bug
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What is broken?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Commands, fixtures, target app, terminal size, or steps needed to reproduce.
+      value: |
+        1. 
+        2. 
+        3. 
+    validations:
+      required: true
+  - type: textarea
+    id: current-truth
+    attributes:
+      label: Current Truth
+      description: Link concrete files, failing output, issues, PRs, or commits.
+    validations:
+      required: true
+  - type: textarea
+    id: expected-truth
+    attributes:
+      label: Expected Truth
+      description: What should happen instead?
+    validations:
+      required: true
+  - type: textarea
+    id: agent-surface
+    attributes:
+      label: Agent-Visible Surface
+      description: If relevant, name the CLI JSON, MCP, schema, read model, or deterministic output that shows the bug.
+    validations:
+      required: false
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance
+      value: |
+        - [ ] Regression test fails before the fix.
+        - [ ] Regression test passes after the fix.
+        - [ ] No authority, admission, or host mutation boundary is changed unless explicitly designed.
+    validations:
+      required: true
