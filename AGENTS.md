@@ -25,10 +25,9 @@ This guide is for AI agents and human operators recovering context in the WARP T
 - **NEVER** rebase or force-push.
 - **NEVER** push to `main` without explicit permission.
 - Always use standard commits and regular pushes.
-- Draft pull requests are allowed only as active cycle coordination surfaces:
-  open them after the initial issue/design commit is pushed, link the GitHub
-  Issue and design doc, and convert them to ready-for-review before final
-  review or merge. A draft PR is not cycle completion.
+- Do not create draft pull requests. Open a normal PR only after the initial
+  issue/design commit is pushed, link the GitHub Issue and design doc, and keep
+  `work-in-progress` on the issue while cycle work is active.
 
 ## Documentation & Planning Map
 

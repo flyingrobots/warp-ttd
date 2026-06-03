@@ -53,11 +53,11 @@ stateDiagram-v2
     Sync --> Issue: GitHub issue
     Issue --> Branch: title slug branch
     Branch --> Design: design doc
-    Design --> Draft: pushed draft PR
-    Draft --> Red: failing tests
+    Design --> PR: pushed PR
+    PR --> Red: failing tests
     Red --> Green: passing tests
     Green --> Manualize: manual chapter
-    Manualize --> Ready: ready-for-review PR
+    Manualize --> Ready: validation evidence
     Ready --> Retro: findings/debt
     Retro --> Ship: merge to main
     Ship --> [*]
@@ -71,10 +71,10 @@ stateDiagram-v2
    slug.
 4. **Design**: Write the `warp-design-v1` design doc, stage it with any issue
    template/process updates, commit, and push the branch.
-5. **Draft PR**: Open a draft PR as the active cycle coordination surface and
-   apply `work-in-progress` to the GitHub Issue. Draft PRs are allowed only for
-   active cycle coordination and must be converted to ready-for-review before
-   final review or merge.
+5. **PR coordination**: Open a normal pull request as the active cycle
+   coordination surface after the initial issue/design commit is pushed, and
+   apply `work-in-progress` to the GitHub Issue. Draft PRs are not used in this
+   repo; unfinished state lives on the issue label and PR checklist.
 6. **Red**: Write failing tests based on the design's playback questions,
    starting with the agent-facing contract when the feature has any inspection
    or interaction surface.
@@ -82,8 +82,8 @@ stateDiagram-v2
 8. **Manualize**: Add or update a `MANUAL.md` chapter when the cycle introduces
    durable doctrine, architecture, protocol boundary, operator workflow, or
    agent contract knowledge.
-9. **Ready**: Run validation, update the PR checklist, and convert the PR from
-   draft to ready-for-review.
+9. **Ready**: Run validation, update the PR checklist, and remove or replace
+   stale `work-in-progress` issue state before final review.
 10. **Retro**: Document findings and follow-on debt in the retro packet.
 11. **Ship**: Merge to `main`. Update `docs/BEARING.md` after merge.
 

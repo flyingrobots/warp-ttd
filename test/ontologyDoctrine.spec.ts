@@ -85,6 +85,10 @@ const CONTINUUM_TARGET_DISCOVERY_MANUAL =
   "docs/manual/008-continuum-target-discovery-contract.md";
 const CONTINUUM_TARGET_DISCOVERY_DESIGN =
   "docs/design/0076-continuum-target-discovery-contract/continuum-target-discovery-contract.md";
+const CONTINUUM_CAUSAL_DEBUGGER_MANUAL =
+  "docs/manual/009-continuum-causal-debugger-design-thinking.md";
+const CONTINUUM_CAUSAL_DEBUGGER_DESIGN =
+  "docs/design/0081-continuum-causal-debugger-design-thinking/continuum-causal-debugger-design-thinking.md";
 
 function assertSharedFamilyBoundaryLifecycle(): void {
   assert.equal(repoPathExists(SHARED_FAMILY_BOUNDARY_DESIGN), true);
@@ -157,6 +161,8 @@ function assertManualFilesExist(): void {
   assert.equal(repoPathExists(WESLEY_GENERATED_ECHO_FAMILY_DESIGN), true);
   assert.equal(repoPathExists(CONTINUUM_TARGET_DISCOVERY_MANUAL), true);
   assert.equal(repoPathExists(CONTINUUM_TARGET_DISCOVERY_DESIGN), true);
+  assert.equal(repoPathExists(CONTINUUM_CAUSAL_DEBUGGER_MANUAL), true);
+  assert.equal(repoPathExists(CONTINUUM_CAUSAL_DEBUGGER_DESIGN), true);
 }
 
 function assertManualFrontDoors(): void {
@@ -187,6 +193,7 @@ function assertManualIndexContent(): void {
     "006. Echo Adapter Probe Boundary",
     "007. Wesley-Generated Echo Family Consumer",
     "008. Continuum Target Discovery Contract",
+    "009. Continuum Causal Debugger Design Thinking",
   ]);
   assertAllTextPresent(readRepoText(MANUAL_INDEX), [
     "# WARP TTD Manual Index",
@@ -200,6 +207,7 @@ function assertManualIndexContent(): void {
     "0032-echo-adapter-probe-boundary",
     "0033-wesley-generated-echo-family-consumer",
     "0076-continuum-target-discovery-contract",
+    "0081-continuum-causal-debugger-design-thinking",
   ]);
 }
 
@@ -425,6 +433,49 @@ function assertContinuumTargetDiscoveryDesign(content: string): void {
   assertContinuumTargetDiscoveryInspectionFields(content);
 }
 
+function assertContinuumCausalDebuggerManual(content: string): void {
+  assertAllTextPresent(content, [
+    "# Continuum Causal Debugger Design Thinking",
+    "WARP TTD is a Continuum causal debugger.",
+    "It is not just a time-travel",
+    "controller.",
+    "Perfect replay gives the investigator a stable history.",
+    "counterfactual branches",
+    "effect breakpoint",
+    "admission breakpoint",
+    "reading breakpoint",
+    "absence breakpoint",
+    "invariant breakpoint",
+    "causal breakpoint",
+    "counterfactual breakpoint",
+    "No host mutation through inspection.",
+    "No counterfactual presented as actual history.",
+    "No visual-only debugger truth.",
+  ]);
+}
+
+function assertContinuumCausalDebuggerDesign(content: string): void {
+  assertAllTextPresent(content, [
+    "format: \"warp-design-v1\"",
+    "# Continuum Causal Debugger Design Thinking",
+    "https://github.com/flyingrobots/warp-ttd/issues/81",
+    "Perfect replay is evidence, not authority.",
+    "Counterfactual branches are",
+    "debugger-local hypotheses",
+    "## User Experience / Product Shape",
+    "### Feature Catalog",
+    "### Breakpoint Model",
+    "Counterfactual workbench",
+    "Evidence ledger",
+    "Agent Inspectability / Explainability Posture",
+    "No host mutation through inspection.",
+    "No inferred authority.",
+  ]);
+  assertMermaidFencePresent(content, "journey");
+  assertMermaidFencePresent(content, "flowchart TD");
+  assertMermaidFencePresent(content, "classDiagram");
+}
+
 function assertNextFiveDesigns(): void {
   assertAllTextPresent(readRepoText(LIVE_ECHO_FAMILY_INTAKE_DESIGN), [
     "status: landed",
@@ -447,6 +498,7 @@ function assertNextFiveDesigns(): void {
   assertEchoAdapterProbeDesign(readRepoText(ECHO_ADAPTER_PROBE_DESIGN));
   assertWesleyGeneratedEchoFamilyDesign(readRepoText(WESLEY_GENERATED_ECHO_FAMILY_DESIGN));
   assertContinuumTargetDiscoveryDesign(readRepoText(CONTINUUM_TARGET_DISCOVERY_DESIGN));
+  assertContinuumCausalDebuggerDesign(readRepoText(CONTINUUM_CAUSAL_DEBUGGER_DESIGN));
 }
 
 test("Mermaid fence assertions tolerate CRLF line endings", () => {
@@ -716,6 +768,7 @@ test("manual starts generated family ingress cycle", () => {
   assertEchoAdapterProbeManual(readRepoText(ECHO_ADAPTER_PROBE_MANUAL));
   assertWesleyGeneratedEchoFamilyManual(readRepoText(WESLEY_GENERATED_ECHO_FAMILY_MANUAL));
   assertContinuumTargetDiscoveryManual(readRepoText(CONTINUUM_TARGET_DISCOVERY_MANUAL));
+  assertContinuumCausalDebuggerManual(readRepoText(CONTINUUM_CAUSAL_DEBUGGER_MANUAL));
   assertNextFiveDesigns();
 });
 

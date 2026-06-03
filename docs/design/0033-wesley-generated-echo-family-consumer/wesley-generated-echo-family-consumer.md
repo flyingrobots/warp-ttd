@@ -291,13 +291,13 @@ codecs after Echo publishes an admitted session surface.
 ## Implementation Slices
 
 - Sync to the merge target, branch from the issue title slug, write this design
-  doc, commit, push, open a draft PR, and apply `work-in-progress` to the issue.
+  doc, commit, push, open a normal PR, and apply `work-in-progress` to the issue.
 - Add failing live Echo family intake tests for present, absent, unavailable,
   and obstructed generated artifact descriptors.
 - Implement target-aware shared-family consumption inspection and manifest
   parsing.
 - Add CLI/MCP regression coverage and Manual updates.
-- Run validation, update closeout links, and convert the PR to ready-for-review.
+- Run validation and update closeout links before final review.
 
 ## Tests To Write First
 
@@ -381,7 +381,7 @@ Mitigations:
 
 ## Closeout Links
 
-- Draft PR: https://github.com/flyingrobots/warp-ttd/pull/75
-- Ready-for-review PR: https://github.com/flyingrobots/warp-ttd/pull/75
+- PR: https://github.com/flyingrobots/warp-ttd/pull/75
+- Ready-for-review evidence: local validation and GitHub Actions were green before merge.
 - Retro: ../../method/retro/0033-wesley-generated-echo-family-consumer/wesley-generated-echo-family-consumer.md
 - Witness: `node --experimental-strip-types --test test/liveEchoFamilyIntake.spec.ts test/cliJson.spec.ts test/mcpAdmissionChainSurface.spec.ts`

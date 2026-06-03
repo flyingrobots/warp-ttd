@@ -4,7 +4,7 @@ title: "Continuum Target Discovery Contract"
 cycle: "0076-continuum-target-discovery-contract"
 legend: "PROTO"
 issue: "https://github.com/flyingrobots/warp-ttd/issues/76"
-status: "active"
+status: "landed"
 base_commit: "bab9f273f5d6e7e442dca7b71c39e566424afd28"
 created: "2026-06-03"
 updated: "2026-06-03"
@@ -446,8 +446,8 @@ Mitigations:
 
 ## Closeout Links
 
-- Draft PR: Not used; `AGENTS.md` forbids draft pull requests in this repo.
-- Ready-for-review PR: https://github.com/flyingrobots/warp-ttd/pull/77
+- PR: https://github.com/flyingrobots/warp-ttd/pull/77
+- Ready-for-review evidence: CI and local validation were green before merge.
 - Retro:
   ../../method/retro/0076-continuum-target-discovery-contract/continuum-target-discovery-contract.md
 - Witness:

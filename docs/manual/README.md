@@ -24,6 +24,7 @@ decisions that should survive beyond an individual cycle.
 6. [Echo Adapter Probe Boundary](./006-echo-adapter-probe-boundary.md)
 7. [Wesley-Generated Echo Family Consumer](./007-wesley-generated-echo-family-consumer.md)
 8. [Continuum Target Discovery Contract](./008-continuum-target-discovery-contract.md)
+9. [Continuum Causal Debugger Design Thinking](./009-continuum-causal-debugger-design-thinking.md)
 
 ## Source Design Cycles
 
@@ -36,4 +37,5 @@ decisions that should survive beyond an individual cycle.
 | [Jedit Echo Smoke](./005-jedit-echo-smoke.md) | [0031-jedit-echo-smoke](../design/0031-jedit-echo-smoke/jedit-echo-smoke.md) | landed |
 | [Echo Adapter Probe Boundary](./006-echo-adapter-probe-boundary.md) | [0032-echo-adapter-probe-boundary](../design/0032-echo-adapter-probe-boundary/echo-adapter-probe-boundary.md) | landed |
 | [Wesley-Generated Echo Family Consumer](./007-wesley-generated-echo-family-consumer.md) | [0033-wesley-generated-echo-family-consumer](../design/0033-wesley-generated-echo-family-consumer/wesley-generated-echo-family-consumer.md) | landed |
-| [Continuum Target Discovery Contract](./008-continuum-target-discovery-contract.md) | [0076-continuum-target-discovery-contract](../design/0076-continuum-target-discovery-contract/continuum-target-discovery-contract.md) | active |
+| [Continuum Target Discovery Contract](./008-continuum-target-discovery-contract.md) | [0076-continuum-target-discovery-contract](../design/0076-continuum-target-discovery-contract/continuum-target-discovery-contract.md) | landed |
+| [Continuum Causal Debugger Design Thinking](./009-continuum-causal-debugger-design-thinking.md) | [0081-continuum-causal-debugger-design-thinking](../design/0081-continuum-causal-debugger-design-thinking/continuum-causal-debugger-design-thinking.md) | active |
