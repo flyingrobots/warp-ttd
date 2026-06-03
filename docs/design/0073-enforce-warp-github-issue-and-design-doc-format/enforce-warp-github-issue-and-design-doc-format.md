@@ -30,10 +30,12 @@ manual: "not-applicable"
 
 WARP TTD will enforce a GitHub-first work format and a `warp-design-v1` design
 format through templates, a deterministic `npm run check:method` gate, CI, and
-the existing pre-push hook. The gate preserves historical design docs through a
-legacy allowlist while requiring future design docs to name agent-first
-surfaces, evidence posture, authority boundaries, executable proof, and
-closeout links.
+the existing pre-push hook. Cycle work starts from a synced merge target, an
+issue-title branch, an initial issue/design commit, and a draft PR coordination
+surface marked `work-in-progress`. The gate preserves historical design docs
+through a legacy allowlist while requiring future design docs to name
+agent-first surfaces, evidence posture, authority boundaries, executable proof,
+and closeout links.
 
 ## Sponsored Human
 
@@ -81,6 +83,7 @@ This cycle includes:
 
 - GitHub issue forms for Method work, bugs, and spikes.
 - A PR proof checklist.
+- A draft PR cycle-start policy.
 - A WARP design template.
 - A legacy design allowlist for pre-format design docs.
 - A deterministic Method design check script.
@@ -96,6 +99,7 @@ This cycle does not include:
 - Retiring legacy filesystem backlog cards; issue #72 tracks that work.
 - Validating live GitHub Issue labels from CI through the GitHub API.
 - Replacing human review with static checks.
+- Treating draft PRs as reviewable or complete work.
 
 ## Agent-First Surface
 
@@ -151,9 +155,9 @@ generated artifacts, Echo-published families, or adapter residue.
 
 ## User Experience / Product Shape
 
-Human contributors see GitHub issue forms, the PR checklist, and CI failures
-when the process contract is missing. There is no rendered WARP TTD product UI
-change in this cycle.
+Human contributors see GitHub issue forms, the PR checklist, the draft PR
+coordination fields, and CI failures when the process contract is missing.
+There is no rendered WARP TTD product UI change in this cycle.
 
 ## Accessibility Posture
 
@@ -242,8 +246,8 @@ cycles should remove entries as historical docs are migrated or retired.
 
 ## Implementation Slices
 
-- Add GitHub issue forms, PR template, WARP design template, and legacy
-  allowlist.
+- Add GitHub issue forms, PR template, WARP design template, draft PR cycle-start
+  policy, and legacy allowlist.
 - Add `scripts/check-method-designs.mjs` and `npm run check:method`.
 - Add test coverage for the check command and wire CI/pre-push.
 - Update process docs to name GitHub Issues as live tracker and docs as
@@ -268,6 +272,8 @@ The work is done when:
 - [ ] The pre-push hook runs `npm run check:method`.
 - [ ] New design docs not on the legacy list must use `warp-design-v1`.
 - [ ] `behavior-required` designs must include at least one non-doc proof tag.
+- [ ] Cycle-start doctrine allows draft PRs only after the initial issue/design
+      commit and requires conversion to ready-for-review before final review.
 - [ ] Issue #73 and this design doc are linked.
 
 ## Validation Plan

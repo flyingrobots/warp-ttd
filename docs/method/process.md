@@ -41,26 +41,36 @@ If the answer is unclear, the work belongs in the backlog, not a cycle.
 
 Each cycle follows the same explicit loop:
 
-0. **Pull from GitHub Issues** - choose an issue, mark it
-   `work-in-progress`, and keep its Method lane/type/legend labels current.
-1. **Design** - write a design doc in `docs/design/<cycle>/` from
+0. **Sync to merge target** - run `git fetch --prune origin`, sync to the
+   target branch (almost always `origin/main`), and verify a clean worktree.
+1. **Issue** - choose or create the GitHub Issue, set Method lane/type/legend
+   labels, set a milestone when relevant, and keep the issue as the live
+   tracker.
+2. **Branch** - create a new branch from the synced merge target using the issue
+   title slug.
+3. **Design** - write a design doc in `docs/design/<cycle>/` from
    `docs/templates/design-cycle.md`. Define the linked issue, sponsor human,
    sponsor agent, hill, agent-first surface, authority/mutation boundary,
    playback questions, tests to write first, and non-goals.
-2. **RED - write failing tests** - playback questions become executable
+4. **Open the cycle** - stage the design doc, commit, push the branch, open a
+   draft PR, link the GitHub Issue and design doc from the PR, and apply
+   `work-in-progress` to the issue. The draft PR is a coordination surface, not
+   a review request or completion claim.
+5. **RED - write failing tests** - playback questions become executable
    specifications. Tests are the literal spec. No documentation layer
    sits between intent and verification. Build the agent-facing surface
    first — it operates at the low level you need anyway to make the
    user-level experience work.
-3. **GREEN - implement** - write code until the tests pass. Code exists
+6. **GREEN - implement** - write code until the tests pass. Code exists
    because specs demanded it.
-4. **Playback** - answer every playback question from both perspectives.
+7. **Playback** - answer every playback question from both perspectives.
    The agent checks the agent playback questions. The human is prompted
    to check the user playback questions. Write the answers down. Do not
    proceed until every playback question has a clear yes/no answer.
-5. **PR to main** - open a pull request. Review loops until merge is
-   accepted.
-6. **Close** - merge. Write a retrospective in
+8. **Ready for review** - run validation, update the PR checklist, remove or
+   replace stale `work-in-progress` issue state, and convert the PR from draft
+   to ready-for-review. Review loops until merge is accepted.
+9. **Close** - merge. Write a retrospective in
    `docs/method/retro/<cycle>/`. The retro must include:
    - **Drift check:** compare what was built against the design doc.
      Call out any divergence — intentional or accidental.
@@ -70,6 +80,14 @@ Each cycle follows the same explicit loop:
    maintain the backlog.
 
 This loop is part of the process, not optional cleanup.
+
+### Draft PR Policy
+
+Draft PRs are allowed only for active cycle coordination. A draft PR must be
+opened after the initial issue/design commit is pushed, must link the GitHub
+Issue and design doc, and must remain visibly unfinished until validation and
+playback are ready for review. A draft PR is never a substitute for issue
+labels, design docs, tests, witness, Manual updates, retros, or closeout.
 
 ## Playback
 

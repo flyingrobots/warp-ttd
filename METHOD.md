@@ -49,28 +49,43 @@ them. Do not treat those directories as the live tracker for new work.
 ```mermaid
 stateDiagram-v2
     direction LR
-    [*] --> Pull: lane:asap
-    Pull --> Branch: cycle/
-    Branch --> Red: failing tests
+    [*] --> Sync: fetch + merge target
+    Sync --> Issue: GitHub issue
+    Issue --> Branch: title slug branch
+    Branch --> Design: design doc
+    Design --> Draft: pushed draft PR
+    Draft --> Red: failing tests
     Red --> Green: passing tests
     Green --> Manualize: manual chapter
-    Manualize --> Retro: findings/debt
-    Retro --> Ship: PR to main
+    Manualize --> Ready: ready-for-review PR
+    Ready --> Retro: findings/debt
+    Retro --> Ship: merge to main
     Ship --> [*]
 ```
 
-1. **Pull**: Choose a GitHub Issue, mark it `work-in-progress`, and link it
-   from the design doc.
-2. **Branch**: Create a branch from the issue title slug.
-3. **Red**: Write failing tests based on the design's playback questions,
+1. **Sync**: `git fetch --prune origin`, sync to the merge target branch
+   (almost always `origin/main`), and verify a clean worktree.
+2. **Issue**: Choose or create the GitHub Issue, set Method labels and milestone,
+   and keep the issue as the live tracker.
+3. **Branch**: Create a branch from the synced merge target using the issue title
+   slug.
+4. **Design**: Write the `warp-design-v1` design doc, stage it with any issue
+   template/process updates, commit, and push the branch.
+5. **Draft PR**: Open a draft PR as the active cycle coordination surface and
+   apply `work-in-progress` to the GitHub Issue. Draft PRs are allowed only for
+   active cycle coordination and must be converted to ready-for-review before
+   final review or merge.
+6. **Red**: Write failing tests based on the design's playback questions,
    starting with the agent-facing contract when the feature has any inspection
    or interaction surface.
-4. **Green**: Implement the solution until tests pass.
-5. **Manualize**: Add or update a `MANUAL.md` chapter when the cycle introduces
+7. **Green**: Implement the solution until tests pass.
+8. **Manualize**: Add or update a `MANUAL.md` chapter when the cycle introduces
    durable doctrine, architecture, protocol boundary, operator workflow, or
    agent contract knowledge.
-6. **Retro**: Document findings and follow-on debt in the retro packet.
-7. **Ship**: Open a PR to `main`. Update `docs/BEARING.md` after merge.
+9. **Ready**: Run validation, update the PR checklist, and convert the PR from
+   draft to ready-for-review.
+10. **Retro**: Document findings and follow-on debt in the retro packet.
+11. **Ship**: Merge to `main`. Update `docs/BEARING.md` after merge.
 
 ## Design Format
 

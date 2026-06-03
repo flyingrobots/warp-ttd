@@ -186,6 +186,8 @@ window.
 
 ## Implementation Slices
 
+- Sync to the merge target, branch from the issue title slug, write this design
+  doc, commit, push, open a draft PR, and apply `work-in-progress` to the issue.
 - <Smallest testable slice>
 - <Next slice>
 
@@ -248,6 +250,7 @@ Mitigations:
 
 ## Closeout Links
 
-- PR:
+- Draft PR:
+- Ready-for-review PR:
 - Retro:
 - Witness:

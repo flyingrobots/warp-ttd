@@ -173,6 +173,11 @@ function assertTemplate() {
       addFailure(`Design template must name non-doc proof tag ${tag}`);
     }
   }
+  for (const value of ['open a draft PR', 'work-in-progress', 'Draft PR:', 'Ready-for-review PR:']) {
+    if (!template.includes(value)) {
+      addFailure(`Design template is missing cycle-opening phrase: ${value}`);
+    }
+  }
 }
 
 function assertIssueTemplates() {
@@ -200,6 +205,10 @@ function assertPrTemplate() {
   const template = readRepoText('.github/pull_request_template.md');
   for (const value of [
     'WARP Proof Checklist',
+    'Cycle Coordination',
+    'Draft PR opened after initial issue/design commit',
+    'work-in-progress',
+    'ready-for-review',
     'agent-first surface',
     'authority, admission, and mutation boundary',
     'non-doc proof test',
