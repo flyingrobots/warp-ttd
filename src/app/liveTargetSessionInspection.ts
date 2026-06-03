@@ -236,11 +236,15 @@ async function inspectGitWarpSession(
 function descriptorOnlySession(
   target: LiveTargetInspection
 ): DescriptorOnlyLiveTargetSessionInspection {
+  const reason = target.adapterPosture === "OBSTRUCTED"
+    ? target.reason
+    : `${target.target} is registered, but runtime handshake session inspection is not implemented in this cycle.`;
+
   return {
     ...liveTargetSessionBase(
       target,
       "OBSTRUCTED",
-      `${target.target} is registered, but runtime handshake session inspection is not implemented in this cycle.`
+      reason
     ),
     hostKind: "CONTINUUM",
     adapterPosture: target.adapterPosture

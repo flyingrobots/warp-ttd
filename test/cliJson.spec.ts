@@ -748,6 +748,38 @@ test("target-session --json reports descriptor-only Continuum target as obstruct
   assert.equal("session" in target, false);
 });
 
+test("target-session --json preserves descriptor obstruction reasons", async () => {
+  const lines = await runJsonWithEnv("target-session", {
+    WARP_TTD_TARGETS_JSON: JSON.stringify([
+      {
+        id: "blocked-demo",
+        label: "Blocked demo runtime",
+        connection: {
+          mode: "descriptor-only",
+          adapterPosture: "OBSTRUCTED",
+          reason: "Runtime endpoint refused the witnessed hello."
+        }
+      }
+    ])
+  });
+  assert.equal(lines.length, 1);
+
+  const obj = parseLine(requireLine(lines, 0));
+  assert.equal(obj.envelope, "LiveTargetSessionInspection");
+  const target = requireRecord(obj.data, "blocked-demo LiveTargetSessionInspection.data");
+  assert.equal(target["target"], "blocked-demo");
+  assert.equal(target["targetLabel"], "Blocked demo runtime");
+  assert.equal(target["connectionMode"], "descriptor-only");
+  assert.equal(target["hostKind"], "CONTINUUM");
+  assert.equal(target["adapterPosture"], "OBSTRUCTED");
+  assert.equal(target["sessionPosture"], "OBSTRUCTED");
+  assert.match(
+    requireString(target["reason"], "blocked-demo.reason"),
+    /refused the witnessed hello/
+  );
+  assert.equal("session" in target, false);
+});
+
 test("target-session --json keeps jedit session obstructed when Echo bridge probe is present", async () => {
   const jeditRoot = fs.mkdtempSync(path.join(os.tmpdir(), "warp-ttd-jedit-"));
 

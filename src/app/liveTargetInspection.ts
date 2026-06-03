@@ -79,6 +79,16 @@ export interface DescriptorOnlyConnectionDescriptor {
   readonly adapterPosture?: Extract<LiveTargetAdapterPosture, "UNSUPPORTED" | "OBSTRUCTED">;
 }
 
+type DescriptorOnlyAdapterPosture = NonNullable<
+  DescriptorOnlyConnectionDescriptor["adapterPosture"]
+>;
+
+interface DescriptorOnlyConnectionFields {
+  readonly rootPath?: string;
+  readonly reason?: string;
+  readonly adapterPosture?: DescriptorOnlyAdapterPosture;
+}
+
 export type ContinuumDebugTargetConnection =
   | EchoRootConnectionDescriptor
   | GitWarpConnectionDescriptor
@@ -392,10 +402,26 @@ function gitWarpConnectionFrom(
 
 function descriptorOnlyAdapterPostureFrom(
   value: JsonValue | undefined
-): DescriptorOnlyConnectionDescriptor["adapterPosture"] | undefined {
+): DescriptorOnlyAdapterPosture | undefined {
   if (value === "UNSUPPORTED") return value;
   if (value === "OBSTRUCTED") return value;
   return undefined;
+}
+
+function descriptorOnlyConnectionFields(
+  reason: string | undefined,
+  rootPath: string | undefined,
+  adapterPosture: DescriptorOnlyAdapterPosture | undefined
+): DescriptorOnlyConnectionFields {
+  const fields: {
+    reason?: string;
+    rootPath?: string;
+    adapterPosture?: DescriptorOnlyAdapterPosture;
+  } = {};
+  if (reason !== undefined) fields.reason = reason;
+  if (rootPath !== undefined) fields.rootPath = rootPath;
+  if (adapterPosture !== undefined) fields.adapterPosture = adapterPosture;
+  return fields;
 }
 
 function descriptorOnlyConnectionFrom(data: JsonObject): DescriptorOnlyConnectionDescriptor {
@@ -409,9 +435,7 @@ function descriptorOnlyConnectionFrom(data: JsonObject): DescriptorOnlyConnectio
   }
   return {
     mode: "descriptor-only",
-    ...(reason === undefined ? {} : { reason }),
-    ...(rootPath === undefined ? {} : { rootPath }),
-    ...(adapterPosture === undefined ? {} : { adapterPosture })
+    ...descriptorOnlyConnectionFields(reason, rootPath, adapterPosture)
   };
 }
 
