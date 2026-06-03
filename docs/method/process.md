@@ -53,9 +53,9 @@ Each cycle follows the same explicit loop:
    sponsor agent, hill, agent-first surface, authority/mutation boundary,
    playback questions, tests to write first, and non-goals.
 4. **Open the cycle** - stage the design doc, commit, push the branch, open a
-   draft PR, link the GitHub Issue and design doc from the PR, and apply
-   `work-in-progress` to the issue. The draft PR is a coordination surface, not
-   a review request or completion claim.
+   normal PR, link the GitHub Issue and design doc from the PR, and apply
+   `work-in-progress` to the issue. The PR is a coordination surface while the
+   issue carries the unfinished-work state.
 5. **RED - write failing tests** - playback questions become executable
    specifications. Tests are the literal spec. No documentation layer
    sits between intent and verification. Build the agent-facing surface
@@ -68,8 +68,8 @@ Each cycle follows the same explicit loop:
    to check the user playback questions. Write the answers down. Do not
    proceed until every playback question has a clear yes/no answer.
 8. **Ready for review** - run validation, update the PR checklist, remove or
-   replace stale `work-in-progress` issue state, and convert the PR from draft
-   to ready-for-review. Review loops until merge is accepted.
+   replace stale `work-in-progress` issue state, and record playback/witness
+   evidence. Review loops until merge is accepted.
 9. **Close** - merge. Write a retrospective in
    `docs/method/retro/<cycle>/`. The retro must include:
    - **Drift check:** compare what was built against the design doc.
@@ -81,13 +81,13 @@ Each cycle follows the same explicit loop:
 
 This loop is part of the process, not optional cleanup.
 
-### Draft PR Policy
+### PR Coordination Policy
 
-Draft PRs are allowed only for active cycle coordination. A draft PR must be
-opened after the initial issue/design commit is pushed, must link the GitHub
-Issue and design doc, and must remain visibly unfinished until validation and
-playback are ready for review. A draft PR is never a substitute for issue
-labels, design docs, tests, witness, Manual updates, retros, or closeout.
+Draft PRs are not used in this repository. Open a normal PR only after the
+initial issue/design commit is pushed, link the GitHub Issue and design doc,
+and keep unfinished cycle state visible through the issue's `work-in-progress`
+label and the PR checklist. A PR is never a substitute for issue labels,
+design docs, tests, witness, Manual updates, retros, or closeout.
 
 ## Playback
 

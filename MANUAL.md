@@ -33,3 +33,4 @@ Manual chapters should:
 - [006. Echo Adapter Probe Boundary](./docs/manual/006-echo-adapter-probe-boundary.md)
 - [007. Wesley-Generated Echo Family Consumer](./docs/manual/007-wesley-generated-echo-family-consumer.md)
 - [008. Continuum Target Discovery Contract](./docs/manual/008-continuum-target-discovery-contract.md)
+- [009. Continuum Causal Debugger Design Thinking](./docs/manual/009-continuum-causal-debugger-design-thinking.md)

@@ -10,6 +10,12 @@ This project will use [Semantic Versioning](https://semver.org/) starting at
 
 ### Added
 
+- **Continuum causal debugger design thinking**: added cycle 0081 design
+  packet and Manual chapter 009 defining WARP TTD as a Continuum causal
+  debugger rather than a time-travel controller. The feature taxonomy covers
+  perfect replay, causal queries, breakpoint families, counterfactual branches,
+  branch comparison, evidence ledgers, agent playbooks, report export, and the
+  no-host-mutation boundary.
 - **Continuum target discovery contract**: `targets --json`,
   `target-session --json`, and `warp_ttd.inspect_live_targets` now inspect
   descriptor-backed Continuum-compatible targets. `jedit` and `graft` remain
@@ -86,6 +92,14 @@ This project will use [Semantic Versioning](https://semver.org/) starting at
 
 ### Changed
 
+- **Cycle PR coordination policy**: Method, AGENTS, process docs, templates,
+  and the 0073 design ledger now state that draft PRs are not used; active work
+  is carried by the GitHub Issue's `work-in-progress` state and the normal PR
+  checklist.
+- **Design format agent sections**: the WARP design template and Method checker
+  now require `Agent Interface` and `Agent DX` sections. Rendered/TUI-specific
+  Bijou-style product detail remains conditional on actual rendered UX
+  implications rather than mandatory for docs-only or backend/process cycles.
 - **Continuum target discovery hardening**: malformed
   `WARP_TTD_TARGETS_JSON` top-level values, caller-supplied duplicate target
   ids, descriptor-declared obstruction posture/reasons, and git-warp session

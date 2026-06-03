@@ -110,6 +110,25 @@ The first structured surface is the existing live-target read model, visible
 through `npm run targets -- --json` and MCP `warp_ttd.inspect_live_targets`.
 The field is `jedit.sessionFamilyIntake.generatedFamilyConsumption`.
 
+## Agent Interface
+
+Agent-facing interfaces are:
+
+- CLI JSON envelope `LiveTargetInspection` from `npm run targets -- --json`
+- MCP tool `warp_ttd.inspect_live_targets`
+- target field `jedit.sessionFamilyIntake.generatedFamilyConsumption`
+- generated artifact posture values `GENERATED_FAMILY_PRESENT`,
+  `GENERATED_FAMILY_UNAVAILABLE`, `LOCAL_MIRROR_FALLBACK`, and obstruction
+  reasons
+
+## Agent DX
+
+An agent can inspect a target once and decide whether generated Echo family
+artifacts are visible, unavailable, locally mirrored, or obstructed. The output
+does not require module execution, app-specific guessing, or UI scraping.
+Malformed descriptors and missing generated files remain visible as machine
+readable obstruction instead of becoming silent absence.
+
 ## Runtime / API / Protocol Contract
 
 The contract is:
@@ -291,13 +310,13 @@ codecs after Echo publishes an admitted session surface.
 ## Implementation Slices
 
 - Sync to the merge target, branch from the issue title slug, write this design
-  doc, commit, push, open a draft PR, and apply `work-in-progress` to the issue.
+  doc, commit, push, open a normal PR, and apply `work-in-progress` to the issue.
 - Add failing live Echo family intake tests for present, absent, unavailable,
   and obstructed generated artifact descriptors.
 - Implement target-aware shared-family consumption inspection and manifest
   parsing.
 - Add CLI/MCP regression coverage and Manual updates.
-- Run validation, update closeout links, and convert the PR to ready-for-review.
+- Run validation and update closeout links before final review.
 
 ## Tests To Write First
 
@@ -381,7 +400,7 @@ Mitigations:
 
 ## Closeout Links
 
-- Draft PR: https://github.com/flyingrobots/warp-ttd/pull/75
-- Ready-for-review PR: https://github.com/flyingrobots/warp-ttd/pull/75
+- PR: https://github.com/flyingrobots/warp-ttd/pull/75
+- Ready-for-review evidence: local validation and GitHub Actions were green before merge.
 - Retro: ../../method/retro/0033-wesley-generated-echo-family-consumer/wesley-generated-echo-family-consumer.md
 - Witness: `node --experimental-strip-types --test test/liveEchoFamilyIntake.spec.ts test/cliJson.spec.ts test/mcpAdmissionChainSurface.spec.ts`

@@ -4,7 +4,7 @@ title: "Continuum Target Discovery Contract"
 cycle: "0076-continuum-target-discovery-contract"
 legend: "PROTO"
 issue: "https://github.com/flyingrobots/warp-ttd/issues/76"
-status: "active"
+status: "landed"
 base_commit: "bab9f273f5d6e7e442dca7b71c39e566424afd28"
 created: "2026-06-03"
 updated: "2026-06-03"
@@ -113,6 +113,29 @@ The first structured surface is the existing target read model visible through
 `npm run targets -- --json`, `npm run target-session -- --json`, and MCP
 `warp_ttd.inspect_live_targets`. Those surfaces will report descriptor-derived
 target records rather than a fixed pair.
+
+## Agent Interface
+
+Agent-facing interfaces are:
+
+- CLI JSON envelope `LiveTargetInspection` from `npm run targets -- --json`
+- CLI JSON envelope `LiveTargetSessionInspection` from
+  `npm run target-session -- --json`
+- MCP tool `warp_ttd.inspect_live_targets`
+- environment override `WARP_TTD_TARGETS_JSON`
+- compatibility environment variables `WARP_TTD_JEDIT_ROOT` and
+  `WARP_TTD_GRAFT_ROOT`
+- descriptor fields `id`, `label`, `appKind`, `connection.mode`, `rootPath`,
+  `graphName`, `capabilities`, and posture facts
+
+## Agent DX
+
+An agent can enumerate Continuum-compatible targets, inspect why each target is
+configured, unsupported, obstructed, or session-capable, and choose a target
+without dispatching on app names. Synthetic descriptor-only targets are visible
+for tests and early vendor integration. Malformed descriptors, duplicate ids,
+and missing git-warp graph names produce machine-readable obstruction facts
+instead of disappearing.
 
 ## Runtime / API / Protocol Contract
 
@@ -446,8 +469,8 @@ Mitigations:
 
 ## Closeout Links
 
-- Draft PR: Not used; `AGENTS.md` forbids draft pull requests in this repo.
-- Ready-for-review PR: https://github.com/flyingrobots/warp-ttd/pull/77
+- PR: https://github.com/flyingrobots/warp-ttd/pull/77
+- Ready-for-review evidence: CI and local validation were green before merge.
 - Retro:
   ../../method/retro/0076-continuum-target-discovery-contract/continuum-target-discovery-contract.md
 - Witness:

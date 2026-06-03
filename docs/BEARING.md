@@ -51,12 +51,14 @@ timeline
 
 ### 4. Neighborhood & Site Catalog
 
-- Refinement of the `NeighborhoodFocusSummary` to share focus across disparate debugger pages.
+- Refinement of the `NeighborhoodFocusSummary` to share focus across disparate
+  debugger pages.
 - Hardening site-driven worldline cursor recomputation for consistent navigation.
 
 ### 5. DebuggerSession Maturity
 
-- Implementation of the `DebuggerSession` investigation object to track speculative result handles and investigator context.
+- Implementation of the `DebuggerSession` investigation object to track
+  speculative result handles and investigator context.
 - Scaling the window-based read model to handle high-density causal worldlines.
 - Exposing read-only session, worldline, reading, `AdapterCapability`, and
   admission-chain facts before adding speculative lifecycle controls.
@@ -67,8 +69,9 @@ timeline
   admission-chain read model, not as debugger-owned authority.
 - Echo owns runtime-local handles, admission, obstruction, access
   instrumentation, witnesses, receipts, and readings.
-- Authority layers issue `CapabilityGrant` and `CapabilityPresentation` objects; applications hide
-  handles, basis references, and runtime coordinates behind adapters.
+- Authority layers issue `CapabilityGrant` and `CapabilityPresentation`
+  objects; applications hide handles, basis references, and runtime coordinates
+  behind adapters.
 - WARP TTD should inspect these facts through protocol/read-model surfaces
   without issuing authority or mutating host state.
 
@@ -115,9 +118,10 @@ timeline
 The product goal is **Continuum-Compatible Target Debugging**: WARP TTD debugs
 targets that expose Continuum-compatible inspection contracts. `jedit`, a live
 Echo app, and `graft`, a live git-warp app, are default witness targets, not
-special debugger concepts. The immediate architectural correction is the
-**Continuum Target Discovery Contract** before the next neighborhood/admission
-slice deepens target assumptions.
+special debugger concepts. The **Continuum Target Discovery Contract** is now
+landed; the next correction is a design-thinking pass that names the
+Continuum-native causal debugger experience before implementation slices deepen
+individual feature assumptions.
 
 MCP is not authority, admission, grant issuance, or mutation. The read-model
 target is
@@ -165,7 +169,7 @@ paired with
 It teaches the Echo path to report manifest-declared generated Continuum Echo
 inspect artifacts when available while preserving `LOCAL_MIRROR_FALLBACK` for
 fixtures, git-warp, and missing generated packages.
-The Continuum target discovery contract is in flight:
+The Continuum target discovery contract is Manual-backed and landed:
 [`docs/manual/008-continuum-target-discovery-contract.md`](./manual/008-continuum-target-discovery-contract.md),
 paired with
 [`docs/design/0076-continuum-target-discovery-contract/continuum-target-discovery-contract.md`](./design/0076-continuum-target-discovery-contract/continuum-target-discovery-contract.md).
@@ -179,25 +183,102 @@ now reports both jedit obstruction and graft session posture. Both surfaces
 include `jedit.echoAdapterProbe`, which distinguishes missing root, absent
 bridge, supported bridge, unsupported ABI, and obstructed descriptor without
 claiming an open Echo session.
-The active evidence-posture cycle is
+The landed evidence-posture boundary is
 [`docs/design/0021-runtime-boundary-evidence-posture/runtime-boundary-evidence-posture.md`](./design/0021-runtime-boundary-evidence-posture/runtime-boundary-evidence-posture.md).
+The active synthesis cycle is
+[`#81 Continuum causal debugger design thinking and post-0076 housekeeping`](https://github.com/flyingrobots/warp-ttd/issues/81):
+it defines what debugging means when Continuum gives WARP TTD deterministic
+replay, counterfactuals, causal evidence, readings, witnesses, and structured
+agent surfaces.
+The paired design and Manual chapter are
+[`docs/design/0081-continuum-causal-debugger-design-thinking/continuum-causal-debugger-design-thinking.md`](./design/0081-continuum-causal-debugger-design-thinking/continuum-causal-debugger-design-thinking.md)
+and
+[`docs/manual/009-continuum-causal-debugger-design-thinking.md`](./manual/009-continuum-causal-debugger-design-thinking.md).
+Its follow-on implementation epics are
+[#82](https://github.com/flyingrobots/warp-ttd/issues/82),
+[#83](https://github.com/flyingrobots/warp-ttd/issues/83),
+[#84](https://github.com/flyingrobots/warp-ttd/issues/84),
+[#85](https://github.com/flyingrobots/warp-ttd/issues/85), and
+[#86](https://github.com/flyingrobots/warp-ttd/issues/86).
 
-## Next Ten Slice Queue
+## Next Twelve Slice Queue
 
 As of 2026-06-03, the next execution queue continues from the landed
-Manual-backed `0033-wesley-generated-echo-family-consumer` cycle. Each slice should
-follow the cycle loop in `METHOD.md`: design packet, failing tests,
+Manual-backed `0076-continuum-target-discovery-contract` cycle. Each slice
+should follow the cycle loop in `METHOD.md`: design packet, failing tests,
 implementation, Manual chapter or Manual update, retro/follow-on debt,
 validation, and PR.
 
-1. **0076 Continuum Target Discovery Contract**
-   - Make configured Continuum-compatible targets descriptor-backed instead of
-     hard-coded as `jedit` and `graft`.
-   - Keep `jedit` and `graft` as default witness targets.
-   - Prove a synthetic third target appears through CLI JSON and MCP without
-     WARP TTD learning a new app name.
+1. **0081 Continuum Causal Debugger Design Thinking**
+   - Define the product shape of debugging with deterministic replay,
+     counterfactuals, causal evidence, readings, witnesses, and agent-first
+     surfaces.
+   - Map features such as breakpoints, watchpoints, effect tracing,
+     counterfactual comparison, time-window search, and causal blame to human
+     UX and machine-readable contracts.
+   - Produce follow-on implementation issue candidates before the next feature
+     slice locks in a narrow interaction model.
 
-2. **0034 Continuum Neighborhood Core Host Facts**
+1. **0080 Vendor-Neutral Continuum Runtime Hello Handshake**
+   - Define the read-only hello contract that lets any Continuum runtime report
+     identity, protocol version, capabilities, consent posture, auth posture,
+     and obstruction reasons.
+   - Keep vendor/runtime names as facts, not dispatch branches.
+   - Do not issue authority, perform runtime admission, or mutate hosts.
+
+1. **0078 Continuum Runtime Discovery Command And Local Registry**
+   - Add an explicit local registry/discovery command after the neutral hello
+     contract exists.
+   - Keep discovery deterministic and consent-aware; no ambient network
+     scanning without a separate consent/auth design.
+   - Prove registered runtimes through CLI JSON and MCP.
+
+1. **0079 Runtime Endpoint Consent And Auth Posture**
+   - Harden endpoint connection policy, redaction, token posture, and retry
+     rules before live endpoint discovery grows.
+   - Report consent/auth requirements as explicit posture facts.
+   - Keep secrets out of JSONL, MCP, logs, screenshots, retros, and witnesses.
+
+1. **0082 Debugger Capability Discovery Read Model**
+   - Report which causal-debugger features a selected target supports before an
+     agent or human attempts them.
+   - Include replay, causal query, breakpoint, counterfactual branch, branch
+     comparison, evidence ledger, report export, and admitted-control posture.
+   - Unsupported, obstructed, rights-limited, budget-limited, redacted, and
+     translated-substrate cases need machine-readable reasons.
+
+1. **0083 Causal Query And Breakpoint Contract**
+   - Define `CausalQuery` forms for why, why-not, causal slice, first cause,
+     absence, and invariant search.
+   - Define `BreakpointSpec` forms for temporal, source, data, effect,
+     admission, reading, witness, absence, invariant, causal, and
+     counterfactual divergence predicates.
+   - Breakpoint hits must cite replay basis, coordinate, predicate, inspected
+     facts, posture, and retry/disable/export options.
+
+1. **0084 Counterfactual Branch Workbench And Worldline Comparison**
+   - Model debugger-local `CounterfactualBranch` records with basis,
+     intervention, assumptions, evaluator posture, divergence coordinate, and
+     changed/unchanged/obstructed/redacted facts.
+   - Compare actual against counterfactual and recorded run against recorded run.
+   - Never present a counterfactual branch as actual history.
+
+1. **0085 Evidence Ledger And Investigation Report Export**
+   - Preserve receipts, witnesses, admission results, reading envelopes, source
+     refs, redactions, rights limits, budget limits, and obstructions.
+   - Export Markdown plus JSON evidence bundles for issues, PRs, and agent
+     review.
+   - Keep replay/report sharing explicit and redaction-aware.
+
+1. **0086 Human Causal Debugger Workspace Over Agent-Readable Facts**
+   - Design the Evidence Timeline, Fact Inspector, and Inquiry Workbench after
+     the structured CLI/MCP/read-model facts exist.
+   - Accessibility, keyboard navigation, screen-reader summaries, directionality,
+     and no visual-only truth are part of the contract.
+   - The rendered workspace composes agent-visible facts; it does not define
+     hidden debugger truth.
+
+1. **0034 Continuum Neighborhood Core Host Facts**
    - Move neighborhood intake from target-scope manifest posture toward actual
      adapter/session facts for any Continuum-compatible target that exposes the
      capability.
@@ -205,81 +286,20 @@ validation, and PR.
    - CLI and MCP must expose source refs and evidence posture without upgrading
      translated substrate evidence into native Continuum witnesshood.
 
-3. **0035 Jedit Reintegration Detail And Receipt Shell**
+1. **0035 Jedit Reintegration Detail And Receipt Shell**
    - Add Echo-published `ReintegrationDetailSummary` and optional
      `ReceiptShellSummary` intake.
    - Preserve the three-layer order: neighborhood core first, seam detail
      second, explanatory receipt shell last.
    - Receipt shell must never redefine neighborhood core.
 
-4. **0036 Admission Registration And Handle Facts**
+1. **0036 Admission Registration And Handle Facts**
    - Add real Echo/jedit admission-chain facts for artifact registration and
      runtime handle posture.
    - Represent artifact hash, `OpticRegistrationDescriptor`, admission
      requirements digest, and Echo-owned `OpticArtifactHandle` distinctly.
    - Keep grant, ticket, and witness facts `ABSENT` or `OBSTRUCTED` until Echo
      exposes them.
-
-5. **0037 Grant, Presentation, Ticket, Witness Posture**
-   - Extend Echo inspection to report `CapabilityGrant`,
-     `CapabilityPresentation`, `AdmissionTicket`, and `LawWitness` posture.
-   - The read model must distinguish no grant, invalid or obstructed grant, no
-     ticket, obstructed admission, and present witness.
-   - Non-goals remain strict: no grant issuance, no presentation construction,
-     no runtime admission, no mutation.
-
-6. **0038 ReadingEnvelope Intake And Materialized Reading Smoke**
-   - Add the first Echo `ReadingEnvelope` inspection path.
-   - The agent surface must name `basisRef`, `observerPlanRef`,
-     `readingEnvelopeRef`, `readingPosture`, witness or receipt backing,
-     runtime source, aperture, and budget posture.
-   - This starts the materialized reading inspector by treating graph-shaped
-     payloads as readings, not substrate truth.
-
-7. **0039 Graft Live Parity Hardening**
-   - Pressure-test `graft` as a real live git-warp target, not only a synthetic
-     fixture path.
-   - Keep the same target, session, CLI, and MCP vocabulary used for `jedit`.
-   - Echo-specific admission facts should remain explicit absence or
-     non-applicable posture for git-warp targets.
-
-8. **0040 Generated Protocol Authority Cutover, Second Cut**
-   - Promote stabilized admission-chain, session-family, and reading facts into
-     authored schema / Wesley-generated artifacts where they belong.
-   - Reduce `src/protocol.ts` toward debugger-local wrappers and compatibility
-     helpers instead of a peer contract authority.
-   - Advance
-     [`PROTO_generated-protocol-authority-cutover.md`](./method/backlog/up-next/PROTO_generated-protocol-authority-cutover.md).
-
-9. **0041 Neighborhood-Scoped Worldline And Core Reading Agent Surface**
-    - Start the core-view arc through structured surfaces before TUI/browser
-      rendering.
-    - Default worldline inspection should be scoped to the current local
-      Kairotic neighborhood instead of dumping every known lane.
-    - Minimal materialized-reading inspection should preserve basis and witness
-      posture.
-
-10. **0042 Echo Causal Commit Evidence Read Model**
-    - Do not start this until Echo exposes stable WAL-backed causal commit
-      evidence or fixtures are needed to lock the read-model contract.
-    - Add `READ_CAUSAL_COMMIT_EVIDENCE`, not `READ_WAL`.
-    - Project Echo-provided commit anchors, recovery certificates, durability
-      mode, recovery posture, and obstruction posture through CLI JSON and MCP
-      before TUI.
-    - Non-goals: no raw WAL parsing, no WAL recovery, no tail truncation, no
-      Echo runtime mutation, and no jedit editor nouns in the debugger model.
-
-## Immediate Slice Plan: 0033 Wesley-Generated Echo Family Consumer
-
-The next cycle should be `0033-wesley-generated-echo-family-consumer`. Its
-purpose is to teach the Echo path to consume Wesley-generated Continuum/Echo
-proof-family TypeScript artifacts when they are available while preserving the
-current `LOCAL_MIRROR_FALLBACK` truth for fixtures, git-warp, and missing
-generated packages.
-
-The new `jedit.echoAdapterProbe` boundary gives this slice a real Echo path to
-attach to without conflating adapter readiness, family payload publication, and
-session open.
 
 ## Echo And Jedit Dependency Boundary
 
@@ -307,10 +327,10 @@ contracts before Echo or `jedit` are ready to publish every live fact.
 The healthy execution order is:
 
 1. Land WARP TTD support first with explicit absence and obstruction posture.
-2. Add companion Echo changes that publish the runtime facts.
-3. Add narrow `jedit` wiring only where needed to publish or register those
+1. Add companion Echo changes that publish the runtime facts.
+1. Add narrow `jedit` wiring only where needed to publish or register those
    facts.
-4. Return to WARP TTD and flip live acceptance from obstructed smoke to present
+1. Return to WARP TTD and flip live acceptance from obstructed smoke to present
    host-published facts.
 
 Strand and speculative lifecycle work remains blocked until the

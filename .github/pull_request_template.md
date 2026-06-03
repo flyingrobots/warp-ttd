@@ -10,15 +10,15 @@
 
 ## Cycle Coordination
 
-- Draft PR opened after initial issue/design commit:
+- PR opened after initial issue/design commit:
 - GitHub Issue has `work-in-progress` while cycle work is active:
-- Converted to ready-for-review after validation/playback:
+- Validation/playback completed before final review:
 
 ## WARP Proof Checklist
 
 - [ ] The linked issue has Method lane/type/legend labels.
 - [ ] The design doc uses the WARP design format, or this PR is a narrow fix that does not need a design doc.
-- [ ] If this began as a cycle draft PR, it was opened only after the initial issue/design commit and converted to ready-for-review before final review.
+- [ ] If this began as a cycle PR, it was opened only after the initial issue/design commit; draft PRs were not used.
 - [ ] The agent-first surface is named: MCP, CLI JSON/JSONL, read model, schema, generated artifact, fixture, or deterministic tool output.
 - [ ] The authority, admission, and mutation boundary is explicit.
 - [ ] Implementation work has at least one non-doc proof test for the actual software surface.

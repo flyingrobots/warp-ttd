@@ -77,6 +77,21 @@ Name the first structured surface. Prefer MCP tools, CLI `--json` / JSONL,
 read models, schemas, generated artifacts, or deterministic fixtures before
 TUI/browser rendering.
 
+## Agent Interface
+
+List the concrete agent-facing interfaces this cycle creates, changes, or
+depends on. Include command names, MCP tool names, JSON/JSONL envelopes,
+schemas, exported types, stable ids, and machine-readable errors.
+
+If the cycle is docs-only, list the future agent interfaces the design is
+standardizing and say no runtime interface changes in this cycle.
+
+## Agent DX
+
+Describe the agent development experience. Explain the expected agent workflow,
+what an agent can discover without guessing, how failures are reported, how to
+retry or narrow the operation, and what proof an agent should collect.
+
 ## Runtime / API / Protocol Contract
 
 Name the software contract: exported functions/types, command output, schema
@@ -115,8 +130,11 @@ residue. Otherwise state "Not applicable" and explain why.
 ## User Experience / Product Shape
 
 Describe what a human sees or does. Include UI flows or mockups only when the
-cycle changes a rendered surface. Otherwise state "Not applicable" and explain
-why.
+cycle changes a rendered surface. If the task has TUI, browser, visual, or other
+rendered UX implications, include the relevant Bijou-style product detail:
+user journey, lower modes, wide/narrow mockups, accessibility, localization,
+directionality, and interaction states. Otherwise state "Not applicable" and
+explain why.
 
 ## Accessibility Posture
 
@@ -187,7 +205,7 @@ window.
 ## Implementation Slices
 
 - Sync to the merge target, branch from the issue title slug, write this design
-  doc, commit, push, open a draft PR, and apply `work-in-progress` to the issue.
+  doc, commit, push, open a normal PR, and apply `work-in-progress` to the issue.
 - <Smallest testable slice>
 - <Next slice>
 
@@ -250,7 +268,7 @@ Mitigations:
 
 ## Closeout Links
 
-- Draft PR:
-- Ready-for-review PR:
+- PR:
+- Ready-for-review evidence:
 - Retro:
 - Witness:

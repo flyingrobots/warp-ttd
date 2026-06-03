@@ -42,6 +42,8 @@ const REQUIRED_HEADINGS = [
   'Scope',
   'Non-Goals',
   'Agent-First Surface',
+  'Agent Interface',
+  'Agent DX',
   'Runtime / API / Protocol Contract',
   'Evidence / Authority / Mutation Boundary',
   'Posture Matrix',
@@ -173,7 +175,7 @@ function assertTemplate() {
       addFailure(`Design template must name non-doc proof tag ${tag}`);
     }
   }
-  for (const value of ['open a draft PR', 'work-in-progress', 'Draft PR:', 'Ready-for-review PR:']) {
+  for (const value of ['open a normal PR', 'work-in-progress', 'PR:', 'Ready-for-review evidence:']) {
     if (!template.includes(value)) {
       addFailure(`Design template is missing cycle-opening phrase: ${value}`);
     }
@@ -206,9 +208,9 @@ function assertPrTemplate() {
   for (const value of [
     'WARP Proof Checklist',
     'Cycle Coordination',
-    'Draft PR opened after initial issue/design commit',
+    'PR opened after initial issue/design commit',
     'work-in-progress',
-    'ready-for-review',
+    'Validation/playback completed before final review',
     'agent-first surface',
     'authority, admission, and mutation boundary',
     'non-doc proof test',
