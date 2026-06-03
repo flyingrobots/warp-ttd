@@ -109,6 +109,26 @@ checks local files without network access and reports missing templates,
 missing frontmatter, missing headings, weak proof tags, and missing full-SHA
 Current Truth permalinks.
 
+## Agent Interface
+
+Agent-facing interfaces are:
+
+- `npm run check:method`
+- `scripts/check-method-designs.mjs`
+- GitHub issue templates for method work, bugs, and spikes
+- the pull request proof checklist
+- `docs/templates/design-cycle.md`
+- deterministic stdout/stderr and exit code
+
+## Agent DX
+
+An agent can run one local command before opening or updating a PR and get a
+deterministic list of missing process evidence. The command does not require
+network access or GitHub API state. Failures point at the missing file,
+frontmatter key, heading, proof tag, or Current Truth permalink so the agent can
+repair the process contract without inferring repository policy from prior
+chats.
+
 ## Runtime / API / Protocol Contract
 
 The software contract is the `scripts/check-method-designs.mjs` command and the

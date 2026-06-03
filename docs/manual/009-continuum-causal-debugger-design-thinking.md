@@ -18,6 +18,28 @@ Actual replay is evidence. Counterfactual branches are hypotheses unless a
 runtime supplies witnessed branch evidence. Inspection remains read-only unless
 a future admitted-control design explicitly introduces host mutation.
 
+## What The Debugger Adds
+
+A Continuum runtime can own replay, counterfactual evaluation, admission,
+witnesshood, and execution truth. WARP TTD should not duplicate that.
+
+WARP TTD adds the investigation layer:
+
+- one agent-readable interface across Continuum-compatible runtimes
+- target and debugger capability discovery before an operation is attempted
+- reusable causal query and breakpoint specs
+- actual-vs-counterfactual branch comparison
+- evidence ledgers that cite receipts, witnesses, readings, admission facts,
+  source refs, redactions, and obstructions
+- investigation reports that another human or agent can replay and audit
+- clear posture for unsupported, obstructed, rights-limited, budget-limited,
+  redacted, translated, and counterfactual facts
+
+Without the debugger, a user may still have runtime powers but must manually
+know which runtime to ask, which fact family to trust, how to express a query,
+how to preserve proof, and how to hand the investigation to another reviewer or
+agent.
+
 ## Product Shape
 
 The debugger should feel familiar at the edge and different at the center.
@@ -58,6 +80,42 @@ The durable workspace model has three regions:
 
 The UI may be visual. The debugger truth is structured. If an agent must scrape
 pixels or prose to understand a feature, that feature is incomplete.
+
+## Agent Interface
+
+Future agent interfaces should include:
+
+- `warp_ttd.inspect_debugger_capabilities`
+- `debugger-capabilities --json`
+- `CausalQuery`
+- `BreakpointSpec`
+- `CounterfactualBranch`
+- `WorldlineComparison`
+- `EvidenceLedger`
+- `InvestigationReport`
+
+Every interface should expose stable ids, schema version, target id, replay
+basis ref, actual/counterfactual posture when relevant, and machine-readable
+unavailable, unsupported, obstructed, rights-limited, budget-limited, and
+redacted reasons.
+
+## Agent DX
+
+The target agent workflow is:
+
+1. Discover targets and debugger capability posture.
+2. Open or import a replay basis.
+3. Anchor a symptom by coordinate, fact id, reading id, effect id, witness id,
+   source ref, or report ref.
+4. Ask a causal query or install a breakpoint/watch predicate.
+5. Receive deterministic JSON/JSONL hits with evidence refs and posture.
+6. Optionally create a labeled counterfactual branch and compare it to actual
+   history.
+7. Export an investigation report another agent or reviewer can inspect.
+
+Good agent DX means no app-name dispatch, no rendered-text scraping, no hidden
+success on partial evidence, deterministic ids, resumable long searches, and
+copy-pasteable examples for CLI JSON and MCP tests.
 
 ## Feature Families
 

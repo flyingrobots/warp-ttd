@@ -42,6 +42,8 @@ const REQUIRED_HEADINGS = [
   'Scope',
   'Non-Goals',
   'Agent-First Surface',
+  'Agent Interface',
+  'Agent DX',
   'Runtime / API / Protocol Contract',
   'Evidence / Authority / Mutation Boundary',
   'Posture Matrix',

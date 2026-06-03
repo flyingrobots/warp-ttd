@@ -110,6 +110,25 @@ The first structured surface is the existing live-target read model, visible
 through `npm run targets -- --json` and MCP `warp_ttd.inspect_live_targets`.
 The field is `jedit.sessionFamilyIntake.generatedFamilyConsumption`.
 
+## Agent Interface
+
+Agent-facing interfaces are:
+
+- CLI JSON envelope `LiveTargetInspection` from `npm run targets -- --json`
+- MCP tool `warp_ttd.inspect_live_targets`
+- target field `jedit.sessionFamilyIntake.generatedFamilyConsumption`
+- generated artifact posture values `GENERATED_FAMILY_PRESENT`,
+  `GENERATED_FAMILY_UNAVAILABLE`, `LOCAL_MIRROR_FALLBACK`, and obstruction
+  reasons
+
+## Agent DX
+
+An agent can inspect a target once and decide whether generated Echo family
+artifacts are visible, unavailable, locally mirrored, or obstructed. The output
+does not require module execution, app-specific guessing, or UI scraping.
+Malformed descriptors and missing generated files remain visible as machine
+readable obstruction instead of becoming silent absence.
+
 ## Runtime / API / Protocol Contract
 
 The contract is:

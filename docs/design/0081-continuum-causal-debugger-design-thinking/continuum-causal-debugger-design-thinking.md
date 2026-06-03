@@ -29,14 +29,17 @@ manual: "required"
 
 ## Decision Summary
 
-WARP TTD should become a Continuum causal debugger: a debugger that starts with
-perfect replay, adds structured causal inquiry, and treats counterfactual
-branches as first-class investigation objects. It remains familiar enough to
-support stepping, seeking, breakpoints, watches, frames, stacks, effects, and
-reports, but the main product shape is no longer a time controller. The main
-product shape is an evidence-backed investigation workspace where humans and
-agents can ask why something happened, why it did not happen, what would change
-under a lawful counterfactual, and which facts prove the answer.
+WARP TTD should become the debugger interface over Continuum runtimes, not a
+replacement for runtime replay or counterfactual evaluation. A Continuum runtime
+may be able to replay and evaluate alternatives by itself; WARP TTD earns its
+place by turning those runtime powers into a cross-target investigation system:
+stable agent interfaces, reusable breakpoint/query specs, evidence ledgers,
+branch comparisons, reports, and failure posture that humans and agents can
+share. It remains familiar enough to support stepping, seeking, breakpoints,
+watches, frames, stacks, effects, and reports, but the main product shape is an
+evidence-backed investigation workspace where humans and agents can ask why
+something happened, why it did not happen, what would change under a lawful
+counterfactual, and which facts prove the answer.
 
 ## Sponsored Human
 
@@ -118,11 +121,35 @@ counterfactual branches, and agent-visible proof.
 WARP TTD has a growing set of target, replay, worldline, reading, admission,
 evidence, and MCP surfaces, but it does not yet have one durable product model
 for what the debugger should feel like when Continuum makes perfect replay and
-counterfactuals available. Without that model, future cycles can drift into a
-thin time controller: rewind, seek, inspect a frame, and stop. That would miss
-the central Continuum opportunity. A causal debugger should let the investigator
-debug causes, evidence, absence, admission, effects, readings, and hypothetical
-alternatives, not just current program state.
+counterfactuals available. A Continuum runtime can own replay, evaluation,
+admission, witnesshood, and counterfactual execution without also being a good
+debugger. Without a debugger layer, an agent or human still has to know which
+runtime to ask, which evidence family to trust, how to express a breakpoint,
+how to compare branches, how to preserve a reusable report, and how to tell
+unsupported, obstructed, rights-limited, redacted, or budget-limited operations
+apart. Without that model, future cycles can drift into a thin time controller:
+rewind, seek, inspect a frame, and stop. That would miss the central Continuum
+opportunity. A causal debugger should let the investigator debug causes,
+evidence, absence, admission, effects, readings, and hypothetical alternatives,
+not just current program state.
+
+## Debugger Value Over Runtime Alone
+
+WARP TTD should add value even when a Continuum runtime already provides perfect
+replay and counterfactual evaluation.
+
+| Without WARP TTD | With WARP TTD |
+| :--- | :--- |
+| A runtime can replay its own history. | The debugger names a reusable `ReplayBasis`, cursor, target posture, and reportable coordinate model across runtimes. |
+| A runtime can evaluate a counterfactual. | The debugger records branch assumptions, divergence, changed and unchanged facts, obstruction posture, and actual-vs-branch comparison. |
+| A runtime can expose facts. | The debugger normalizes fact posture, source refs, evidence refs, redaction, and target capability discovery. |
+| A runtime can answer one local question. | The debugger gives agents a stable query and breakpoint language they can use across targets. |
+| A runtime can show its own diagnostics. | The debugger creates shareable investigation reports with replay basis, evidence ledger, commands, and follow-on proof. |
+| A human can manually inspect a target. | The debugger lets agents inspect without pixels, private app state, or vendor-specific guessing. |
+
+The debugger therefore owns investigation ergonomics: discovery, vocabulary,
+query shape, breakpoint lifecycle, comparison, persistence, reporting, and
+agent/human handoff. The runtime owns execution truth.
 
 ## Scope
 
@@ -177,6 +204,53 @@ These should report support for replay, causal queries, breakpoint classes,
 counterfactual branch creation, branch comparison, evidence ledgers, replay
 export, and admitted controls without requiring an agent to infer support from
 app names or UI state.
+
+## Agent Interface
+
+No runtime interface changes in this docs-only cycle. The design standardizes
+the future agent interface families that will make the causal debugger more
+than a runtime-specific replay shell:
+
+| Interface | Shape | Agent Use |
+| :--- | :--- | :--- |
+| `warp_ttd.inspect_debugger_capabilities` | MCP read tool | Discover target support for replay, causal query, breakpoints, counterfactuals, comparison, evidence ledger, report export, and admitted controls. |
+| `debugger-capabilities --json` | CLI JSON/JSONL | Script capability discovery without MCP. |
+| `CausalQuery` | JSON schema / exported type | Ask why, why-not, causal slice, first cause, absence, and invariant questions. |
+| `BreakpointSpec` | JSON schema / exported type | Define temporal, source, data, effect, admission, reading, witness, absence, invariant, causal, and counterfactual predicates. |
+| `CounterfactualBranch` | JSON schema / exported type | Track basis, intervention, assumptions, evaluator posture, divergence coordinate, and branch facts. |
+| `WorldlineComparison` | JSON schema / CLI/MCP result | Compare actual vs counterfactual or recorded run vs recorded run. |
+| `EvidenceLedger` | JSONL / MCP result | List receipts, witnesses, readings, admission facts, source refs, redactions, and obstructions. |
+| `InvestigationReport` | Markdown plus JSON bundle | Export reproducible findings for issues, PRs, and agent handoff. |
+
+Every interface must include stable ids, schema version, target id, replay basis
+ref, actual/counterfactual posture where relevant, and machine-readable
+unavailable/unsupported/obstructed reasons.
+
+## Agent DX
+
+The intended agent workflow is:
+
+1. Discover targets and debugger capability posture.
+2. Open or import a replay basis.
+3. Anchor a symptom by coordinate, fact id, reading id, effect id, witness id,
+   source ref, or report ref.
+4. Ask a causal query or install a breakpoint/watch predicate.
+5. Receive deterministic JSON/JSONL hits with evidence refs and posture.
+6. Optionally create a labeled counterfactual branch and compare it to actual
+   history.
+7. Export an investigation report that another agent or reviewer can replay.
+
+Agent DX requirements:
+
+- no app-name dispatch as feature discovery
+- no scraping rendered timelines or prose explanations
+- no hidden success when a fact is absent, unsupported, obstructed, rights
+  limited, budget limited, or redacted
+- deterministic ids for sessions, replay bases, facts, queries, breakpoints,
+  branches, comparisons, and reports
+- resumable or streamable output for long searches
+- examples that are copy-pasteable into MCP calls or CLI JSON tests
+- RED tests written against actual agent interfaces before rendered UI
 
 ## Runtime / API / Protocol Contract
 

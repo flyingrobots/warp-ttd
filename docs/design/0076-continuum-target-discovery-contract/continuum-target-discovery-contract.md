@@ -114,6 +114,29 @@ The first structured surface is the existing target read model visible through
 `warp_ttd.inspect_live_targets`. Those surfaces will report descriptor-derived
 target records rather than a fixed pair.
 
+## Agent Interface
+
+Agent-facing interfaces are:
+
+- CLI JSON envelope `LiveTargetInspection` from `npm run targets -- --json`
+- CLI JSON envelope `LiveTargetSessionInspection` from
+  `npm run target-session -- --json`
+- MCP tool `warp_ttd.inspect_live_targets`
+- environment override `WARP_TTD_TARGETS_JSON`
+- compatibility environment variables `WARP_TTD_JEDIT_ROOT` and
+  `WARP_TTD_GRAFT_ROOT`
+- descriptor fields `id`, `label`, `appKind`, `connection.mode`, `rootPath`,
+  `graphName`, `capabilities`, and posture facts
+
+## Agent DX
+
+An agent can enumerate Continuum-compatible targets, inspect why each target is
+configured, unsupported, obstructed, or session-capable, and choose a target
+without dispatching on app names. Synthetic descriptor-only targets are visible
+for tests and early vendor integration. Malformed descriptors, duplicate ids,
+and missing git-warp graph names produce machine-readable obstruction facts
+instead of disappearing.
+
 ## Runtime / API / Protocol Contract
 
 The contract is `ContinuumDebugTargetDescriptor` and
