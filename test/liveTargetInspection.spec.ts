@@ -147,6 +147,38 @@ test("live target env descriptors obstruct duplicate ids deterministically", () 
   }
 });
 
+test("live target env descriptor-only entries preserve declared adapter posture", () => {
+  const previousTargetsJson = process.env["WARP_TTD_TARGETS_JSON"];
+  process.env["WARP_TTD_TARGETS_JSON"] = JSON.stringify([
+    {
+      id: "blocked-runtime",
+      connection: {
+        mode: "descriptor-only",
+        adapterPosture: "OBSTRUCTED",
+        reason: "Runtime endpoint refused the witnessed hello."
+      }
+    }
+  ]);
+
+  try {
+    const targets = inspectLiveTargets(liveTargetDescriptorsFromEnv());
+
+    assert.equal(targets.length, 1);
+    const target = targets[0];
+    assert.ok(target !== undefined);
+    assert.equal(target.target, "blocked-runtime");
+    assert.equal(target.connectionMode, "descriptor-only");
+    assert.equal(target.adapterPosture, "OBSTRUCTED");
+    assert.match(target.reason, /refused the witnessed hello/);
+  } finally {
+    if (previousTargetsJson === undefined) {
+      delete process.env["WARP_TTD_TARGETS_JSON"];
+    } else {
+      process.env["WARP_TTD_TARGETS_JSON"] = previousTargetsJson;
+    }
+  }
+});
+
 test("caller-supplied live target descriptors obstruct duplicate ids deterministically", () => {
   const descriptors: readonly ContinuumDebugTargetDescriptor[] = [
     {

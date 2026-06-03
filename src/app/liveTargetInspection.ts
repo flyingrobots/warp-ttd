@@ -390,13 +390,28 @@ function gitWarpConnectionFrom(
   return { mode: "git-warp", rootPath, graphName };
 }
 
+function descriptorOnlyAdapterPostureFrom(
+  value: JsonValue | undefined
+): DescriptorOnlyConnectionDescriptor["adapterPosture"] | undefined {
+  if (value === "UNSUPPORTED") return value;
+  if (value === "OBSTRUCTED") return value;
+  return undefined;
+}
+
 function descriptorOnlyConnectionFrom(data: JsonObject): DescriptorOnlyConnectionDescriptor {
   const reason = stringField(data, "reason");
   const rootPath = stringField(data, "rootPath");
+  const adapterPosture = descriptorOnlyAdapterPostureFrom(data["adapterPosture"]);
+  if ("adapterPosture" in data && adapterPosture === undefined) {
+    return obstructedDescriptorOnlyConnection(
+      "descriptor-only target descriptor adapterPosture must be UNSUPPORTED or OBSTRUCTED."
+    );
+  }
   return {
     mode: "descriptor-only",
     ...(reason === undefined ? {} : { reason }),
-    ...(rootPath === undefined ? {} : { rootPath })
+    ...(rootPath === undefined ? {} : { rootPath }),
+    ...(adapterPosture === undefined ? {} : { adapterPosture })
   };
 }
 
