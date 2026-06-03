@@ -247,11 +247,17 @@ Agents can inspect:
 
 - `target`
 - `targetLabel`
+- `hostKind`
 - `appKind`
 - `connectionMode`
 - `rootPath`
 - `rootPosture`
 - `adapterPosture`
+- `admissionChainPosture`
+- `graphName`, when the target uses the git-warp adapter path
+- `echoAdapterProbe`, when the target uses the Echo-root probe path
+- `sessionFamilyIntake`, when the target uses the Echo-root family-intake path
+- `capabilities`
 - `runtimeBoundaryEvidence`
 - `readOnly`
 - `reason`

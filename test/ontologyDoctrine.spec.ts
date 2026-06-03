@@ -392,6 +392,19 @@ function assertContinuumTargetDiscoveryManual(content: string): void {
   ]);
 }
 
+function assertContinuumTargetDiscoveryInspectionFields(content: string): void {
+  const start = content.indexOf("## Agent Inspectability / Explainability Posture");
+  const end = content.indexOf("## Security / Redaction / Consent Posture");
+  const section = content.slice(start, end);
+  assertAllTextPresent(section, [
+    "hostKind",
+    "admissionChainPosture",
+    "graphName",
+    "echoAdapterProbe",
+    "sessionFamilyIntake",
+  ]);
+}
+
 function assertContinuumTargetDiscoveryDesign(content: string): void {
   assertAllTextPresent(content, [
     "format: \"warp-design-v1\"",
@@ -409,6 +422,7 @@ function assertContinuumTargetDiscoveryDesign(content: string): void {
     "target id, app label, runtime vendor, and substrate are reported facts",
     "No generated modules are executed",
   ]);
+  assertContinuumTargetDiscoveryInspectionFields(content);
 }
 
 function assertNextFiveDesigns(): void {
