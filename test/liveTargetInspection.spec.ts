@@ -147,6 +147,35 @@ test("live target env descriptors obstruct duplicate ids deterministically", () 
   }
 });
 
+test("live target env git-warp descriptors require graphName", () => {
+  const previousTargetsJson = process.env["WARP_TTD_TARGETS_JSON"];
+  const vendorRoot = path.join(process.cwd(), "test", "missing-git-warp-vendor");
+  process.env["WARP_TTD_TARGETS_JSON"] = JSON.stringify([
+    {
+      id: "vendor-git-warp",
+      connection: { mode: "git-warp", rootPath: vendorRoot }
+    }
+  ]);
+
+  try {
+    const targets = inspectLiveTargets(liveTargetDescriptorsFromEnv());
+
+    assert.equal(targets.length, 1);
+    const target = targets[0];
+    assert.ok(target !== undefined);
+    assert.equal(target.target, "vendor-git-warp");
+    assert.equal(target.connectionMode, "descriptor-only");
+    assert.equal(target.adapterPosture, "OBSTRUCTED");
+    assert.match(target.reason, /git-warp.*graphName/);
+  } finally {
+    if (previousTargetsJson === undefined) {
+      delete process.env["WARP_TTD_TARGETS_JSON"];
+    } else {
+      process.env["WARP_TTD_TARGETS_JSON"] = previousTargetsJson;
+    }
+  }
+});
+
 test("live target env descriptor parse errors are obstructed target facts", () => {
   const previousTargetsJson = process.env["WARP_TTD_TARGETS_JSON"];
   process.env["WARP_TTD_TARGETS_JSON"] = "[";

@@ -402,6 +402,7 @@ function assertContinuumTargetDiscoveryDesign(content: string): void {
     "descriptor-only",
     "\"appKind\": \"live Echo app\"",
     "\"appKind\": \"live git-warp app\"",
+    "{ mode: \"git-warp\"; rootPath: string; graphName: string }",
     "Duplicate ids are obstructed deterministically.",
     "unsupported, malformed, and duplicate-id",
     "synthetic third target",

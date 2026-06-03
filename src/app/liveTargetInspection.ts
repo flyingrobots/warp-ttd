@@ -69,7 +69,7 @@ export interface EchoRootConnectionDescriptor {
 export interface GitWarpConnectionDescriptor {
   readonly mode: "git-warp";
   readonly rootPath: string;
-  readonly graphName?: string;
+  readonly graphName: string;
 }
 
 export interface DescriptorOnlyConnectionDescriptor {
@@ -276,7 +276,7 @@ function inspectGitWarpTarget(
     runtimeBoundaryEvidence: graftTranslatedSubstrateEvidence(),
     capabilities: ["GIT_WARP_SESSION"],
     readOnly: true,
-    graphName: connection.graphName ?? GRAFT_GRAPH_NAME,
+    graphName: connection.graphName,
     reason:
       "git-warp-compatible descriptor is registered; facts are translated substrate evidence, not native Continuum witnesshood."
   };
@@ -384,7 +384,9 @@ function gitWarpConnectionFrom(
     return obstructedDescriptorOnlyConnection("git-warp target descriptor requires rootPath.");
   }
   const graphName = stringField(data, "graphName");
-  if (graphName === undefined) return { mode: "git-warp", rootPath };
+  if (graphName === undefined) {
+    return obstructedDescriptorOnlyConnection("git-warp target descriptor requires graphName.");
+  }
   return { mode: "git-warp", rootPath, graphName };
 }
 

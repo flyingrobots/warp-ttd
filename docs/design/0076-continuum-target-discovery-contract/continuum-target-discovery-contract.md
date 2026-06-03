@@ -128,7 +128,7 @@ interface ContinuumDebugTargetDescriptor {
   appKind?: string;
   connection:
     | { mode: "echo-root"; rootPath: string }
-    | { mode: "git-warp"; rootPath: string; graphName?: string }
+    | { mode: "git-warp"; rootPath: string; graphName: string }
     | {
         mode: "descriptor-only";
         rootPath?: string;

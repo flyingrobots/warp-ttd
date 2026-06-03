@@ -155,7 +155,9 @@ WARP_TTD_TARGETS_JSON='[
 handshake inspection in this slice. Unknown connection modes become visible
 `descriptor-only` records with `adapterPosture: "UNSUPPORTED"`. Malformed
 entries and duplicate ids become visible `descriptor-only` records with
-`adapterPosture: "OBSTRUCTED"` and a reason string.
+`adapterPosture: "OBSTRUCTED"` and a reason string. Env-configured `git-warp`
+descriptors must include `graphName`; otherwise they are obstructed instead of
+borrowing the default graft graph name.
 
 `target-session --json` keeps the same read-only boundary but opens configured
 targets through their adapter when possible. The first supported live session

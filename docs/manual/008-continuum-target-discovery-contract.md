@@ -106,7 +106,7 @@ session-capable adapter report `sessionPosture: "OBSTRUCTED"` with a reason.
 
 - `echo-root` means the target root may expose Echo-compatible descriptor facts.
 - `git-warp` means WARP TTD can use the existing read-only git-warp adapter
-  path.
+  path. Env-configured `git-warp` descriptors must include `graphName`.
 - `descriptor-only` means the target is registered as a Continuum-compatible
   target, but runtime handshake discovery is not implemented in this cycle.
 
