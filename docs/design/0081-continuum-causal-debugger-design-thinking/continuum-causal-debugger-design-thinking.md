@@ -762,7 +762,9 @@ Mitigations:
 
 ## Closeout Links
 
-- PR:
-- Ready-for-review evidence:
+- PR: https://github.com/flyingrobots/warp-ttd/pull/87
+- Ready-for-review evidence: `npm run check:method`, `npm test`,
+  `npm run test:integration`, `npx tsc --noEmit`, `npm run lint`,
+  `npm run lint:check`, `git diff --check`, and the pre-push hook were green.
 - Retro:
-- Witness:
+- Witness: `node --experimental-strip-types --test test/methodDesignFormat.spec.ts test/ontologyDoctrine.spec.ts`
