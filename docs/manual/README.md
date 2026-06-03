@@ -22,6 +22,7 @@ decisions that should survive beyond an individual cycle.
 4. [Generated Family Consumption Boundary](./004-generated-family-consumption.md)
 5. [Jedit Echo Smoke](./005-jedit-echo-smoke.md)
 6. [Echo Adapter Probe Boundary](./006-echo-adapter-probe-boundary.md)
+7. [Wesley-Generated Echo Family Consumer](./007-wesley-generated-echo-family-consumer.md)
 
 ## Source Design Cycles
 
@@ -33,3 +34,4 @@ decisions that should survive beyond an individual cycle.
 | [Generated Family Consumption Boundary](./004-generated-family-consumption.md) | [0030-generated-family-consumption](../design/0030-generated-family-consumption/generated-family-consumption.md) | landed |
 | [Jedit Echo Smoke](./005-jedit-echo-smoke.md) | [0031-jedit-echo-smoke](../design/0031-jedit-echo-smoke/jedit-echo-smoke.md) | landed |
 | [Echo Adapter Probe Boundary](./006-echo-adapter-probe-boundary.md) | [0032-echo-adapter-probe-boundary](../design/0032-echo-adapter-probe-boundary/echo-adapter-probe-boundary.md) | landed |
+| [Wesley-Generated Echo Family Consumer](./007-wesley-generated-echo-family-consumer.md) | [0033-wesley-generated-echo-family-consumer](../design/0033-wesley-generated-echo-family-consumer/wesley-generated-echo-family-consumer.md) | active |

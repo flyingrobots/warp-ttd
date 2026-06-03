@@ -96,6 +96,7 @@ This cycle includes:
 This cycle does not include:
 
 - Checking generated Continuum or Echo artifacts into WARP TTD.
+- Executing generated modules.
 - Replacing `src/protocol.ts`.
 - Opening an Echo runtime session.
 - Hydrating session payloads from generated codecs.
@@ -380,7 +381,7 @@ Mitigations:
 
 ## Closeout Links
 
-- Draft PR:
-- Ready-for-review PR:
-- Retro:
-- Witness:
+- Draft PR: https://github.com/flyingrobots/warp-ttd/pull/75
+- Ready-for-review PR: https://github.com/flyingrobots/warp-ttd/pull/75
+- Retro: ../../method/retro/0033-wesley-generated-echo-family-consumer/wesley-generated-echo-family-consumer.md
+- Witness: `node --experimental-strip-types --test test/liveEchoFamilyIntake.spec.ts test/cliJson.spec.ts test/mcpAdmissionChainSurface.spec.ts`

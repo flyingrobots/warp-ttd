@@ -155,9 +155,13 @@ The Echo adapter probe boundary is Manual-backed:
 [`docs/manual/006-echo-adapter-probe-boundary.md`](./manual/006-echo-adapter-probe-boundary.md),
 paired with
 [`docs/design/0032-echo-adapter-probe-boundary/echo-adapter-probe-boundary.md`](./design/0032-echo-adapter-probe-boundary/echo-adapter-probe-boundary.md).
-The next pressure is teaching the Echo path to consume Wesley-generated shared
-family artifacts when available, now that `jedit` has a separate adapter probe
-posture to hang that work from.
+The Wesley-generated Echo family consumer is in flight:
+[`docs/manual/007-wesley-generated-echo-family-consumer.md`](./manual/007-wesley-generated-echo-family-consumer.md),
+paired with
+[`docs/design/0033-wesley-generated-echo-family-consumer/wesley-generated-echo-family-consumer.md`](./design/0033-wesley-generated-echo-family-consumer/wesley-generated-echo-family-consumer.md).
+It teaches the Echo path to report manifest-declared generated Continuum Echo
+inspect artifacts when available while preserving `LOCAL_MIRROR_FALLBACK` for
+fixtures, git-warp, and missing generated packages.
 The first executable smoke surface is `npm run targets -- --json`, which
 reports read-only posture for both live targets without attaching or mutating.
 The paired session smoke surface is `npm run target-session -- --json`, which

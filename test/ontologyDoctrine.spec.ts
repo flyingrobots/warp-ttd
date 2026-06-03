@@ -77,6 +77,10 @@ const ECHO_ADAPTER_PROBE_MANUAL =
   "docs/manual/006-echo-adapter-probe-boundary.md";
 const ECHO_ADAPTER_PROBE_DESIGN =
   "docs/design/0032-echo-adapter-probe-boundary/echo-adapter-probe-boundary.md";
+const WESLEY_GENERATED_ECHO_FAMILY_MANUAL =
+  "docs/manual/007-wesley-generated-echo-family-consumer.md";
+const WESLEY_GENERATED_ECHO_FAMILY_DESIGN =
+  "docs/design/0033-wesley-generated-echo-family-consumer/wesley-generated-echo-family-consumer.md";
 
 function assertSharedFamilyBoundaryLifecycle(): void {
   assert.equal(repoPathExists(SHARED_FAMILY_BOUNDARY_DESIGN), true);
@@ -145,6 +149,8 @@ function assertManualFilesExist(): void {
   assert.equal(repoPathExists(JEDIT_ECHO_SMOKE_DESIGN), true);
   assert.equal(repoPathExists(ECHO_ADAPTER_PROBE_MANUAL), true);
   assert.equal(repoPathExists(ECHO_ADAPTER_PROBE_DESIGN), true);
+  assert.equal(repoPathExists(WESLEY_GENERATED_ECHO_FAMILY_MANUAL), true);
+  assert.equal(repoPathExists(WESLEY_GENERATED_ECHO_FAMILY_DESIGN), true);
 }
 
 function assertManualFrontDoors(): void {
@@ -173,6 +179,7 @@ function assertManualIndexContent(): void {
     "004. Generated Family Consumption Boundary",
     "005. Jedit Echo Smoke",
     "006. Echo Adapter Probe Boundary",
+    "007. Wesley-Generated Echo Family Consumer",
   ]);
   assertAllTextPresent(readRepoText(MANUAL_INDEX), [
     "# WARP TTD Manual Index",
@@ -184,6 +191,7 @@ function assertManualIndexContent(): void {
     "0030-generated-family-consumption",
     "0031-jedit-echo-smoke",
     "0032-echo-adapter-probe-boundary",
+    "0033-wesley-generated-echo-family-consumer",
   ]);
 }
 
@@ -324,6 +332,36 @@ function assertEchoAdapterProbeDesign(content: string): void {
   ]);
 }
 
+function assertWesleyGeneratedEchoFamilyManual(content: string): void {
+  assertAllTextPresent(content, [
+    "# Wesley-Generated Echo Family Consumer",
+    ".warp-ttd/live-echo-family-facts.json",
+    "generatedFamilyArtifacts",
+    "consumerPosture: \"GENERATED_FAMILY_PRESENT\"",
+    "consumerPosture: \"GENERATED_FAMILY_UNAVAILABLE\"",
+    "consumerPosture: \"LOCAL_MIRROR_FALLBACK\"",
+    "artifactPosture: \"PRESENT\"",
+    "artifactPosture: \"ABSENT\"",
+    "artifactPosture: \"OBSTRUCTED\"",
+    "No generated modules are executed.",
+    "No runtime admission.",
+    "No host mutation.",
+    "No native Continuum witnesshood inferred from file presence.",
+  ]);
+}
+
+function assertWesleyGeneratedEchoFamilyDesign(content: string): void {
+  assertAllTextPresent(content, [
+    "format: \"warp-design-v1\"",
+    "# Wesley-Generated Echo Family Consumer",
+    "https://github.com/flyingrobots/warp-ttd/issues/68",
+    "GENERATED_FAMILY_PRESENT",
+    "generatedFamilyArtifacts",
+    "No generated artifacts are checked into WARP TTD.",
+    "No generated modules are executed",
+  ]);
+}
+
 function assertNextFourDesigns(): void {
   assertAllTextPresent(readRepoText(LIVE_ECHO_FAMILY_INTAKE_DESIGN), [
     "status: landed",
@@ -344,6 +382,7 @@ function assertNextFourDesigns(): void {
     "sessionPosture: \"OBSTRUCTED\"",
   ]);
   assertEchoAdapterProbeDesign(readRepoText(ECHO_ADAPTER_PROBE_DESIGN));
+  assertWesleyGeneratedEchoFamilyDesign(readRepoText(WESLEY_GENERATED_ECHO_FAMILY_DESIGN));
 }
 
 test("Mermaid fence assertions tolerate CRLF line endings", () => {
@@ -611,6 +650,7 @@ test("manual starts generated family ingress cycle", () => {
   assertGeneratedFamilyConsumptionManual(readRepoText(GENERATED_FAMILY_CONSUMPTION_MANUAL));
   assertJeditEchoSmokeManual(readRepoText(JEDIT_ECHO_SMOKE_MANUAL));
   assertEchoAdapterProbeManual(readRepoText(ECHO_ADAPTER_PROBE_MANUAL));
+  assertWesleyGeneratedEchoFamilyManual(readRepoText(WESLEY_GENERATED_ECHO_FAMILY_MANUAL));
   assertNextFourDesigns();
 });
 

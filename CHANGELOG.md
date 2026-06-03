@@ -16,6 +16,12 @@ This project will use [Semantic Versioning](https://semver.org/) starting at
   missing root, absent bridge, supported bridge, unsupported ABI, and obstructed
   descriptor without opening an Echo session, issuing authority, admitting, or
   mutating `jedit`.
+- **Wesley-generated Echo family consumer**: `jedit.sessionFamilyIntake` now
+  reports `generatedFamilyConsumption` posture for manifest-declared
+  Continuum Echo inspect artifacts. Agents can distinguish
+  `GENERATED_FAMILY_PRESENT`, `GENERATED_FAMILY_UNAVAILABLE`, and
+  `LOCAL_MIRROR_FALLBACK` without executing generated modules, opening an Echo
+  session, issuing authority, admitting, or mutating `jedit`.
 - **Admission-chain read model**: started cycle 0024 with a versioned
   `warp-ttd.admission-chain.v1` read model behind
   `warp_ttd.inspect_admission_chain` and `admission-chain --json`. MCP and CLI
