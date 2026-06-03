@@ -337,10 +337,10 @@ function isLiveTargetRoots(value: object): value is LiveTargetRoots {
 function descriptorsFromInput(
   input: LiveTargetInspectionInput
 ): readonly ContinuumDebugTargetDescriptor[] {
-  if (isDescriptorArray(input)) return input;
-  if (isLiveTargetRoots(input)) return defaultLiveTargetDescriptors(input);
-  if ("descriptors" in input) return input.descriptors;
-  return defaultLiveTargetDescriptors();
+  if (isDescriptorArray(input)) return obstructDuplicateIds(input);
+  if (isLiveTargetRoots(input)) return obstructDuplicateIds(defaultLiveTargetDescriptors(input));
+  if ("descriptors" in input) return obstructDuplicateIds(input.descriptors);
+  return obstructDuplicateIds(defaultLiveTargetDescriptors());
 }
 
 function isJsonObject(value: JsonValue | undefined): value is JsonObject {

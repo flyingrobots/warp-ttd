@@ -147,6 +147,34 @@ test("live target env descriptors obstruct duplicate ids deterministically", () 
   }
 });
 
+test("caller-supplied live target descriptors obstruct duplicate ids deterministically", () => {
+  const descriptors: readonly ContinuumDebugTargetDescriptor[] = [
+    {
+      id: "same-runtime",
+      connection: { mode: "descriptor-only" }
+    },
+    {
+      id: "same-runtime",
+      connection: { mode: "descriptor-only" }
+    }
+  ];
+
+  for (const targets of [
+    inspectLiveTargets(descriptors),
+    inspectLiveTargets({ descriptors })
+  ]) {
+    assert.deepEqual(targets.map((target) => target.target), [
+      "same-runtime",
+      "same-runtime"
+    ]);
+    assert.deepEqual(targets.map((target) => target.adapterPosture), [
+      "OBSTRUCTED",
+      "OBSTRUCTED"
+    ]);
+    assert.ok(targets.every((target) => target.reason.includes("Duplicate target descriptor id")));
+  }
+});
+
 test("live target env git-warp descriptors require graphName", () => {
   const previousTargetsJson = process.env["WARP_TTD_TARGETS_JSON"];
   const vendorRoot = path.join(process.cwd(), "test", "missing-git-warp-vendor");
