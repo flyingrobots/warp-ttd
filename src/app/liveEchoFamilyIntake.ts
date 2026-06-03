@@ -16,6 +16,7 @@ import {
 import {
   inspectSharedFamilyConsumption,
   sharedFamilySourceFor,
+  type SharedFamilyGeneratedArtifactDescriptor,
   type SharedFamilyConsumptionInspection
 } from "./sharedFamilyHydration.ts";
 
@@ -52,6 +53,7 @@ export interface LiveEchoFamilyIntakeInspection extends JsonObject {
 interface ManifestRead {
   readonly manifestPosture: LiveEchoFamilyManifestPosture;
   readonly publishedFields: readonly SessionFamilyFactKey[];
+  readonly generatedArtifacts: readonly SharedFamilyGeneratedArtifactDescriptor[];
   readonly reason: string;
 }
 
@@ -95,19 +97,135 @@ function publishedFieldsFrom(data: JsonObject): readonly SessionFamilyFactKey[] 
   return fields;
 }
 
+function isJsonObject(value: JsonValue | undefined): value is JsonObject {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isSafeTargetRelativePath(value: string): boolean {
+  if (value.trim().length === 0) return false;
+  if (path.isAbsolute(value)) return false;
+  const normalized = path.normalize(value);
+  if (normalized === "." || normalized === "..") return false;
+  return !normalized.startsWith(`..${path.sep}`);
+}
+
+function stringArrayFrom(value: JsonValue | undefined): readonly string[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const entries = value as readonly JsonValue[];
+  if (entries.length === 0) return undefined;
+  const strings: string[] = [];
+  for (const entry of entries) {
+    if (typeof entry !== "string") return undefined;
+    strings.push(entry);
+  }
+  return strings;
+}
+
+function targetRelativePathFrom(value: JsonValue | undefined): string | undefined {
+  if (typeof value !== "string") return undefined;
+  if (!isSafeTargetRelativePath(value)) return undefined;
+  return value;
+}
+
+function requiredFilesFrom(value: JsonValue | undefined): readonly string[] | undefined {
+  const requiredFiles = stringArrayFrom(value);
+  if (requiredFiles === undefined) return undefined;
+  if (!requiredFiles.every(isSafeTargetRelativePath)) return undefined;
+  return requiredFiles;
+}
+
+function hasKnownGeneratedArtifactIdentity(entry: JsonObject): boolean {
+  return entry["family"] === "continuum" && entry["target"] === "echo-inspect";
+}
+
+interface GeneratedArtifactPathFields {
+  readonly artifactRoot: string;
+  readonly requiredFiles: readonly string[];
+}
+
+function generatedArtifactPathFields(
+  entry: JsonObject
+): GeneratedArtifactPathFields | undefined {
+  const artifactRoot = targetRelativePathFrom(entry["artifactRoot"]);
+  const requiredFiles = requiredFilesFrom(entry["requiredFiles"]);
+  if (artifactRoot === undefined || requiredFiles === undefined) return undefined;
+  return { artifactRoot, requiredFiles };
+}
+
+function schemaVersionFrom(value: JsonValue | undefined): string | undefined | null {
+  if (value === undefined) return undefined;
+  if (typeof value === "string") return value;
+  return null;
+}
+
+function schemaVersionObject(
+  schemaVersion: string | undefined
+): Pick<SharedFamilyGeneratedArtifactDescriptor, "schemaVersion"> | object {
+  return schemaVersion === undefined ? {} : { schemaVersion };
+}
+
+function generatedArtifactDescriptorFrom(
+  entry: JsonValue
+): SharedFamilyGeneratedArtifactDescriptor | undefined {
+  if (!isJsonObject(entry)) return undefined;
+  if (!hasKnownGeneratedArtifactIdentity(entry)) return undefined;
+  const pathFields = generatedArtifactPathFields(entry);
+  if (pathFields === undefined) return undefined;
+  const schemaVersion = schemaVersionFrom(entry["schemaVersion"]);
+  if (schemaVersion === null) return undefined;
+
+  return {
+    family: "continuum",
+    target: "echo-inspect",
+    ...schemaVersionObject(schemaVersion),
+    artifactRoot: pathFields.artifactRoot,
+    requiredFiles: pathFields.requiredFiles
+  };
+}
+
+function generatedArtifactsFrom(
+  data: JsonObject
+): readonly SharedFamilyGeneratedArtifactDescriptor[] | undefined {
+  const value = data["generatedFamilyArtifacts"];
+  if (value === undefined) return [];
+  if (!Array.isArray(value)) return undefined;
+
+  const entries = value as readonly JsonValue[];
+  const artifacts: SharedFamilyGeneratedArtifactDescriptor[] = [];
+  for (const entry of entries) {
+    const artifact = generatedArtifactDescriptorFrom(entry);
+    if (artifact === undefined) return undefined;
+    artifacts.push(artifact);
+  }
+
+  return artifacts;
+}
+
 function presentManifest(data: JsonObject): ManifestRead {
   const publishedFields = publishedFieldsFrom(data);
   if (publishedFields === undefined) {
     return {
       manifestPosture: "OBSTRUCTED",
       publishedFields: [],
+      generatedArtifacts: [],
       reason: "jedit live Echo family manifest must declare publishedFields."
+    };
+  }
+  const generatedArtifacts = generatedArtifactsFrom(data);
+  if (generatedArtifacts === undefined) {
+    return {
+      manifestPosture: "OBSTRUCTED",
+      publishedFields: [],
+      generatedArtifacts: [],
+      reason:
+        "jedit live Echo family manifest generatedFamilyArtifacts must use known families, known targets, non-empty requiredFiles, and target-root-relative paths."
     };
   }
 
   return {
     manifestPosture: "PRESENT",
     publishedFields,
+    generatedArtifacts,
     reason: "jedit live Echo family manifest was read without attaching to Echo."
   };
 }
@@ -119,6 +237,7 @@ function readPresentManifest(pathname: string): ManifestRead {
     return {
       manifestPosture: "OBSTRUCTED",
       publishedFields: [],
+      generatedArtifacts: [],
       reason: `jedit live Echo family manifest could not be read: ${errorMessage(
         error instanceof Error ? error : undefined
       )}`
@@ -131,6 +250,7 @@ function readManifest(args: LiveEchoFamilyIntakeArgs): ManifestRead {
     return {
       manifestPosture: "MISSING",
       publishedFields: [],
+      generatedArtifacts: [],
       reason: "jedit root is missing; no live Echo family manifest was read."
     };
   }
@@ -139,6 +259,7 @@ function readManifest(args: LiveEchoFamilyIntakeArgs): ManifestRead {
     return {
       manifestPosture: "MISSING",
       publishedFields: [],
+      generatedArtifacts: [],
       reason: "jedit live Echo family manifest is not present."
     };
   }
@@ -219,7 +340,10 @@ export function inspectLiveEchoFamilyIntake(
     intakePosture: intakePosture(manifest),
     expectedFields: SESSION_FAMILY_FACT_KEYS,
     facts: SESSION_FAMILY_FACT_KEYS.map((field) => intakeFactFor(field, manifest)),
-    generatedFamilyConsumption: inspectSharedFamilyConsumption(),
+    generatedFamilyConsumption: inspectSharedFamilyConsumption({
+      rootPath: args.rootPath,
+      artifacts: manifest.generatedArtifacts
+    }),
     readOnly: true,
     reason: manifest.reason
   };

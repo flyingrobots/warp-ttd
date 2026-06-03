@@ -5,10 +5,18 @@ import {
   inspectLiveEchoFamilyIntake,
   type LiveEchoFamilyIntakeInspection
 } from "./liveEchoFamilyIntake.ts";
+import {
+  inspectLiveEchoAdapterProbe,
+  type EchoAdapterProbeInspection
+} from "./echoAdapterProbe.ts";
 
 export type LiveTargetName = "jedit" | "graft";
 export type LiveTargetRootPosture = "PRESENT" | "MISSING";
-export type LiveTargetAdapterPosture = "CONFIGURED" | "UNAVAILABLE";
+export type LiveTargetAdapterPosture =
+  | "CONFIGURED"
+  | "UNAVAILABLE"
+  | "UNSUPPORTED"
+  | "OBSTRUCTED";
 export type LiveTargetAdmissionChainPosture = "UNAVAILABLE";
 export type LiveTargetRuntimeBoundaryEvidencePosture =
   | "UNAVAILABLE"
@@ -52,6 +60,7 @@ export interface LiveTargetInspection {
   admissionChainPosture: LiveTargetAdmissionChainPosture;
   runtimeBoundaryEvidence: LiveTargetRuntimeBoundaryEvidence;
   readOnly: true;
+  echoAdapterProbe?: EchoAdapterProbeInspection;
   sessionFamilyIntake?: LiveEchoFamilyIntakeInspection;
   graphName?: string;
   reason: string;
@@ -97,8 +106,27 @@ function graftTranslatedSubstrateEvidence(): LiveTargetRuntimeBoundaryEvidence {
   };
 }
 
+function adapterPostureFromEchoProbe(
+  probe: EchoAdapterProbeInspection
+): LiveTargetAdapterPosture {
+  switch (probe.probePosture) {
+    case "PRESENT":
+      return "CONFIGURED";
+    case "UNSUPPORTED":
+      return "UNSUPPORTED";
+    case "OBSTRUCTED":
+      return "OBSTRUCTED";
+    case "UNAVAILABLE":
+      return "UNAVAILABLE";
+  }
+}
+
 function inspectJeditTarget(roots: LiveTargetRoots): LiveTargetInspection {
   const posture = rootPosture(roots.jeditRoot);
+  const echoAdapterProbe = inspectLiveEchoAdapterProbe({
+    rootPath: roots.jeditRoot,
+    rootPosture: posture
+  });
 
   return {
     target: "jedit",
@@ -106,10 +134,11 @@ function inspectJeditTarget(roots: LiveTargetRoots): LiveTargetInspection {
     appKind: "live Echo app",
     rootPath: roots.jeditRoot,
     rootPosture: posture,
-    adapterPosture: "UNAVAILABLE",
+    adapterPosture: adapterPostureFromEchoProbe(echoAdapterProbe),
     admissionChainPosture: "UNAVAILABLE",
     runtimeBoundaryEvidence: unavailableRuntimeBoundaryEvidence(),
     readOnly: true,
+    echoAdapterProbe,
     sessionFamilyIntake: inspectLiveEchoFamilyIntake({
       rootPath: roots.jeditRoot,
       rootPosture: posture

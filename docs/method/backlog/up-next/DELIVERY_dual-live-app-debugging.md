@@ -29,7 +29,9 @@ host-neutral session, CLI, and MCP vocabulary.
 
 - `jedit` pressures admission-chain representation: artifact registration,
   Echo-owned handles, grants, presentations, tickets, witnesses, receipts, and
-  reading envelopes.
+  reading envelopes. Once Echo exposes WAL-backed recovery facts, `jedit` also
+  pressures causal commit evidence and recovery posture without making WARP TTD
+  parse raw WAL segments.
 - `graft` pressures causal-history representation: git-warp commits, Lamport
   ticks, receipts, effect emissions, materialized readings, and lane/worldline
   state.
@@ -56,6 +58,7 @@ host-neutral session, CLI, and MCP vocabulary.
 
 - No grant issuance in WARP TTD.
 - No runtime admission in WARP TTD.
+- No Echo WAL parsing, recovery, or tail truncation in WARP TTD.
 - No strand creation before admission-chain representation exists.
 - No `jedit` editor semantics in the debugger core.
 - No `graft` app-domain graph ontology in the debugger core.

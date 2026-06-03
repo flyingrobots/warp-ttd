@@ -13,6 +13,10 @@ import os from "node:os";
 import path from "node:path";
 
 import { inspectLiveTargets } from "../src/app/liveTargetInspection.ts";
+import {
+  LIVE_ECHO_ADAPTER_PROBE_MANIFEST,
+  LIVE_ECHO_ADAPTER_PROBE_SCHEMA_VERSION
+} from "../src/app/echoAdapterProbe.ts";
 import { LIVE_ECHO_FAMILY_FACTS_MANIFEST } from "../src/app/liveEchoFamilyIntake.ts";
 import {
   requireArray,
@@ -25,11 +29,23 @@ const exec = promisify(execFile);
 
 const CLI = "./src/cli.ts";
 const NODE_ARGS = ["--experimental-strip-types", CLI];
+const GENERATED_ARTIFACT_ROOT = "dist/generated/continuum-echo-inspect";
+const REQUIRED_GENERATED_FILES = [
+  "schemas.generated.ts",
+  "ops.generated.ts",
+  "client.generated.ts"
+] as const;
 
 interface EnvelopeLine {
   envelope: string;
   data?: JsonObject;
   label?: string;
+}
+
+interface JeditFamilyIntakeExpectation {
+  intakePosture: string;
+  consumerPosture?: string;
+  artifactPosture?: string;
 }
 
 async function runJson(command: string): Promise<string[]> {
@@ -131,13 +147,15 @@ function assertGeneratedFamilyFact(
 
 function assertJeditFamilyIntake(
   value: JsonValue | object | undefined,
-  expectedPosture: string
+  expectation: JeditFamilyIntakeExpectation
 ): JsonObject {
+  const consumerPosture = expectation.consumerPosture ?? "LOCAL_MIRROR_FALLBACK";
+  const artifactPosture = expectation.artifactPosture ?? "ABSENT";
   const intake = requireRecord(value, "jedit.sessionFamilyIntake");
   assert.equal(intake["schemaVersion"], "warp-ttd.live-echo-family-intake.v1");
   assert.equal(intake["target"], "jedit");
   assert.equal(intake["readOnly"], true);
-  assert.equal(intake["intakePosture"], expectedPosture);
+  assert.equal(intake["intakePosture"], expectation.intakePosture);
   const facts = requireArray(intake["facts"], "jedit.sessionFamilyIntake.facts");
   assert.deepEqual(
     facts.map((fact) => requireRecord(fact, "intakeFact")["field"]),
@@ -147,18 +165,96 @@ function assertJeditFamilyIntake(
     intake["generatedFamilyConsumption"],
     "jedit.sessionFamilyIntake.generatedFamilyConsumption"
   );
-  assert.equal(generated["consumerPosture"], "LOCAL_MIRROR_FALLBACK");
+  assert.equal(generated["consumerPosture"], consumerPosture);
+  assert.equal(generated["artifactPosture"], artifactPosture);
+  requireArray(generated["artifacts"], "jedit.generatedFamilyConsumption.artifacts");
   return intake;
 }
 
-function writeJeditManifest(rootPath: string, publishedFields: readonly string[]): void {
+function assertEchoAdapterProbe(
+  value: JsonValue | object | undefined,
+  expectedBridgePosture: string,
+  expectedProbePosture: string
+): JsonObject {
+  const probe = requireRecord(value, "jedit.echoAdapterProbe");
+  assert.equal(probe["schemaVersion"], LIVE_ECHO_ADAPTER_PROBE_SCHEMA_VERSION);
+  assert.equal(probe["target"], "jedit");
+  assert.equal(probe["hostKind"], "ECHO");
+  assert.equal(probe["readOnly"], true);
+  assert.equal(probe["bridgePosture"], expectedBridgePosture);
+  assert.equal(probe["probePosture"], expectedProbePosture);
+  assert.equal(Array.isArray(probe["supportedAbiVersions"]), true);
+  assert.equal(typeof probe["reason"], "string");
+  return probe;
+}
+
+function assertMissingGraftLiveTargetInspection(
+  graft: JsonObject | undefined
+): void {
+  assert.ok(graft !== undefined);
+  assert.equal(graft["target"], "graft");
+  assert.equal(graft["hostKind"], "GIT_WARP");
+  assert.equal(graft["appKind"], "live git-warp app");
+  assert.equal(graft["readOnly"], true);
+  assert.equal(graft["rootPosture"], "MISSING");
+  assert.equal(graft["adapterPosture"], "CONFIGURED");
+  assert.equal(graft["graphName"], "graft-ast");
+  assert.equal(graft["admissionChainPosture"], "UNAVAILABLE");
+  const graftEvidence = requireRecord(
+    graft["runtimeBoundaryEvidence"],
+    "graft.runtimeBoundaryEvidence"
+  );
+  assert.equal(graftEvidence["posture"], "TRANSLATED_SUBSTRATE");
+  assert.equal(graftEvidence["substrate"], "git-warp");
+  assert.equal(graftEvidence["evidenceKind"], "warp-index");
+  assert.equal(graftEvidence["nativeContinuumWitness"], false);
+}
+
+function generatedArtifactDescriptor(): object {
+  return {
+    family: "continuum",
+    target: "echo-inspect",
+    schemaVersion: "continuum.echo.inspect-ir/v1",
+    artifactRoot: GENERATED_ARTIFACT_ROOT,
+    requiredFiles: REQUIRED_GENERATED_FILES
+  };
+}
+
+function writeGeneratedArtifacts(rootPath: string): void {
+  for (const file of REQUIRED_GENERATED_FILES) {
+    const filePath = path.join(rootPath, GENERATED_ARTIFACT_ROOT, file);
+    fs.mkdirSync(path.dirname(filePath), { recursive: true });
+    fs.writeFileSync(filePath, "// generated fixture\n");
+  }
+}
+
+function writeJeditManifest(
+  rootPath: string,
+  publishedFields: readonly string[],
+  extra: object = {}
+): void {
   const manifestPath = path.join(rootPath, LIVE_ECHO_FAMILY_FACTS_MANIFEST);
   fs.mkdirSync(path.dirname(manifestPath), { recursive: true });
   fs.writeFileSync(
     manifestPath,
     JSON.stringify({
       schemaVersion: "warp-ttd.live-echo-family-intake.v1",
-      publishedFields
+      publishedFields,
+      ...extra
+    })
+  );
+}
+
+function writeEchoAdapterProbeManifest(rootPath: string): void {
+  const manifestPath = path.join(rootPath, LIVE_ECHO_ADAPTER_PROBE_MANIFEST);
+  fs.mkdirSync(path.dirname(manifestPath), { recursive: true });
+  fs.writeFileSync(
+    manifestPath,
+    JSON.stringify({
+      schemaVersion: LIVE_ECHO_ADAPTER_PROBE_SCHEMA_VERSION,
+      bridgeKind: "echo",
+      abiVersion: 1,
+      transport: "wasm"
     })
   );
 }
@@ -403,30 +499,18 @@ test("targets --json names jedit and graft as read-only live target inspections"
   assert.equal(jedit["rootPosture"], "MISSING");
   assert.equal(jedit["adapterPosture"], "UNAVAILABLE");
   assert.equal(jedit["admissionChainPosture"], "UNAVAILABLE");
+  assertEchoAdapterProbe(jedit["echoAdapterProbe"], "ROOT_UNAVAILABLE", "UNAVAILABLE");
   const jeditEvidence = requireRecord(
     jedit["runtimeBoundaryEvidence"],
     "jedit.runtimeBoundaryEvidence"
   );
   assert.equal(jeditEvidence["posture"], "UNAVAILABLE");
   assert.equal(jeditEvidence["nativeContinuumWitness"], false);
-  assertJeditFamilyIntake(jedit["sessionFamilyIntake"], "UNAVAILABLE");
+  assertJeditFamilyIntake(jedit["sessionFamilyIntake"], {
+    intakePosture: "UNAVAILABLE"
+  });
 
-  assert.equal(graft["target"], "graft");
-  assert.equal(graft["hostKind"], "GIT_WARP");
-  assert.equal(graft["appKind"], "live git-warp app");
-  assert.equal(graft["readOnly"], true);
-  assert.equal(graft["rootPosture"], "MISSING");
-  assert.equal(graft["adapterPosture"], "CONFIGURED");
-  assert.equal(graft["graphName"], "graft-ast");
-  assert.equal(graft["admissionChainPosture"], "UNAVAILABLE");
-  const graftEvidence = requireRecord(
-    graft["runtimeBoundaryEvidence"],
-    "graft.runtimeBoundaryEvidence"
-  );
-  assert.equal(graftEvidence["posture"], "TRANSLATED_SUBSTRATE");
-  assert.equal(graftEvidence["substrate"], "git-warp");
-  assert.equal(graftEvidence["evidenceKind"], "warp-index");
-  assert.equal(graftEvidence["nativeContinuumWitness"], false);
+  assertMissingGraftLiveTargetInspection(graft);
 });
 
 test("targets --json reports jedit live Echo family intake manifest", async () => {
@@ -444,11 +528,91 @@ test("targets --json reports jedit live Echo family intake manifest", async () =
 
     assert.ok(jedit !== undefined);
     assert.equal(jedit["rootPosture"], "PRESENT");
-    const intake = assertJeditFamilyIntake(jedit["sessionFamilyIntake"], "PRESENT");
+    assert.equal(jedit["adapterPosture"], "UNAVAILABLE");
+    assertEchoAdapterProbe(jedit["echoAdapterProbe"], "BRIDGE_ABSENT", "UNAVAILABLE");
+    const intake = assertJeditFamilyIntake(jedit["sessionFamilyIntake"], {
+      intakePosture: "PRESENT"
+    });
     const facts = requireArray(intake["facts"], "jedit.sessionFamilyIntake.facts")
       .map((fact) => requireRecord(fact, "intakeFact"));
     assert.equal(facts[0]?.["posture"], "PRESENT");
     assert.equal(facts[1]?.["posture"], "ABSENT");
+  } finally {
+    fs.rmSync(jeditRoot, { recursive: true, force: true });
+  }
+});
+
+test("targets --json reports jedit Wesley-generated Echo family artifact posture", async () => {
+  const jeditRoot = fs.mkdtempSync(path.join(os.tmpdir(), "warp-ttd-jedit-"));
+
+  try {
+    writeGeneratedArtifacts(jeditRoot);
+    writeJeditManifest(jeditRoot, ["neighborhoodCore"], {
+      generatedFamilyArtifacts: [generatedArtifactDescriptor()]
+    });
+    const lines = await runJsonWithEnv("targets", {
+      WARP_TTD_JEDIT_ROOT: jeditRoot,
+      WARP_TTD_GRAFT_ROOT: path.join(process.cwd(), "test", "missing-graft")
+    });
+    const jedit = lines
+      .map((line) => requireRecord(parseLine(line).data, "target"))
+      .find((target) => target["target"] === "jedit");
+
+    assert.ok(jedit !== undefined);
+    const intake = assertJeditFamilyIntake(
+      jedit["sessionFamilyIntake"],
+      {
+        intakePosture: "PRESENT",
+        consumerPosture: "GENERATED_FAMILY_PRESENT",
+        artifactPosture: "PRESENT"
+      }
+    );
+    const consumption = requireRecord(
+      intake["generatedFamilyConsumption"],
+      "jedit.generatedFamilyConsumption"
+    );
+    const artifacts = requireArray(
+      consumption["artifacts"],
+      "jedit.generatedFamilyConsumption.artifacts"
+    ).map((artifact) => requireRecord(artifact, "generated artifact"));
+    assert.deepEqual(
+      artifacts.map((artifact) => [
+        artifact["family"],
+        artifact["target"],
+        artifact["artifactPosture"]
+      ]),
+      [["continuum", "echo-inspect", "PRESENT"]]
+    );
+  } finally {
+    fs.rmSync(jeditRoot, { recursive: true, force: true });
+  }
+});
+
+test("targets --json reports supported jedit Echo adapter probe separately from family intake", async () => {
+  const jeditRoot = fs.mkdtempSync(path.join(os.tmpdir(), "warp-ttd-jedit-"));
+
+  try {
+    writeEchoAdapterProbeManifest(jeditRoot);
+    const lines = await runJsonWithEnv("targets", {
+      WARP_TTD_JEDIT_ROOT: jeditRoot,
+      WARP_TTD_GRAFT_ROOT: path.join(process.cwd(), "test", "missing-graft")
+    });
+    const jedit = lines
+      .map((line) => requireRecord(parseLine(line).data, "target"))
+      .find((target) => target["target"] === "jedit");
+
+    assert.ok(jedit !== undefined);
+    assert.equal(jedit["rootPosture"], "PRESENT");
+    assert.equal(jedit["adapterPosture"], "CONFIGURED");
+    const probe = assertEchoAdapterProbe(
+      jedit["echoAdapterProbe"],
+      "BRIDGE_PRESENT",
+      "PRESENT"
+    );
+    assert.equal(probe["sessionProbePosture"], "SESSION_OBSTRUCTED");
+    assertJeditFamilyIntake(jedit["sessionFamilyIntake"], {
+      intakePosture: "UNAVAILABLE"
+    });
   } finally {
     fs.rmSync(jeditRoot, { recursive: true, force: true });
   }
@@ -491,7 +655,10 @@ test("target-session --json reports live target session posture", async () => {
   assert.equal(jedit["readOnly"], true);
   assert.equal(jedit["adapterPosture"], "UNAVAILABLE");
   assert.equal(jedit["sessionPosture"], "OBSTRUCTED");
-  assertJeditFamilyIntake(jedit["sessionFamilyIntake"], "UNAVAILABLE");
+  assertEchoAdapterProbe(jedit["echoAdapterProbe"], "ROOT_UNAVAILABLE", "UNAVAILABLE");
+  assertJeditFamilyIntake(jedit["sessionFamilyIntake"], {
+    intakePosture: "UNAVAILABLE"
+  });
 
   const obj = parseLine(requireLine(lines, 1));
   assert.equal(obj.envelope, "LiveTargetSessionInspection");
@@ -505,6 +672,33 @@ test("target-session --json reports live target session posture", async () => {
   assert.equal(data["sessionPosture"], "OBSTRUCTED");
   assert.equal(typeof data["reason"], "string");
   assert.equal("session" in data, false);
+});
+
+test("target-session --json keeps jedit session obstructed when Echo bridge probe is present", async () => {
+  const jeditRoot = fs.mkdtempSync(path.join(os.tmpdir(), "warp-ttd-jedit-"));
+
+  try {
+    writeEchoAdapterProbeManifest(jeditRoot);
+    const lines = await runJsonWithEnv("target-session", {
+      WARP_TTD_JEDIT_ROOT: jeditRoot,
+      WARP_TTD_GRAFT_ROOT: path.join(process.cwd(), "test", "missing-graft")
+    });
+    const jeditObj = parseLine(requireLine(lines, 0));
+    const jedit = requireRecord(jeditObj.data, "jedit LiveTargetSessionInspection.data");
+
+    assert.equal(jedit["target"], "jedit");
+    assert.equal(jedit["adapterPosture"], "CONFIGURED");
+    assert.equal(jedit["sessionPosture"], "OBSTRUCTED");
+    const probe = assertEchoAdapterProbe(
+      jedit["echoAdapterProbe"],
+      "BRIDGE_PRESENT",
+      "PRESENT"
+    );
+    assert.equal(probe["sessionProbePosture"], "SESSION_OBSTRUCTED");
+    assert.match(requireString(jedit["reason"], "jedit.reason"), /session adapter is not wired/);
+  } finally {
+    fs.rmSync(jeditRoot, { recursive: true, force: true });
+  }
 });
 
 test("live target evidence posture cannot be poisoned by mutating a prior inspection", () => {

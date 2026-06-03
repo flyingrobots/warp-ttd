@@ -1,4 +1,7 @@
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import test from "node:test";
 
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
@@ -6,6 +9,8 @@ import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
 import { EchoFixtureAdapter } from "../src/adapters/echoFixtureAdapter.ts";
+import { LIVE_ECHO_ADAPTER_PROBE_SCHEMA_VERSION } from "../src/app/echoAdapterProbe.ts";
+import { LIVE_ECHO_FAMILY_FACTS_MANIFEST } from "../src/app/liveEchoFamilyIntake.ts";
 import {
   MCP_ADMISSION_TOOL_NAMES,
   createMcpAdmissionChainServer
@@ -19,6 +24,24 @@ import {
 
 const HEAD_ID = "head:main";
 const MCP_INSPECT_LIVE_TARGETS_TOOL = "warp_ttd.inspect_live_targets";
+const GENERATED_ARTIFACT_ROOT = "dist/generated/continuum-echo-inspect";
+const REQUIRED_GENERATED_FILES = [
+  "schemas.generated.ts",
+  "ops.generated.ts",
+  "client.generated.ts"
+] as const;
+
+interface JeditLiveTargetIntakeExpectation {
+  intakePosture?: string;
+  consumerPosture?: string;
+  artifactPosture?: string;
+}
+
+interface RequiredJeditLiveTargetIntakeExpectation {
+  intakePosture: string;
+  consumerPosture: string;
+  artifactPosture: string;
+}
 
 function targetLabel(target: JsonObject): string {
   const value = target["target"];
@@ -94,7 +117,21 @@ function assertAdmissionChainNestedFactShape(
   );
 }
 
-function assertJeditLiveTargetIntake(targets: readonly object[]): void {
+function normalizeJeditLiveTargetIntakeExpectation(
+  expectation: JeditLiveTargetIntakeExpectation = {}
+): RequiredJeditLiveTargetIntakeExpectation {
+  return {
+    intakePosture: expectation.intakePosture ?? "UNAVAILABLE",
+    consumerPosture: expectation.consumerPosture ?? "LOCAL_MIRROR_FALLBACK",
+    artifactPosture: expectation.artifactPosture ?? "ABSENT"
+  };
+}
+
+function assertJeditLiveTargetIntake(
+  targets: readonly object[],
+  expectation?: JeditLiveTargetIntakeExpectation
+): void {
+  const expected = normalizeJeditLiveTargetIntakeExpectation(expectation);
   const jedit = targets
     .map((target) => requireRecord(target, "target"))
     .find((target) => target["target"] === "jedit");
@@ -105,7 +142,61 @@ function assertJeditLiveTargetIntake(targets: readonly object[]): void {
     "jedit.sessionFamilyIntake"
   );
   assert.equal(jeditIntake["schemaVersion"], "warp-ttd.live-echo-family-intake.v1");
-  assert.equal(jeditIntake["intakePosture"], "UNAVAILABLE");
+  assert.equal(jeditIntake["intakePosture"], expected.intakePosture);
+  const generated = requireRecord(
+    jeditIntake["generatedFamilyConsumption"],
+    "jedit.generatedFamilyConsumption"
+  );
+  assert.equal(generated["consumerPosture"], expected.consumerPosture);
+  assert.equal(generated["artifactPosture"], expected.artifactPosture);
+  requireArray(generated["artifacts"], "jedit.generatedFamilyConsumption.artifacts");
+
+  const jeditProbe = requireRecord(
+    jedit["echoAdapterProbe"],
+    "jedit.echoAdapterProbe"
+  );
+  assert.equal(jeditProbe["schemaVersion"], LIVE_ECHO_ADAPTER_PROBE_SCHEMA_VERSION);
+  const bridgePosture = jeditProbe["bridgePosture"];
+  if (typeof bridgePosture !== "string") {
+    assert.fail("jedit.echoAdapterProbe.bridgePosture must be a string");
+  }
+  assert.ok(
+    ["ROOT_UNAVAILABLE", "BRIDGE_ABSENT"].includes(bridgePosture),
+    "jedit probe should be unavailable without a supported bridge"
+  );
+  assert.equal(jeditProbe["probePosture"], "UNAVAILABLE");
+  assert.equal(jeditProbe["sessionProbePosture"], "NOT_OPENED");
+}
+
+function generatedArtifactDescriptor(): object {
+  return {
+    family: "continuum",
+    target: "echo-inspect",
+    schemaVersion: "continuum.echo.inspect-ir/v1",
+    artifactRoot: GENERATED_ARTIFACT_ROOT,
+    requiredFiles: REQUIRED_GENERATED_FILES
+  };
+}
+
+function writeGeneratedArtifacts(rootPath: string): void {
+  for (const file of REQUIRED_GENERATED_FILES) {
+    const filePath = path.join(rootPath, GENERATED_ARTIFACT_ROOT, file);
+    fs.mkdirSync(path.dirname(filePath), { recursive: true });
+    fs.writeFileSync(filePath, "// generated fixture\n");
+  }
+}
+
+function writeJeditManifest(rootPath: string): void {
+  const manifestPath = path.join(rootPath, LIVE_ECHO_FAMILY_FACTS_MANIFEST);
+  fs.mkdirSync(path.dirname(manifestPath), { recursive: true });
+  fs.writeFileSync(
+    manifestPath,
+    JSON.stringify({
+      schemaVersion: "warp-ttd.live-echo-family-intake.v1",
+      publishedFields: ["neighborhoodCore"],
+      generatedFamilyArtifacts: [generatedArtifactDescriptor()]
+    })
+  );
 }
 
 async function connectMcp(
@@ -253,6 +344,43 @@ test("MCP live-target inspection exposes runtime-boundary evidence posture", asy
       }
     }
   } finally {
+    await closeMcp(client, server);
+  }
+});
+
+test("MCP live-target inspection exposes Wesley-generated Echo family artifact posture", async () => {
+  const jeditRoot = fs.mkdtempSync(path.join(os.tmpdir(), "warp-ttd-jedit-"));
+  const previousJeditRoot = process.env["WARP_TTD_JEDIT_ROOT"];
+  const { client, server } = await connectMcp();
+
+  try {
+    writeGeneratedArtifacts(jeditRoot);
+    writeJeditManifest(jeditRoot);
+    process.env["WARP_TTD_JEDIT_ROOT"] = jeditRoot;
+
+    const result = structuredContent(
+      await client.callTool({
+        name: MCP_INSPECT_LIVE_TARGETS_TOOL,
+        arguments: {}
+      })
+    );
+    const targets = requireArray(result["targets"], "targets");
+
+    assertJeditLiveTargetIntake(
+      targets.map((entry) => requireRecord(entry, "target")),
+      {
+        intakePosture: "PRESENT",
+        consumerPosture: "GENERATED_FAMILY_PRESENT",
+        artifactPosture: "PRESENT"
+      }
+    );
+  } finally {
+    if (previousJeditRoot === undefined) {
+      delete process.env["WARP_TTD_JEDIT_ROOT"];
+    } else {
+      process.env["WARP_TTD_JEDIT_ROOT"] = previousJeditRoot;
+    }
+    fs.rmSync(jeditRoot, { recursive: true, force: true });
     await closeMcp(client, server);
   }
 });

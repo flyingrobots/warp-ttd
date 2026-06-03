@@ -81,6 +81,21 @@ timeline
 - Host substrate details remain adapter residue unless WARP TTD deliberately
   projects them into debugger summaries with visible evidence posture.
 
+### 8. Echo WAL Evidence Boundary
+
+- Echo owns WAL truth: segment format, append authority, commit-marker
+  validation, recovery, truncation, runtime admission, and scheduler decisions.
+- WARP TTD may become WAL-evidence-aware only through Echo-projected causal
+  commit evidence, recovery certificates, and durability posture supplied by an
+  adapter or generated shared-family artifact.
+- WARP TTD must not parse raw Echo WAL segments, truncate WAL tails, validate
+  commit markers, recover Echo runtime state, or mark recovery clean.
+- The debugger concept is `READ_CAUSAL_COMMIT_EVIDENCE`, not `READ_WAL`.
+- Missing durable commit evidence must be explicit absence or obstruction, not
+  inferred from a present receipt.
+- This boundary is future-facing. The immediate `0032` Echo adapter probe still
+  remains a read-only bridge/probe posture, not a WAL evidence surface.
+
 ## Tensions
 
 - **TUI-Lead Inertia**: Breaking the habit of implementing new inspection
@@ -111,6 +126,10 @@ The live app delivery target is
 [`docs/method/backlog/up-next/DELIVERY_dual-live-app-debugging.md`](./method/backlog/up-next/DELIVERY_dual-live-app-debugging.md).
 The debugger/shared-family boundary packet is
 [`docs/design/0026-debugger-native-shared-family-boundary/debugger-native-shared-family-boundary.md`](./design/0026-debugger-native-shared-family-boundary/debugger-native-shared-family-boundary.md).
+The future Echo causal commit evidence boundary is
+[`docs/design/0042-echo-causal-commit-evidence-read-model/echo-causal-commit-evidence-read-model.md`](./design/0042-echo-causal-commit-evidence-read-model/echo-causal-commit-evidence-read-model.md),
+tracked by
+[`docs/method/backlog/up-next/PROTO_echo-causal-commit-evidence-read-model.md`](./method/backlog/up-next/PROTO_echo-causal-commit-evidence-read-model.md).
 The landed generated-family ingress seam is now the Manual-backed path for
 bringing shared-family payload posture into WARP TTD:
 [`docs/manual/001-generated-family-ingress-seam.md`](./manual/001-generated-family-ingress-seam.md),
@@ -132,32 +151,36 @@ The first jedit target-session smoke is Manual-backed:
 [`docs/manual/005-jedit-echo-smoke.md`](./manual/005-jedit-echo-smoke.md),
 paired with
 [`docs/design/0031-jedit-echo-smoke/jedit-echo-smoke.md`](./design/0031-jedit-echo-smoke/jedit-echo-smoke.md).
-The next pressure is replacing the jedit intake manifest with a real Echo
-adapter path for neighborhood, reading, admission, and authority payloads as
-those families become available.
+The Echo adapter probe boundary is Manual-backed:
+[`docs/manual/006-echo-adapter-probe-boundary.md`](./manual/006-echo-adapter-probe-boundary.md),
+paired with
+[`docs/design/0032-echo-adapter-probe-boundary/echo-adapter-probe-boundary.md`](./design/0032-echo-adapter-probe-boundary/echo-adapter-probe-boundary.md).
+The Wesley-generated Echo family consumer is in flight:
+[`docs/manual/007-wesley-generated-echo-family-consumer.md`](./manual/007-wesley-generated-echo-family-consumer.md),
+paired with
+[`docs/design/0033-wesley-generated-echo-family-consumer/wesley-generated-echo-family-consumer.md`](./design/0033-wesley-generated-echo-family-consumer/wesley-generated-echo-family-consumer.md).
+It teaches the Echo path to report manifest-declared generated Continuum Echo
+inspect artifacts when available while preserving `LOCAL_MIRROR_FALLBACK` for
+fixtures, git-warp, and missing generated packages.
 The first executable smoke surface is `npm run targets -- --json`, which
 reports read-only posture for both live targets without attaching or mutating.
 The paired session smoke surface is `npm run target-session -- --json`, which
-now reports both jedit obstruction and graft session posture.
+now reports both jedit obstruction and graft session posture. Both surfaces
+include `jedit.echoAdapterProbe`, which distinguishes missing root, absent
+bridge, supported bridge, unsupported ABI, and obstructed descriptor without
+claiming an open Echo session.
 The active evidence-posture cycle is
 [`docs/design/0021-runtime-boundary-evidence-posture/runtime-boundary-evidence-posture.md`](./design/0021-runtime-boundary-evidence-posture/runtime-boundary-evidence-posture.md).
 
 ## Next Ten Slice Queue
 
-As of 2026-05-23, the next execution queue continues from the landed
-Manual-backed `0031-jedit-echo-smoke` cycle. Each slice should follow the cycle
-loop in `METHOD.md`: design packet, failing tests, implementation, Manual
-chapter or Manual update, retro/follow-on debt, validation, and PR.
+As of 2026-05-25, the next execution queue continues from the landed
+Manual-backed `0032-echo-adapter-probe-boundary` cycle. Each slice should
+follow the cycle loop in `METHOD.md`: design packet, failing tests,
+implementation, Manual chapter or Manual update, retro/follow-on debt,
+validation, and PR.
 
-1. **0032 Echo Adapter Probe Boundary**
-   - Add the first real read-only `EchoHostAdapter` probe path for `jedit`.
-   - Replace pure manifest-only smoke with explicit adapter probe posture:
-     bridge absent, bridge present, ABI unsupported, or session obstructed.
-   - Keep `targets --json`, `target-session --json`, and MCP read-only.
-   - Non-goals: no browser attachment, no session open, no admission, no host
-     mutation.
-
-2. **0033 Wesley-Generated Echo Family Consumer**
+1. **0033 Wesley-Generated Echo Family Consumer**
    - Teach the Echo path to consume Wesley-generated Continuum/Echo proof-family
      TypeScript artifacts when they are available.
    - Keep `LOCAL_MIRROR_FALLBACK` explicit for git-warp, fixtures, and missing
@@ -165,21 +188,21 @@ chapter or Manual update, retro/follow-on debt, validation, and PR.
    - Advance
      [`PROTO_wesley-generated-echo-family-consumption.md`](./method/backlog/up-next/PROTO_wesley-generated-echo-family-consumption.md).
 
-3. **0034 Jedit Neighborhood Core Host Facts**
+2. **0034 Jedit Neighborhood Core Host Facts**
    - Move `jedit` neighborhood intake from target-scope manifest posture toward
      actual Echo adapter/session facts.
    - First live payload: `NeighborhoodCoreSummary`.
    - CLI and MCP must expose source refs and evidence posture without upgrading
      translated substrate evidence into native Continuum witnesshood.
 
-4. **0035 Jedit Reintegration Detail And Receipt Shell**
+3. **0035 Jedit Reintegration Detail And Receipt Shell**
    - Add Echo-published `ReintegrationDetailSummary` and optional
      `ReceiptShellSummary` intake.
    - Preserve the three-layer order: neighborhood core first, seam detail
      second, explanatory receipt shell last.
    - Receipt shell must never redefine neighborhood core.
 
-5. **0036 Admission Registration And Handle Facts**
+4. **0036 Admission Registration And Handle Facts**
    - Add real Echo/jedit admission-chain facts for artifact registration and
      runtime handle posture.
    - Represent artifact hash, `OpticRegistrationDescriptor`, admission
@@ -187,7 +210,7 @@ chapter or Manual update, retro/follow-on debt, validation, and PR.
    - Keep grant, ticket, and witness facts `ABSENT` or `OBSTRUCTED` until Echo
      exposes them.
 
-6. **0037 Grant, Presentation, Ticket, Witness Posture**
+5. **0037 Grant, Presentation, Ticket, Witness Posture**
    - Extend Echo inspection to report `CapabilityGrant`,
      `CapabilityPresentation`, `AdmissionTicket`, and `LawWitness` posture.
    - The read model must distinguish no grant, invalid or obstructed grant, no
@@ -195,7 +218,7 @@ chapter or Manual update, retro/follow-on debt, validation, and PR.
    - Non-goals remain strict: no grant issuance, no presentation construction,
      no runtime admission, no mutation.
 
-7. **0038 ReadingEnvelope Intake And Materialized Reading Smoke**
+6. **0038 ReadingEnvelope Intake And Materialized Reading Smoke**
    - Add the first Echo `ReadingEnvelope` inspection path.
    - The agent surface must name `basisRef`, `observerPlanRef`,
      `readingEnvelopeRef`, `readingPosture`, witness or receipt backing,
@@ -203,14 +226,14 @@ chapter or Manual update, retro/follow-on debt, validation, and PR.
    - This starts the materialized reading inspector by treating graph-shaped
      payloads as readings, not substrate truth.
 
-8. **0039 Graft Live Parity Hardening**
+7. **0039 Graft Live Parity Hardening**
    - Pressure-test `graft` as a real live git-warp target, not only a synthetic
      fixture path.
    - Keep the same target, session, CLI, and MCP vocabulary used for `jedit`.
    - Echo-specific admission facts should remain explicit absence or
      non-applicable posture for git-warp targets.
 
-9. **0040 Generated Protocol Authority Cutover, Second Cut**
+8. **0040 Generated Protocol Authority Cutover, Second Cut**
    - Promote stabilized admission-chain, session-family, and reading facts into
      authored schema / Wesley-generated artifacts where they belong.
    - Reduce `src/protocol.ts` toward debugger-local wrappers and compatibility
@@ -218,13 +241,35 @@ chapter or Manual update, retro/follow-on debt, validation, and PR.
    - Advance
      [`PROTO_generated-protocol-authority-cutover.md`](./method/backlog/up-next/PROTO_generated-protocol-authority-cutover.md).
 
-10. **0041 Neighborhood-Scoped Worldline And Core Reading Agent Surface**
+9. **0041 Neighborhood-Scoped Worldline And Core Reading Agent Surface**
     - Start the core-view arc through structured surfaces before TUI/browser
       rendering.
     - Default worldline inspection should be scoped to the current local
       Kairotic neighborhood instead of dumping every known lane.
     - Minimal materialized-reading inspection should preserve basis and witness
       posture.
+
+10. **0042 Echo Causal Commit Evidence Read Model**
+    - Do not start this until Echo exposes stable WAL-backed causal commit
+      evidence or fixtures are needed to lock the read-model contract.
+    - Add `READ_CAUSAL_COMMIT_EVIDENCE`, not `READ_WAL`.
+    - Project Echo-provided commit anchors, recovery certificates, durability
+      mode, recovery posture, and obstruction posture through CLI JSON and MCP
+      before TUI.
+    - Non-goals: no raw WAL parsing, no WAL recovery, no tail truncation, no
+      Echo runtime mutation, and no jedit editor nouns in the debugger model.
+
+## Immediate Slice Plan: 0033 Wesley-Generated Echo Family Consumer
+
+The next cycle should be `0033-wesley-generated-echo-family-consumer`. Its
+purpose is to teach the Echo path to consume Wesley-generated Continuum/Echo
+proof-family TypeScript artifacts when they are available while preserving the
+current `LOCAL_MIRROR_FALLBACK` truth for fixtures, git-warp, and missing
+generated packages.
+
+The new `jedit.echoAdapterProbe` boundary gives this slice a real Echo path to
+attach to without conflating adapter readiness, family payload publication, and
+session open.
 
 ## Echo And Jedit Dependency Boundary
 
