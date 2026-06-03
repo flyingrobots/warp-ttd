@@ -86,6 +86,11 @@ This project will use [Semantic Versioning](https://semver.org/) starting at
 
 ### Changed
 
+- **Continuum target discovery hardening**: malformed
+  `WARP_TTD_TARGETS_JSON` top-level values, caller-supplied duplicate target
+  ids, and git-warp session descriptors missing `graphName` now remain visible
+  as deterministic obstruction facts instead of disappearing, duplicating
+  ambiguous ids, or borrowing the built-in graft graph name.
 - **MCP parity obstruction vocabulary**: proposed MCP playback obstruction
   outputs now use `missingAdapterCapability` and reserve `CapabilityGrant` /
   `CapabilityPresentation` language for authority facts. Playback control
