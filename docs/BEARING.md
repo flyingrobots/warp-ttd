@@ -51,12 +51,14 @@ timeline
 
 ### 4. Neighborhood & Site Catalog
 
-- Refinement of the `NeighborhoodFocusSummary` to share focus across disparate debugger pages.
+- Refinement of the `NeighborhoodFocusSummary` to share focus across disparate
+  debugger pages.
 - Hardening site-driven worldline cursor recomputation for consistent navigation.
 
 ### 5. DebuggerSession Maturity
 
-- Implementation of the `DebuggerSession` investigation object to track speculative result handles and investigator context.
+- Implementation of the `DebuggerSession` investigation object to track
+  speculative result handles and investigator context.
 - Scaling the window-based read model to handle high-density causal worldlines.
 - Exposing read-only session, worldline, reading, `AdapterCapability`, and
   admission-chain facts before adding speculative lifecycle controls.
@@ -67,8 +69,9 @@ timeline
   admission-chain read model, not as debugger-owned authority.
 - Echo owns runtime-local handles, admission, obstruction, access
   instrumentation, witnesses, receipts, and readings.
-- Authority layers issue `CapabilityGrant` and `CapabilityPresentation` objects; applications hide
-  handles, basis references, and runtime coordinates behind adapters.
+- Authority layers issue `CapabilityGrant` and `CapabilityPresentation`
+  objects; applications hide handles, basis references, and runtime coordinates
+  behind adapters.
 - WARP TTD should inspect these facts through protocol/read-model surfaces
   without issuing authority or mutating host state.
 
@@ -216,27 +219,27 @@ validation, and PR.
    - Produce follow-on implementation issue candidates before the next feature
      slice locks in a narrow interaction model.
 
-2. **0080 Vendor-Neutral Continuum Runtime Hello Handshake**
+1. **0080 Vendor-Neutral Continuum Runtime Hello Handshake**
    - Define the read-only hello contract that lets any Continuum runtime report
      identity, protocol version, capabilities, consent posture, auth posture,
      and obstruction reasons.
    - Keep vendor/runtime names as facts, not dispatch branches.
    - Do not issue authority, perform runtime admission, or mutate hosts.
 
-3. **0078 Continuum Runtime Discovery Command And Local Registry**
+1. **0078 Continuum Runtime Discovery Command And Local Registry**
    - Add an explicit local registry/discovery command after the neutral hello
      contract exists.
    - Keep discovery deterministic and consent-aware; no ambient network
      scanning without a separate consent/auth design.
    - Prove registered runtimes through CLI JSON and MCP.
 
-4. **0079 Runtime Endpoint Consent And Auth Posture**
+1. **0079 Runtime Endpoint Consent And Auth Posture**
    - Harden endpoint connection policy, redaction, token posture, and retry
      rules before live endpoint discovery grows.
    - Report consent/auth requirements as explicit posture facts.
    - Keep secrets out of JSONL, MCP, logs, screenshots, retros, and witnesses.
 
-5. **0082 Debugger Capability Discovery Read Model**
+1. **0082 Debugger Capability Discovery Read Model**
    - Report which causal-debugger features a selected target supports before an
      agent or human attempts them.
    - Include replay, causal query, breakpoint, counterfactual branch, branch
@@ -244,7 +247,7 @@ validation, and PR.
    - Unsupported, obstructed, rights-limited, budget-limited, redacted, and
      translated-substrate cases need machine-readable reasons.
 
-6. **0083 Causal Query And Breakpoint Contract**
+1. **0083 Causal Query And Breakpoint Contract**
    - Define `CausalQuery` forms for why, why-not, causal slice, first cause,
      absence, and invariant search.
    - Define `BreakpointSpec` forms for temporal, source, data, effect,
@@ -253,21 +256,21 @@ validation, and PR.
    - Breakpoint hits must cite replay basis, coordinate, predicate, inspected
      facts, posture, and retry/disable/export options.
 
-7. **0084 Counterfactual Branch Workbench And Worldline Comparison**
+1. **0084 Counterfactual Branch Workbench And Worldline Comparison**
    - Model debugger-local `CounterfactualBranch` records with basis,
      intervention, assumptions, evaluator posture, divergence coordinate, and
      changed/unchanged/obstructed/redacted facts.
    - Compare actual against counterfactual and recorded run against recorded run.
    - Never present a counterfactual branch as actual history.
 
-8. **0085 Evidence Ledger And Investigation Report Export**
+1. **0085 Evidence Ledger And Investigation Report Export**
    - Preserve receipts, witnesses, admission results, reading envelopes, source
      refs, redactions, rights limits, budget limits, and obstructions.
    - Export Markdown plus JSON evidence bundles for issues, PRs, and agent
      review.
    - Keep replay/report sharing explicit and redaction-aware.
 
-9. **0086 Human Causal Debugger Workspace Over Agent-Readable Facts**
+1. **0086 Human Causal Debugger Workspace Over Agent-Readable Facts**
    - Design the Evidence Timeline, Fact Inspector, and Inquiry Workbench after
      the structured CLI/MCP/read-model facts exist.
    - Accessibility, keyboard navigation, screen-reader summaries, directionality,
@@ -275,7 +278,7 @@ validation, and PR.
    - The rendered workspace composes agent-visible facts; it does not define
      hidden debugger truth.
 
-10. **0034 Continuum Neighborhood Core Host Facts**
+1. **0034 Continuum Neighborhood Core Host Facts**
    - Move neighborhood intake from target-scope manifest posture toward actual
      adapter/session facts for any Continuum-compatible target that exposes the
      capability.
@@ -283,14 +286,14 @@ validation, and PR.
    - CLI and MCP must expose source refs and evidence posture without upgrading
      translated substrate evidence into native Continuum witnesshood.
 
-11. **0035 Jedit Reintegration Detail And Receipt Shell**
+1. **0035 Jedit Reintegration Detail And Receipt Shell**
    - Add Echo-published `ReintegrationDetailSummary` and optional
      `ReceiptShellSummary` intake.
    - Preserve the three-layer order: neighborhood core first, seam detail
      second, explanatory receipt shell last.
    - Receipt shell must never redefine neighborhood core.
 
-12. **0036 Admission Registration And Handle Facts**
+1. **0036 Admission Registration And Handle Facts**
    - Add real Echo/jedit admission-chain facts for artifact registration and
      runtime handle posture.
    - Represent artifact hash, `OpticRegistrationDescriptor`, admission
@@ -324,10 +327,10 @@ contracts before Echo or `jedit` are ready to publish every live fact.
 The healthy execution order is:
 
 1. Land WARP TTD support first with explicit absence and obstruction posture.
-2. Add companion Echo changes that publish the runtime facts.
-3. Add narrow `jedit` wiring only where needed to publish or register those
+1. Add companion Echo changes that publish the runtime facts.
+1. Add narrow `jedit` wiring only where needed to publish or register those
    facts.
-4. Return to WARP TTD and flip live acceptance from obstructed smoke to present
+1. Return to WARP TTD and flip live acceptance from obstructed smoke to present
    host-published facts.
 
 Strand and speculative lifecycle work remains blocked until the
