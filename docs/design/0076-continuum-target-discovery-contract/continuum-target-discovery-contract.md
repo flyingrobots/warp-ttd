@@ -340,8 +340,8 @@ hard-coded target refactor.
 ## Implementation Slices
 
 - Sync to the merge target, branch from the issue title slug, write this design
-  doc, commit, push, open a non-draft PR because `AGENTS.md` forbids draft PRs,
-  and apply `work-in-progress` to the issue.
+  doc, commit, push, open the PR coordination surface allowed by the current
+  repo instructions, and apply `work-in-progress` to the issue.
 - Add target descriptor types, default descriptor construction, and generic
   target inspection.
 - Add behavior tests for default witness compatibility and a synthetic third
