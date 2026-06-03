@@ -5,6 +5,7 @@ import {
   liveTargetDescriptorsFromEnv,
   type LiveTargetInspection,
   type LiveTargetAdapterPosture,
+  type LiveTargetConnectionMode,
   type LiveTargetInspectionInput,
   type LiveTargetRuntimeBoundaryEvidence,
   type LiveTargetRootPosture
@@ -23,7 +24,7 @@ export type LiveTargetSessionInspection =
 interface LiveTargetSessionBase {
   target: string;
   targetLabel?: string;
-  connectionMode: string;
+  connectionMode: LiveTargetConnectionMode;
   appKind: string;
   rootPath: string;
   rootPosture: LiveTargetRootPosture;
@@ -44,20 +45,33 @@ export interface LiveEchoTargetSessionInspection extends LiveTargetSessionBase {
   sessionFamilyIntake: LiveEchoFamilyIntakeInspection;
 }
 
-export interface GitWarpLiveTargetSessionInspection extends LiveTargetSessionBase {
+export type GitWarpLiveTargetSessionInspection =
+  | ObstructedGitWarpLiveTargetSessionInspection
+  | PresentGitWarpLiveTargetSessionInspection;
+
+interface GitWarpLiveTargetSessionBase extends LiveTargetSessionBase {
   hostKind: "GIT_WARP";
   adapterPosture: "CONFIGURED";
+  graphName?: string;
+}
+
+export interface ObstructedGitWarpLiveTargetSessionInspection
+  extends GitWarpLiveTargetSessionBase {
+  sessionPosture: "OBSTRUCTED";
+}
+
+export interface PresentGitWarpLiveTargetSessionInspection
+  extends GitWarpLiveTargetSessionBase {
+  sessionPosture: "PRESENT";
   graphName: string;
-  defaultHeadId?: string;
-  hostHello?: HostHello;
-  session?: SerializedSession;
+  defaultHeadId: string;
+  hostHello: HostHello;
+  session: SerializedSession;
 }
 
 export interface DescriptorOnlyLiveTargetSessionInspection extends LiveTargetSessionBase {
   hostKind: "CONTINUUM";
 }
-
-const GRAFT_GRAPH_NAME = "graft-ast";
 
 class MissingLiveTargetRegistrationError extends Error {
   public constructor(target: string) {
@@ -131,20 +145,23 @@ function obstructedEchoSession(
 function obstructedGitWarpSession(
   target: LiveTargetInspection,
   reason: string
-): GitWarpLiveTargetSessionInspection {
+): ObstructedGitWarpLiveTargetSessionInspection {
+  const graphName = gitWarpGraphName(target);
   return {
     ...liveTargetSessionBase(target, "OBSTRUCTED", reason),
     hostKind: "GIT_WARP",
     adapterPosture: "CONFIGURED",
-    graphName: target.graphName ?? GRAFT_GRAPH_NAME
+    sessionPosture: "OBSTRUCTED",
+    ...(graphName === undefined ? {} : { graphName })
   };
 }
 
 function presentGitWarpSession(
   target: LiveTargetInspection,
   defaultHeadId: string,
-  session: DebuggerSession
-): GitWarpLiveTargetSessionInspection {
+  session: DebuggerSession,
+  graphName: string
+): PresentGitWarpLiveTargetSessionInspection {
   return {
     ...liveTargetSessionBase(
       target,
@@ -153,16 +170,30 @@ function presentGitWarpSession(
     ),
     hostKind: "GIT_WARP",
     adapterPosture: "CONFIGURED",
-    graphName: target.graphName ?? GRAFT_GRAPH_NAME,
+    sessionPosture: "PRESENT",
+    graphName,
     defaultHeadId,
     hostHello: session.hostHello,
     session: session.toJSON()
   };
 }
 
+function gitWarpGraphName(target: LiveTargetInspection): string | undefined {
+  const graphName = target.graphName;
+  return typeof graphName === "string" && graphName.length > 0 ? graphName : undefined;
+}
+
 async function inspectGitWarpSession(
   target: LiveTargetInspection
 ): Promise<LiveTargetSessionInspection> {
+  const graphName = gitWarpGraphName(target);
+  if (graphName === undefined) {
+    return obstructedGitWarpSession(
+      target,
+      `${target.target} git-warp target descriptor is missing graphName; no git-warp session was opened.`
+    );
+  }
+
   if (target.rootPosture !== "PRESENT") {
     return obstructedGitWarpSession(
       target,
@@ -174,11 +205,11 @@ async function inspectGitWarpSession(
     const { adapter, defaultHeadId } = await resolveAdapter({
       kind: "git-warp",
       repoPath: target.rootPath,
-      graphName: target.graphName ?? GRAFT_GRAPH_NAME
+      graphName
     });
     const session = await DebuggerSession.create(adapter, defaultHeadId);
 
-    return presentGitWarpSession(target, defaultHeadId, session);
+    return presentGitWarpSession(target, defaultHeadId, session, graphName);
   } catch (err) {
     const message = err instanceof Error ? err.message : "unknown error";
     return obstructedGitWarpSession(

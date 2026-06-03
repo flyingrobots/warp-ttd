@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import { resolveAdapter } from "../src/app/adapterRegistry.ts";
 import type { AdapterConfig } from "../src/app/adapterRegistry.ts";
 import { inspectLiveTargetSessions } from "../src/app/liveTargetSessionInspection.ts";
+import type { ContinuumDebugTargetDescriptor } from "../src/app/liveTargetInspection.ts";
 import { createFixture, scenarioLinearHistory } from "./helpers/gitWarpFixture.ts";
 import type { GitWarpFixture } from "./helpers/gitWarpFixture.ts";
 
@@ -68,4 +69,28 @@ test("inspectLiveTargetSessions opens graft through a read-only git-warp session
   } finally {
     await fixture.cleanup();
   }
+});
+
+test("inspectLiveTargetSessions obstructs git-warp descriptors missing graphName", async () => {
+  const descriptors = [
+    {
+      id: "vendor-git-warp",
+      appKind: "live git-warp app",
+      connection: {
+        mode: "git-warp",
+        rootPath: "/missing/vendor-git-warp"
+      }
+    }
+  ] as unknown as readonly ContinuumDebugTargetDescriptor[];
+
+  const [inspection] = await inspectLiveTargetSessions(descriptors);
+
+  assert.ok(inspection !== undefined);
+  assert.equal(inspection.target, "vendor-git-warp");
+  assert.equal(inspection.connectionMode, "git-warp");
+  assert.equal(inspection.hostKind, "GIT_WARP");
+  assert.equal(inspection.sessionPosture, "OBSTRUCTED");
+  assert.equal("graphName" in inspection, false);
+  assert.equal("session" in inspection, false);
+  assert.match(inspection.reason, /graphName/);
 });
