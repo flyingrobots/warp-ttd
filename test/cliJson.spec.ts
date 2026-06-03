@@ -717,6 +717,37 @@ test("target-session --json reports live target session posture", async () => {
   assert.equal("session" in data, false);
 });
 
+test("target-session --json reports descriptor-only Continuum target as obstructed", async () => {
+  const lines = await runJsonWithEnv("target-session", {
+    WARP_TTD_TARGETS_JSON: JSON.stringify([
+      {
+        id: "vendor-demo",
+        label: "Vendor demo runtime",
+        appKind: "Continuum-compatible app",
+        connection: {
+          mode: "descriptor-only",
+          reason: "Vendor runtime handshake is not implemented in this slice."
+        }
+      }
+    ])
+  });
+  assert.equal(lines.length, 1);
+
+  const obj = parseLine(requireLine(lines, 0));
+  assert.equal(obj.envelope, "LiveTargetSessionInspection");
+  const target = requireRecord(obj.data, "vendor-demo LiveTargetSessionInspection.data");
+  assert.equal(target["target"], "vendor-demo");
+  assert.equal(target["targetLabel"], "Vendor demo runtime");
+  assert.equal(target["connectionMode"], "descriptor-only");
+  assert.equal(target["hostKind"], "CONTINUUM");
+  assert.equal(target["appKind"], "Continuum-compatible app");
+  assert.equal(target["readOnly"], true);
+  assert.equal(target["adapterPosture"], "UNSUPPORTED");
+  assert.equal(target["sessionPosture"], "OBSTRUCTED");
+  assert.match(requireString(target["reason"], "vendor-demo.reason"), /runtime handshake/);
+  assert.equal("session" in target, false);
+});
+
 test("target-session --json keeps jedit session obstructed when Echo bridge probe is present", async () => {
   const jeditRoot = fs.mkdtempSync(path.join(os.tmpdir(), "warp-ttd-jedit-"));
 
