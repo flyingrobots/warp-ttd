@@ -153,13 +153,13 @@ Default descriptors preserve current behavior:
   {
     "id": "jedit",
     "label": "jedit local witness",
-    "appKind": "Continuum-compatible app",
+    "appKind": "live Echo app",
     "connection": { "mode": "echo-root", "rootPath": "../jedit" }
   },
   {
     "id": "graft",
     "label": "graft local witness",
-    "appKind": "Continuum-compatible app",
+    "appKind": "live git-warp app",
     "connection": {
       "mode": "git-warp",
       "rootPath": "../graft",

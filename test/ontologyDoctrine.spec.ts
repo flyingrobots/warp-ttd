@@ -400,6 +400,8 @@ function assertContinuumTargetDiscoveryDesign(content: string): void {
     "ContinuumDebugTargetDescriptor",
     "ContinuumDebugTargetInspection",
     "descriptor-only",
+    "\"appKind\": \"live Echo app\"",
+    "\"appKind\": \"live git-warp app\"",
     "Duplicate ids are obstructed deterministically.",
     "unsupported, malformed, and duplicate-id",
     "synthetic third target",
