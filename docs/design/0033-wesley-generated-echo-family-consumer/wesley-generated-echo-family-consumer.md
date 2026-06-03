@@ -96,7 +96,7 @@ This cycle includes:
 This cycle does not include:
 
 - Checking generated Continuum or Echo artifacts into WARP TTD.
-- Executing generated modules.
+- No generated modules are executed.
 - Replacing `src/protocol.ts`.
 - Opening an Echo runtime session.
 - Hydrating session payloads from generated codecs.
