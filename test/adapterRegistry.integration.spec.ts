@@ -8,6 +8,13 @@ import type { ContinuumDebugTargetDescriptor } from "../src/app/liveTargetInspec
 import { createFixture, scenarioLinearHistory } from "./helpers/gitWarpFixture.ts";
 import type { GitWarpFixture } from "./helpers/gitWarpFixture.ts";
 
+type MalformedGitWarpDescriptor = Omit<ContinuumDebugTargetDescriptor, "connection"> & {
+  readonly connection: {
+    readonly mode: "git-warp";
+    readonly rootPath: string;
+  };
+};
+
 test("resolveAdapter returns a git-warp adapter for git-warp config", async () => {
   const fixture = await scenarioLinearHistory();
 
@@ -72,16 +79,17 @@ test("inspectLiveTargetSessions opens graft through a read-only git-warp session
 });
 
 test("inspectLiveTargetSessions obstructs git-warp descriptors missing graphName", async () => {
-  const descriptors = [
-    {
-      id: "vendor-git-warp",
-      appKind: "live git-warp app",
-      connection: {
-        mode: "git-warp",
-        rootPath: "/missing/vendor-git-warp"
-      }
+  const malformedDescriptor: MalformedGitWarpDescriptor = {
+    id: "vendor-git-warp",
+    appKind: "live git-warp app",
+    connection: {
+      mode: "git-warp",
+      rootPath: "/missing/vendor-git-warp"
     }
-  ] as unknown as readonly ContinuumDebugTargetDescriptor[];
+  };
+  const descriptors = [
+    malformedDescriptor as never
+  ] satisfies readonly ContinuumDebugTargetDescriptor[];
 
   const [inspection] = await inspectLiveTargetSessions(descriptors);
 

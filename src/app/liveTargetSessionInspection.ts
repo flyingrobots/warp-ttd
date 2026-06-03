@@ -73,6 +73,13 @@ export interface DescriptorOnlyLiveTargetSessionInspection extends LiveTargetSes
   hostKind: "CONTINUUM";
 }
 
+interface PresentGitWarpSessionArgs {
+  readonly target: LiveTargetInspection;
+  readonly defaultHeadId: string;
+  readonly session: DebuggerSession;
+  readonly graphName: string;
+}
+
 class MissingLiveTargetRegistrationError extends Error {
   public constructor(target: string) {
     super(`${target} live target is not registered`);
@@ -156,12 +163,12 @@ function obstructedGitWarpSession(
   };
 }
 
-function presentGitWarpSession(
-  target: LiveTargetInspection,
-  defaultHeadId: string,
-  session: DebuggerSession,
-  graphName: string
-): PresentGitWarpLiveTargetSessionInspection {
+function presentGitWarpSession({
+  target,
+  defaultHeadId,
+  session,
+  graphName
+}: PresentGitWarpSessionArgs): PresentGitWarpLiveTargetSessionInspection {
   return {
     ...liveTargetSessionBase(
       target,
@@ -183,6 +190,20 @@ function gitWarpGraphName(target: LiveTargetInspection): string | undefined {
   return typeof graphName === "string" && graphName.length > 0 ? graphName : undefined;
 }
 
+async function openGitWarpDebuggerSession(
+  target: LiveTargetInspection,
+  graphName: string
+): Promise<PresentGitWarpLiveTargetSessionInspection> {
+  const { adapter, defaultHeadId } = await resolveAdapter({
+    kind: "git-warp",
+    repoPath: target.rootPath,
+    graphName
+  });
+  const session = await DebuggerSession.create(adapter, defaultHeadId);
+
+  return presentGitWarpSession({ target, defaultHeadId, session, graphName });
+}
+
 async function inspectGitWarpSession(
   target: LiveTargetInspection
 ): Promise<LiveTargetSessionInspection> {
@@ -202,14 +223,7 @@ async function inspectGitWarpSession(
   }
 
   try {
-    const { adapter, defaultHeadId } = await resolveAdapter({
-      kind: "git-warp",
-      repoPath: target.rootPath,
-      graphName
-    });
-    const session = await DebuggerSession.create(adapter, defaultHeadId);
-
-    return presentGitWarpSession(target, defaultHeadId, session, graphName);
+    return await openGitWarpDebuggerSession(target, graphName);
   } catch (err) {
     const message = err instanceof Error ? err.message : "unknown error";
     return obstructedGitWarpSession(
