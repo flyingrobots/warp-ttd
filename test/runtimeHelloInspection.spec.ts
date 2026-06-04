@@ -144,6 +144,38 @@ test("inspectRuntimeHello preserves unsupported Echo adapter probe posture", asy
   }
 });
 
+test("inspectRuntimeHello surfaces obstructed Echo adapter probe reasons", async () => {
+  const jeditRoot = fs.mkdtempSync(path.join(os.tmpdir(), "warp-ttd-jedit-"));
+
+  try {
+    writeEchoProbeManifest(jeditRoot, {
+      schemaVersion: LIVE_ECHO_ADAPTER_PROBE_SCHEMA_VERSION,
+      bridgeKind: "not-echo",
+      abiVersion: 1,
+      transport: "wasm"
+    });
+
+    const inspections = await inspectRuntimeHello([
+      {
+        id: "jedit",
+        label: "jedit local witness",
+        appKind: "live Echo app",
+        connection: { mode: "echo-root", rootPath: jeditRoot }
+      }
+    ]);
+
+    const jedit = inspections[0];
+    assert.ok(jedit !== undefined);
+    assert.equal(jedit.helloPosture, "OBSTRUCTED");
+    assert.equal(jedit.evidencePosture, "UNAVAILABLE");
+    assert.equal(jedit.nativeContinuumWitness, false);
+    assert.equal(jedit.hello, undefined);
+    assert.match(jedit.reason ?? "", /bridgeKind echo/);
+  } finally {
+    fs.rmSync(jeditRoot, { recursive: true, force: true });
+  }
+});
+
 test("inspectRuntimeHello keeps unsupported and obstructed descriptors visible", async () => {
   const descriptors: readonly ContinuumDebugTargetDescriptor[] = [
     {

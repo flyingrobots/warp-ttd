@@ -337,7 +337,7 @@ function inspectObstructedEchoHello(
     target,
     helloPosture: "OBSTRUCTED",
     code: "echo-runtime-hello-obstructed",
-    message: target.reason,
+    message: target.echoAdapterProbe?.reason ?? target.reason,
     source: "TARGET_DESCRIPTOR",
     retryHint:
       "Fix the Echo target descriptor or adapter probe obstruction, then rerun runtime hello inspection."
