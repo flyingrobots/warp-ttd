@@ -50,7 +50,7 @@ perform admission, mutate host state, or create local strands.
 ## Tool Groups
 
 - **Inspection**: `warp_ttd.inspect_session`,
-  `warp_ttd.inspect_adapter_capabilities`, `warp_ttd.inspect_readings`, and
+  `warp_ttd.inspect_adapter_capabilities`, `warp_ttd.inspect_readings`,
   `warp_ttd.inspect_live_targets`, and `warp_ttd.inspect_runtime_hello`.
 - **Capabilities**: adapter support reported as `AdapterCapability` facts.
 - **Admission Chain**: `warp_ttd.inspect_admission_chain` reports registered
@@ -71,10 +71,11 @@ perform admission, mutate host state, or create local strands.
   `ContinuumRuntimeHelloInspection` read model as `runtime-hello --json`.
   Agents get target id, connection mode, hello posture, evidence posture,
   native witnesshood, structured reasons, retry hints, and a
-  `continuum.debug.hello.v1` payload when present. `graft` is currently a
-  translated-substrate compatibility hello with `nativeContinuumWitness: false`;
-  `jedit` is explicit `ABSENT` until Echo publishes a native runtime hello
-  producer.
+  `continuum.debug.hello.v1` payload when present. `graft` is a
+  translated-substrate compatibility hello with `nativeContinuumWitness: false`
+  only when its root is present and adapter facts are inspectable; missing
+  roots return `UNAVAILABLE`. `jedit` is explicit `ABSENT` until Echo publishes
+  a native runtime hello producer.
 
 ## Running
 

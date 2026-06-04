@@ -126,13 +126,15 @@ same registered target list. They report
 - `reasons`
 - `retryHint`, when there is a deterministic next action
 
-`graft` currently returns `helloPosture: "PRESENT"` through a
-translated-substrate compatibility hello. It still reports
-`nativeContinuumWitness: false`. `jedit` currently returns
-`helloPosture: "ABSENT"` until Echo publishes a native
-`continuum.debug.hello.v1` producer. Descriptor-only targets return
-`UNSUPPORTED` unless descriptor parsing or runtime response handling is
-obstructed.
+`graft` returns `helloPosture: "PRESENT"` through a translated-substrate
+compatibility hello only when its root is present and WARP TTD can inspect
+adapter facts. It still reports `nativeContinuumWitness: false`. Missing
+`graft` roots return `helloPosture: "UNAVAILABLE"` and no hello payload. `jedit`
+currently returns `helloPosture: "ABSENT"` until Echo publishes a native
+`continuum.debug.hello.v1` producer; missing Echo roots return `UNAVAILABLE`
+and unsupported Echo adapter probe descriptors return `UNSUPPORTED`.
+Descriptor-only targets return `UNSUPPORTED` unless descriptor parsing or
+runtime response handling is obstructed.
 
 ## Connection Modes
 
@@ -164,6 +166,8 @@ Connection mode is an adapter implementation hint. It is not an app identity.
   read and parsed.
 - `helloPosture: "ABSENT"` means the target is configured but no runtime hello
   producer is currently published.
+- `helloPosture: "UNAVAILABLE"` means WARP TTD cannot inspect runtime hello in
+  the current environment, such as when a configured local root is missing.
 - `helloPosture: "UNSUPPORTED"` means the descriptor is visible but this WARP
   TTD cycle cannot inspect runtime hello for that connection mode.
 - `helloPosture: "OBSTRUCTED"` means descriptor or hello input is malformed or

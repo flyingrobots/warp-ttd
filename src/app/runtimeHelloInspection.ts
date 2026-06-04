@@ -3,7 +3,6 @@ import {
   type LiveTargetConnectionMode,
   type LiveTargetInspection,
   type LiveTargetInspectionInput,
-  type LiveTargetRuntimeBoundaryEvidence,
   type LiveTargetRuntimeBoundaryEvidencePosture
 } from "./liveTargetInspection.ts";
 
@@ -82,12 +81,6 @@ export interface ContinuumRuntimeHello {
     authority: "NOT_ISSUED";
     admission: "NOT_PERFORMED";
   };
-  evidence: {
-    posture: RuntimeHelloEvidencePosture;
-    nativeContinuumWitness: boolean;
-    substrate?: string;
-    evidenceKind?: string;
-  };
   sourceRefs: readonly ContinuumHelloSourceRef[];
   reasons: readonly ContinuumHelloReason[];
 }
@@ -116,6 +109,8 @@ interface NonPresentInspectionArgs {
   message: string;
   source: ContinuumHelloReason["source"];
   retryHint?: string;
+  evidencePosture?: RuntimeHelloEvidencePosture;
+  nativeContinuumWitness?: boolean;
 }
 
 function evidencePostureFromTarget(
@@ -149,16 +144,6 @@ function runtimeDisplayNameObject(
   target: LiveTargetInspection
 ): Pick<ContinuumRuntimeHello["runtime"], "displayName"> | object {
   return target.targetLabel === undefined ? {} : { displayName: target.targetLabel };
-}
-
-function evidenceFields(
-  evidence: LiveTargetRuntimeBoundaryEvidence
-): Pick<ContinuumRuntimeHello["evidence"], "evidenceKind" | "substrate"> | object {
-  if (evidence.posture === "UNAVAILABLE") return {};
-  return {
-    ...(evidence.substrate === undefined ? {} : { substrate: evidence.substrate }),
-    ...(evidence.evidenceKind === undefined ? {} : { evidenceKind: evidence.evidenceKind })
-  };
 }
 
 function adapterTranslationSourceRef(
@@ -249,11 +234,6 @@ function translatedGitWarpHello(target: LiveTargetInspection): ContinuumRuntimeH
     protocol: { debugHelloVersion: "1", supportedFamilies: translatedGitWarpFamilies() },
     capabilities: translatedGitWarpCapabilities(evidencePosture),
     posture: translatedGitWarpPosture(evidencePosture),
-    evidence: {
-      posture: evidencePosture,
-      nativeContinuumWitness: false,
-      ...evidenceFields(target.runtimeBoundaryEvidence)
-    },
     sourceRefs: sourceRefs(target),
     reasons: [translatedGitWarpReason()]
   };
@@ -272,16 +252,26 @@ function presentInspection(
     appKind: target.appKind,
     readOnly: true,
     helloPosture: "PRESENT",
-    evidencePosture: hello.evidence.posture,
-    nativeContinuumWitness: hello.evidence.nativeContinuumWitness,
+    evidencePosture: hello.posture.evidence,
+    nativeContinuumWitness: hello.posture.nativeContinuumWitness,
     hello,
     reasons: hello.reasons
   };
 }
 
+function nonPresentEvidencePosture(args: NonPresentInspectionArgs): RuntimeHelloEvidencePosture {
+  return args.evidencePosture ?? evidencePostureFromTarget(
+    args.target.runtimeBoundaryEvidence.posture
+  );
+}
+
+function nonPresentNativeContinuumWitness(args: NonPresentInspectionArgs): boolean {
+  return args.nativeContinuumWitness ?? args.target.runtimeBoundaryEvidence.nativeContinuumWitness;
+}
+
 function nonPresentInspection(args: NonPresentInspectionArgs): ContinuumRuntimeHelloInspection {
-  const { code, helloPosture, message, retryHint, source, target } = args;
-  const reasons = [reason(code, message, source)];
+  const { target } = args;
+  const reasons = [reason(args.code, args.message, args.source)];
   return {
     schemaVersion: CONTINUUM_RUNTIME_HELLO_INSPECTION_SCHEMA_VERSION,
     target: target.target,
@@ -290,28 +280,80 @@ function nonPresentInspection(args: NonPresentInspectionArgs): ContinuumRuntimeH
     hostKind: target.hostKind,
     appKind: target.appKind,
     readOnly: true,
-    helloPosture,
-    evidencePosture: evidencePostureFromTarget(target.runtimeBoundaryEvidence.posture),
-    nativeContinuumWitness: target.runtimeBoundaryEvidence.nativeContinuumWitness,
-    reason: message,
+    helloPosture: args.helloPosture,
+    evidencePosture: nonPresentEvidencePosture(args),
+    nativeContinuumWitness: nonPresentNativeContinuumWitness(args),
+    reason: args.message,
     reasons,
-    ...(retryHint === undefined ? {} : { retryHint })
+    ...(args.retryHint === undefined ? {} : { retryHint: args.retryHint })
   };
 }
 
-function inspectEchoHello(target: LiveTargetInspection): ContinuumRuntimeHelloInspection {
-  if (target.adapterPosture === "OBSTRUCTED") {
-    return nonPresentInspection({
-      target,
-      helloPosture: "OBSTRUCTED",
-      code: "echo-runtime-hello-obstructed",
-      message: target.reason,
-      source: "TARGET_DESCRIPTOR",
-      retryHint:
-        "Fix the Echo target descriptor or adapter probe obstruction, then rerun runtime hello inspection."
-    });
-  }
+function unavailableRootInspection(
+  target: LiveTargetInspection,
+  message: string,
+  retryHint: string
+): ContinuumRuntimeHelloInspection {
+  return nonPresentInspection({
+    target,
+    helloPosture: "UNAVAILABLE",
+    code: "runtime-hello-root-unavailable",
+    message,
+    source: "TARGET_DESCRIPTOR",
+    evidencePosture: "UNAVAILABLE",
+    nativeContinuumWitness: false,
+    retryHint
+  });
+}
 
+function targetRootMissing(target: LiveTargetInspection): boolean {
+  return target.rootPosture === "MISSING";
+}
+
+function echoRootMissingMessage(target: LiveTargetInspection): string {
+  return target.echoAdapterProbe?.reason
+    ?? `${target.target} root is missing; no Echo runtime hello was inspected.`;
+}
+
+function inspectMissingEchoRootHello(
+  target: LiveTargetInspection
+): ContinuumRuntimeHelloInspection {
+  return unavailableRootInspection(
+    target,
+    echoRootMissingMessage(target),
+    "Fix the Echo target root path, then rerun runtime hello inspection."
+  );
+}
+
+function inspectObstructedEchoHello(
+  target: LiveTargetInspection
+): ContinuumRuntimeHelloInspection {
+  return nonPresentInspection({
+    target,
+    helloPosture: "OBSTRUCTED",
+    code: "echo-runtime-hello-obstructed",
+    message: target.reason,
+    source: "TARGET_DESCRIPTOR",
+    retryHint:
+      "Fix the Echo target descriptor or adapter probe obstruction, then rerun runtime hello inspection."
+  });
+}
+
+function inspectUnsupportedEchoHello(
+  target: LiveTargetInspection
+): ContinuumRuntimeHelloInspection {
+  return nonPresentInspection({
+    target,
+    helloPosture: "UNSUPPORTED",
+    code: "echo-runtime-hello-unsupported",
+    message: target.echoAdapterProbe?.reason ?? target.reason,
+    source: "TARGET_DESCRIPTOR",
+    retryHint:
+      "Publish a supported Echo adapter probe descriptor, then rerun runtime hello inspection."
+  });
+}
+
+function inspectAbsentEchoHello(target: LiveTargetInspection): ContinuumRuntimeHelloInspection {
   return nonPresentInspection({
     target,
     helloPosture: "ABSENT",
@@ -321,6 +363,37 @@ function inspectEchoHello(target: LiveTargetInspection): ContinuumRuntimeHelloIn
     retryHint:
       "Install or enable an Echo producer for continuum.debug.hello.v1, then rerun runtime hello inspection."
   });
+}
+
+function inspectEchoHello(target: LiveTargetInspection): ContinuumRuntimeHelloInspection {
+  if (targetRootMissing(target)) return inspectMissingEchoRootHello(target);
+  if (target.adapterPosture === "OBSTRUCTED") return inspectObstructedEchoHello(target);
+  if (target.adapterPosture === "UNSUPPORTED") return inspectUnsupportedEchoHello(target);
+  return inspectAbsentEchoHello(target);
+}
+
+function inspectGitWarpHello(target: LiveTargetInspection): ContinuumRuntimeHelloInspection {
+  if (targetRootMissing(target)) {
+    return unavailableRootInspection(
+      target,
+      `${target.target} root is missing; no git-warp adapter facts were inspected.`,
+      "Fix the git-warp target root path, then rerun runtime hello inspection."
+    );
+  }
+
+  if (target.adapterPosture === "OBSTRUCTED") {
+    return nonPresentInspection({
+      target,
+      helloPosture: "OBSTRUCTED",
+      code: "git-warp-runtime-hello-obstructed",
+      message: target.reason,
+      source: "ADAPTER_TRANSLATION",
+      retryHint:
+        "Fix the git-warp adapter/runtime probe obstruction, then rerun runtime hello inspection."
+    });
+  }
+
+  return presentInspection(target, translatedGitWarpHello(target));
 }
 
 function inspectDescriptorOnlyHello(
@@ -353,7 +426,7 @@ function inspectTargetRuntimeHello(
   target: LiveTargetInspection
 ): ContinuumRuntimeHelloInspection {
   if (target.connectionMode === "git-warp") {
-    return presentInspection(target, translatedGitWarpHello(target));
+    return inspectGitWarpHello(target);
   }
 
   if (target.connectionMode === "echo-root") {

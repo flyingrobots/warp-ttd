@@ -19,7 +19,8 @@ import type { HostHello, PlaybackFrame } from "../src/protocol.ts";
 import {
   requireArray,
   requireRecord,
-  type JsonObject
+  type JsonObject,
+  type JsonValue
 } from "./helpers/jsonTestUtils.ts";
 
 const HEAD_ID = "head:main";
@@ -178,20 +179,34 @@ function assertDefaultRuntimeHelloInspection(runtimeHello: readonly JsonObject[]
       entry["nativeContinuumWitness"]
     ]),
     [
-      ["jedit", "ABSENT", "UNAVAILABLE", false],
+      ["jedit", "UNAVAILABLE", "UNAVAILABLE", false],
       ["graft", "PRESENT", "TRANSLATED_SUBSTRATE", false]
     ]
   );
+  const jedit = runtimeHello.find((entry) => entry["target"] === "jedit");
+  assert.ok(jedit !== undefined);
+  assert.equal("hello" in jedit, false);
+  assert.match(requireString(jedit["reason"], "jedit.reason"), /root is missing/);
 
   const graft = runtimeHello.find((entry) => entry["target"] === "graft");
   assert.ok(graft !== undefined);
   const hello = requireRecord(graft["hello"], "graft.hello");
   assert.equal(hello["schemaVersion"], "continuum.debug.hello.v1");
   assert.equal(requireRecord(hello["runtime"], "graft.hello.runtime")["runtimeKind"], "git-warp");
+  const posture = requireRecord(hello["posture"], "graft.hello.posture");
+  assert.equal(posture["evidence"], "TRANSLATED_SUBSTRATE");
   assert.equal(
-    requireRecord(hello["evidence"], "graft.hello.evidence")["nativeContinuumWitness"],
+    posture["nativeContinuumWitness"],
     false
   );
+  assert.equal("evidence" in hello, false);
+}
+
+function requireString(value: JsonValue | undefined, label: string): string {
+  if (typeof value !== "string") {
+    assert.fail(`${label} must be a string`);
+  }
+  return value;
 }
 
 function generatedArtifactDescriptor(): object {
@@ -458,13 +473,14 @@ test("MCP live-target inspection exposes descriptor-only Continuum targets", asy
 });
 
 test("MCP runtime hello inspection exposes the CLI-equivalent read model", async () => {
+  const graftRoot = fs.mkdtempSync(path.join(os.tmpdir(), "warp-ttd-graft-"));
   const previousJeditRoot = process.env["WARP_TTD_JEDIT_ROOT"];
   const previousGraftRoot = process.env["WARP_TTD_GRAFT_ROOT"];
   const { client, server } = await connectMcp();
 
   try {
     process.env["WARP_TTD_JEDIT_ROOT"] = path.join(process.cwd(), "test", "missing-jedit");
-    process.env["WARP_TTD_GRAFT_ROOT"] = path.join(process.cwd(), "test", "missing-graft");
+    process.env["WARP_TTD_GRAFT_ROOT"] = graftRoot;
 
     const result = structuredContent(
       await client.callTool({
@@ -487,6 +503,7 @@ test("MCP runtime hello inspection exposes the CLI-equivalent read model", async
     } else {
       process.env["WARP_TTD_GRAFT_ROOT"] = previousGraftRoot;
     }
+    fs.rmSync(graftRoot, { recursive: true, force: true });
     await closeMcp(client, server);
   }
 });

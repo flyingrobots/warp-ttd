@@ -215,15 +215,19 @@ Each inspection includes:
 "CONTINUUM_NATIVE" | "TRANSLATED_SUBSTRATE" | "LOCAL_MIRROR_FALLBACK" | "UNAVAILABLE"
 ```
 
-The default `graft` witness currently reports `helloPosture: "PRESENT"` with a
-hand-authored `continuum.debug.hello.v1` compatibility payload projected from
-git-warp adapter facts. That payload keeps `nativeContinuumWitness: false` and
-`evidencePosture: "TRANSLATED_SUBSTRATE"`.
+The default `graft` witness reports `helloPosture: "PRESENT"` with a
+hand-authored `continuum.debug.hello.v1` compatibility payload only when WARP
+TTD can inspect translated git-warp adapter facts from a present root. That
+payload keeps `nativeContinuumWitness: false` and `evidencePosture:
+"TRANSLATED_SUBSTRATE"`. A missing `graft` root reports
+`helloPosture: "UNAVAILABLE"` and does not emit a hello payload.
 
 The default `jedit` witness currently reports `helloPosture: "ABSENT"` because
-Echo has not published a native runtime hello producer yet. Descriptor-only
-targets report `UNSUPPORTED` unless their descriptor is malformed or unsafe, in
-which case they report `OBSTRUCTED` with the descriptor reason.
+Echo has not published a native runtime hello producer yet. Missing Echo roots
+report `UNAVAILABLE`; unsupported Echo adapter probe descriptors report
+`UNSUPPORTED`. Descriptor-only targets report `UNSUPPORTED` unless their
+descriptor is malformed or unsafe, in which case they report `OBSTRUCTED` with
+the descriptor reason.
 
 ---
 **The goal is structured truth. Human-only text must not appear on stdout in `--json` mode.**
