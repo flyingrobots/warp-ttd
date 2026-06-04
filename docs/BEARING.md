@@ -1,6 +1,7 @@
 # BEARING
 
-Current direction and active tensions. Historical ship data is in `CHANGELOG.md`.
+Current direction and active tensions. Long-horizon orientation is in
+`ROADMAP.md`; historical ship data is in `CHANGELOG.md`.
 
 ```mermaid
 timeline
@@ -118,12 +119,12 @@ timeline
 The product goal is **Continuum-Compatible Target Debugging**: WARP TTD debugs
 targets that expose Continuum-compatible inspection contracts. `jedit`, a live
 Echo app, and `graft`, a live git-warp app, are default witness targets, not
-special debugger concepts. The **Continuum Target Discovery Contract** and the
-**Continuum Causal Debugger Design Thinking** pass are now landed; the next
-correction is the vendor-neutral runtime hello handshake that lets WARP TTD ask
-a configured Continuum-compatible target what runtime/debug protocol it speaks
-before discovery, endpoint auth, or capability inspection harden around adapter
-names.
+special debugger concepts. The **Continuum Target Discovery Contract**,
+**Continuum Causal Debugger Design Thinking**, and **Vendor-Neutral Continuum
+Runtime Hello Handshake** cycles are now landed. The next correction is
+[#78 Continuum runtime discovery command and local registry](https://github.com/flyingrobots/warp-ttd/issues/78):
+WARP TTD needs deterministic local discovery and registry facts before endpoint
+consent/auth, debugger capability discovery, or live runtime connection harden.
 
 MCP is not authority, admission, grant issuance, or mutation. The read-model
 target is
@@ -201,7 +202,7 @@ Its follow-on implementation epics are
 [#84](https://github.com/flyingrobots/warp-ttd/issues/84),
 [#85](https://github.com/flyingrobots/warp-ttd/issues/85), and
 [#86](https://github.com/flyingrobots/warp-ttd/issues/86).
-The active protocol design cycle is
+The landed runtime hello cycle is
 [`#80 Vendor-neutral Continuum runtime hello handshake`](https://github.com/flyingrobots/warp-ttd/issues/80),
 paired with
 [`docs/design/0080-vendor-neutral-continuum-runtime-hello-handshake/vendor-neutral-continuum-runtime-hello-handshake.md`](./design/0080-vendor-neutral-continuum-runtime-hello-handshake/vendor-neutral-continuum-runtime-hello-handshake.md).
@@ -214,18 +215,11 @@ structured reasons without issuing authority, admitting, or mutating a target.
 
 ## Next Slice Queue
 
-As of 2026-06-03, the next execution queue continues from the landed
-Manual-backed `0081-continuum-causal-debugger-design-thinking` cycle. Each slice
-should follow the cycle loop in `METHOD.md`: design packet, failing tests,
-implementation, Manual chapter or Manual update, retro/follow-on debt,
+As of 2026-06-04, the next execution queue continues from the landed
+Manual-backed `0080-vendor-neutral-continuum-runtime-hello-handshake` cycle.
+Each slice should follow the cycle loop in `METHOD.md`: design packet, failing
+tests, implementation, Manual chapter or Manual update, retro/follow-on debt,
 validation, and PR.
-
-1. **0080 Vendor-Neutral Continuum Runtime Hello Handshake**
-   - Define the read-only hello contract that lets any Continuum runtime report
-     identity, protocol version, capabilities, consent posture, auth posture,
-     and obstruction reasons.
-   - Keep vendor/runtime names as facts, not dispatch branches.
-   - Do not issue authority, perform runtime admission, or mutate hosts.
 
 1. **0078 Continuum Runtime Discovery Command And Local Registry**
    - Add an explicit local registry/discovery command after the neutral hello

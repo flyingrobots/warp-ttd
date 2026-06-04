@@ -63,6 +63,8 @@ script invokes `../wesley/crates/wesley-cli/Cargo.toml`.
 - **[Advanced Guide](./ADVANCED_GUIDE.md)**: Theoretical foundations, Wesley integration, and custom adapters.
 - **[Architecture](./ARCHITECTURE.md)**: The authoritative system map (Hexagonal, Ports, DebuggerSession).
 - **[Vision](./VISION.md)**: Core tenets and the observer geometry mission.
+- **[Roadmap](./ROADMAP.md)**: Long-horizon product ladder, live tracker
+  links, and rough slice estimates.
 - **[Method](./METHOD.md)**: Repo work doctrine and the cycle loop.
 
 ---

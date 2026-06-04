@@ -10,6 +10,9 @@ This project will use [Semantic Versioning](https://semver.org/) starting at
 
 ### Added
 
+- **Roadmap orientation index**: added `ROADMAP.md` as the front door for the
+  long-horizon product ladder, live GitHub tracker links, v0.1.0 closeout
+  goalposts, and rough slice estimates for queued Continuum debugger work.
 - **Continuum runtime hello read model**: added
   `inspectRuntimeHello`, `runtime-hello --json`, `npm run runtime-hello`, and
   MCP `warp_ttd.inspect_runtime_hello`. The new
