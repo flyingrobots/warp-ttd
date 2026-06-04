@@ -10,6 +10,9 @@ This project will use [Semantic Versioning](https://semver.org/) starting at
 
 ### Added
 
+- **Roadmap orientation index**: added `ROADMAP.md` as the front door for the
+  long-horizon product ladder, live GitHub tracker links, v0.1.0 closeout
+  goalposts, and rough slice estimates for queued Continuum debugger work.
 - **Continuum runtime hello read model**: added
   `inspectRuntimeHello`, `runtime-hello --json`, `npm run runtime-hello`, and
   MCP `warp_ttd.inspect_runtime_hello`. The new
@@ -109,6 +112,9 @@ This project will use [Semantic Versioning](https://semver.org/) starting at
 
 ### Changed
 
+- **Markdown lint baseline**: added a repository Markdown lint config, wrapped
+  README prose, and cleaned old changelog style drift so the roadmap, bearing,
+  README, and changelog pass `markdownlint-cli2` together.
 - **Cycle PR coordination policy**: Method, AGENTS, process docs, templates,
   and the 0073 design ledger now state that draft PRs are not used; active work
   is carried by the GitHub Issue's `work-in-progress` state and the normal PR
@@ -222,7 +228,7 @@ This project will use [Semantic Versioning](https://semver.org/) starting at
 - **Canonical glossary** (`docs/glossary.md`) — 11 domain terms with
   frame-vs-tick decision. Contract test pins required terms.
 - **CONTRIBUTING.md restructured** — split into practical front door
-  + linked docs: `docs/doctrine.md`, `docs/glossary.md`,
+  and linked docs: `docs/doctrine.md`, `docs/glossary.md`,
   `docs/cycle-process.md`, `docs/release.md`.
 
 ### Previous (effect emission cycle)
@@ -245,7 +251,7 @@ This project will use [Semantic Versioning](https://semver.org/) starting at
 - **TUI tables** — bijou `tableSurface` for Receipts and Effects.
   Scenario fixtures selectable from connect page.
 
-### Changed
+### Changed (effect emission cycle)
 
 - **Capabilities** — new: `read:effect-emissions`,
   `read:delivery-observations`, `read:execution-context`,

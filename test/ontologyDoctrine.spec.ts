@@ -168,10 +168,12 @@ function assertManualFilesExist(): void {
 }
 
 function assertManualFrontDoors(): void {
-  assertAllTextPresent(readRepoText("README.md"), [
-    "[Manual](./MANUAL.md)",
-    "Durable operator and maintainer chapters compiled from design cycles.",
-  ]);
+  const readme = readRepoText("README.md");
+  assertAllTextPresent(readme, ["[Manual](./MANUAL.md)"]);
+  assert.match(
+    readme,
+    /Durable operator and maintainer chapters compiled\s+from design cycles\./,
+  );
   assertAllTextPresent(readRepoText("GUIDE.md"), [
     "[MANUAL.md](./MANUAL.md)",
     "compiled manual for durable design knowledge",
