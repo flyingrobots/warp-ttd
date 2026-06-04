@@ -12,6 +12,7 @@ flowchart LR
     B --> B2[catalog]
     B --> B3[targets]
     B --> B4[target-session]
+    B --> B5[runtime-hello]
     C --> C1[frame]
     C --> C2[effects]
     C --> C3[deliveries]
@@ -45,6 +46,13 @@ facts should be usable by agents here before they become human-only TUI affordan
 
   ```bash
   npm run target-session -- --json
+  ```
+
+- **Runtime Hello**: Inspect configured Continuum-compatible targets for the
+  read-only runtime hello posture.
+
+  ```bash
+  npm run runtime-hello -- --json
   ```
 
 - **Inspect**: Read the current playback frame and receipts.
@@ -169,6 +177,53 @@ instead of mutating or inferring facts.
 For `jedit`, `target-session --json` includes the same `echoAdapterProbe` and
 `sessionFamilyIntake` objects, but still reports `sessionPosture:
 "OBSTRUCTED"` until the Echo host adapter session path exists.
+
+## Continuum Runtime Hello
+
+`runtime-hello --json` reports `ContinuumRuntimeHelloInspection` envelopes for
+the same configured target list as `targets --json`. It is read-only and does
+not open a runtime control channel, issue authority, admit runtime work,
+present credentials, create strands, or mutate host state.
+
+Each inspection includes:
+
+- `schemaVersion`
+- `target`
+- `targetLabel`
+- `connectionMode`
+- `hostKind`
+- `appKind`
+- `readOnly`
+- `helloPosture`
+- `evidencePosture`
+- `nativeContinuumWitness`
+- `hello`, when a compatibility hello payload is present
+- `reason`, when the hello is absent, unsupported, obstructed, rights-limited,
+  or redacted
+- `reasons`
+- `retryHint`, when a deterministic next action exists
+
+`helloPosture` uses the vendor-neutral posture set:
+
+```ts
+"PRESENT" | "ABSENT" | "UNAVAILABLE" | "UNSUPPORTED" | "OBSTRUCTED" | "RIGHTS_LIMITED" | "REDACTED"
+```
+
+`evidencePosture` separates compatibility from native witnesshood:
+
+```ts
+"CONTINUUM_NATIVE" | "TRANSLATED_SUBSTRATE" | "LOCAL_MIRROR_FALLBACK" | "UNAVAILABLE"
+```
+
+The default `graft` witness currently reports `helloPosture: "PRESENT"` with a
+hand-authored `continuum.debug.hello.v1` compatibility payload projected from
+git-warp adapter facts. That payload keeps `nativeContinuumWitness: false` and
+`evidencePosture: "TRANSLATED_SUBSTRATE"`.
+
+The default `jedit` witness currently reports `helloPosture: "ABSENT"` because
+Echo has not published a native runtime hello producer yet. Descriptor-only
+targets report `UNSUPPORTED` unless their descriptor is malformed or unsafe, in
+which case they report `OBSTRUCTED` with the descriptor reason.
 
 ---
 **The goal is structured truth. Human-only text must not appear on stdout in `--json` mode.**

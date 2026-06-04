@@ -552,6 +552,72 @@ test("targets --json reports a descriptor-only Continuum target", async () => {
   assert.match(requireString(target["reason"], "vendor-demo.reason"), /Vendor runtime/);
 });
 
+test("runtime-hello --json emits one ContinuumRuntimeHelloInspection per target", async () => {
+  const lines = await runJsonWithEnv("runtime-hello", {
+    WARP_TTD_JEDIT_ROOT: path.join(process.cwd(), "test", "missing-jedit"),
+    WARP_TTD_GRAFT_ROOT: path.join(process.cwd(), "test", "missing-graft")
+  });
+  assert.equal(lines.length, 2);
+
+  const parsed = lines.map((line) => parseLine(line));
+  assert.deepEqual(parsed.map((entry) => entry.envelope), [
+    "ContinuumRuntimeHelloInspection",
+    "ContinuumRuntimeHelloInspection"
+  ]);
+
+  const [jedit, graft] = parsed.map((entry) =>
+    requireRecord(entry.data, `${entry.envelope}.data`)
+  );
+  assert.ok(jedit !== undefined);
+  assert.ok(graft !== undefined);
+  assert.equal(jedit["target"], "jedit");
+  assert.equal(jedit["helloPosture"], "ABSENT");
+  assert.equal(jedit["evidencePosture"], "UNAVAILABLE");
+  assert.equal(jedit["nativeContinuumWitness"], false);
+  assert.equal("hello" in jedit, false);
+  assert.match(requireString(jedit["reason"], "jedit.reason"), /native runtime hello producer/);
+
+  assert.equal(graft["target"], "graft");
+  assert.equal(graft["helloPosture"], "PRESENT");
+  assert.equal(graft["evidencePosture"], "TRANSLATED_SUBSTRATE");
+  assert.equal(graft["nativeContinuumWitness"], false);
+  const hello = requireRecord(graft["hello"], "graft.hello");
+  assert.equal(hello["schemaVersion"], "continuum.debug.hello.v1");
+  assert.equal(requireRecord(hello["runtime"], "graft.hello.runtime")["runtimeKind"], "git-warp");
+  assert.equal(
+    requireRecord(hello["evidence"], "graft.hello.evidence")["nativeContinuumWitness"],
+    false
+  );
+});
+
+test("runtime-hello --json preserves descriptor obstruction posture", async () => {
+  const lines = await runJsonWithEnv("runtime-hello", {
+    WARP_TTD_TARGETS_JSON: JSON.stringify([
+      {
+        id: "blocked-demo",
+        label: "Blocked demo runtime",
+        connection: {
+          mode: "descriptor-only",
+          adapterPosture: "OBSTRUCTED",
+          reason: "Runtime endpoint returned malformed hello JSON."
+        }
+      }
+    ])
+  });
+  assert.equal(lines.length, 1);
+
+  const obj = parseLine(requireLine(lines, 0));
+  assert.equal(obj.envelope, "ContinuumRuntimeHelloInspection");
+  const target = requireRecord(obj.data, "blocked-demo runtime hello");
+  assert.equal(target["target"], "blocked-demo");
+  assert.equal(target["targetLabel"], "Blocked demo runtime");
+  assert.equal(target["helloPosture"], "OBSTRUCTED");
+  assert.equal(target["evidencePosture"], "UNAVAILABLE");
+  assert.equal(target["nativeContinuumWitness"], false);
+  assert.match(requireString(target["reason"], "blocked-demo.reason"), /malformed hello JSON/);
+  assert.equal("hello" in target, false);
+});
+
 test("targets --json reports jedit live Echo family intake manifest", async () => {
   const jeditRoot = fs.mkdtempSync(path.join(os.tmpdir(), "warp-ttd-jedit-"));
 

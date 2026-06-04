@@ -3,6 +3,7 @@ import { buildAdmissionChainReadModel } from "./app/admissionChainReadModel.ts";
 import { DebuggerSession } from "./app/debuggerSession.ts";
 import { inspectLiveTargets } from "./app/liveTargetInspection.ts";
 import { inspectLiveTargetSessions } from "./app/liveTargetSessionInspection.ts";
+import { inspectRuntimeHello } from "./app/runtimeHelloInspection.ts";
 import { buildTickRows } from "./tui/worldlineLayout.ts";
 import type { FrameData } from "./tui/worldlineLayout.ts";
 import {
@@ -11,8 +12,8 @@ import {
   UnsupportedCommandError
 } from "./errors.ts";
 
-type Command = "demo" | "hello" | "catalog" | "frame" | "step" | "effects" | "deliveries" | "context" | "session" | "worldline" | "targets" | "target-session" | "admission-chain";
-type AdapterCommand = Exclude<Command, "targets" | "target-session">;
+type Command = "demo" | "hello" | "catalog" | "frame" | "step" | "effects" | "deliveries" | "context" | "session" | "worldline" | "targets" | "target-session" | "runtime-hello" | "admission-chain";
+type AdapterCommand = Exclude<Command, "targets" | "target-session" | "runtime-hello">;
 type PrintableValue = object | string | number | boolean | null | undefined;
 type PrintFn = (envelope: string, data: PrintableValue, label?: string) => void;
 type CliHandler = (ctx: CliContext) => Promise<void>;
@@ -26,6 +27,7 @@ const VALID_COMMANDS = new Set<Command>([
   "effects",
   "frame",
   "hello",
+  "runtime-hello",
   "session",
   "step",
   "targets",
@@ -168,6 +170,11 @@ async function handleTargetSession(ctx: PrintContext): Promise<void> {
   printList(ctx, "LiveTargetSessionInspection", await inspectLiveTargetSessions());
 }
 
+function handleRuntimeHello(ctx: PrintContext): Promise<void> {
+  printList(ctx, "ContinuumRuntimeHelloInspection", inspectRuntimeHello());
+  return Promise.resolve();
+}
+
 async function collectWorldlineFrames(ctx: CliContext): Promise<FrameData[]> {
   const maxFrame = await ctx.adapter.seekToFrame(ctx.headId, Number.MAX_SAFE_INTEGER);
   const frames: FrameData[] = [];
@@ -268,6 +275,11 @@ async function main(): Promise<void> {
 
   if (command === "target-session") {
     await handleTargetSession({ json, print });
+    return;
+  }
+
+  if (command === "runtime-hello") {
+    await handleRuntimeHello({ json, print });
     return;
   }
 
