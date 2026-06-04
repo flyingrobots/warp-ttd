@@ -170,9 +170,8 @@ async function handleTargetSession(ctx: PrintContext): Promise<void> {
   printList(ctx, "LiveTargetSessionInspection", await inspectLiveTargetSessions());
 }
 
-function handleRuntimeHello(ctx: PrintContext): Promise<void> {
-  printList(ctx, "ContinuumRuntimeHelloInspection", inspectRuntimeHello());
-  return Promise.resolve();
+async function handleRuntimeHello(ctx: PrintContext): Promise<void> {
+  printList(ctx, "ContinuumRuntimeHelloInspection", await inspectRuntimeHello());
 }
 
 async function collectWorldlineFrames(ctx: CliContext): Promise<FrameData[]> {

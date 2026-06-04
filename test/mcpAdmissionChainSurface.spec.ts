@@ -22,6 +22,7 @@ import {
   type JsonObject,
   type JsonValue
 } from "./helpers/jsonTestUtils.ts";
+import { createFixture } from "./helpers/gitWarpFixture.ts";
 
 const HEAD_ID = "head:main";
 const MCP_INSPECT_LIVE_TARGETS_TOOL = "warp_ttd.inspect_live_targets";
@@ -473,14 +474,14 @@ test("MCP live-target inspection exposes descriptor-only Continuum targets", asy
 });
 
 test("MCP runtime hello inspection exposes the CLI-equivalent read model", async () => {
-  const graftRoot = fs.mkdtempSync(path.join(os.tmpdir(), "warp-ttd-graft-"));
+  const fixture = await createFixture("runtime-hello-mcp-graft", "graft-ast");
   const previousJeditRoot = process.env["WARP_TTD_JEDIT_ROOT"];
   const previousGraftRoot = process.env["WARP_TTD_GRAFT_ROOT"];
   const { client, server } = await connectMcp();
 
   try {
     process.env["WARP_TTD_JEDIT_ROOT"] = path.join(process.cwd(), "test", "missing-jedit");
-    process.env["WARP_TTD_GRAFT_ROOT"] = graftRoot;
+    process.env["WARP_TTD_GRAFT_ROOT"] = fixture.tempDir;
 
     const result = structuredContent(
       await client.callTool({
@@ -503,7 +504,7 @@ test("MCP runtime hello inspection exposes the CLI-equivalent read model", async
     } else {
       process.env["WARP_TTD_GRAFT_ROOT"] = previousGraftRoot;
     }
-    fs.rmSync(graftRoot, { recursive: true, force: true });
+    await fixture.cleanup();
     await closeMcp(client, server);
   }
 });

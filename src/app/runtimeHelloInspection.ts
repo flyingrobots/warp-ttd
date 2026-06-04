@@ -1,10 +1,15 @@
 import {
   inspectLiveTargets,
+  liveTargetDescriptorsFromEnv,
   type LiveTargetConnectionMode,
   type LiveTargetInspection,
   type LiveTargetInspectionInput,
   type LiveTargetRuntimeBoundaryEvidencePosture
 } from "./liveTargetInspection.ts";
+import {
+  inspectLiveTargetSessions,
+  type LiveTargetSessionInspection
+} from "./liveTargetSessionInspection.ts";
 
 export const CONTINUUM_RUNTIME_HELLO_SCHEMA_VERSION = "continuum.debug.hello.v1";
 export const CONTINUUM_RUNTIME_HELLO_INSPECTION_SCHEMA_VERSION =
@@ -372,7 +377,36 @@ function inspectEchoHello(target: LiveTargetInspection): ContinuumRuntimeHelloIn
   return inspectAbsentEchoHello(target);
 }
 
-function inspectGitWarpHello(target: LiveTargetInspection): ContinuumRuntimeHelloInspection {
+function obstructedGitWarpHello(
+  target: LiveTargetInspection,
+  message: string
+): ContinuumRuntimeHelloInspection {
+  return nonPresentInspection({
+    target,
+    helloPosture: "OBSTRUCTED",
+    code: "git-warp-runtime-hello-obstructed",
+    message,
+    source: "ADAPTER_TRANSLATION",
+    evidencePosture: "UNAVAILABLE",
+    nativeContinuumWitness: false,
+    retryHint:
+      "Fix the git-warp adapter/runtime probe obstruction, then rerun runtime hello inspection."
+  });
+}
+
+function gitWarpSessionObstructionReason(
+  target: LiveTargetInspection,
+  session: LiveTargetSessionInspection | undefined
+): string | undefined {
+  if (session === undefined) return `${target.target} git-warp session was not inspected.`;
+  if (session.sessionPosture === "OBSTRUCTED") return session.reason;
+  return undefined;
+}
+
+function inspectGitWarpHello(
+  target: LiveTargetInspection,
+  session: LiveTargetSessionInspection | undefined
+): ContinuumRuntimeHelloInspection {
   if (targetRootMissing(target)) {
     return unavailableRootInspection(
       target,
@@ -382,16 +416,14 @@ function inspectGitWarpHello(target: LiveTargetInspection): ContinuumRuntimeHell
   }
 
   if (target.adapterPosture === "OBSTRUCTED") {
-    return nonPresentInspection({
-      target,
-      helloPosture: "OBSTRUCTED",
-      code: "git-warp-runtime-hello-obstructed",
-      message: target.reason,
-      source: "ADAPTER_TRANSLATION",
-      retryHint:
-        "Fix the git-warp adapter/runtime probe obstruction, then rerun runtime hello inspection."
-    });
+    return obstructedGitWarpHello(target, target.reason);
   }
+
+  const sessionObstructionReason = gitWarpSessionObstructionReason(target, session);
+  if (sessionObstructionReason !== undefined) return obstructedGitWarpHello(
+    target,
+    sessionObstructionReason
+  );
 
   return presentInspection(target, translatedGitWarpHello(target));
 }
@@ -423,10 +455,11 @@ function inspectDescriptorOnlyHello(
 }
 
 function inspectTargetRuntimeHello(
-  target: LiveTargetInspection
+  target: LiveTargetInspection,
+  session: LiveTargetSessionInspection | undefined
 ): ContinuumRuntimeHelloInspection {
   if (target.connectionMode === "git-warp") {
-    return inspectGitWarpHello(target);
+    return inspectGitWarpHello(target, session);
   }
 
   if (target.connectionMode === "echo-root") {
@@ -436,8 +469,10 @@ function inspectTargetRuntimeHello(
   return inspectDescriptorOnlyHello(target);
 }
 
-export function inspectRuntimeHello(
-  input?: LiveTargetInspectionInput
-): ContinuumRuntimeHelloInspection[] {
-  return inspectLiveTargets(input).map(inspectTargetRuntimeHello);
+export async function inspectRuntimeHello(
+  input: LiveTargetInspectionInput = liveTargetDescriptorsFromEnv()
+): Promise<ContinuumRuntimeHelloInspection[]> {
+  const targets = inspectLiveTargets(input);
+  const sessions = await inspectLiveTargetSessions(input);
+  return targets.map((target, index) => inspectTargetRuntimeHello(target, sessions[index]));
 }

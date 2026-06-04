@@ -23,7 +23,8 @@ flowchart LR
 
 ## Agent Contract
 
-For agent use, `--json` is the primary contract. Every command emits a versioned, machine-readable JSONL envelope.
+For agent use, `--json` is the primary contract. Every command emits a
+versioned, machine-readable JSONL envelope.
 MCP is the preferred LLM-facing integration surface, while CLI `--json` remains
 the deterministic audit, scripting, and local recovery interface. New debugger
 facts should be usable by agents here before they become human-only TUI affordances.
@@ -76,7 +77,9 @@ facts should be usable by agents here before they become human-only TUI affordan
 
 ## Relationship to the TUI
 
-The TUI is a delivery adapter over the same `DebuggerSession` core. It follows the explicit adapter capabilities proven by the CLI surface. New inspection logic must land in the CLI before the TUI depends on it.
+The TUI is a delivery adapter over the same `DebuggerSession` core. It follows
+the explicit adapter capabilities proven by the CLI surface. New inspection
+logic must land in the CLI before the TUI depends on it.
 
 ## Continuum Target Discovery
 
@@ -206,13 +209,24 @@ Each inspection includes:
 `helloPosture` uses the vendor-neutral posture set:
 
 ```ts
-"PRESENT" | "ABSENT" | "UNAVAILABLE" | "UNSUPPORTED" | "OBSTRUCTED" | "RIGHTS_LIMITED" | "REDACTED"
+type RuntimeHelloPosture =
+  | "PRESENT"
+  | "ABSENT"
+  | "UNAVAILABLE"
+  | "UNSUPPORTED"
+  | "OBSTRUCTED"
+  | "RIGHTS_LIMITED"
+  | "REDACTED";
 ```
 
 `evidencePosture` separates compatibility from native witnesshood:
 
 ```ts
-"CONTINUUM_NATIVE" | "TRANSLATED_SUBSTRATE" | "LOCAL_MIRROR_FALLBACK" | "UNAVAILABLE"
+type RuntimeHelloEvidencePosture =
+  | "CONTINUUM_NATIVE"
+  | "TRANSLATED_SUBSTRATE"
+  | "LOCAL_MIRROR_FALLBACK"
+  | "UNAVAILABLE";
 ```
 
 The default `graft` witness reports `helloPosture: "PRESENT"` with a
@@ -230,4 +244,5 @@ descriptor is malformed or unsafe, in which case they report `OBSTRUCTED` with
 the descriptor reason.
 
 ---
-**The goal is structured truth. Human-only text must not appear on stdout in `--json` mode.**
+**The goal is structured truth. Human-only text must not appear on stdout in
+`--json` mode.**

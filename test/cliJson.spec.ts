@@ -24,6 +24,7 @@ import {
   type JsonObject,
   type JsonValue
 } from "./helpers/jsonTestUtils.ts";
+import { createFixture } from "./helpers/gitWarpFixture.ts";
 
 const exec = promisify(execFile);
 
@@ -586,7 +587,7 @@ test("runtime-hello --json reports missing roots as unavailable", async () => {
 });
 
 test("runtime-hello --json emits translated git-warp hello when root is present", async () => {
-  const graftRoot = fs.mkdtempSync(path.join(os.tmpdir(), "warp-ttd-graft-"));
+  const fixture = await createFixture("runtime-hello-cli-graft", "graft-ast");
 
   try {
     const lines = await runJsonWithEnv("runtime-hello", {
@@ -597,8 +598,8 @@ test("runtime-hello --json emits translated git-warp hello when root is present"
           appKind: "live git-warp app",
           connection: {
             mode: "git-warp",
-            rootPath: graftRoot,
-            graphName: "graft-ast"
+            rootPath: fixture.tempDir,
+            graphName: fixture.graphName
           }
         }
       ])
@@ -620,6 +621,43 @@ test("runtime-hello --json emits translated git-warp hello when root is present"
     assert.equal(posture["evidence"], "TRANSLATED_SUBSTRATE");
     assert.equal(posture["nativeContinuumWitness"], false);
     assert.equal("evidence" in hello, false);
+  } finally {
+    await fixture.cleanup();
+  }
+});
+
+test("runtime-hello --json obstructs unopenable git-warp roots", async () => {
+  const graftRoot = fs.mkdtempSync(path.join(os.tmpdir(), "warp-ttd-empty-graft-"));
+
+  try {
+    const lines = await runJsonWithEnv("runtime-hello", {
+      WARP_TTD_TARGETS_JSON: JSON.stringify([
+        {
+          id: "graft",
+          label: "empty graft witness",
+          appKind: "live git-warp app",
+          connection: {
+            mode: "git-warp",
+            rootPath: graftRoot,
+            graphName: "graft-ast"
+          }
+        }
+      ])
+    });
+    assert.equal(lines.length, 1);
+
+    const obj = parseLine(requireLine(lines, 0));
+    assert.equal(obj.envelope, "ContinuumRuntimeHelloInspection");
+    const graft = requireRecord(obj.data, "graft runtime hello");
+    assert.equal(graft["target"], "graft");
+    assert.equal(graft["helloPosture"], "OBSTRUCTED");
+    assert.equal(graft["evidencePosture"], "UNAVAILABLE");
+    assert.equal(graft["nativeContinuumWitness"], false);
+    assert.equal("hello" in graft, false);
+    assert.match(
+      requireString(graft["reason"], "graft.reason"),
+      /git-warp session could not be opened/
+    );
   } finally {
     fs.rmSync(graftRoot, { recursive: true, force: true });
   }
@@ -665,7 +703,7 @@ test("runtime-hello --json preserves unsupported Echo adapter posture", async ()
 });
 
 test("runtime-hello --json keeps posture fields on the documented hello posture object", async () => {
-  const graftRoot = fs.mkdtempSync(path.join(os.tmpdir(), "warp-ttd-graft-"));
+  const fixture = await createFixture("runtime-hello-cli-posture", "graft-ast");
 
   try {
     const lines = await runJsonWithEnv("runtime-hello", {
@@ -674,8 +712,8 @@ test("runtime-hello --json keeps posture fields on the documented hello posture 
           id: "graft",
           connection: {
             mode: "git-warp",
-            rootPath: graftRoot,
-            graphName: "graft-ast"
+            rootPath: fixture.tempDir,
+            graphName: fixture.graphName
           }
         }
       ])
@@ -691,7 +729,7 @@ test("runtime-hello --json keeps posture fields on the documented hello posture 
     );
     assert.equal("evidence" in hello, false);
   } finally {
-    fs.rmSync(graftRoot, { recursive: true, force: true });
+    await fixture.cleanup();
   }
 });
 

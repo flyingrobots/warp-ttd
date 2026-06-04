@@ -94,9 +94,9 @@ export function inspectLiveTargetPosture(): LiveTargetsInspection {
   };
 }
 
-export function inspectRuntimeHelloPosture(): RuntimeHelloInspection {
+export async function inspectRuntimeHelloPosture(): Promise<RuntimeHelloInspection> {
   return {
-    runtimeHello: inspectRuntimeHello().map((inspection) => jsonObject(inspection))
+    runtimeHello: (await inspectRuntimeHello()).map((inspection) => jsonObject(inspection))
   };
 }
 
