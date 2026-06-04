@@ -118,10 +118,12 @@ timeline
 The product goal is **Continuum-Compatible Target Debugging**: WARP TTD debugs
 targets that expose Continuum-compatible inspection contracts. `jedit`, a live
 Echo app, and `graft`, a live git-warp app, are default witness targets, not
-special debugger concepts. The **Continuum Target Discovery Contract** is now
-landed; the next correction is a design-thinking pass that names the
-Continuum-native causal debugger experience before implementation slices deepen
-individual feature assumptions.
+special debugger concepts. The **Continuum Target Discovery Contract** and the
+**Continuum Causal Debugger Design Thinking** pass are now landed; the next
+correction is the vendor-neutral runtime hello handshake that lets WARP TTD ask
+a configured Continuum-compatible target what runtime/debug protocol it speaks
+before discovery, endpoint auth, or capability inspection harden around adapter
+names.
 
 MCP is not authority, admission, grant issuance, or mutation. The read-model
 target is
@@ -185,12 +187,11 @@ bridge, supported bridge, unsupported ABI, and obstructed descriptor without
 claiming an open Echo session.
 The landed evidence-posture boundary is
 [`docs/design/0021-runtime-boundary-evidence-posture/runtime-boundary-evidence-posture.md`](./design/0021-runtime-boundary-evidence-posture/runtime-boundary-evidence-posture.md).
-The active synthesis cycle is
-[`#81 Continuum causal debugger design thinking and post-0076 housekeeping`](https://github.com/flyingrobots/warp-ttd/issues/81):
-it defines what debugging means when Continuum gives WARP TTD deterministic
+The landed synthesis cycle
+[`#81 Continuum causal debugger design thinking and post-0076 housekeeping`](https://github.com/flyingrobots/warp-ttd/issues/81)
+defines what debugging means when Continuum gives WARP TTD deterministic
 replay, counterfactuals, causal evidence, readings, witnesses, and structured
-agent surfaces.
-The paired design and Manual chapter are
+agent surfaces. The paired design and Manual chapter are
 [`docs/design/0081-continuum-causal-debugger-design-thinking/continuum-causal-debugger-design-thinking.md`](./design/0081-continuum-causal-debugger-design-thinking/continuum-causal-debugger-design-thinking.md)
 and
 [`docs/manual/009-continuum-causal-debugger-design-thinking.md`](./manual/009-continuum-causal-debugger-design-thinking.md).
@@ -200,24 +201,20 @@ Its follow-on implementation epics are
 [#84](https://github.com/flyingrobots/warp-ttd/issues/84),
 [#85](https://github.com/flyingrobots/warp-ttd/issues/85), and
 [#86](https://github.com/flyingrobots/warp-ttd/issues/86).
+The active protocol design cycle is
+[`#80 Vendor-neutral Continuum runtime hello handshake`](https://github.com/flyingrobots/warp-ttd/issues/80),
+paired with
+[`docs/design/0080-vendor-neutral-continuum-runtime-hello-handshake/vendor-neutral-continuum-runtime-hello-handshake.md`](./design/0080-vendor-neutral-continuum-runtime-hello-handshake/vendor-neutral-continuum-runtime-hello-handshake.md).
+It defines `continuum.debug.hello.v1` as the next shared contract before local
+registry discovery, endpoint consent/auth, or debugger capability discovery.
 
-## Next Twelve Slice Queue
+## Next Slice Queue
 
 As of 2026-06-03, the next execution queue continues from the landed
-Manual-backed `0076-continuum-target-discovery-contract` cycle. Each slice
+Manual-backed `0081-continuum-causal-debugger-design-thinking` cycle. Each slice
 should follow the cycle loop in `METHOD.md`: design packet, failing tests,
 implementation, Manual chapter or Manual update, retro/follow-on debt,
 validation, and PR.
-
-1. **0081 Continuum Causal Debugger Design Thinking**
-   - Define the product shape of debugging with deterministic replay,
-     counterfactuals, causal evidence, readings, witnesses, and agent-first
-     surfaces.
-   - Map features such as breakpoints, watchpoints, effect tracing,
-     counterfactual comparison, time-window search, and causal blame to human
-     UX and machine-readable contracts.
-   - Produce follow-on implementation issue candidates before the next feature
-     slice locks in a narrow interaction model.
 
 1. **0080 Vendor-Neutral Continuum Runtime Hello Handshake**
    - Define the read-only hello contract that lets any Continuum runtime report
