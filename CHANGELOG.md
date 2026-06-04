@@ -10,6 +10,16 @@ This project will use [Semantic Versioning](https://semver.org/) starting at
 
 ### Added
 
+- **Continuum runtime hello read model**: added
+  `inspectRuntimeHello`, `runtime-hello --json`, `npm run runtime-hello`, and
+  MCP `warp_ttd.inspect_runtime_hello`. The new
+  `ContinuumRuntimeHelloInspection` surface reports `helloPosture`,
+  `evidencePosture`, `nativeContinuumWitness`, structured reasons, and a
+  `continuum.debug.hello.v1` compatibility payload when one is present. The
+  `graft` exposes translated-substrate compatibility with
+  `nativeContinuumWitness: false` when its root is present and adapter facts
+  are inspectable; missing roots stay `UNAVAILABLE`. The default `jedit`
+  witness stays `ABSENT` until Echo publishes a native runtime hello producer.
 - **Vendor-neutral Continuum runtime hello handshake design**: added cycle 0080
   design packet defining `continuum.debug.hello.v1` as the next read-only
   compatibility contract before local registry discovery, endpoint auth, or

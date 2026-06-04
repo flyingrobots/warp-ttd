@@ -24,6 +24,7 @@ import {
   type JsonObject,
   type JsonValue
 } from "./helpers/jsonTestUtils.ts";
+import { createFixture } from "./helpers/gitWarpFixture.ts";
 
 const exec = promisify(execFile);
 
@@ -550,6 +551,214 @@ test("targets --json reports a descriptor-only Continuum target", async () => {
   assert.equal(target["adapterPosture"], "UNSUPPORTED");
   assert.deepEqual(target["capabilities"], ["DESCRIPTOR_ONLY"]);
   assert.match(requireString(target["reason"], "vendor-demo.reason"), /Vendor runtime/);
+});
+
+test("runtime-hello --json reports missing roots as unavailable", async () => {
+  const lines = await runJsonWithEnv("runtime-hello", {
+    WARP_TTD_JEDIT_ROOT: path.join(process.cwd(), "test", "missing-jedit"),
+    WARP_TTD_GRAFT_ROOT: path.join(process.cwd(), "test", "missing-graft")
+  });
+  assert.equal(lines.length, 2);
+
+  const parsed = lines.map((line) => parseLine(line));
+  assert.deepEqual(parsed.map((entry) => entry.envelope), [
+    "ContinuumRuntimeHelloInspection",
+    "ContinuumRuntimeHelloInspection"
+  ]);
+
+  const [jedit, graft] = parsed.map((entry) =>
+    requireRecord(entry.data, `${entry.envelope}.data`)
+  );
+  assert.ok(jedit !== undefined);
+  assert.ok(graft !== undefined);
+  assert.equal(jedit["target"], "jedit");
+  assert.equal(jedit["helloPosture"], "UNAVAILABLE");
+  assert.equal(jedit["evidencePosture"], "UNAVAILABLE");
+  assert.equal(jedit["nativeContinuumWitness"], false);
+  assert.equal("hello" in jedit, false);
+  assert.match(requireString(jedit["reason"], "jedit.reason"), /root is missing/);
+
+  assert.equal(graft["target"], "graft");
+  assert.equal(graft["helloPosture"], "UNAVAILABLE");
+  assert.equal(graft["evidencePosture"], "UNAVAILABLE");
+  assert.equal(graft["nativeContinuumWitness"], false);
+  assert.equal("hello" in graft, false);
+  assert.match(requireString(graft["reason"], "graft.reason"), /root is missing/);
+});
+
+test("runtime-hello --json emits translated git-warp hello when root is present", async () => {
+  const fixture = await createFixture("runtime-hello-cli-graft", "graft-ast");
+
+  try {
+    const lines = await runJsonWithEnv("runtime-hello", {
+      WARP_TTD_TARGETS_JSON: JSON.stringify([
+        {
+          id: "graft",
+          label: "graft local witness",
+          appKind: "live git-warp app",
+          connection: {
+            mode: "git-warp",
+            rootPath: fixture.tempDir,
+            graphName: fixture.graphName
+          }
+        }
+      ])
+    });
+    assert.equal(lines.length, 1);
+
+    const obj = parseLine(requireLine(lines, 0));
+    assert.equal(obj.envelope, "ContinuumRuntimeHelloInspection");
+    const graft = requireRecord(obj.data, "graft runtime hello");
+    assert.equal(graft["target"], "graft");
+    assert.equal(graft["targetLabel"], "graft local witness");
+    assert.equal(graft["helloPosture"], "PRESENT");
+    assert.equal(graft["evidencePosture"], "TRANSLATED_SUBSTRATE");
+    assert.equal(graft["nativeContinuumWitness"], false);
+    const hello = requireRecord(graft["hello"], "graft.hello");
+    assert.equal(hello["schemaVersion"], "continuum.debug.hello.v1");
+    assert.equal(requireRecord(hello["runtime"], "graft.hello.runtime")["runtimeKind"], "git-warp");
+    const posture = requireRecord(hello["posture"], "graft.hello.posture");
+    assert.equal(posture["evidence"], "TRANSLATED_SUBSTRATE");
+    assert.equal(posture["nativeContinuumWitness"], false);
+    assert.equal("evidence" in hello, false);
+  } finally {
+    await fixture.cleanup();
+  }
+});
+
+test("runtime-hello --json obstructs unopenable git-warp roots", async () => {
+  const graftRoot = fs.mkdtempSync(path.join(os.tmpdir(), "warp-ttd-empty-graft-"));
+
+  try {
+    const lines = await runJsonWithEnv("runtime-hello", {
+      WARP_TTD_TARGETS_JSON: JSON.stringify([
+        {
+          id: "graft",
+          label: "empty graft witness",
+          appKind: "live git-warp app",
+          connection: {
+            mode: "git-warp",
+            rootPath: graftRoot,
+            graphName: "graft-ast"
+          }
+        }
+      ])
+    });
+    assert.equal(lines.length, 1);
+
+    const obj = parseLine(requireLine(lines, 0));
+    assert.equal(obj.envelope, "ContinuumRuntimeHelloInspection");
+    const graft = requireRecord(obj.data, "graft runtime hello");
+    assert.equal(graft["target"], "graft");
+    assert.equal(graft["helloPosture"], "OBSTRUCTED");
+    assert.equal(graft["evidencePosture"], "UNAVAILABLE");
+    assert.equal(graft["nativeContinuumWitness"], false);
+    assert.equal("hello" in graft, false);
+    assert.match(
+      requireString(graft["reason"], "graft.reason"),
+      /git-warp session could not be opened/
+    );
+  } finally {
+    fs.rmSync(graftRoot, { recursive: true, force: true });
+  }
+});
+
+test("runtime-hello --json preserves unsupported Echo adapter posture", async () => {
+  const jeditRoot = fs.mkdtempSync(path.join(os.tmpdir(), "warp-ttd-jedit-"));
+
+  try {
+    const manifestPath = path.join(jeditRoot, LIVE_ECHO_ADAPTER_PROBE_MANIFEST);
+    fs.mkdirSync(path.dirname(manifestPath), { recursive: true });
+    fs.writeFileSync(
+      manifestPath,
+      JSON.stringify({
+        schemaVersion: LIVE_ECHO_ADAPTER_PROBE_SCHEMA_VERSION,
+        bridgeKind: "echo",
+        abiVersion: 99,
+        transport: "wasm"
+      })
+    );
+
+    const lines = await runJsonWithEnv("runtime-hello", {
+      WARP_TTD_TARGETS_JSON: JSON.stringify([
+        {
+          id: "jedit",
+          label: "jedit local witness",
+          connection: { mode: "echo-root", rootPath: jeditRoot }
+        }
+      ])
+    });
+    assert.equal(lines.length, 1);
+
+    const obj = parseLine(requireLine(lines, 0));
+    const jedit = requireRecord(obj.data, "jedit runtime hello");
+    assert.equal(jedit["helloPosture"], "UNSUPPORTED");
+    assert.equal(jedit["evidencePosture"], "UNAVAILABLE");
+    assert.equal(jedit["nativeContinuumWitness"], false);
+    assert.equal("hello" in jedit, false);
+    assert.match(requireString(jedit["reason"], "jedit.reason"), /Unsupported Echo adapter ABI/);
+  } finally {
+    fs.rmSync(jeditRoot, { recursive: true, force: true });
+  }
+});
+
+test("runtime-hello --json keeps posture fields on the documented hello posture object", async () => {
+  const fixture = await createFixture("runtime-hello-cli-posture", "graft-ast");
+
+  try {
+    const lines = await runJsonWithEnv("runtime-hello", {
+      WARP_TTD_TARGETS_JSON: JSON.stringify([
+        {
+          id: "graft",
+          connection: {
+            mode: "git-warp",
+            rootPath: fixture.tempDir,
+            graphName: fixture.graphName
+          }
+        }
+      ])
+    });
+    const graft = requireRecord(parseLine(requireLine(lines, 0)).data, "graft runtime hello");
+    const hello = requireRecord(graft["hello"], "graft.hello");
+    const posture = requireRecord(hello["posture"], "graft.hello.posture");
+
+    assert.equal(posture["evidence"], "TRANSLATED_SUBSTRATE");
+    assert.equal(
+      posture["nativeContinuumWitness"],
+      false
+    );
+    assert.equal("evidence" in hello, false);
+  } finally {
+    await fixture.cleanup();
+  }
+});
+
+test("runtime-hello --json preserves descriptor obstruction posture", async () => {
+  const lines = await runJsonWithEnv("runtime-hello", {
+    WARP_TTD_TARGETS_JSON: JSON.stringify([
+      {
+        id: "blocked-demo",
+        label: "Blocked demo runtime",
+        connection: {
+          mode: "descriptor-only",
+          adapterPosture: "OBSTRUCTED",
+          reason: "Runtime endpoint returned malformed hello JSON."
+        }
+      }
+    ])
+  });
+  assert.equal(lines.length, 1);
+
+  const obj = parseLine(requireLine(lines, 0));
+  assert.equal(obj.envelope, "ContinuumRuntimeHelloInspection");
+  const target = requireRecord(obj.data, "blocked-demo runtime hello");
+  assert.equal(target["target"], "blocked-demo");
+  assert.equal(target["targetLabel"], "Blocked demo runtime");
+  assert.equal(target["helloPosture"], "OBSTRUCTED");
+  assert.equal(target["evidencePosture"], "UNAVAILABLE");
+  assert.equal(target["nativeContinuumWitness"], false);
+  assert.match(requireString(target["reason"], "blocked-demo.reason"), /malformed hello JSON/);
+  assert.equal("hello" in target, false);
 });
 
 test("targets --json reports jedit live Echo family intake manifest", async () => {

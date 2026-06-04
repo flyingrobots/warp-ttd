@@ -107,6 +107,35 @@ Each target includes:
 `target-session --json` uses the same registered target list. Targets without a
 session-capable adapter report `sessionPosture: "OBSTRUCTED"` with a reason.
 
+`runtime-hello --json` and MCP `warp_ttd.inspect_runtime_hello` also use the
+same registered target list. They report
+`ContinuumRuntimeHelloInspection` records with:
+
+- `schemaVersion`
+- `target`
+- `targetLabel`
+- `connectionMode`
+- `hostKind`
+- `appKind`
+- `readOnly`
+- `helloPosture`
+- `evidencePosture`
+- `nativeContinuumWitness`
+- `hello`, when a compatibility payload is present
+- `reason`, when the hello is not present
+- `reasons`
+- `retryHint`, when there is a deterministic next action
+
+`graft` returns `helloPosture: "PRESENT"` through a translated-substrate
+compatibility hello only when its root is present and WARP TTD can inspect
+adapter facts. It still reports `nativeContinuumWitness: false`. Missing
+`graft` roots return `helloPosture: "UNAVAILABLE"` and no hello payload. `jedit`
+currently returns `helloPosture: "ABSENT"` until Echo publishes a native
+`continuum.debug.hello.v1` producer; missing Echo roots return `UNAVAILABLE`
+and unsupported Echo adapter probe descriptors return `UNSUPPORTED`.
+Descriptor-only targets return `UNSUPPORTED` unless descriptor parsing or
+runtime response handling is obstructed.
+
 ## Connection Modes
 
 - `echo-root` means the target root may expose Echo-compatible descriptor facts.
@@ -133,6 +162,18 @@ Connection mode is an adapter implementation hint. It is not an app identity.
   projected from a substrate and are not native Continuum witnesshood.
 - `runtimeBoundaryEvidence.posture: "UNAVAILABLE"` means no runtime-boundary
   evidence is available yet.
+- `helloPosture: "PRESENT"` means a runtime hello or compatibility hello was
+  read and parsed.
+- `helloPosture: "ABSENT"` means the target is configured but no runtime hello
+  producer is currently published.
+- `helloPosture: "UNAVAILABLE"` means WARP TTD cannot inspect runtime hello in
+  the current environment, such as when a configured local root is missing.
+- `helloPosture: "UNSUPPORTED"` means the descriptor is visible but this WARP
+  TTD cycle cannot inspect runtime hello for that connection mode.
+- `helloPosture: "OBSTRUCTED"` means descriptor or hello input is malformed or
+  unsafe to trust.
+- `evidencePosture: "TRANSLATED_SUBSTRATE"` means the hello is adapter
+  compatibility evidence, not native Continuum witnesshood.
 
 ## Compatibility Rule
 

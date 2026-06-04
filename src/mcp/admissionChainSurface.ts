@@ -14,6 +14,7 @@ import {
 } from "../app/admissionChainReadModel.ts";
 import { DebuggerSession } from "../app/debuggerSession.ts";
 import { inspectLiveTargets } from "../app/liveTargetInspection.ts";
+import { inspectRuntimeHello } from "../app/runtimeHelloInspection.ts";
 import type { AdapterCapability } from "../protocol.ts";
 
 export type {
@@ -30,7 +31,8 @@ export const MCP_ADMISSION_TOOL_NAMES = {
   inspectAdapterCapabilities: "warp_ttd.inspect_adapter_capabilities",
   inspectReadings: "warp_ttd.inspect_readings",
   inspectAdmissionChain: "warp_ttd.inspect_admission_chain",
-  inspectLiveTargets: "warp_ttd.inspect_live_targets"
+  inspectLiveTargets: "warp_ttd.inspect_live_targets",
+  inspectRuntimeHello: "warp_ttd.inspect_runtime_hello"
 } as const;
 
 export type McpAdmissionToolName =
@@ -43,6 +45,10 @@ export interface AdapterCapabilitiesInspection extends JsonObject {
 
 export interface LiveTargetsInspection extends JsonObject {
   targets: readonly JsonObject[];
+}
+
+export interface RuntimeHelloInspection extends JsonObject {
+  runtimeHello: readonly JsonObject[];
 }
 
 export interface McpAdmissionChainServerOptions {
@@ -85,6 +91,12 @@ export function inspectAdmissionChain(session: DebuggerSession): AdmissionChainR
 export function inspectLiveTargetPosture(): LiveTargetsInspection {
   return {
     targets: inspectLiveTargets().map((target) => jsonObject(target))
+  };
+}
+
+export async function inspectRuntimeHelloPosture(): Promise<RuntimeHelloInspection> {
+  return {
+    runtimeHello: (await inspectRuntimeHello()).map((inspection) => jsonObject(inspection))
   };
 }
 
@@ -176,6 +188,16 @@ function liveTargetsTool(): ReadOnlyToolRegistration {
   };
 }
 
+function runtimeHelloTool(): ReadOnlyToolRegistration {
+  return {
+    name: MCP_ADMISSION_TOOL_NAMES.inspectRuntimeHello,
+    title: "Inspect Runtime Hello",
+    description:
+      "Return read-only Continuum runtime hello posture for configured targets.",
+    callback: () => inspectRuntimeHelloPosture()
+  };
+}
+
 function mcpToolRegistrations(
   getSession: () => Promise<DebuggerSession>
 ): readonly ReadOnlyToolRegistration[] {
@@ -184,7 +206,8 @@ function mcpToolRegistrations(
     capabilityTool(getSession),
     readingTool(getSession),
     admissionChainTool(getSession),
-    liveTargetsTool()
+    liveTargetsTool(),
+    runtimeHelloTool()
   ];
 }
 

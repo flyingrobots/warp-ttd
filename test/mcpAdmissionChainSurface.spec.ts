@@ -19,11 +19,14 @@ import type { HostHello, PlaybackFrame } from "../src/protocol.ts";
 import {
   requireArray,
   requireRecord,
-  type JsonObject
+  type JsonObject,
+  type JsonValue
 } from "./helpers/jsonTestUtils.ts";
+import { createFixture } from "./helpers/gitWarpFixture.ts";
 
 const HEAD_ID = "head:main";
 const MCP_INSPECT_LIVE_TARGETS_TOOL = "warp_ttd.inspect_live_targets";
+const MCP_INSPECT_RUNTIME_HELLO_TOOL = "warp_ttd.inspect_runtime_hello";
 const GENERATED_ARTIFACT_ROOT = "dist/generated/continuum-echo-inspect";
 const REQUIRED_GENERATED_FILES = [
   "schemas.generated.ts",
@@ -166,6 +169,45 @@ function assertJeditLiveTargetIntake(
   );
   assert.equal(jeditProbe["probePosture"], "UNAVAILABLE");
   assert.equal(jeditProbe["sessionProbePosture"], "NOT_OPENED");
+}
+
+function assertDefaultRuntimeHelloInspection(runtimeHello: readonly JsonObject[]): void {
+  assert.deepEqual(
+    runtimeHello.map((entry) => [
+      entry["target"],
+      entry["helloPosture"],
+      entry["evidencePosture"],
+      entry["nativeContinuumWitness"]
+    ]),
+    [
+      ["jedit", "UNAVAILABLE", "UNAVAILABLE", false],
+      ["graft", "PRESENT", "TRANSLATED_SUBSTRATE", false]
+    ]
+  );
+  const jedit = runtimeHello.find((entry) => entry["target"] === "jedit");
+  assert.ok(jedit !== undefined);
+  assert.equal("hello" in jedit, false);
+  assert.match(requireString(jedit["reason"], "jedit.reason"), /root is missing/);
+
+  const graft = runtimeHello.find((entry) => entry["target"] === "graft");
+  assert.ok(graft !== undefined);
+  const hello = requireRecord(graft["hello"], "graft.hello");
+  assert.equal(hello["schemaVersion"], "continuum.debug.hello.v1");
+  assert.equal(requireRecord(hello["runtime"], "graft.hello.runtime")["runtimeKind"], "git-warp");
+  const posture = requireRecord(hello["posture"], "graft.hello.posture");
+  assert.equal(posture["evidence"], "TRANSLATED_SUBSTRATE");
+  assert.equal(
+    posture["nativeContinuumWitness"],
+    false
+  );
+  assert.equal("evidence" in hello, false);
+}
+
+function requireString(value: JsonValue | undefined, label: string): string {
+  if (typeof value !== "string") {
+    assert.fail(`${label} must be a string`);
+  }
+  return value;
 }
 
 function generatedArtifactDescriptor(): object {
@@ -427,6 +469,42 @@ test("MCP live-target inspection exposes descriptor-only Continuum targets", asy
     } else {
       process.env["WARP_TTD_TARGETS_JSON"] = previousTargetsJson;
     }
+    await closeMcp(client, server);
+  }
+});
+
+test("MCP runtime hello inspection exposes the CLI-equivalent read model", async () => {
+  const fixture = await createFixture("runtime-hello-mcp-graft", "graft-ast");
+  const previousJeditRoot = process.env["WARP_TTD_JEDIT_ROOT"];
+  const previousGraftRoot = process.env["WARP_TTD_GRAFT_ROOT"];
+  const { client, server } = await connectMcp();
+
+  try {
+    process.env["WARP_TTD_JEDIT_ROOT"] = path.join(process.cwd(), "test", "missing-jedit");
+    process.env["WARP_TTD_GRAFT_ROOT"] = fixture.tempDir;
+
+    const result = structuredContent(
+      await client.callTool({
+        name: MCP_INSPECT_RUNTIME_HELLO_TOOL,
+        arguments: {}
+      })
+    );
+    const runtimeHello = requireArray(result["runtimeHello"], "runtimeHello")
+      .map((entry) => requireRecord(entry, "runtimeHello entry"));
+
+    assertDefaultRuntimeHelloInspection(runtimeHello);
+  } finally {
+    if (previousJeditRoot === undefined) {
+      delete process.env["WARP_TTD_JEDIT_ROOT"];
+    } else {
+      process.env["WARP_TTD_JEDIT_ROOT"] = previousJeditRoot;
+    }
+    if (previousGraftRoot === undefined) {
+      delete process.env["WARP_TTD_GRAFT_ROOT"];
+    } else {
+      process.env["WARP_TTD_GRAFT_ROOT"] = previousGraftRoot;
+    }
+    await fixture.cleanup();
     await closeMcp(client, server);
   }
 });

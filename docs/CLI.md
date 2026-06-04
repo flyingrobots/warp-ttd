@@ -12,6 +12,7 @@ flowchart LR
     B --> B2[catalog]
     B --> B3[targets]
     B --> B4[target-session]
+    B --> B5[runtime-hello]
     C --> C1[frame]
     C --> C2[effects]
     C --> C3[deliveries]
@@ -22,7 +23,8 @@ flowchart LR
 
 ## Agent Contract
 
-For agent use, `--json` is the primary contract. Every command emits a versioned, machine-readable JSONL envelope.
+For agent use, `--json` is the primary contract. Every command emits a
+versioned, machine-readable JSONL envelope.
 MCP is the preferred LLM-facing integration surface, while CLI `--json` remains
 the deterministic audit, scripting, and local recovery interface. New debugger
 facts should be usable by agents here before they become human-only TUI affordances.
@@ -47,6 +49,13 @@ facts should be usable by agents here before they become human-only TUI affordan
   npm run target-session -- --json
   ```
 
+- **Runtime Hello**: Inspect configured Continuum-compatible targets for the
+  read-only runtime hello posture.
+
+  ```bash
+  npm run runtime-hello -- --json
+  ```
+
 - **Inspect**: Read the current playback frame and receipts.
 
   ```bash
@@ -68,7 +77,9 @@ facts should be usable by agents here before they become human-only TUI affordan
 
 ## Relationship to the TUI
 
-The TUI is a delivery adapter over the same `DebuggerSession` core. It follows the explicit adapter capabilities proven by the CLI surface. New inspection logic must land in the CLI before the TUI depends on it.
+The TUI is a delivery adapter over the same `DebuggerSession` core. It follows
+the explicit adapter capabilities proven by the CLI surface. New inspection
+logic must land in the CLI before the TUI depends on it.
 
 ## Continuum Target Discovery
 
@@ -170,5 +181,68 @@ For `jedit`, `target-session --json` includes the same `echoAdapterProbe` and
 `sessionFamilyIntake` objects, but still reports `sessionPosture:
 "OBSTRUCTED"` until the Echo host adapter session path exists.
 
+## Continuum Runtime Hello
+
+`runtime-hello --json` reports `ContinuumRuntimeHelloInspection` envelopes for
+the same configured target list as `targets --json`. It is read-only and does
+not open a runtime control channel, issue authority, admit runtime work,
+present credentials, create strands, or mutate host state.
+
+Each inspection includes:
+
+- `schemaVersion`
+- `target`
+- `targetLabel`
+- `connectionMode`
+- `hostKind`
+- `appKind`
+- `readOnly`
+- `helloPosture`
+- `evidencePosture`
+- `nativeContinuumWitness`
+- `hello`, when a compatibility hello payload is present
+- `reason`, when the hello is absent, unsupported, obstructed, rights-limited,
+  or redacted
+- `reasons`
+- `retryHint`, when a deterministic next action exists
+
+`helloPosture` uses the vendor-neutral posture set:
+
+```ts
+type RuntimeHelloPosture =
+  | "PRESENT"
+  | "ABSENT"
+  | "UNAVAILABLE"
+  | "UNSUPPORTED"
+  | "OBSTRUCTED"
+  | "RIGHTS_LIMITED"
+  | "REDACTED";
+```
+
+`evidencePosture` separates compatibility from native witnesshood:
+
+```ts
+type RuntimeHelloEvidencePosture =
+  | "CONTINUUM_NATIVE"
+  | "TRANSLATED_SUBSTRATE"
+  | "LOCAL_MIRROR_FALLBACK"
+  | "UNAVAILABLE";
+```
+
+The default `graft` witness reports `helloPosture: "PRESENT"` with a
+hand-authored `continuum.debug.hello.v1` compatibility payload only when WARP
+TTD can inspect translated git-warp adapter facts from a present root. That
+payload keeps `nativeContinuumWitness: false` and `evidencePosture:
+"TRANSLATED_SUBSTRATE"`. A missing `graft` root reports
+`helloPosture: "UNAVAILABLE"` and does not emit a hello payload.
+
+The default `jedit` witness currently reports `helloPosture: "ABSENT"` because
+Echo has not published a native runtime hello producer yet. Missing Echo roots
+report `UNAVAILABLE`; unsupported Echo adapter probe descriptors report
+`UNSUPPORTED`. Descriptor-only targets report `UNSUPPORTED` unless their
+descriptor is malformed or unsafe, in which case they report `OBSTRUCTED` with
+the descriptor reason.
+
 ---
-**The goal is structured truth. Human-only text must not appear on stdout in `--json` mode.**
+**The goal is structured truth. Human-only text must not appear on stdout in
+`--json` mode.**

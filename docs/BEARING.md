@@ -207,6 +207,10 @@ paired with
 [`docs/design/0080-vendor-neutral-continuum-runtime-hello-handshake/vendor-neutral-continuum-runtime-hello-handshake.md`](./design/0080-vendor-neutral-continuum-runtime-hello-handshake/vendor-neutral-continuum-runtime-hello-handshake.md).
 It defines `continuum.debug.hello.v1` as the next shared contract before local
 registry discovery, endpoint consent/auth, or debugger capability discovery.
+The first implementation surface is `npm run runtime-hello -- --json` plus MCP
+`warp_ttd.inspect_runtime_hello`; both report `ContinuumRuntimeHelloInspection`
+records with explicit hello posture, evidence posture, native witnesshood, and
+structured reasons without issuing authority, admitting, or mutating a target.
 
 ## Next Slice Queue
 
