@@ -470,6 +470,7 @@ function assertContinuumCausalDebuggerManual(content: string): void {
 function assertContinuumCausalDebuggerDesign(content: string): void {
   assertAllTextPresent(content, [
     "format: \"warp-design-v1\"",
+    "status: \"landed\"",
     "# Continuum Causal Debugger Design Thinking",
     "https://github.com/flyingrobots/warp-ttd/issues/81",
     "Perfect replay is evidence, not authority.",
@@ -503,6 +504,7 @@ function assertVendorNeutralRuntimeHelloDesign(content: string): void {
     "format: \"warp-design-v1\"",
     "# Vendor-Neutral Continuum Runtime Hello Handshake",
     "https://github.com/flyingrobots/warp-ttd/issues/80",
+    "[Issue #80](https://github.com/flyingrobots/warp-ttd/issues/80)",
     "continuum.debug.hello.v1",
     "Continuum owns the shared semantic contract",
     "read model, CLI/MCP inspection surface",
@@ -516,11 +518,24 @@ function assertVendorNeutralRuntimeHelloDesign(content: string): void {
     "LiveTargetInspection.runtimeHello",
     "LiveTargetSessionInspection.runtimeHello",
     "admission: \"NOT_PERFORMED\"",
+    "reason?: string;",
+    "### Hello Posture Matrix",
+    "### Evidence Posture Matrix",
+    "request consent out-of-band",
     "native Continuum witnesshood",
     "nativeContinuumWitness: false",
     "Continuum owns `continuum.debug.hello.v1` semantics",
+    "https://github.com/flyingrobots/continuum/issues/24",
+    "https://github.com/flyingrobots/echo/issues/532",
+    "https://github.com/git-stunts/git-warp/issues/625",
+    "https://github.com/flyingrobots/warp-ttd/issues/101",
+    "https://github.com/flyingrobots/warp-ttd/pull/93",
+    "Ready-for-review evidence: `npm run check:method`",
+    "Witness: focused Method/doctrine tests.",
     "### Lower Modes",
   ]);
+  assert.doesNotMatch(content, /reason: string;/);
+  assert.doesNotMatch(content, /grant consent/);
   assertMermaidFencePresent(content, "flowchart TD");
 }
 

@@ -28,7 +28,7 @@ manual: "not-applicable"
 
 ## Linked Issue
 
-- https://github.com/flyingrobots/warp-ttd/issues/80
+- [Issue #80](https://github.com/flyingrobots/warp-ttd/issues/80)
 
 ## Decision Summary
 
@@ -191,18 +191,27 @@ transport.
 
 ## Agent Interface
 
-This design cycle changes no runtime interface directly. It standardizes the
-future interfaces below.
+This design cycle changes no runtime interface directly. It standardizes these
+future interfaces:
 
-| Interface | Shape | Agent Use |
-| :--- | :--- | :--- |
-| `continuum.debug.hello.v1` | Continuum-authored contract family or profile | Shared runtime declaration consumed by WARP TTD, Echo, git-warp, and vendor runtimes. |
-| `ContinuumRuntimeHello` | Generated/shared payload type | Runtime identity, protocol versions, supported families, capability posture, consent/auth posture, evidence posture, redaction posture, and obstruction reasons. |
-| `ContinuumRuntimeHelloInspection` | WARP TTD read model | Target-scoped wrapper around hello posture, source, payload, and machine-readable reason. |
-| `runtime-hello --json` | CLI JSON/JSONL | Scriptable inspection of hello facts for all configured targets. |
-| `warp_ttd.inspect_runtime_hello` | MCP read-only tool | Agent-native hello inspection without shelling out. |
-| `LiveTargetInspection.runtimeHello` | Optional summary field | Backward-compatible hello posture visible from existing target enumeration. |
-| `LiveTargetSessionInspection.runtimeHello` | Optional summary field | Session posture can include whether the runtime hello was present, unavailable, or obstructed. |
+- `continuum.debug.hello.v1`: Continuum-authored contract family or profile.
+  Agents use it as the shared runtime declaration consumed by WARP TTD, Echo,
+  git-warp, and vendor runtimes.
+- `ContinuumRuntimeHello`: generated/shared payload type. It carries runtime
+  identity, protocol versions, supported families, capability posture,
+  consent/auth posture, evidence posture, redaction posture, and obstruction
+  reasons.
+- `ContinuumRuntimeHelloInspection`: WARP TTD read model. It wraps target-scoped
+  hello posture, source, payload, and machine-readable reasons.
+- `runtime-hello --json`: CLI JSON/JSONL surface for scriptable inspection of
+  hello facts across configured targets.
+- `warp_ttd.inspect_runtime_hello`: MCP read-only tool for agent-native hello
+  inspection without shelling out.
+- `LiveTargetInspection.runtimeHello`: optional summary field. Existing target
+  enumeration can expose hello posture without breaking consumers.
+- `LiveTargetSessionInspection.runtimeHello`: optional summary field. Session
+  posture can include whether runtime hello is present, unavailable, or
+  obstructed.
 
 Machine-readable error and posture fields must use stable strings, not prose
 parsing. The first vocabulary is:
@@ -320,11 +329,16 @@ interface ContinuumRuntimeHelloInspection {
   evidencePosture: RuntimeHelloEvidencePosture;
   nativeContinuumWitness: boolean;
   hello?: ContinuumRuntimeHello;
-  reason: string;
+  reason?: string;
   reasons: readonly ContinuumHelloReason[];
   retryHint?: string;
 }
 ```
+
+`reason` is present for actionable non-present or degraded outcomes. `PRESENT`
+records should rely on structured fields and may leave `reason` absent rather
+than inventing success prose. `retryHint` is reserved for lower modes that can
+actually be retried or narrowed.
 
 The contract deliberately separates:
 
@@ -348,41 +362,80 @@ protocols, but it never carries authority itself. It is a door sign, not a key.
 
 ## Posture Matrix
 
-| Posture | Meaning | Agent Action |
-| :--- | :--- | :--- |
-| `PRESENT` | Runtime hello was read and parsed. | Inspect payload fields and source refs. |
-| `ABSENT` | Target is reachable/configured, but publishes no hello. | Continue with descriptor posture or ask runtime owner to add hello producer. |
-| `UNAVAILABLE` | WARP TTD cannot attempt hello in current environment. | Check root, command, endpoint, or later discovery setup. |
-| `UNSUPPORTED` | Target mode cannot provide hello in this cycle. | Use descriptor-only posture; do not infer runtime compatibility. |
-| `OBSTRUCTED` | Input or runtime response is malformed or unsafe to trust. | Fix descriptor or runtime response before proceeding. |
-| `RIGHTS_LIMITED` | Runtime requires consent or auth before full hello. | Do not retry with secrets unless an auth design applies. |
-| `REDACTED` | Runtime intentionally hid fields. | Preserve redaction facts; do not guess missing values. |
-| `CONTINUUM_NATIVE` evidence | Runtime claims native Continuum boundary witnesshood. | Accept only when source refs and producer contract support it. |
-| `TRANSLATED_SUBSTRATE` evidence | Adapter translated substrate facts into compatible shape. | Use as compatibility evidence, not native witnesshood. |
-| `LOCAL_MIRROR_FALLBACK` evidence | WARP TTD fixture/local mirror filled a shape. | Valid for tests and demos, not runtime truth. |
+### Hello Posture Matrix
+
+- `PRESENT`: runtime hello was read and parsed. Agents inspect payload fields and
+  source refs.
+- `ABSENT`: target is reachable or configured but publishes no hello. Agents
+  continue with descriptor posture or ask the runtime owner to add a producer.
+- `UNAVAILABLE`: WARP TTD cannot attempt hello in the current environment.
+  Agents check root, command, endpoint, or later discovery setup.
+- `UNSUPPORTED`: target mode cannot provide hello in this cycle. Agents use
+  descriptor-only posture and do not infer runtime compatibility.
+- `OBSTRUCTED`: input or runtime response is malformed or unsafe to trust.
+  Agents fix the descriptor or runtime response before proceeding.
+- `RIGHTS_LIMITED`: runtime requires consent or auth before full hello. Agents
+  do not retry with secrets unless the endpoint/auth design applies.
+- `REDACTED`: runtime intentionally hid fields. Agents preserve redaction facts
+  and do not guess missing values.
+
+### Evidence Posture Matrix
+
+- `CONTINUUM_NATIVE`: runtime claims native Continuum boundary witnesshood.
+  Agents accept it only when source refs and producer contract support it.
+- `TRANSLATED_SUBSTRATE`: adapter translated substrate facts into compatible
+  shape. Agents use it as compatibility evidence, not native witnesshood.
+- `LOCAL_MIRROR_FALLBACK`: WARP TTD fixture/local mirror filled a shape. Agents
+  treat it as valid for tests and demos, not runtime truth.
+- `UNAVAILABLE`: no evidence source is currently inspectable. Agents keep the
+  target visible and report the obstruction or absence reason.
 
 ## Host / Target Applicability
 
-| Target Class | Expected Behavior |
-| :--- | :--- |
-| Echo runtime | First native producer. Echo reports runtime identity, supported Continuum families, native evidence posture when it has a real producer, and explicit absence for unpublished facts. |
-| git-warp / graft | First translated-substrate witness. WARP TTD may produce a compatibility hello from adapter facts, but `nativeContinuumWitness` stays `false` unless git-warp later implements native Continuum hello. |
-| descriptor-only target | Returned as `UNSUPPORTED`, `ABSENT`, or `OBSTRUCTED` with deterministic reason. |
-| vendor runtime | Can implement the Continuum-owned contract and become inspectable without WARP TTD knowing vendor-specific app names. |
-| missing host | Returns `UNAVAILABLE` or `OBSTRUCTED`; does not disappear from output. |
+- Echo runtime: first native producer. Echo reports runtime identity, supported
+  Continuum families, native evidence posture when it has a real producer, and
+  explicit absence for unpublished facts.
+- git-warp / graft: first translated-substrate witness. WARP TTD may produce a
+  compatibility hello from adapter facts, but `nativeContinuumWitness` stays
+  `false` unless git-warp later implements native Continuum hello.
+- descriptor-only target: returned as `UNSUPPORTED`, `ABSENT`, or `OBSTRUCTED`
+  with deterministic reason.
+- vendor runtime: can implement the Continuum-owned contract and become
+  inspectable without WARP TTD knowing vendor-specific app names.
+- missing host: returns `UNAVAILABLE` or `OBSTRUCTED`; it does not disappear
+  from output.
 
 `jedit` remains a local Echo-app witness only. It should not define the hello
 schema, own debugger ontology, or become a special target class.
 
 ## Data / State Model
 
-| State | Source of Truth | Derived State | Invalid State | Reset Behavior |
-| :--- | :--- | :--- | :--- | :--- |
-| `ContinuumRuntimeHello` | Runtime producer or adapter translation | WARP TTD hello summary | Missing `schemaVersion`, non-deterministic ids, contradictory evidence posture | Re-read target hello. |
-| `ContinuumRuntimeHelloInspection` | WARP TTD read model | CLI/MCP envelopes | `helloPosture: PRESENT` without payload | Re-run inspection after target/adapter fix. |
-| `supportedFamilies` | Runtime declaration | capability discovery inputs | Family key with no version or unknown role | Runtime fixes hello response. |
-| `consent` / `auth` posture | Runtime declaration or adapter obstruction | retry hints | Secret values in output | Redact and return obstruction. |
-| `sourceRefs` | Runtime/adapter evidence refs | evidence ledger anchors | Absolute secret-bearing paths or tokens | Redact and preserve reason. |
+- `ContinuumRuntimeHello`
+  - Source of truth: runtime producer or adapter translation.
+  - Derived state: WARP TTD hello summary.
+  - Invalid state: missing `schemaVersion`, non-deterministic ids, or
+    contradictory evidence posture.
+  - Reset behavior: re-read target hello.
+- `ContinuumRuntimeHelloInspection`
+  - Source of truth: WARP TTD read model.
+  - Derived state: CLI/MCP envelopes.
+  - Invalid state: `helloPosture: PRESENT` without payload.
+  - Reset behavior: re-run inspection after target or adapter fix.
+- `supportedFamilies`
+  - Source of truth: runtime declaration.
+  - Derived state: capability discovery inputs.
+  - Invalid state: family key with no version or unknown role.
+  - Reset behavior: runtime fixes hello response.
+- `consent` / `auth` posture
+  - Source of truth: runtime declaration or adapter obstruction.
+  - Derived state: retry hints.
+  - Invalid state: secret values in output.
+  - Reset behavior: redact and return obstruction.
+- `sourceRefs`
+  - Source of truth: runtime or adapter evidence refs.
+  - Derived state: evidence ledger anchors.
+  - Invalid state: absolute secret-bearing paths or tokens.
+  - Reset behavior: redact and preserve reason.
 
 Serialization must be deterministic: stable object keys where possible, stable
 array ordering from runtime output or descriptor order, no wall-clock timestamps
@@ -424,16 +477,24 @@ flowchart TD
   Present -->|yes| Inspect[Read runtime identity, families, consent, auth, evidence]
   Present -->|no| Reason[Read reason and retryHint]
   Inspect --> Next[Proceed to discovery, capability, or session inspection]
-  Reason --> Fix[Fix descriptor, install producer, grant consent, or defer]
+  Reason --> FixDescriptor[Fix descriptor]
+  Reason --> InstallProducer[Install producer]
+  Reason --> Consent[request consent out-of-band]
+  Reason --> Defer[Defer]
 ```
 
-Expected non-JSON output can be a compact table:
+Expected non-JSON output can be compact key/value rows:
 
 ```text
-Target        Hello       Runtime      Evidence              Consent       Auth       Reason
-jedit         ABSENT      Echo         UNAVAILABLE           UNKNOWN       UNKNOWN    Echo hello producer not published
-graft         PRESENT     git-warp     TRANSLATED_SUBSTRATE  NOT_REQUIRED  NOT_REQUIRED translated adapter hello
-vendor-demo   OBSTRUCTED  unknown      UNAVAILABLE           UNKNOWN       UNKNOWN    invalid schemaVersion
+jedit hello=ABSENT runtime=Echo evidence=UNAVAILABLE
+  consent=UNKNOWN auth=UNKNOWN
+  reason=Echo hello producer not published
+graft hello=PRESENT runtime=git-warp evidence=TRANSLATED_SUBSTRATE
+  consent=NOT_REQUIRED auth=NOT_REQUIRED
+  reason=translated adapter hello
+vendor-demo hello=OBSTRUCTED runtime=unknown evidence=UNAVAILABLE
+  consent=UNKNOWN auth=UNKNOWN
+  reason=invalid schemaVersion
 ```
 
 Expected JSON output emits one envelope per target:
@@ -532,9 +593,12 @@ should be additive optional fields in existing envelopes. The new
 complete hello payload and posture. Existing descriptor-only targets remain
 visible even before they can produce hello.
 
-The first implementation may hand-author local TypeScript mirrors while the
-Continuum schema lands. That mirror expires when Wesley-generated
-`continuum.debug.hello.v1` artifacts are available for WARP TTD consumption.
+The first implementation may hand-author local TypeScript mirrors only while
+[Continuum issue #24](https://github.com/flyingrobots/continuum/issues/24)
+lands the shared schema. That mirror expires through
+[WARP TTD issue #101](https://github.com/flyingrobots/warp-ttd/issues/101)
+when Wesley-generated `continuum.debug.hello.v1` artifacts are available for
+WARP TTD consumption.
 
 ## Linked Invariants
 
@@ -602,7 +666,8 @@ Cons:
 Choose Option B. `continuum.debug.hello.v1` should be a Continuum-owned shared
 contract, and WARP TTD should consume it through a debugger-local read model.
 The temporary migration allowance is a hand-authored TypeScript mirror in WARP
-TTD only until Continuum/Wesley generated artifacts exist.
+TTD only until Continuum/Wesley generated artifacts exist. The retirement gate
+is [WARP TTD issue #101](https://github.com/flyingrobots/warp-ttd/issues/101).
 
 ## Implementation Slices
 
@@ -740,17 +805,27 @@ Mitigations:
 
 ## Follow-On Issues
 
-- `#78` Continuum runtime discovery command and local registry.
-- `#79` Runtime endpoint consent and auth posture.
-- `#82` Debugger capability discovery read model.
-- Create an Echo-side issue for the native `continuum.debug.hello.v1` producer
-  when implementation begins.
-- Create a git-warp-side or WARP TTD translated-witness issue if native
-  git-warp hello is deferred.
+- [WARP TTD #78](https://github.com/flyingrobots/warp-ttd/issues/78):
+  Continuum runtime discovery command and local registry.
+- [WARP TTD #79](https://github.com/flyingrobots/warp-ttd/issues/79):
+  Runtime endpoint consent and auth posture.
+- [WARP TTD #82](https://github.com/flyingrobots/warp-ttd/issues/82):
+  Debugger capability discovery read model.
+- [Continuum #24](https://github.com/flyingrobots/continuum/issues/24):
+  define `continuum.debug.hello.v1` schema and generated artifacts.
+- [Echo #532](https://github.com/flyingrobots/echo/issues/532):
+  publish native `continuum.debug.hello.v1` runtime hello.
+- [git-warp #625](https://github.com/git-stunts/git-warp/issues/625):
+  decide native vs translated `continuum.debug.hello.v1` posture.
+- [WARP TTD #101](https://github.com/flyingrobots/warp-ttd/issues/101):
+  retire temporary WARP TTD runtime hello mirror.
 
 ## Closeout Links
 
-- PR:
-- Ready-for-review evidence:
+- PR: [#93](https://github.com/flyingrobots/warp-ttd/pull/93)
+- Ready-for-review evidence: `npm run check:method`, focused doctrine/method
+  tests, `npm test`, `npm run test:integration`, `npx tsc --noEmit`,
+  `npm run lint`, `npm run lint:check`, `git diff --check`, and the pre-push
+  hook were green before review.
 - Retro:
-- Witness:
+- Witness: focused Method/doctrine tests.
