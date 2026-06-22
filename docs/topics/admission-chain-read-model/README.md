@@ -32,8 +32,7 @@ verification:
   - npm run docs:verify
   - npm run test
   - npm run test:integration
-  review_interval_days: 30
-status_last_reviewed: 2026-06-22
+review_interval_days: 30
 status_last_reviewed_by: James <james@flyingrobots.dev>
 test_plan: test-plan.md
 review_due: 2026-09-20
