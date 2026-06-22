@@ -162,7 +162,9 @@ Documentation changes containing Mermaid blocks must pass a parse validation pas
    - `npm run docs:verify:deep`
 4. If any parse error exists in either pass, fix the diagram, then rerun step 2.
 5. Continue Steps 2 → 4 as a loop until zero parse errors are returned.
-6. Enforce macro constraints in Pass 1: single root for mindmaps, no Mermaid syntax warnings, and node budget under 5 for the first macro diagram.
+6. Enforce macro constraints in Pass 1: single root for mindmaps, no Mermaid syntax warnings, and
+   onboarding shape limits for the first diagram (`flowchart`/`class`/`state`/`sequence`: <=5 nodes/edges;
+   `mindmap`: one root plus up to 5 immediate children, with no additional depth).
 7. If errors persist after an edit cycle with no syntax-change progress, pause the slice, document the blocker, and escalate with the specific failing diagram and source line.
 8. Record the final pass result in the relevant shelf activity notes when documentation edits are complete.
 

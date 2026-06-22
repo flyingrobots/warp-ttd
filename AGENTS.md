@@ -95,6 +95,29 @@ npm run lint:check
 For topic-shelf updates, run `cargo xtask verify` where available; otherwise run
 the equivalent local verification set above and call out the gap in the PR body.
 
+## Documentation verification gate for topic shelves
+
+- For any documentation edit under `docs/topics/**`, run the two-pass gate before editing behavior or content.
+  - `npm run docs:verify:onboarding` (Pass 1)
+  - `npm run docs:verify:deep` (Pass 2)
+- If either pass exits with `10` or `11` during a docs-editing cycle:
+  1. Parse `.docs-report.jsonl` and apply the remediation guidance in the most recent report entry.
+  2. Re-run the corresponding pass (or both passes after structural passes are clear).
+  3. Repeat until green or no remediation progress is possible.
+- If no remediation progress is possible, escalate with the first unresolved `DOC-LOAD` record and halt further edits.
+- If `docs:verify` exits with `12`, treat this as a hard stop, do not proceed, and escalate toolchain availability or mmdc installation as a blocker.
+
+Git hooks are strongly recommended for this repo:
+
+- Add a repository-level `pre-commit` hook or equivalent CI-only enforcement that runs `npm run docs:verify` before documentation changes are committed.
+- The repository ships `.githooks/pre-commit`; enable it with:
+  - `git config core.hooksPath .githooks`
+  - then commit docs changes normally; staged files under `docs/topics/**` will run:
+    - `npm run docs:verify:onboarding`
+    - `npm run docs:verify:deep`
+- If you also use the alternate hook path (`git config --local core.hooksPath scripts/hooks`), ensure `scripts/hooks/pre-push` includes `npm run docs:verify` before tests and type checks.
+- Do not weaken the hook by auto-fixing and skipping failed `docs:verify` states.
+
 ## Context Recovery
 
 When recovering context:
@@ -103,3 +126,15 @@ When recovering context:
 2. Read `ROADMAP.md` for product sequencing.
 3. Review GitHub issues/milestones for active work and status.
 4. Run `git log -n 5` and `git status`.
+
+## Topic Shelf Documentation Standard (New-Hire/Uninitiated Reader Mode)
+
+The canonical topic documentation standard is maintained in [`docs/topics/DOCUMENTATION_STANDARDS.md`](docs/topics/DOCUMENTATION_STANDARDS.md).
+
+Before editing topic shelf documentation in this repo, read that standard and apply it directly. Any update to the standard must be treated as process change:
+
+1. Update [`docs/topics/DOCUMENTATION_STANDARDS.md`](docs/topics/DOCUMENTATION_STANDARDS.md) first.
+2. Apply the revised format to touched shelves in the same work slice where feasible.
+3. If other shelves are impacted, either migrate them in the same slice or add an explicit follow-up task with owners and scope.
+4. Record the refinement decision in `codex-think` with enough detail to preserve intent and rollout plan.
+5. For any `agent_entry_queries` action with intent `edit`, perform the hard preflight in that standard first: if `test-plan.md` lacks stable requirement IDs, evidence mappings, fixtures, or measurable oracles, stop and request closure before changing code or shelf content.
