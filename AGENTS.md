@@ -1,78 +1,105 @@
 # AGENTS
 
-This guide is for AI agents and human operators recovering context in the WARP TTD repository.
+## Scope
 
-## Agent-Native / Agent-First Doctrine
+This guide is for AI agents and human operators in the WARP TTD repository.
 
-- WARP TTD is **AGENT-NATIVE** and **AGENT-FIRST**. LLM agents are primary users,
-  not afterthoughts.
-- Implement new debugger features for agents first through structured surfaces:
-  MCP tools, CLI `--json` / JSONL, generated protocol artifacts, and
-  deterministic read models.
-- Human TUI, browser, and text views follow those same surfaces. They may render
-  or compose agent-visible facts, but they must not become the only
-  implementation of new debugger behavior.
-- For Continuum apps, WARP TTD should be the primary LLM inspection and
-  lawful-interaction surface. If an agent must screen-scrape human UI text to use
-  a feature, that feature is incomplete.
-- Interaction still respects the admission chain. Agent-facing tools do not issue
-  authority, perform admission, or mutate host state unless an explicit
-  witnessed/admitted control design says so.
+- WARP TTD is agent-native and agent-first. New behavior should first land as
+  structured surfaces (CLI `--json`/JSONL, MCP, protocol artifacts, deterministic
+  read-models).
+- Human interfaces (TUI/browser/text) may compose those same surfaces but are not
+  the canonical source of truth.
+- For Continuum targets, if an agent must scrape a human view to use a feature,
+  that feature is incomplete.
 
 ## Git Rules
 
-- **NEVER** amend commits.
-- **NEVER** rebase or force-push.
-- **NEVER** push to `main` without explicit permission.
-- Always use standard commits and regular pushes.
-- Do not create draft pull requests. Open a normal PR only after the initial
-  issue/design commit is pushed, link the GitHub Issue and design doc, and keep
-  `work-in-progress` on the issue while cycle work is active.
+- NEVER amend commits.
+- NEVER rebase unless explicitly requested.
+- NEVER force any git operation. If force appears necessary, stop and explain the
+  options.
+- NEVER create draft pull requests.
+- Do not create branch names, PR titles, or commit messages with `codex`.
+- Pushes to `main` require explicit user permission.
+- Keep PR history non-draft and merge-oriented.
+- PR bodies for issue work must include GitHub auto-close text such as
+  `Closes #123` for each issue it intends to close.
 
-## Documentation & Planning Map
+## Issue, Milestone, and Tracking Model
 
-Do not audit the repository by recursively walking the filesystem. Follow the authoritative manifests:
+### Source of Truth
+- GitHub Issues are the live work tracker.
+- GitHub Milestones are the primary release/cycle grouping mechanism.
+- For live work status, use milestone membership plus issue labels/state.
 
-### 1. The Entrance
-- **`README.md`**: Public front door, core value prop, and quick start.
-- **`GUIDE.md`**: Orientation, fast path, and system orchestration.
+### Labeling Discipline
+- Use repository issue labels as governance signal (asap / cooldown / blocked /
+  quality / debt / etc.) and keep labels aligned to current lifecycle.
+- Keep `needs-design` where no design artifact is ready.
+- Keep issues out of closed states once implementation starts.
 
-### 2. The Bedrock
-- **`ARCHITECTURE.md`**: The authoritative structural reference (Hexagonal, Ports, session logic).
-- **`VISION.md`**: Core tenets and the observer geometry mission.
-- **`METHOD.md`**: Repo work doctrine (Backlog lanes, Cycle loop).
+### End-of-Turn Checklist (repo changes)
+1. Update issue state, milestone, and labels for the change you made.
+2. Preserve milestone hygiene: move completed work to the next appropriate
+   milestone state.
+3. Avoid adding unresolved `needs-design` debt for fully implemented behavior.
 
-### 3. The Direction
-- **`docs/BEARING.md`**: Current execution gravity and active tensions.
-- **GitHub Issues**: Live tracker for pending work, Method lanes, and release
-  milestones.
-- **`docs/design/`**: Active and landed cycle design documents.
+## Topic Shelf Model
 
-### 4. The Proof
-- **`CHANGELOG.md`**: Historical truth of merged behavior.
-- **`docs/audit/`**: Structural health and due diligence reports.
+`docs/topics/` holds the living contract graph for landed behavior. Shelves are
+for contract-bearing surface area, not administrative prose.
 
-## Context Recovery Protocol
+Each shelf may contain:
 
-When starting a new session or recovering from context loss:
+- `README.md`: current truth in HEAD.
+- `test-plan.md`: requirements/cases/fixtures/oracles/planned gaps.
+- `architecture.md`: optional dataflow/structure notes.
+- `rationale.md`: optional tradeoff and rejection notes.
 
-1. **Read `docs/BEARING.md`** to find the current execution gravity.
-2. **Read `METHOD.md`** to understand the work doctrine.
-3. **Check GitHub Issues**, especially `lane:asap`, `work-in-progress`, and
-   active release milestones.
-4. **Check `git log -n 5` and `git status`** to verify the current branch state.
+### When To Update Topic Shelves
 
-## End of Turn Checklist
+For every nontrivial behavior, workflow, release, schema, validation, or public
+surface change:
 
-After altering files:
+1. Identify the owning topic shelf before editing implementation.
+2. If no shelf exists, create one.
+3. Update `test-plan.md` with requirement IDs, cases, fixtures, and oracles.
+4. Add executable evidence (tests/fixtures/contract checks).
+5. Update `README.md` only after behavior lands on branch.
+6. Mark planned cases only when evidence exists.
+7. Run `cargo xtask verify` before claiming a shelf current.
 
-1. **Verify Truth**: Ensure documentation is updated if behavior or structure changed.
-2. **Log Debt**: Add follow-on GitHub Issues with `lane:bad-code` or
-   `lane:cool-ideas`.
-3. **Commit**: Use focused, conventional commit messages. Propose a draft before executing.
-4. **Validate**: Run `npm run check:method`, `npm test`,
-   `npm run test:integration`, `npx tsc --noEmit`, `npm run lint`, and
-   `npm run lint:check` when relevant.
+If this repo does not yet have `cargo xtask verify`, document that temporary
+substitute explicitly in the shelf and run the equivalent local verification
+commands in that command set.
 
----
-**The goal is determinism. Every feature is defined by its tests.**
+### When Not To Update Topic Shelves
+
+Skip shelf updates for pure mechanics that do not change contract truth:
+formatting, typo-only edits, dependency pin updates with no observable behavior
+change, or refactors that keep existing contract/tests valid.
+
+## Local Verification Gate for This Repo
+
+Unless explicitly overridden, use this command set before calling work
+"ready":
+
+```bash
+npm run test
+npm run test:integration
+npx tsc --noEmit
+npm run lint
+npm run lint:check
+```
+
+For topic-shelf updates, run `cargo xtask verify` where available; otherwise run
+the equivalent local verification set above and call out the gap in the PR body.
+
+## Context Recovery
+
+When recovering context:
+
+1. Read `docs/BEARING.md` for active gravity.
+2. Read `ROADMAP.md` for product sequencing.
+3. Review GitHub issues/milestones for active work and status.
+4. Run `git log -n 5` and `git status`.
