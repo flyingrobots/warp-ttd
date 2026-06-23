@@ -1,0 +1,23 @@
+schema_version: 1
+id: "protocol-contract"
+title: "Protocol Contract"
+profile: "contract"
+risk_level: "high"
+lifecycle: active
+documentation_maturity: "verified"
+owners:
+  - "james"
+depends_on:
+[]
+owns:
+  - "schemas/warp-ttd-protocol.graphql"
+  - "src/protocol.ts"
+  - "AGENTS.md"
+  - "scripts/docs-verify.mjs"
+  - "scripts/hooks/pre-push"
+entrypoints:
+  onboarding: "README.md#entry-onboarding"
+  edit: "README.md#entry-edit"
+  triage: "README.md#entry-triage"
+  impact: "README.md#entry-impact"
+test_plan: "test-plan.md"

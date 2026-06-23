@@ -62,16 +62,16 @@ shelves:
     agent_entry_queries:
       - id: onboarding
         intent: Read orientation and contract scope.
-        anchor: "#overview"
+        anchor: "#entry-onboarding"
       - id: edit
         intent: Edit a protocol field and run chain checks.
-        anchor: "#workflow-example-new-field-introduction"
+        anchor: "#entry-edit"
       - id: triage
         intent: Triage protocol failures and parity mismatch.
-        anchor: "#failure-mode-catalog"
+        anchor: "#entry-triage"
       - id: impact
         intent: Validate cross-shelf implications before release.
-        anchor: "#governance-and-boundary-dependencies"
+        anchor: "#entry-impact"
 
   - id: adapter-port-and-registry
     title: Adapter Port and Registry
@@ -89,13 +89,13 @@ shelves:
     agent_entry_queries:
       - id: onboarding
         intent: Learn adapter resolution and capability boundaries.
-        anchor: "#overview"
+        anchor: "#entry-onboarding"
       - id: edit
         intent: Modify adapter registration and inspect scope constraints.
-        anchor: "#reader-pathways"
+        anchor: "#entry-edit"
       - id: triage
         intent: Triage adapter capability mismatch versus protocol consumers.
-        anchor: "#failure-modes-and-evidence"
+        anchor: "#entry-triage"
 
   - id: adapter-implementations
     title: Adapter Implementations
@@ -109,13 +109,13 @@ shelves:
     agent_entry_queries:
       - id: onboarding
         intent: Compare implementation shapes for fixture, git-warp, and scenario.
-        anchor: "#overview"
+        anchor: "#entry-onboarding"
       - id: edit
         intent: Update concrete adapter behavior.
-        anchor: "#reader-pathways"
+        anchor: "#entry-edit"
       - id: triage
         intent: Resolve adapter runtime divergence against registry contracts.
-        anchor: "#failure-modes-and-evidence"
+        anchor: "#entry-triage"
 
   - id: debugger-session-core
     title: Debugger Session Core
@@ -132,13 +132,13 @@ shelves:
     agent_entry_queries:
       - id: onboarding
         intent: Understand session snapshotting and navigation state.
-        anchor: "#overview"
+        anchor: "#entry-onboarding"
       - id: edit
         intent: Change session lifecycle with minimal cross-shelf impact.
-        anchor: "#reader-pathways"
+        anchor: "#entry-edit"
       - id: triage
         intent: Debug snapshot and cursor/state mismatch failures.
-        anchor: "#failure-modes-and-evidence"
+        anchor: "#entry-triage"
 
   - id: neighborhood-state-models
     title: Neighborhood State Models
@@ -153,10 +153,10 @@ shelves:
     agent_entry_queries:
       - id: onboarding
         intent: Learn neighborhood summaries and reintegration assumptions.
-        anchor: "#overview"
+        anchor: "#entry-onboarding"
       - id: triage
         intent: Triage focus/reintegration and neighborhood projection failures.
-        anchor: "#failure-mode-catalog"
+        anchor: "#entry-triage"
 
   - id: shared-family-facts
     title: Shared Family Facts
@@ -171,13 +171,13 @@ shelves:
     agent_entry_queries:
       - id: onboarding
         intent: Learn family fact ownership, preference, and ingestion flow.
-        anchor: "#overview"
+        anchor: "#entry-onboarding"
       - id: edit
         intent: Update family fact precedence and reconciliation rules.
-        anchor: "#reader-pathways"
+        anchor: "#entry-edit"
       - id: triage
         intent: Resolve host-vs-local fact conflict failures.
-        anchor: "#failure-mode-catalog"
+        anchor: "#entry-triage"
 
   - id: effect-and-delivery-observability
     title: Effect and Delivery Observability
@@ -192,10 +192,10 @@ shelves:
     agent_entry_queries:
       - id: onboarding
         intent: Understand effect extraction and delivery summary observability.
-        anchor: "#overview"
+        anchor: "#entry-onboarding"
       - id: triage
         intent: Resolve summary extraction and effect traceability failures.
-        anchor: "#failure-modes-and-evidence"
+        anchor: "#entry-triage"
 
   - id: cli-interface
     title: CLI Interface
@@ -210,13 +210,13 @@ shelves:
     agent_entry_queries:
       - id: onboarding
         intent: Learn JSON/JSONL command output contracts.
-        anchor: "#overview"
+        anchor: "#entry-onboarding"
       - id: edit
         intent: Update command surfaces with protocol-safe output changes.
-        anchor: "#reader-pathways"
+        anchor: "#entry-edit"
       - id: triage
         intent: Handle CLI output shape regressions against protocol contract.
-        anchor: "#failure-modes-and-evidence"
+        anchor: "#entry-triage"
 
   - id: mcp-interface
     title: MCP Interface
@@ -230,10 +230,10 @@ shelves:
     agent_entry_queries:
       - id: onboarding
         intent: Learn read-only MCP tool contracts and session reuse behavior.
-        anchor: "#overview"
+        anchor: "#entry-onboarding"
       - id: triage
         intent: Triage MCP tool shape or session command failures.
-        anchor: "#failure-modes-and-evidence"
+        anchor: "#entry-triage"
 
   - id: tui-shell
     title: TUI Shell
@@ -248,10 +248,10 @@ shelves:
     agent_entry_queries:
       - id: onboarding
         intent: Learn page flow and inspector synchronization assumptions.
-        anchor: "#overview"
+        anchor: "#entry-onboarding"
       - id: triage
         intent: Resolve UI/session sync regression across connect and inspector paths.
-        anchor: "#failure-modes-and-evidence"
+        anchor: "#entry-triage"
 
   - id: worldline-visualization
     title: Worldline Visualization
@@ -266,10 +266,10 @@ shelves:
     agent_entry_queries:
       - id: onboarding
         intent: Understand lane/worldline projection and split rendering.
-        anchor: "#overview"
+        anchor: "#entry-onboarding"
       - id: triage
         intent: Triage projection, layout, and lane ordering mismatches.
-        anchor: "#failure-modes-and-evidence"
+        anchor: "#entry-triage"
 
   - id: continuum-target-discovery
     title: Continuum Target Discovery
@@ -284,10 +284,10 @@ shelves:
     agent_entry_queries:
       - id: onboarding
         intent: Learn target discovery posture and runtime hello contracts.
-        anchor: "#overview"
+        anchor: "#entry-onboarding"
       - id: triage
         intent: Resolve discovery drift and hello contract mismatches.
-        anchor: "#failure-mode-catalog"
+        anchor: "#entry-triage"
 
   - id: admission-chain-read-model
     title: Admission Chain Read Model
@@ -301,28 +301,42 @@ shelves:
     agent_entry_queries:
       - id: onboarding
         intent: Learn obstruction/fallback posture and admission semantics.
-        anchor: "#overview"
+        anchor: "#entry-onboarding"
       - id: triage
         intent: Resolve admission-chain and fallback failure modes.
-        anchor: "#failure-modes-and-evidence"
+        anchor: "#entry-triage"
 ---
 
 # Topic Shelves (Landed Feature Contracts)
 
 This directory tracks durable, test-backed contracts for existing WARP TTD behavior.
 
+## Overview
+
+This is the machine-first registry for topic shelves and their explicit cross-shelf entry routes.
+
+```mermaid
+mindmap
+  root((WARP TTD Topics))
+    Protocol Layer
+    Adapter Layer
+    Session Layer
+    Interface Layer
+    Discovery Layer
+```
+
 ## Machine Registry (agent-first)
 
 This registry is the definitive parse-safe entry point for dynamic agents. A context governor should read this frontmatter first and use `agent_entry_queries` as the first-action routing table.
 
-### Recommended agent bootstrap
+## Recommended agent bootstrap
 
 1. Load `shelf_graph` to understand coverage and grouping.
 2. Read the target shelf entry from `shelves`.
 3. Execute one `agent_entry_query` anchor before deep reading.
 4. Follow `depends_on` / `used_by` for downstream checks when a change is proposed.
 
-### Bootstrap query schema (machine-readable)
+## Bootstrap query schema (machine-readable)
 
 - `shelves[].agent_entry_queries[].id`: action key (`onboarding`, `edit`, `triage`, `impact`).
 - `shelves[].agent_entry_queries[].intent`: concise first-step intent.
@@ -333,29 +347,24 @@ This registry is the definitive parse-safe entry point for dynamic agents. A con
 ```mermaid
 mindmap
   root((WARP TTD Topics))
-    Protocol Layer
-      protocol-contract
-    Adapter Layer
-      adapter-port-and-registry
-      adapter-implementations
-    Session Layer
-      debugger-session-core
-      neighborhood-state-models
-      shared-family-facts
-      effect-and-delivery-observability
-    Interface Layer
-      cli-interface
-      mcp-interface
-      tui-shell
-      worldline-visualization
-    Discovery Layer
-      continuum-target-discovery
-      admission-chain-read-model
+    protocol-contract
+    adapter-port-and-registry
+    adapter-implementations
+    debugger-session-core
+    neighborhood-state-models
+    shared-family-facts
+    effect-and-delivery-observability
+    cli-interface
+    mcp-interface
+    tui-shell
+    worldline-visualization
+    continuum-target-discovery
+    admission-chain-read-model
 ```
 
-## Active Topic Shelves
+# Active Topic Shelves
 
-### Protocol Layer
+## Protocol Layer
 
 ```mermaid
 mindmap
@@ -365,10 +374,10 @@ mindmap
     artifact parity
 ```
 
-#### [protocol-contract](protocol-contract/README.md)
+## [protocol-contract](protocol-contract/README.md)
 Protocol schema, protocol mirror, and shape/version invariants.
 
-### Adapter Layer
+## Adapter Layer
 
 ```mermaid
 mindmap
@@ -378,7 +387,7 @@ mindmap
     capability boundaries
 ```
 
-#### [adapter-port-and-registry](adapter-port-and-registry/README.md)
+## [adapter-port-and-registry](adapter-port-and-registry/README.md)
 Host adapter port, capabilities, and adapter resolution.
 
 ```mermaid
@@ -389,10 +398,10 @@ mindmap
     scenario adapter
 ```
 
-#### [adapter-implementations](adapter-implementations/README.md)
+## [adapter-implementations](adapter-implementations/README.md)
 Fixture, git-warp, and scenario adapter behavior.
 
-### Session Layer
+## Session Layer
 
 ```mermaid
 mindmap
@@ -402,7 +411,7 @@ mindmap
     pin lifecycle
 ```
 
-#### [debugger-session-core](debugger-session-core/README.md)
+## [debugger-session-core](debugger-session-core/README.md)
 Session lifecycle, snapshot assembly, and navigation state.
 
 ```mermaid
@@ -412,7 +421,7 @@ mindmap
     reintegration focus
 ```
 
-#### [neighborhood-state-models](neighborhood-state-models/README.md)
+## [neighborhood-state-models](neighborhood-state-models/README.md)
 Neighborhood summaries and focus/cross-view state contracts.
 
 ```mermaid
@@ -423,7 +432,7 @@ mindmap
     fallback posture
 ```
 
-#### [shared-family-facts](shared-family-facts/README.md)
+## [shared-family-facts](shared-family-facts/README.md)
 Shared-family ingress and host/manifest continuity contracts.
 
 ```mermaid
@@ -434,10 +443,10 @@ mindmap
     capability-safe fallbacks
 ```
 
-#### [effect-and-delivery-observability](effect-and-delivery-observability/README.md)
+## [effect-and-delivery-observability](effect-and-delivery-observability/README.md)
 Effects, observations, and execution context.
 
-### Interface Layer
+## Interface Layer
 
 ```mermaid
 mindmap
@@ -446,7 +455,7 @@ mindmap
     session and worldline commands
 ```
 
-#### [cli-interface](cli-interface/README.md)
+## [cli-interface](cli-interface/README.md)
 Machine-readable and human CLI workflows.
 
 ```mermaid
@@ -456,7 +465,7 @@ mindmap
     session-admission contracts
 ```
 
-#### [mcp-interface](mcp-interface/README.md)
+## [mcp-interface](mcp-interface/README.md)
 MCP server, read-only inspection tools, and session reuse.
 
 ```mermaid
@@ -466,7 +475,7 @@ mindmap
     inspector and connect flow
 ```
 
-#### [tui-shell](tui-shell/README.md)
+## [tui-shell](tui-shell/README.md)
 Connect and synchronization model for shell workflows.
 
 ```mermaid
@@ -476,10 +485,10 @@ mindmap
     split rendering
 ```
 
-#### [worldline-visualization](worldline-visualization/README.md)
+## [worldline-visualization](worldline-visualization/README.md)
 Lane layout, worldline columns, and navigation.
 
-### Discovery Layer
+## Discovery Layer
 
 ```mermaid
 mindmap
@@ -488,7 +497,7 @@ mindmap
     runtime hello contracts
 ```
 
-#### [continuum-target-discovery](continuum-target-discovery/README.md)
+## [continuum-target-discovery](continuum-target-discovery/README.md)
 Live target descriptors, discovery posture, and runtime hello facts.
 
 ```mermaid
@@ -498,14 +507,14 @@ mindmap
     fallback and obstruction
 ```
 
-#### [admission-chain-read-model](admission-chain-read-model/README.md)
+## [admission-chain-read-model](admission-chain-read-model/README.md)
 Admission-chain posture model and read inspection.
 
 Each shelf has:
 - `README.md`: current truth at HEAD.
 - `test-plan.md`: executable evidence, cases, fixtures, oracles, and known gaps.
 
-## Onboarding path for uninitiated readers
+# Onboarding path for uninitiated readers
 
 1. Start with `protocol-contract` to understand the data vocabulary.
 2. Read `adapter-port-and-registry` to learn runtime boundaries.

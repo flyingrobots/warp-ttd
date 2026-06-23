@@ -1,0 +1,19 @@
+schema_version: 1
+id: "adapter-port-and-registry"
+title: "Adapter Port and Registry"
+profile: "behavior"
+risk_level: "medium"
+lifecycle: active
+documentation_maturity: "current"
+owners:
+  - "james"
+depends_on:
+  - "protocol-contract"
+owns:
+  - "src/protocol.ts"
+entrypoints:
+  onboarding: "README.md#entry-onboarding"
+  edit: "README.md#entry-edit"
+  triage: "README.md#entry-triage"
+  impact: "README.md#entry-impact"
+test_plan: "test-plan.md"

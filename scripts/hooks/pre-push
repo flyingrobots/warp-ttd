@@ -5,7 +5,7 @@ set -euo pipefail
 echo "pre-push: running method checks + tests + typecheck + lint ratchet..."
 
 npm run check:method || { echo "pre-push: method checks failed"; exit 1; }
-npm run docs:verify || { echo "pre-push: cognitive-load and mermaid gate failed"; exit 1; }
+npm run docs:verify || { echo "pre-push: docs check/evidence/impact gate failed"; exit 1; }
 npm test --silent || { echo "pre-push: tests failed"; exit 1; }
 npx tsc --noEmit || { echo "pre-push: typecheck failed"; exit 1; }
 bash scripts/lint-check.sh || { echo "pre-push: lint ceiling exceeded"; exit 1; }

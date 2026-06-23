@@ -1,33 +1,23 @@
 # Test Plan — Effect and Delivery Observability
 
-## Requirements
-
-- **R-EDO-1:** Effect and delivery records stay stable across adapters and frames.
-- **R-EDO-2:** Emission extraction is deterministic for materialized fixture or live data.
-- **R-EDO-3:** Capabilities are gated safely when emission/deivery paths are unavailable.
-- **R-EDO-4:** Summary shapes are stable in machine-readable surfaces.
-
-## Evidence
-
-- C1 — `test/effectEmission.spec.ts`
-  - Verifies parity between adapters for delivery/effect semantics and sequencing.
-- C2 — `test/gitWarpAdapter.spec.ts`
-  - Verifies adapter frame progression and emission counts from git-warp fixtures.
-- C3 — `test/debuggerSession.spec.ts`
-  - Verifies surfaced emission and observation summaries in sessions.
+| Requirement | Contract claim | Evidence | Fixture or input | Measurable oracle | Status |
+|---|---|---|---|---|---|
+| R-EDO-1 | Effect and delivery records stay stable across adapters and frames. | `test/effectEmission.spec.ts` | `test/helpers/gitWarpEffectFixture.ts`, `test/helpers/worldlineFixture.ts`, `test/helpers/scenarioFixture.ts` | same adapter input frame pair emits same ordered effect records. | covered |
+| R-EDO-2 | Emission extraction is deterministic for materialized fixture or live data. | `test/gitWarpAdapter.spec.ts`, `test/effectEmission.spec.ts` | Frame and receipt fixtures with materialized events. | Event extraction order and counts match deterministic mapping rules. | covered |
+| R-EDO-3 | Capabilities are gated safely when emission/delivery paths are unavailable. | `test/effectEmission.spec.ts`, `test/debuggerSession.spec.ts` | Inputs where optional channels are absent. | Consumer receives explicit empty lists or absent fields, never hard crashes. | covered |
+| R-EDO-4 | Summary shapes are stable in machine-readable surfaces. | `test/debuggerSession.spec.ts`, `test/effectEmission.spec.ts` | Session/worldline summary assertions. | Emission summary payloads preserve schema shape and stable keys. | covered |
 
 ## Fixtures
 
-- Git-warp and scenario fixtures that exercise admissible and suppressed effects.
-- Delivery-focused fixture cases in scenario builders.
+- `test/helpers/gitWarpFixture.ts`
+- Scenario fixture and suppression descriptors used by effect tests
 
 ## Oracles
 
-- Emission arrays are stable for equivalent inputs.
-- Frame-index mapping for emissions is deterministic.
-- Missing capability paths remain non-throwing and empty when absent.
+- Stable emission and delivery arrays for equivalent inputs.
+- Deterministic frame-index mapping.
+- Non-destructive behavior for missing capability paths.
 
 ## Planned Cases
 
-- Add explicit regression cases for mixed emission/delivery suppression and malformed payload tolerance in a dedicated integration test path.
-
+- Add explicit suppression/malformed payload integration cases.

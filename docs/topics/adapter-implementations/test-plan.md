@@ -1,38 +1,24 @@
 # Test Plan — Adapter Implementations
 
-## Requirements
-
-- **R-AD-1:** Echo fixture emits complete protocol shape for frame/receipt/effect/development facts.
-- **R-AD-2:** Git-warp adapter translates materialized substrate data into lanes, frames, and receipts.
-- **R-AD-3:** Scenario adapter builds deterministic fixtures that exercise protocol controls.
-- **R-AD-4:** Out-of-range or missing data surfaces explicit adapter errors.
-
-## Evidence
-
-- C1 — `test/echoFixtureAdapter.spec.ts`
-  - Verifies hello, catalog, head initialization, stepping, frame lookup, session-family publication.
-- C2 — `test/gitWarpAdapter.spec.ts`
-  - Verifies catalog composition, frame indexing rules, navigation, receipt counts, effect emission extraction,
-    malformed payload handling, and frame clamping behavior.
-- C3 — `test/scenarioFixture.spec.ts`
-  - Verifies scenario construction, lane resolution, receipts/emissions/deliveries, execution mode, and invalid
-    scenario definitions.
-- C4 — `test/effectEmission.spec.ts`
-  - Verifies shared effect and delivery semantics across adapters.
+| Requirement | Contract claim | Evidence | Fixture or input | Measurable oracle | Status |
+|---|---|---|---|---|---|
+| R-AD-1 | Echo fixture emits complete protocol shape for frame/receipt/effect/facts. | `test/echoFixtureAdapter.spec.ts` | Echo fixture payload and static adapter tuples. | Protocol methods and summaries match fixture expectations and are deterministic. | covered |
+| R-AD-2 | Git-warp adapter translates materialized substrate data into lanes, frames, and receipts. | `test/gitWarpAdapter.spec.ts` | Git-warp fixture graph and receipt fixtures. | Frame indexing and lane catalogs match expected order and counts. | covered |
+| R-AD-3 | Scenario adapter builds deterministic fixtures for protocol controls. | `test/scenarioFixture.spec.ts` | Scenario descriptors and factory inputs. | Scenario keys resolve deterministically and invalid descriptors reject clearly. | covered |
+| R-AD-4 | Out-of-range and missing data surfaces explicit adapter errors. | `test/echoFixtureAdapter.spec.ts`, `test/gitWarpAdapter.spec.ts`, `test/scenarioFixture.spec.ts` | Invalid frame indexes and missing scenario keys. | Error paths are explicit and non-throwing for unsupported optional channels. | covered |
 
 ## Fixtures
 
-- `test/helpers/gitWarpFixture.ts` (integration support)
+- `test/helpers/gitWarpFixture.ts`
 - `test/helpers/scenarioFixture.ts`
-- Built-in scenario descriptors (`liveWithEffects`, `replayWithSuppression`, `multiWriterWithConflicts`, `complex`)
+- Scenario fixture constants in scenario adapter tests
 
 ## Oracles
 
-- Snapshot comparisons for deterministic head/frame sequences.
-- Receipt and emission arrays contain expected counts and IDs by frame.
-- Out-of-range cases throw named adapter-level errors.
+- Frame and receipt sequences are deterministic for fixed fixtures.
+- Error classes for boundary and missing keys are stable and inspectable.
+- Capability flags change only with explicit feature inputs.
 
 ## Planned Cases
 
 - none
-

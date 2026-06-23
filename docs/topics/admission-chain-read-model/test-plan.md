@@ -1,31 +1,23 @@
 # Test Plan — Admission Chain Read Model
 
-## Requirements
-
-- **R-ACR-1:** Admission-chain read model assembly is deterministic for fixed inputs.
-- **R-ACR-2:** Missing or obstructed data returns explicit absence/posture.
-- **R-ACR-3:** MCP and TUI consumers observe consistent admission-chain shapes.
-- **R-ACR-4:** Read model errors are stable and non-throwing for malformed data.
-
-## Evidence
-
-- C1 — `test/mcpAdmissionChainSurface.spec.ts`
-  - Verifies MCP read-model content and structure.
-- C2 — `test/inspectorPage.spec.ts`
-  - Verifies inspector consumes admission-chain style facts.
-- C3 — `test/debuggerSession.spec.ts`
-  - Verifies session snapshot includes expected chain posture in integrated flows.
+| Requirement | Contract claim | Evidence | Fixture or input | Measurable oracle | Status |
+|---|---|---|---|---|---|
+| R-ACR-1 | Admission-chain read model assembly is deterministic for fixed inputs. | `test/mcpAdmissionChainSurface.spec.ts` | Stable admission-chain fixtures and target descriptors. | Same inputs produce identical admission-chain summaries and posture. | covered |
+| R-ACR-2 | Missing or obstructed data returns explicit absence/posture. | `test/liveEchoFamilyIntake.spec.ts`, `test/inspectorPage.spec.ts` | Present/absent/obstructed inputs from live target fixtures. | Posture values remain explicit and machine-parseable for all branches. | covered |
+| R-ACR-3 | MCP and TUI consumers observe consistent admission-chain shapes. | `test/mcpAdmissionChainSurface.spec.ts`, `test/inspectorPage.spec.ts` | MCP and inspector integration flows. | tool/page outputs preserve required fields and stable ordering. | covered |
+| R-ACR-4 | Read model errors are stable and non-throwing for malformed data. | `test/liveEchoFamilyIntake.spec.ts`, `test/debuggerSession.spec.ts` | Malformed descriptors and partial artifacts. | Invalid inputs result in posture changes without hard crashes. | covered |
 
 ## Fixtures
 
-- Adapter fixtures that include admission-chain-compatible and obstructed paths.
+- Live target and admission fixtures from `test/helpers`.
+- Protocol-shaped descriptors used by inspection entrypoints.
 
 ## Oracles
 
-- Chain summaries contain stable required fields when present.
-- Obstruction reasons remain explicit and machine-parseable.
+- Admission-chain summaries are deterministic.
+- Posture values are explicit and stable by branch.
+- Consumers receive non-throwing, parseable structures.
 
 ## Planned Cases
 
-- Expand test vectors for malformed admission chain payloads and partial chain reconstruction.
-
+- Expand malformed admission-chain payload coverage for partial reconstruction branches.

@@ -1,34 +1,23 @@
 # Test Plan — Worldline Visualization
 
-## Requirements
-
-- **R-WV-1:** Worldline layout remains deterministic for identical lane and frame inputs.
-- **R-WV-2:** Rendering identifiers (lane, worldline, writer) remain stable.
-- **R-WV-3:** Worldline views tolerate partial data without breaking shell or CLI outputs.
-- **R-WV-4:** Layout and split-view outputs track session and frame progression.
-
-## Evidence
-
-- C1 — `test/worldlineRender.spec.ts`
-  - Verifies low-level layout rendering invariants.
-- C2 — `test/worldlineLayout.spec.ts`
-  - Verifies worldline frame/lane composition contracts.
-- C3 — `test/worldlineSplitView.spec.ts`
-  - Verifies split-view output stability and fallback behavior.
-- C4 — `test/worldlinePage.spec.ts`
-  - Verifies full-page worldline display state transitions.
+| Requirement | Contract claim | Evidence | Fixture or input | Measurable oracle | Status |
+|---|---|---|---|---|---|
+| R-WV-1 | Worldline layout remains deterministic for identical lane and frame inputs. | `test/worldlineRender.spec.ts` | Stable lane/frame fixtures. | Render output remains identical for fixed inputs. | covered |
+| R-WV-2 | Rendering identifiers remain stable across frames and lanes. | `test/worldlineLayout.spec.ts` | Lane and worldline fixture sets. | Lane/writer IDs and ordering remain deterministic. | covered |
+| R-WV-3 | Worldline views tolerate partial data without breaking shell or CLI outputs. | `test/worldlineSplitView.spec.ts` | Partial lane and frame fixtures. | Rendering degrades gracefully with absent optional inputs. | covered |
+| R-WV-4 | Layout and split-view outputs track session and frame progression. | `test/worldlinePage.spec.ts`, `test/worldlineSplitView.spec.ts` | Session progression and terminal-width variants. | Output transitions follow session/viewport rules. | covered |
 
 ## Fixtures
 
-- Worldline fixtures used in `test/helpers/worldlineFixture.ts` and adapter-generated lane inputs.
+- `test/helpers/worldlineFixture.ts`
+- Adapter-generated lane inputs from session fixtures.
 
 ## Oracles
 
-- Stable rendering coordinate output for identical inputs.
-- No runtime exceptions when lanes or frames are partially absent.
-- Consistent ordering of visual summaries across runs.
+- Stable coordinate output for fixed inputs.
+- No runtime exceptions with partial data.
+- Consistent ordering in rendered summaries.
 
 ## Planned Cases
 
-- Add coverage for mixed WORLDLINE and STRAND lane transitions over long session spans.
-
+- Add mixed WORLDLINE/STRAND lane transition coverage across long sessions.

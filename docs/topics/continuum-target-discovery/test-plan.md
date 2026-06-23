@@ -1,35 +1,23 @@
 # Test Plan — Continuum Target Discovery
 
-## Requirements
-
-- **R-CTD-1:** Target enumeration remains deterministic and adapter-rooted.
-- **R-CTD-2:** Runtime hello posture returns machine-parseable values and reasons.
-- **R-CTD-3:** `target-session` posture is stable when adapters report present/absent/unsupported/unavailable.
-- **R-CTD-4:** Target-facing command and MCP outputs never regress schema shape when posture shifts.
-
-## Evidence
-
-- C1 — `test/cliJson.spec.ts`
-  - Verifies JSON session shape stability for runtime-facing outputs.
-- C2 — `test/adapterRegistry.integration.spec.ts`
-  - Verifies adapter-backed target resolution and deterministic descriptor behavior.
-- C3 — `test/mcpAdmissionChainSurface.spec.ts`
-  - Verifies MCP session and tool outputs are built from adapter posture and registry context.
-- C4 — `test/ontologyDoctrine.spec.ts`
-  - Validates doctrine terms used for target/runtime posture compatibility.
+| Requirement | Contract claim | Evidence | Fixture or input | Measurable oracle | Status |
+|---|---|---|---|---|---|
+| R-CTD-1 | Target enumeration remains deterministic and adapter-rooted. | `test/cliJson.spec.ts`, `test/adapterRegistry.integration.spec.ts` | `test/helpers/worldlineFixture.ts`, `test/helpers/gitWarpFixture.ts`, `test/helpers/scenarioFixture.ts` | Enumeration output ordering and posture are stable for fixed input sets. | covered |
+| R-CTD-2 | Runtime hello posture returns machine-parseable values and reasons. | `test/cliJson.spec.ts`, `test/runtimeHelloInspection.spec.ts` | `test/runtimeHelloInspection.spec.ts` | Posture payload uses expected enums and reason fields. | covered |
+| R-CTD-3 | `target-session` posture is stable across descriptor-present, absent, and unsupported modes. | `test/adapterRegistry.integration.spec.ts`, `test/mcpAdmissionChainSurface.spec.ts` | Descriptor modes across sessions and targets. | Returned posture transitions are deterministic and non-flaky. | covered |
+| R-CTD-4 | Discovery outputs remain schema-consistent when posture shifts. | `test/ontologyDoctrine.spec.ts` | Cross-surface parity fixtures between CLI and MCP. | Output keys and value classes remain consistent after posture changes. | covered |
 
 ## Fixtures
 
-- CLI and MCP fixture targets exercised through existing helper builders.
-- Runtime hello and target posture fixtures in live docs design examples.
+- Discovery descriptors for target and runtime hello fixtures.
+- Shared adapter fixtures used by CLI/MCP tests.
 
 ## Oracles
 
-- Posture values are exact and documented.
-- Obstruction/reason fields exist for non-present states.
-- Probe output remains stable across CLI/MCP surfaces for equivalent target conditions.
+- Deterministic posture enums.
+- Stable reason fields for non-present states.
+- Schema compatibility across CLI and MCP equivalent inputs.
 
 ## Planned Cases
 
-- Expand CLI and MCP fixture coverage for explicit Continuum target edge cases once command surfaces are expanded.
-
+- Expand fixture coverage for additional continuum edge posture values.

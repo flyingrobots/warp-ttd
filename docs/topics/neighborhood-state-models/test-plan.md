@@ -1,35 +1,23 @@
 # Test Plan — Neighborhood State Models
 
-## Scope
-
-Neighborhood-derived summaries are now tracked with executable expectations matching their source contracts.
-
-## Requirements
-
-- **R-NSM-1:** Neighborhood summary derivation is deterministic from protocol and session facts.
-- **R-NSM-2:** Site catalog and focus summaries stay consistent when lanes move between frames.
-- **R-NSM-3:** Receipt shell summaries project execution counters and evidence flags correctly.
-- **R-NSM-4:** Reintegration detail summaries remain stable in obstructed and present fact states.
-
-## Evidence
-
-- C1 — `test/neighborhoodCoreSummary.spec.ts`, `test/neighborhoodFocusSummary.spec.ts`, `test/neighborhoodSiteCatalog.spec.ts`
-  - Enforces deterministic summary construction and identity behavior.
-- C2 — `test/inspectorPage.spec.ts`
-  - Validates neighborhood-focused views consume expected summaries.
-- C3 — `test/sessionSync.spec.ts`
-  - Validates frame navigation updates neighborhood composition.
+| Requirement | Contract claim | Evidence | Fixture or input | Measurable oracle | Status |
+|---|---|---|---|---|---|
+| R-NSM-1 | Neighborhood summary derivation is deterministic from protocol and session facts. | `test/neighborhoodCoreSummary.spec.ts` | Stable protocol/session fixture sets. | Summary outputs repeat identically for the same input fixtures. | covered |
+| R-NSM-2 | Site catalog and focus summaries remain consistent when lanes move between frames. | `test/neighborhoodSiteCatalog.spec.ts`, `test/neighborhoodFocusSummary.spec.ts` | Lane reassignments and frame progression fixtures. | Focus and catalog outputs remain identity-stable after transitions. | covered |
+| R-NSM-3 | Receipt shell summaries project execution counters and evidence flags correctly. | `test/neighborhoodCoreSummary.spec.ts`, `test/neighborhoodSiteCatalog.spec.ts` | Receipt fixture families used in summary tests. | Counter totals and flags match expected frame state. | covered |
+| R-NSM-4 | Reintegration detail summaries remain stable in obstructed and present fact states. | `test/debuggerSession.spec.ts`, `test/neighborhoodCoreSummary.spec.ts` | Presence and obstructed family fact fixtures. | Reintegration details preserve precedence and deterministic order. | covered |
 
 ## Fixtures
 
-- Neighborhood/summary builders and protocol fixtures used across the existing summary tests.
+- Neighborhood summary builders and protocol fixtures used in `test/neighborhoodCoreSummary.spec.ts`, `test/neighborhoodSiteCatalog.spec.ts`, `test/neighborhoodFocusSummary.spec.ts`.
+- Inspector and session-sync inputs.
 
 ## Oracles
 
-- Deterministic summary outputs for stable inputs.
-- Stale IDs are rejected and replaced with stable alternatives.
-- Fact-derived evidence is prioritized over local fallback when present.
+- Summary outputs are deterministic for stable input.
+- Identity changes are explicit and stable.
+- Obstructed facts produce explicit posture markers and fallback behavior.
 
 ## Planned Cases
 
-- Add explicit fixture cases for malformed neighborhood source facts and fallback behavior.
+- Add malformed fact cases for focus and reintegration boundary behavior.

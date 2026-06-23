@@ -1,44 +1,79 @@
-# Shared-Family Facts
+---
+title: Shared-Family Facts
+topic: shared-family-facts
+date_created: 2026-06-22
+status: current
+risk_level: high
+depends_on:
+  - neighborhood-state-models
+used_by:
+  - effect-and-delivery-observability
+verification:
+  - npm run test
+  - npm run test:integration
+  - npx tsc --noEmit
+  - npm run lint
+  - npm run lint:check
+test_plan: test-plan.md
+---
 
-```mermaid
-mindmap
-  root((shared-family-facts))
-    family ingress
-    family hydration
-    host-vs-local preference
+<a id="entry-onboarding"></a>
+## At a glance
+
+This shelf defines family fact ingestion and preference rules when host and generated facts are combined into session snapshots.
+
+| Question | Answer |
+|---|---|
+| What this topic owns | provenance metadata, family-fact posture handling, and fallback behavior. |
+| What it does not own | source adapter fact generation and worldline rendering. |
+| How it works | host and generated facts are ingested, scored, and combined into session snapshot posture. |
+| Why this matters | precedence decisions determine trust in host vs generated evidence for diagnostics and UI reads. |
+| First prerequisite | `neighborhood-state-models` and session snapshot ownership. |
+| What changes propagate | precedence and fallback behavior here directly affects session contracts read by diagnostics and observers. |
+
+<a id="entry-edit"></a>
+## Safe change path
+
+1. Update provenance and ingestion logic with matching tests in `test-plan.md`.
+2. Keep fallback and malformed-input behavior explicit and tested.
+3. Run family fact and session parity tests together.
+
+Focused command:
+
+```bash
+npm run test -- test/generatedFamilyIngress.spec.ts test/liveEchoFamilyIntake.spec.ts
 ```
 
-## Purpose
+Focused verification command: `npm run test -- test/liveEchoAdapterProbe.spec.ts`
 
-Track how WARP TTD ingests and projects host/published and generated family facts
-into debugger-readable observability facts.
+Full verification:
 
-## Contract Points
+```bash
+npm run test && npm run test:integration && npx tsc --noEmit && npm run lint && npm run lint:check
+```
 
-1. `src/app/generatedFamilyIngress.ts` defines canonical encoded family fact wrappers
-   with source/origin/scope/posture metadata.
-2. `sessionFamilyFacts` from adapters are consumed and normalized by
-   `src/app/sessionFamilyFacts.ts` and related hydration helpers.
-3. `src/app/sharedFamilyHydration.ts` applies local fallback and malformed-host-fact guards
-   so corrupted host facts do not crash sessions.
-4. Live Echo ingress path (`src/app/liveEchoFamilyIntake.ts`) exposes:
-   - target posture
-   - manifest/descriptor validation
-   - generated artifact consumption posture (present/absent/obstructed)
-5. Adapter-published family data is combined into session summaries where available and
-   gracefully falls back when absent.
+High-risk compatibility boundary:
+- Changing precedence or posture handling affects inspection output and user trust in host data.
+
+<a id="entry-triage"></a>
+## Failure modes
+
+| Failure shape | Detection signal | Consequence | First response | Verification |
+|---|---|---|---|---|
+| Malformed family fact | malformed wrapper or missing source metadata | family facts dropped or coerced incorrectly | validate parser and posture normalization branches | `test/generatedFamilyIngress.spec.ts` |
+| Host-vs-local conflict | local fallback used when host data should win | missing authoritative signal in session output | verify precedence rules and generated fact path | `test/liveEchoFamilyIntake.spec.ts` |
+| Obstruction not surfaced | absent posture becomes silent omission | degraded diagnostics without explicit explanation | ensure posture markers remain machine-readable | `test/liveEchoAdapterProbe.spec.ts` |
+
+<a id="entry-impact"></a>
+## Dependencies and impact
+
+| Edge | Details |
+|---|---|
+| Depends on | `neighborhood-state-models`. |
+| Used by | `effect-and-delivery-observability`. |
+| Cross-shelf impact | Family fact changes influence session evidence and observability outputs. |
 
 ## Evidence
 
-- `src/app/generatedFamilyIngress.ts`
-- `src/app/sessionFamilyFacts.ts`
-- `src/app/sharedFamilyHydration.ts`
-- `src/app/liveEchoFamilyIntake.ts`
-- `test/generatedFamilyIngress.spec.ts`
-- `test/liveEchoFamilyIntake.spec.ts`
-- `test/liveEchoAdapterProbe.spec.ts` (protocol-facing fact posture from probe support)
-
-## Stability Notes
-
-- Family sources are postureed (`PRESENT`, `ABSENT`, `OBSTRUCTED`) and should remain machine-parsed
-  with no implicit assumptions about vendor-specific payload formats.
+- Normative claims are in `test-plan.md` rows `R-SF-1` through `R-SF-4`.
+- Primary sources: `src/app/generatedFamilyIngress.ts`, `src/app/sessionFamilyFacts.ts`, `src/app/sharedFamilyHydration.ts`.

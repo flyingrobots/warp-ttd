@@ -97,15 +97,15 @@ the equivalent local verification set above and call out the gap in the PR body.
 
 ## Documentation verification gate for topic shelves
 
-- For any documentation edit under `docs/topics/**`, run the two-pass gate before editing behavior or content.
-  - `npm run docs:verify:onboarding` (Pass 1)
-  - `npm run docs:verify:deep` (Pass 2)
-- If either pass exits with `10` or `11` during a docs-editing cycle:
-  1. Parse `.docs-report.jsonl` and apply the remediation guidance in the most recent report entry.
-  2. Re-run the corresponding pass (or both passes after structural passes are clear).
-  3. Repeat until green or no remediation progress is possible.
-- If no remediation progress is possible, escalate with the first unresolved `DOC-LOAD` record and halt further edits.
-- If `docs:verify` exits with `12`, treat this as a hard stop, do not proceed, and escalate toolchain availability or mmdc installation as a blocker.
+- For documentation work under `docs/topics/**`, run the canonical command stack before behavior edits:
+  - `npm run docs:check`
+  - `npm run docs:evidence`
+  - `npm run docs:impact`
+- If `docs:check` reports manifest/structural regressions, resolve them or narrow scope before changing behavior or README content.
+- If `docs:evidence` reports evidence gaps for a changed shelf, either map the change to stable requirements/tests or defer behavior merge until proof is in place.
+- If `docs:impact` reports missing impacted-shelf updates, either update the impacted shelves or document `docs-impact: none` with rationale.
+- Parse `.docs-report.jsonl` for the most recent unresolved `DOC-LOAD` record and use its remediation guidance.
+- If `docs:check` exits with `12`, treat Mermaid toolchain unavailability as a hard blocker and halt unless CI-equivalent tooling is available.
 
 Git hooks are strongly recommended for this repo:
 
@@ -113,8 +113,9 @@ Git hooks are strongly recommended for this repo:
 - The repository ships `.githooks/pre-commit`; enable it with:
   - `git config core.hooksPath .githooks`
   - then commit docs changes normally; staged files under `docs/topics/**` will run:
-    - `npm run docs:verify:onboarding`
-    - `npm run docs:verify:deep`
+    - `npm run docs:check`
+    - `npm run docs:evidence`
+    - `npm run docs:impact`
 - If you also use the alternate hook path (`git config --local core.hooksPath scripts/hooks`), ensure `scripts/hooks/pre-push` includes `npm run docs:verify` before tests and type checks.
 - Do not weaken the hook by auto-fixing and skipping failed `docs:verify` states.
 

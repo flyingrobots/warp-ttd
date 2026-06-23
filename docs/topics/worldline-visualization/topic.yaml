@@ -1,0 +1,22 @@
+schema_version: 1
+id: "worldline-visualization"
+title: "Worldline Visualization"
+profile: "behavior"
+risk_level: "medium"
+lifecycle: active
+documentation_maturity: "current"
+owners:
+  - "james"
+depends_on:
+  - "protocol-contract"
+  - "debugger-session-core"
+  - "neighborhood-state-models"
+  - "tui-shell"
+owns:
+[]
+entrypoints:
+  onboarding: "README.md#entry-onboarding"
+  edit: "README.md#entry-edit"
+  triage: "README.md#entry-triage"
+  impact: "README.md#entry-impact"
+test_plan: "test-plan.md"

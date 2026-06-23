@@ -1,0 +1,23 @@
+schema_version: 1
+id: "admission-chain-read-model"
+title: "Admission Chain Read Model"
+profile: "behavior"
+risk_level: "medium"
+lifecycle: active
+documentation_maturity: "current"
+owners:
+  - "james"
+depends_on:
+[]
+owns:
+  - "src/app/admissionChainReadModel.ts"
+  - "src/app/liveTargetSessionInspection.ts"
+  - "src/app/liveTargetInspection.ts"
+  - "src/app/runtimeHelloInspection.ts"
+  - "src/mcp/admissionChainSurface.ts"
+entrypoints:
+  onboarding: "README.md#entry-onboarding"
+  edit: "README.md#entry-edit"
+  triage: "README.md#entry-triage"
+  impact: "README.md#entry-impact"
+test_plan: "test-plan.md"

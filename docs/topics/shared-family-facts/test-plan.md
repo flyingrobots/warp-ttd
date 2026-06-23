@@ -1,35 +1,23 @@
 # Test Plan — Shared-Family Facts
 
-## Requirements
-
-- **R-SF-1:** Generated-family helpers preserve source/origin/scope metadata.
-- **R-SF-2:** Session family facts are emitted as typed, posture-aware artifacts.
-- **R-SF-3:** Malformed host-provided family facts do not break session assembly.
-- **R-SF-4:** Live Echo intake surfaces descriptor and generated-manifest posture consistently.
-
-## Evidence
-
-- C1 — `test/generatedFamilyIngress.spec.ts`
-  - Validates present/absent/obstructed behavior and coverage of initial ingress refs.
-- C2 — `test/liveEchoFamilyIntake.spec.ts`
-  - Verifies target-family intake posture for missing roots, present manifests, malformed descriptors, unavailable artifacts.
-- C3 — `test/liveEchoAdapterProbe.spec.ts`
-  - Verifies probe posture values carried into intake paths and surfaced through adapters.
-- C4 — `test/debuggerSession.spec.ts`
-  - Verifies session preference for host-published family facts when present.
+| Requirement | Contract claim | Evidence | Fixture or input | Measurable oracle | Status |
+|---|---|---|---|---|---|
+| R-SF-1 | Generated-family helpers preserve source/origin/scope metadata. | `test/generatedFamilyIngress.spec.ts` | Generated family fixtures and wrapper inputs. | Wrapped facts include source/origin/scope fields as expected. | covered |
+| R-SF-2 | Session family facts are emitted as typed, posture-aware artifacts. | `test/liveEchoFamilyIntake.spec.ts` | Session ingress cases for present/absent/obstructed family facts. | Emitted facts always include posture and metadata channels. | covered |
+| R-SF-3 | Malformed host-provided family facts do not break session assembly. | `test/liveEchoFamilyIntake.spec.ts`, `test/debuggerSession.spec.ts` | Malformed fact payloads and missing manifest values. | Host parsing failures surface posture, not hard crashes. | covered |
+| R-SF-4 | Live echo intake surfaces descriptor and generated-manifest posture consistently. | `test/liveEchoAdapterProbe.spec.ts`, `test/liveEchoFamilyIntake.spec.ts` | Probe fixtures and manifest scenarios. | Probe and session outputs agree on posture and target roots. | covered |
 
 ## Fixtures
 
 - `test/helpers/jsonTestUtils.ts`
-- Manifest-like fixture constants in `src/app/liveEchoFamilyIntake.ts` tests.
+- Manifest-like fixture constants in family fact tests.
 
 ## Oracles
 
-- Family fact wrappers contain stable field names and provenance metadata.
-- Obstruction reasons exist where posture is not present.
-- Local fallback used only when host fact inputs are missing or malformed.
+- Fact wrappers contain stable metadata fields and provenance.
+- Obstruction reasons exist where required.
+- Local fallback is used only when host values are missing or invalid.
 
 ## Planned Cases
 
 - none
-
