@@ -306,220 +306,87 @@ shelves:
         intent: Resolve admission-chain and fallback failure modes.
         anchor: "#entry-triage"
 ---
+# Topic Shelf Registry
 
-# Topic Shelves (Landed Feature Contracts)
+This index maps durable, contract-bearing behavior to discoverable topic shelves and stable agent routes.
+The source of truth for each shelf remains in each shelf directory and its `topic.yaml` (or validated README frontmatter during migration).
 
-This directory tracks durable, test-backed contracts for existing WARP TTD behavior.
+<a id="entry-onboarding"></a>
+## At a glance
 
-## Overview
+| Question | Answer |
+|---|---|
+| What this doc owns | Shelf discovery, topic ownership routing, and boundary navigation. |
+| What it does not own | Runtime contracts, tests, evidence rows, source behavior, and milestone management. |
+| How it works | Humans and agents start here, select a shelf, then follow one of four entry points (`onboarding`, `edit`, `triage`, `impact`) in that shelf README. |
+| Why this matters | It reduces "where do I edit/read next" ambiguity during behavior changes. |
+| First prerequisite | `docs/topics/DOCUMENTATION_STANDARDS.md` plus the target topic `README.md` and `test-plan.md`. |
+| What changes propagate | Missing, drifted, or mislinked shelf edges here can misroute edit-impact checks and triage steps. |
 
-This is the machine-first registry for topic shelves and their explicit cross-shelf entry routes.
+## Registry quick map
 
-```mermaid
-mindmap
-  root((WARP TTD Topics))
-    Protocol Layer
-    Adapter Layer
-    Session Layer
-    Interface Layer
-    Discovery Layer
-```
+| Family | Shelf | Risk | Path |
+|---|---|---|---|
+| Protocol Layer | protocol-contract | high | `protocol-contract/README.md` |
+| Adapter Layer | adapter-port-and-registry | medium | `adapter-port-and-registry/README.md` |
+| Adapter Layer | adapter-implementations | medium | `adapter-implementations/README.md` |
+| Session Layer | debugger-session-core | high | `debugger-session-core/README.md` |
+| Session Layer | neighborhood-state-models | medium | `neighborhood-state-models/README.md` |
+| Session Layer | shared-family-facts | high | `shared-family-facts/README.md` |
+| Session Layer | effect-and-delivery-observability | medium | `effect-and-delivery-observability/README.md` |
+| Interface Layer | cli-interface | medium | `cli-interface/README.md` |
+| Interface Layer | mcp-interface | medium | `mcp-interface/README.md` |
+| Interface Layer | tui-shell | medium | `tui-shell/README.md` |
+| Interface Layer | worldline-visualization | medium | `worldline-visualization/README.md` |
+| Discovery Layer | continuum-target-discovery | high | `continuum-target-discovery/README.md` |
+| Discovery Layer | admission-chain-read-model | high | `admission-chain-read-model/README.md` |
 
-## Machine Registry (agent-first)
+<a id="entry-edit"></a>
+## Safe change path
 
-This registry is the definitive parse-safe entry point for dynamic agents. A context governor should read this frontmatter first and use `agent_entry_queries` as the first-action routing table.
+Use this sequence before merging contract or behavior changes:
 
-## Recommended agent bootstrap
+1. Identify the owning shelf for the changed behavior.
+2. Update that shelf's `topic.yaml` and `test-plan.md` evidence rows before behavior merge.
+3. Keep the registry entry in this file synchronized during migration (until manifest-only generation is complete).
+4. Run:
+   - `npm run docs:check`
+   - `npm run docs:evidence`
+   - `npm run docs:impact`
+5. For contract-bearing shelf changes, update `README.md` Evidence rows and executable test-name anchors.
+6. Run repository verification set when behavior changes touch runtime:
+   - `npm run test`
+   - `npm run test:integration`
+   - `npx tsc --noEmit`
+   - `npm run lint`
+   - `npm run lint:check`
 
-1. Load `shelf_graph` to understand coverage and grouping.
-2. Read the target shelf entry from `shelves`.
-3. Execute one `agent_entry_query` anchor before deep reading.
-4. Follow `depends_on` / `used_by` for downstream checks when a change is proposed.
+Allowed exceptions:
+- If behavior is unchanged and only this registry shape is being repaired, run docs gates and explain why runtime checks are out of scope.
+- If evidence is missing, documentation repair is allowed first, but contract-bearing behavior changes remain blocked until proof is restored.
 
-## Bootstrap query schema (machine-readable)
+<a id="entry-triage"></a>
+## Failure modes
 
-- `shelves[].agent_entry_queries[].id`: action key (`onboarding`, `edit`, `triage`, `impact`).
-- `shelves[].agent_entry_queries[].intent`: concise first-step intent.
-- `shelves[].agent_entry_queries[].anchor`: section anchor in the shelf README.
+| Failure shape | Detection signal | Consequence | First response | Verification |
+|---|---|---|---|---|
+| Unknown dependency ID in registry | docs gate `DOCL-REG-UNKNOWN-DEP` | Impact graph misses owners and downstream checks are skipped | Inspect and correct `depends_on` shelf IDs | `npm run docs:check` |
+| Shelf readme missing in registry path | docs gate `DOCL-REG-MISSING-READMEs` | Agent routing fails for a shelf | Fix `path` and add the missing README target | `npm run docs:check` |
+| Registry missing shelf | docs gate `DOCL-REG-MISSING` | New behavior has no entry point for impact/readability checks | Add shelf record and `depends_on`/`used_by` links | `npm run docs:check` |
+| Anchor route missing in shelf | Onboarding/edit/triage start point unavailable | Agents cannot enter the right playbook quickly | Add explicit anchors in topic README: `entry-onboarding`, `entry-edit`, `entry-triage` | `npm run docs:eval` |
 
-## High-Level Mind Map
+<a id="entry-impact"></a>
+## Dependencies and impact
 
-```mermaid
-mindmap
-  root((WARP TTD Topics))
-    protocol-contract
-    adapter-port-and-registry
-    adapter-implementations
-    debugger-session-core
-    neighborhood-state-models
-    shared-family-facts
-    effect-and-delivery-observability
-    cli-interface
-    mcp-interface
-    tui-shell
-    worldline-visualization
-    continuum-target-discovery
-    admission-chain-read-model
-```
+| Edge | Details |
+|---|---|
+| Depends on | Shelf manifests and topic ownership metadata in `docs/topics/*` |
+| Used by | Agents, docs commands, and pre-merge impact checks |
+| Cross-shelf impact | Incorrect edges can hide compatibility scope and misroute triage/impact reads |
 
-# Active Topic Shelves
+## Evidence
 
-## Protocol Layer
-
-```mermaid
-mindmap
-  root((protocol-contract))
-    data schema contract
-    versioned protocol shape
-    artifact parity
-```
-
-## [protocol-contract](protocol-contract/README.md)
-Protocol schema, protocol mirror, and shape/version invariants.
-
-## Adapter Layer
-
-```mermaid
-mindmap
-  root((adapter-port-and-registry))
-    adapter resolution
-    adapter kinds/config
-    capability boundaries
-```
-
-## [adapter-port-and-registry](adapter-port-and-registry/README.md)
-Host adapter port, capabilities, and adapter resolution.
-
-```mermaid
-mindmap
-  root((adapter-implementations))
-    echo fixture adapter
-    git-warp adapter
-    scenario adapter
-```
-
-## [adapter-implementations](adapter-implementations/README.md)
-Fixture, git-warp, and scenario adapter behavior.
-
-## Session Layer
-
-```mermaid
-mindmap
-  root((debugger-session-core))
-    session snapshotting
-    navigation state
-    pin lifecycle
-```
-
-## [debugger-session-core](debugger-session-core/README.md)
-Session lifecycle, snapshot assembly, and navigation state.
-
-```mermaid
-mindmap
-  root((neighborhood-state-models))
-    neighborhood summary
-    reintegration focus
-```
-
-## [neighborhood-state-models](neighborhood-state-models/README.md)
-Neighborhood summaries and focus/cross-view state contracts.
-
-```mermaid
-mindmap
-  root((shared-family-facts))
-    family fact ingestion
-    local-vs-host evidence
-    fallback posture
-```
-
-## [shared-family-facts](shared-family-facts/README.md)
-Shared-family ingress and host/manifest continuity contracts.
-
-```mermaid
-mindmap
-  root((effect-and-delivery-observability))
-    effect extraction
-    delivery summaries
-    capability-safe fallbacks
-```
-
-## [effect-and-delivery-observability](effect-and-delivery-observability/README.md)
-Effects, observations, and execution context.
-
-## Interface Layer
-
-```mermaid
-mindmap
-  root((cli-interface))
-    JSON/JSONL output
-    session and worldline commands
-```
-
-## [cli-interface](cli-interface/README.md)
-Machine-readable and human CLI workflows.
-
-```mermaid
-mindmap
-  root((mcp-interface))
-    read-only tool surface
-    session-admission contracts
-```
-
-## [mcp-interface](mcp-interface/README.md)
-MCP server, read-only inspection tools, and session reuse.
-
-```mermaid
-mindmap
-  root((tui-shell))
-    page lifecycle
-    inspector and connect flow
-```
-
-## [tui-shell](tui-shell/README.md)
-Connect and synchronization model for shell workflows.
-
-```mermaid
-mindmap
-  root((worldline-visualization))
-    lane and worldline layouts
-    split rendering
-```
-
-## [worldline-visualization](worldline-visualization/README.md)
-Lane layout, worldline columns, and navigation.
-
-## Discovery Layer
-
-```mermaid
-mindmap
-  root((continuum-target-discovery))
-    target posture
-    runtime hello contracts
-```
-
-## [continuum-target-discovery](continuum-target-discovery/README.md)
-Live target descriptors, discovery posture, and runtime hello facts.
-
-```mermaid
-mindmap
-  root((admission-chain-read-model))
-    admission posture
-    fallback and obstruction
-```
-
-## [admission-chain-read-model](admission-chain-read-model/README.md)
-Admission-chain posture model and read inspection.
-
-Each shelf has:
-- `README.md`: current truth at HEAD.
-- `test-plan.md`: executable evidence, cases, fixtures, oracles, and known gaps.
-
-# Onboarding path for uninitiated readers
-
-1. Start with `protocol-contract` to understand the data vocabulary.
-2. Read `adapter-port-and-registry` to learn runtime boundaries.
-3. Read `debugger-session-core` to understand session assembly.
-4. Read `neighborhood-state-models` and `shared-family-facts` to learn derived summaries.
-5. Read interface shelves (`cli-interface`, `mcp-interface`, `tui-shell`, `worldline-visualization`) to learn consumption paths.
-6. Read operational shelves (`effect-and-delivery-observability`, `continuum-target-discovery`, `admission-chain-read-model`) for why posture and absence behavior matters.
-7. Validate changes against linked `test-plan.md` files before editing behavior.
+- `docs/topics/DOCUMENTATION_STANDARDS.md`: process and section intent
+- `scripts/docs-verify.mjs`: machine checks, registry parsing, evidence and impact validation
+- `docs/topics/*/topic.yaml` or validated shelf frontmatter: canonical shelf metadata
+- Required checks that keep this file trustworthy: `npm run docs:check`, `npm run docs:evidence`, and `npm run docs:impact`
