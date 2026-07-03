@@ -35,6 +35,12 @@ If those all pass, you're ready.
 
 Do not insert a second prose-spec layer between design and tests.
 
+## Documentation Standards
+
+For topic-shelf work, use the canonical format and maintenance rules in
+[`docs/topics/DOCUMENTATION_STANDARDS.md`](docs/topics/DOCUMENTATION_STANDARDS.md).
+`AGENTS.md` points there as the source of truth for process and quality gates.
+
 ## Testing Rules
 
 Tests must be deterministic:

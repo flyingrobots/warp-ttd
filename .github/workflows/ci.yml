@@ -27,6 +27,14 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: npm
       - run: npm ci
+      - name: Docs: structural and syntax checks
+        run: npm run docs:check
+      - name: Docs: evidence map checks
+        run: npm run docs:evidence
+      - name: Docs: impact graph checks
+        run: npm run docs:impact
+      - name: Docs: editorial checks (advisory)
+        run: npm run docs:eval
       - run: npm run check:method
       - run: npx tsc --noEmit
       - run: npm test

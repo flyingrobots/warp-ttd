@@ -25,9 +25,23 @@
     "mcp": "node --experimental-strip-types ./src/mcp/main.ts",
     "tui": "node --experimental-strip-types ./src/tui/main.ts",
     "check:method": "node scripts/check-method-designs.mjs",
+    "docs:verify": "npm run docs:check && npm run docs:evidence && npm run docs:impact && npm run docs:eval",
+    "docs:verify:all": "npm run docs:check:all && npm run docs:evidence:all && npm run docs:impact:all",
+    "docs:verify:onboarding": "npm run docs:check",
+    "docs:verify:deep": "npm run docs:evidence",
+    "docs:verify:onboarding:all": "npm run docs:check:all",
+    "docs:verify:deep:all": "npm run docs:evidence:all",
     "lint": "eslint .",
     "lint:check": "bash scripts/lint-check.sh",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "docs:check": "node scripts/docs-verify.mjs --mode=check --scope=changed",
+    "docs:check:all": "node scripts/docs-verify.mjs --mode=check --scope=all",
+    "docs:evidence": "node scripts/docs-verify.mjs --mode=evidence --scope=changed",
+    "docs:evidence:all": "node scripts/docs-verify.mjs --mode=evidence --scope=all",
+    "docs:impact": "node scripts/docs-verify.mjs --mode=impact --scope=changed",
+    "docs:impact:all": "node scripts/docs-verify.mjs --mode=impact --scope=all",
+    "docs:eval": "node scripts/docs-verify.mjs --mode=eval --scope=changed",
+    "docs:eval:all": "node scripts/docs-verify.mjs --mode=eval --scope=all"
   },
   "dependencies": {
     "@flyingrobots/bijou": "^4.4.0",
@@ -39,6 +53,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@mermaid-js/mermaid-cli": "^11.15.0",
     "@types/node": "^22.19.15",
     "eslint": "^10.1.0",
     "typescript": "^5.9.3",
