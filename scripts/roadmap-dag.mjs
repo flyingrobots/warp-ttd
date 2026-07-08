@@ -925,6 +925,23 @@ function generate() {
   return { issues, markdown, dot };
 }
 
+function firstDifference(name, actual, expected) {
+  const actualLines = actual.split(/\r?\n/);
+  const expectedLines = expected.split(/\r?\n/);
+  const maxLines = Math.max(actualLines.length, expectedLines.length);
+  for (let index = 0; index < maxLines; index += 1) {
+    if (actualLines[index] === expectedLines[index]) {
+      continue;
+    }
+    return [
+      `${name} first differs at line ${index + 1}.`,
+      `expected: ${expectedLines[index] ?? '(missing)'}`,
+      `actual:   ${actualLines[index] ?? '(missing)'}`,
+    ].join('\n');
+  }
+  return `${name} differs but no line-level mismatch was found.`;
+}
+
 function check() {
   const issues = fetchIssues();
   const expectedMarkdown = buildMarkdown(issues);
@@ -935,10 +952,10 @@ function check() {
   const missing = missingDesiredEdges(issues);
   const failures = [];
   if (actualMarkdown !== expectedMarkdown) {
-    failures.push('ROADMAP.md is not generated from current GitHub issue state. Run `npm run roadmap:generate`.');
+    failures.push(`ROADMAP.md is not generated from current GitHub issue state. Run \`npm run roadmap:generate\`.\n${firstDifference('ROADMAP.md', actualMarkdown, expectedMarkdown)}`);
   }
   if (actualDot !== expectedDot) {
-    failures.push('docs/roadmap-dag.dot is not generated from current GitHub issue state. Run `npm run roadmap:generate`.');
+    failures.push(`docs/roadmap-dag.dot is not generated from current GitHub issue state. Run \`npm run roadmap:generate\`.\n${firstDifference('docs/roadmap-dag.dot', actualDot, expectedDot)}`);
   }
   if (!existsSync(DAG_SVG_PATH)) {
     failures.push('docs/roadmap-dag.svg is missing. Run `npm run roadmap:generate`.');
