@@ -58,7 +58,7 @@ This shelf owns the project roadmap governance loop: this repository's GitHub Is
 |---|---|
 | What this topic owns | Roadmap artifact generation, roadmap issue/DAG sync commands, PR readiness instructions in `AGENTS.md`, and the policy that software tests assert executable behavior rather than Markdown prose. |
 | What it does not own | Runtime protocol schema semantics, adapter behavior, UI behavior, release packaging, or private external-repository blocker state. |
-| How it works | `scripts/roadmap-dag.mjs` reads GitHub issue metadata, renders grouped Graphviz output, and checks that committed roadmap artifacts match issue state. |
+| How it works | `scripts/roadmap-dag.mjs` reads GitHub issue metadata, renders grouped Graphviz output, includes native blocker edges for emitted goalposts and child slices, and checks that committed roadmap artifacts match issue state. |
 | Why this matters | Planning drift changes which work appears blocked, ready, or complete; stale artifacts can send agents and reviewers toward the wrong next slice. |
 | First prerequisite | Repository-local GitHub issue state and native issue relationships must be synchronized before regenerating roadmap artifacts. |
 | What changes propagate | Roadmap script, workflow, and AGENTS edits alter PR readiness and planning governance for every future slice. |
@@ -91,6 +91,7 @@ High-risk compatibility boundary:
 |---|---|---|---|---|
 | ROADMAP artifacts drift from issues | `npm run roadmap:check` fails | PR presents stale milestone, goalpost, slice, or blocker state | Regenerate from GitHub Issues and review the diff | `npm run roadmap:check` |
 | Issue dependency graph is stale | Generated DAG has missing or wrong blocked-by edges | Next work may be sequenced incorrectly | Re-run sync and inspect GitHub native blocker/sub-issue relationships | `npm run roadmap:sync -- --check` |
+| Child slice blocker edges are invisible | A child issue is blocked in GitHub but the DOT/SVG omits the edge | Goalpost execution order is only visible in GitHub, not the roadmap DAG | Regenerate artifacts and inspect child issue blocked-by relationships | `npm run roadmap:check` |
 | Changed roadmap files are unmapped | `npm run docs:impact` reports `DOCL-IMPACT-OWNERSHIP-GAP` | Pre-push hook blocks publication | Add or correct `owns` entries in this shelf | `npm run docs:impact` |
 | Markdown-only tests return | `npm run test` contains assertions over documentation prose | Test suite can fail on wording instead of software behavior | Remove the prose assertion and keep behavior or artifact checks | `npm run test` |
 
@@ -105,6 +106,6 @@ High-risk compatibility boundary:
 
 ## Evidence
 
-- Requirement rows `R-RMAP-1` through `R-RMAP-4` in `test-plan.md` define the governance contract.
+- Requirement rows `R-RMAP-1` through `R-RMAP-5` in `test-plan.md` define the governance contract.
 - Primary sources: `scripts/roadmap-dag.mjs`, `.github/workflows/roadmap.yml`, `AGENTS.md`, `ROADMAP.md`, and `package.json`.
 - The retained protocol-boundary tests in `test/protocolPublicationBoundary.spec.ts` are behavior checks for generated protocol mirrors; Markdown/prose-examination tests are outside this shelf's accepted test model.
