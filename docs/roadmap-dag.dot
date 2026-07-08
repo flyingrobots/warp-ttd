@@ -1,0 +1,318 @@
+digraph RoadmapDAG {
+  graph [layout=dot, rankdir=LR, compound=true, newrank=true, overlap=false, splines=ortho, bgcolor="white", fontname="Helvetica", label="WARP TTD Roadmap DAG (Graphviz dot / Sugiyama-style layered layout)", labelloc=t, fontsize=18];
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=10, margin="0.08,0.05"];
+  edge [fontname="Helvetica", fontsize=9, arrowsize=0.7, color="#248232", penwidth=1.4];
+  legend_open [label="OPEN", fillcolor="#d8f5d0", color="#248232"];
+  legend_blocked [label="BLOCKED", fillcolor="#ffd7d7", color="#bd2c00"];
+  legend_done [label="COMPLETED", fillcolor="#e5e7eb", color="#6b7280"];
+  legend_open -> legend_blocked [label="open dependency", color="#248232", penwidth=1.4];
+  legend_blocked -> legend_done [label="blocked dependency", color="#bd2c00", penwidth=3.2];
+  subgraph cluster_M0 {
+    label="M0. Present-Day Reality And Release Governance";
+    color="#d1d5db";
+    style="rounded";
+    subgraph cluster_goalpost_74 {
+      label="#74";
+      color="#e5e7eb";
+      style="rounded,dashed";
+      issue_74 [label="#74\\nv0.1.0 release gates and closeout", fillcolor="#d8f5d0", color="#248232", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/74"];
+      issue_123 [label="#123\\nPlan slices for #74: v0.1.0 release gates and closeout", fillcolor="#d8f5d0", color="#248232", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/123"];
+      issue_74 -> issue_123 [style=dotted, color="#6b7280", penwidth=1.0, label="slice"];
+    }
+    subgraph cluster_goalpost_72 {
+      label="#72";
+      color="#e5e7eb";
+      style="rounded,dashed";
+      issue_72 [label="#72\\nRetire legacy filesystem backlog after GitHub migration", fillcolor="#d8f5d0", color="#248232", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/72"];
+      issue_122 [label="#122\\nPlan slices for #72: Retire legacy filesystem backlog after GitHub migration", fillcolor="#d8f5d0", color="#248232", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/122"];
+      issue_72 -> issue_122 [style=dotted, color="#6b7280", penwidth=1.0, label="slice"];
+    }
+    subgraph cluster_goalpost_88 {
+      label="#88";
+      color="#e5e7eb";
+      style="rounded,dashed";
+      issue_88 [label="#88\\nBad code: Method checker accepts shallow design sections", fillcolor="#d8f5d0", color="#248232", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/88"];
+      issue_131 [label="#131\\nPlan slices for #88: Bad code: Method checker accepts shallow design sections", fillcolor="#d8f5d0", color="#248232", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/131"];
+      issue_88 -> issue_131 [style=dotted, color="#6b7280", penwidth=1.0, label="slice"];
+    }
+    subgraph cluster_goalpost_89 {
+      label="#89";
+      color="#e5e7eb";
+      style="rounded,dashed";
+      issue_89 [label="#89\\nBad code: GitHub comment workflow is shell-quoting fragile", fillcolor="#d8f5d0", color="#248232", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/89"];
+      issue_132 [label="#132\\nPlan slices for #89: Bad code: GitHub comment workflow is shell-quoting fragile", fillcolor="#d8f5d0", color="#248232", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/132"];
+      issue_89 -> issue_132 [style=dotted, color="#6b7280", penwidth=1.0, label="slice"];
+    }
+    subgraph cluster_goalpost_90 {
+      label="#90";
+      color="#e5e7eb";
+      style="rounded,dashed";
+      issue_90 [label="#90\\nBad code: Method has no stale work-in-progress label audit", fillcolor="#d8f5d0", color="#248232", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/90"];
+      issue_133 [label="#133\\nPlan slices for #90: Bad code: Method has no stale work-in-progress label audit", fillcolor="#d8f5d0", color="#248232", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/133"];
+      issue_90 -> issue_133 [style=dotted, color="#6b7280", penwidth=1.0, label="slice"];
+    }
+    subgraph cluster_goalpost_91 {
+      label="#91";
+      color="#e5e7eb";
+      style="rounded,dashed";
+      issue_91 [label="#91\\nCool idea: Agent interface cookbook for causal debugging", fillcolor="#d8f5d0", color="#248232", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/91"];
+      issue_134 [label="#134\\nPlan slices for #91: Cool idea: Agent interface cookbook for causal debugging", fillcolor="#d8f5d0", color="#248232", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/134"];
+      issue_91 -> issue_134 [style=dotted, color="#6b7280", penwidth=1.0, label="slice"];
+    }
+    subgraph cluster_goalpost_92 {
+      label="#92";
+      color="#e5e7eb";
+      style="rounded,dashed";
+      issue_92 [label="#92\\nCool idea: Continuum debugger capability simulator fixtures", fillcolor="#d8f5d0", color="#248232", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/92"];
+      issue_135 [label="#135\\nPlan slices for #92: Cool idea: Continuum debugger capability simulator fixtures", fillcolor="#d8f5d0", color="#248232", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/135"];
+      issue_92 -> issue_135 [style=dotted, color="#6b7280", penwidth=1.0, label="slice"];
+    }
+    subgraph cluster_goalpost_113 {
+      label="#113";
+      color="#e5e7eb";
+      style="rounded,dashed";
+      issue_113 [label="#113\\nReconcile TTD protocol schemas with warp-ttd", fillcolor="#d8f5d0", color="#248232", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/113"];
+      issue_141 [label="#141\\nPlan slices for #113: Reconcile TTD protocol schemas with warp-ttd", fillcolor="#d8f5d0", color="#248232", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/141"];
+      issue_113 -> issue_141 [style=dotted, color="#6b7280", penwidth=1.0, label="slice"];
+    }
+  }
+  subgraph cluster_M1 {
+    label="M1. Continuum Runtime Discovery Foundation";
+    color="#d1d5db";
+    style="rounded";
+    subgraph cluster_goalpost_76 {
+      label="#76";
+      color="#e5e7eb";
+      style="rounded,dashed";
+      issue_76 [label="#76\\nContinuum Target Discovery Contract", fillcolor="#e5e7eb", color="#6b7280", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/76"];
+    }
+    subgraph cluster_goalpost_80 {
+      label="#80";
+      color="#e5e7eb";
+      style="rounded,dashed";
+      issue_80 [label="#80\\nVendor-neutral Continuum runtime hello handshake", fillcolor="#e5e7eb", color="#6b7280", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/80"];
+    }
+    subgraph cluster_goalpost_78 {
+      label="#78";
+      color="#e5e7eb";
+      style="rounded,dashed";
+      issue_78 [label="#78\\nContinuum runtime discovery command and local registry", fillcolor="#d8f5d0", color="#248232", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/78"];
+      issue_124 [label="#124\\nPlan slices for #78: Continuum runtime discovery command and local registry", fillcolor="#d8f5d0", color="#248232", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/124"];
+      issue_78 -> issue_124 [style=dotted, color="#6b7280", penwidth=1.0, label="slice"];
+    }
+    subgraph cluster_goalpost_79 {
+      label="#79";
+      color="#e5e7eb";
+      style="rounded,dashed";
+      issue_79 [label="#79\\nRuntime endpoint consent and auth posture", fillcolor="#ffd7d7", color="#bd2c00", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/79"];
+      issue_125 [label="#125\\nPlan slices for #79: Runtime endpoint consent and auth posture", fillcolor="#d8f5d0", color="#248232", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/125"];
+      issue_79 -> issue_125 [style=dotted, color="#6b7280", penwidth=1.0, label="slice"];
+    }
+    subgraph cluster_goalpost_82 {
+      label="#82";
+      color="#e5e7eb";
+      style="rounded,dashed";
+      issue_82 [label="#82\\nDebugger capability discovery read model", fillcolor="#ffd7d7", color="#bd2c00", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/82"];
+      issue_126 [label="#126\\nPlan slices for #82: Debugger capability discovery read model", fillcolor="#d8f5d0", color="#248232", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/126"];
+      issue_82 -> issue_126 [style=dotted, color="#6b7280", penwidth=1.0, label="slice"];
+    }
+  }
+  subgraph cluster_M2 {
+    label="M2. Causal Inquiry And Breakpoint Bedrock";
+    color="#d1d5db";
+    style="rounded";
+    subgraph cluster_goalpost_83 {
+      label="#83";
+      color="#e5e7eb";
+      style="rounded,dashed";
+      issue_83 [label="#83\\nCausal query and breakpoint contract", fillcolor="#ffd7d7", color="#bd2c00", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/83"];
+      issue_127 [label="#127\\nPlan slices for #83: Causal query and breakpoint contract", fillcolor="#d8f5d0", color="#248232", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/127"];
+      issue_83 -> issue_127 [style=dotted, color="#6b7280", penwidth=1.0, label="slice"];
+    }
+    subgraph cluster_goalpost_100 {
+      label="#100";
+      color="#e5e7eb";
+      style="rounded,dashed";
+      issue_100 [label="#100\\nCool idea: Why-not causal query surface", fillcolor="#ffd7d7", color="#bd2c00", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/100"];
+      issue_137 [label="#137\\nPlan slices for #100: Cool idea: Why-not causal query surface", fillcolor="#d8f5d0", color="#248232", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/137"];
+      issue_100 -> issue_137 [style=dotted, color="#6b7280", penwidth=1.0, label="slice"];
+    }
+  }
+  subgraph cluster_M3 {
+    label="M3. Counterfactual Branches And Comparisons";
+    color="#d1d5db";
+    style="rounded";
+    subgraph cluster_goalpost_84 {
+      label="#84";
+      color="#e5e7eb";
+      style="rounded,dashed";
+      issue_84 [label="#84\\nCounterfactual branch workbench and worldline comparison", fillcolor="#ffd7d7", color="#bd2c00", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/84"];
+      issue_128 [label="#128\\nPlan slices for #84: Counterfactual branch workbench and worldline comparison", fillcolor="#d8f5d0", color="#248232", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/128"];
+      issue_84 -> issue_128 [style=dotted, color="#6b7280", penwidth=1.0, label="slice"];
+    }
+    subgraph cluster_goalpost_98 {
+      label="#98";
+      color="#e5e7eb";
+      style="rounded,dashed";
+      issue_98 [label="#98\\nCool idea: Causal delta minimizer for counterfactual branches", fillcolor="#ffd7d7", color="#bd2c00", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/98"];
+      issue_136 [label="#136\\nPlan slices for #98: Cool idea: Causal delta minimizer for counterfactual branches", fillcolor="#d8f5d0", color="#248232", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/136"];
+      issue_98 -> issue_136 [style=dotted, color="#6b7280", penwidth=1.0, label="slice"];
+    }
+  }
+  subgraph cluster_M4 {
+    label="M4. Evidence Ledger And Durable Investigation Assets";
+    color="#d1d5db";
+    style="rounded";
+    subgraph cluster_goalpost_116 {
+      label="#116";
+      color="#e5e7eb";
+      style="rounded,dashed";
+      issue_116 [label="#116\\nCOOL IDEA: Tap-shaped debugger session event outbox", fillcolor="#ffd7d7", color="#bd2c00", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/116"];
+      issue_143 [label="#143\\nPlan slices for #116: COOL IDEA: Tap-shaped debugger session event outbox", fillcolor="#d8f5d0", color="#248232", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/143"];
+      issue_116 -> issue_143 [style=dotted, color="#6b7280", penwidth=1.0, label="slice"];
+    }
+    subgraph cluster_goalpost_85 {
+      label="#85";
+      color="#e5e7eb";
+      style="rounded,dashed";
+      issue_85 [label="#85\\nEvidence ledger and investigation report export", fillcolor="#ffd7d7", color="#bd2c00", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/85"];
+      issue_129 [label="#129\\nPlan slices for #85: Evidence ledger and investigation report export", fillcolor="#d8f5d0", color="#248232", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/129"];
+      issue_85 -> issue_129 [style=dotted, color="#6b7280", penwidth=1.0, label="slice"];
+    }
+    subgraph cluster_goalpost_115 {
+      label="#115";
+      color="#e5e7eb";
+      style="rounded,dashed";
+      issue_115 [label="#115\\nCompliance reporting as a TTD protocol extension", fillcolor="#ffd7d7", color="#bd2c00", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/115"];
+      issue_142 [label="#142\\nPlan slices for #115: Compliance reporting as a TTD protocol extension", fillcolor="#d8f5d0", color="#248232", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/142"];
+      issue_115 -> issue_142 [style=dotted, color="#6b7280", penwidth=1.0, label="slice"];
+    }
+  }
+  subgraph cluster_M5 {
+    label="M5. Human Workbench Over Agent-Readable Facts";
+    color="#d1d5db";
+    style="rounded";
+    subgraph cluster_goalpost_86 {
+      label="#86";
+      color="#e5e7eb";
+      style="rounded,dashed";
+      issue_86 [label="#86\\nHuman causal debugger workspace over agent-readable facts", fillcolor="#ffd7d7", color="#bd2c00", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/86"];
+      issue_130 [label="#130\\nPlan slices for #86: Human causal debugger workspace over agent-readable facts", fillcolor="#d8f5d0", color="#248232", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/130"];
+      issue_86 -> issue_130 [style=dotted, color="#6b7280", penwidth=1.0, label="slice"];
+    }
+    subgraph cluster_goalpost_108 {
+      label="#108";
+      color="#e5e7eb";
+      style="rounded,dashed";
+      issue_108 [label="#108\\n[LP-GP4-S1] Launchpad browser runtime hello target descriptor", fillcolor="#ffd7d7", color="#bd2c00", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/108"];
+      issue_140 [label="#140\\nPlan slices for #108: [LP-GP4-S1] Launchpad browser runtime hello target descriptor", fillcolor="#d8f5d0", color="#248232", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/140"];
+      issue_108 -> issue_140 [style=dotted, color="#6b7280", penwidth=1.0, label="slice"];
+    }
+    subgraph cluster_goalpost_107 {
+      label="#107";
+      color="#e5e7eb";
+      style="rounded,dashed";
+      issue_107 [label="#107\\n[LP-GP4-S2] Browser replay tick history read model", fillcolor="#ffd7d7", color="#bd2c00", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/107"];
+      issue_139 [label="#139\\nPlan slices for #107: [LP-GP4-S2] Browser replay tick history read model", fillcolor="#d8f5d0", color="#248232", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/139"];
+      issue_107 -> issue_139 [style=dotted, color="#6b7280", penwidth=1.0, label="slice"];
+    }
+    subgraph cluster_goalpost_106 {
+      label="#106";
+      color="#e5e7eb";
+      style="rounded,dashed";
+      issue_106 [label="#106\\n[LP-GP4-S3] Rewind current visit control contract", fillcolor="#ffd7d7", color="#bd2c00", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/106"];
+      issue_138 [label="#138\\nPlan slices for #106: [LP-GP4-S3] Rewind current visit control contract", fillcolor="#d8f5d0", color="#248232", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/138"];
+      issue_106 -> issue_138 [style=dotted, color="#6b7280", penwidth=1.0, label="slice"];
+    }
+    subgraph cluster_goalpost_56 {
+      label="#56";
+      color="#e5e7eb";
+      style="rounded,dashed";
+      issue_56 [label="#56\\nBrowser TTD delivery adapter", fillcolor="#ffd7d7", color="#bd2c00", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/56"];
+      issue_121 [label="#121\\nPlan slices for #56: Browser TTD delivery adapter", fillcolor="#d8f5d0", color="#248232", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/121"];
+      issue_56 -> issue_121 [style=dotted, color="#6b7280", penwidth=1.0, label="slice"];
+    }
+    subgraph cluster_goalpost_117 {
+      label="#117";
+      color="#e5e7eb";
+      style="rounded,dashed";
+      issue_117 [label="#117\\nVISOR target: inspect Bijou artifact bundles in the browser debugger", fillcolor="#ffd7d7", color="#bd2c00", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/117"];
+      issue_144 [label="#144\\nPlan slices for #117: VISOR target: inspect Bijou artifact bundles in the browser debugger", fillcolor="#d8f5d0", color="#248232", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/144"];
+      issue_117 -> issue_144 [style=dotted, color="#6b7280", penwidth=1.0, label="slice"];
+    }
+  }
+  subgraph cluster_M6 {
+    label="M6. North-Star Workbench, Worker, Verify, And Ledger Loop";
+    color="#d1d5db";
+    style="rounded";
+    subgraph cluster_goalpost_28 {
+      label="#28";
+      color="#e5e7eb";
+      style="rounded,dashed";
+      issue_28 [label="#28\\nTooling: Reliving debugger UX (Constraint Lens + Provenance Heatmap)", fillcolor="#ffd7d7", color="#bd2c00", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/28"];
+      issue_118 [label="#118\\nPlan slices for #28: Tooling: Reliving debugger UX (Constraint Lens + Provenance Heatmap)", fillcolor="#d8f5d0", color="#248232", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/118"];
+      issue_28 -> issue_118 [style=dotted, color="#6b7280", penwidth=1.0, label="slice"];
+    }
+    subgraph cluster_goalpost_29 {
+      label="#29";
+      color="#e5e7eb";
+      style="rounded,dashed";
+      issue_29 [label="#29\\nTT2: Reliving debugger MVP (scrub timeline + causal slice + fork branch)", fillcolor="#ffd7d7", color="#bd2c00", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/29"];
+      issue_119 [label="#119\\nPlan slices for #29: TT2: Reliving debugger MVP (scrub timeline + causal slice + fork branch)", fillcolor="#d8f5d0", color="#248232", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/119"];
+      issue_29 -> issue_119 [style=dotted, color="#6b7280", penwidth=1.0, label="slice"];
+    }
+    subgraph cluster_goalpost_31 {
+      label="#31";
+      color="#e5e7eb";
+      style="rounded,dashed";
+      issue_31 [label="#31\\nTT3: Rulial diff / worldline compare MVP", fillcolor="#ffd7d7", color="#bd2c00", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/31"];
+      issue_120 [label="#120\\nPlan slices for #31: TT3: Rulial diff / worldline compare MVP", fillcolor="#d8f5d0", color="#248232", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/120"];
+      issue_31 -> issue_120 [style=dotted, color="#6b7280", penwidth=1.0, label="slice"];
+    }
+  }
+  subgraph cluster_external {
+    label="External blockers";
+    color="#f97316";
+    style="rounded,dashed";
+    issue_14 [label="flyingrobots-labs/flyingrobots.dev#14\\n[LP-GP3-S3] Launchpad client adapter drives Echo WASM intents", fillcolor="#d8f5d0", color="#248232", fontcolor="#111827", URL="https://github.com/flyingrobots-labs/flyingrobots.dev/issues/14"];
+    issue_111 [label="#111\\n[LP-GP2-S3] Launchpad contract evidence package for debugger consumption", fillcolor="#d8f5d0", color="#248232", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/111"];
+    issue_441 [label="flyingrobots/bijou#441\\n[LP-GP5-S2] WARP-TTD debugger scene IR fixture", fillcolor="#d8f5d0", color="#248232", fontcolor="#111827", URL="https://github.com/flyingrobots/bijou/issues/441"];
+    issue_442 [label="flyingrobots/bijou#442\\n[LP-GP5-S1] Browser renderer seam for ui-scene-ir", fillcolor="#d8f5d0", color="#248232", fontcolor="#111827", URL="https://github.com/flyingrobots/bijou/issues/442"];
+    issue_594 [label="flyingrobots/echo#594\\n[LP-GP3-S2] Witnessed Launchpad intent receipts and readings", fillcolor="#d8f5d0", color="#248232", fontcolor="#111827", URL="https://github.com/flyingrobots/echo/issues/594"];
+    issue_595 [label="flyingrobots/echo#595\\n[LP-GP3-S1] Browser WASM static-content host capability", fillcolor="#d8f5d0", color="#248232", fontcolor="#111827", URL="https://github.com/flyingrobots/echo/issues/595"];
+    issue_596 [label="flyingrobots/echo#596\\n[LP-GP4-S4] Debugger-safe browser session fact export", fillcolor="#d8f5d0", color="#248232", fontcolor="#111827", URL="https://github.com/flyingrobots/echo/issues/596"];
+  }
+  issue_76 -> issue_80 [label="OPEN", color="#248232", penwidth=1.4, style=solid];
+  issue_80 -> issue_78 [label="OPEN", color="#248232", penwidth=1.4, style=solid];
+  issue_78 -> issue_79 [label="BLOCKED", color="#bd2c00", penwidth=3.2, style=solid];
+  issue_79 -> issue_82 [label="BLOCKED", color="#bd2c00", penwidth=3.2, style=solid];
+  issue_113 -> issue_82 [label="BLOCKED", color="#bd2c00", penwidth=3.2, style=solid];
+  issue_82 -> issue_83 [label="BLOCKED", color="#bd2c00", penwidth=3.2, style=solid];
+  issue_83 -> issue_100 [label="BLOCKED", color="#bd2c00", penwidth=3.2, style=solid];
+  issue_83 -> issue_84 [label="BLOCKED", color="#bd2c00", penwidth=3.2, style=solid];
+  issue_84 -> issue_98 [label="BLOCKED", color="#bd2c00", penwidth=3.2, style=solid];
+  issue_82 -> issue_116 [label="BLOCKED", color="#bd2c00", penwidth=3.2, style=solid];
+  issue_84 -> issue_85 [label="BLOCKED", color="#bd2c00", penwidth=3.2, style=solid];
+  issue_116 -> issue_85 [label="BLOCKED", color="#bd2c00", penwidth=3.2, style=solid];
+  issue_85 -> issue_115 [label="BLOCKED", color="#bd2c00", penwidth=3.2, style=solid];
+  issue_85 -> issue_86 [label="BLOCKED", color="#bd2c00", penwidth=3.2, style=solid];
+  issue_78 -> issue_108 [label="BLOCKED", color="#bd2c00", penwidth=3.2, style=solid];
+  issue_595 -> issue_108 [label="BLOCKED", color="#bd2c00", penwidth=3.2, style=solid];
+  issue_82 -> issue_107 [label="BLOCKED", color="#bd2c00", penwidth=3.2, style=solid];
+  issue_108 -> issue_107 [label="BLOCKED", color="#bd2c00", penwidth=3.2, style=solid];
+  issue_111 -> issue_107 [label="BLOCKED", color="#bd2c00", penwidth=3.2, style=solid];
+  issue_594 -> issue_107 [label="BLOCKED", color="#bd2c00", penwidth=3.2, style=solid];
+  issue_596 -> issue_107 [label="BLOCKED", color="#bd2c00", penwidth=3.2, style=solid];
+  issue_107 -> issue_106 [label="BLOCKED", color="#bd2c00", penwidth=3.2, style=solid];
+  issue_14 -> issue_56 [label="BLOCKED", color="#bd2c00", penwidth=3.2, style=solid];
+  issue_86 -> issue_56 [label="BLOCKED", color="#bd2c00", penwidth=3.2, style=solid];
+  issue_106 -> issue_56 [label="BLOCKED", color="#bd2c00", penwidth=3.2, style=solid];
+  issue_108 -> issue_56 [label="BLOCKED", color="#bd2c00", penwidth=3.2, style=solid];
+  issue_441 -> issue_56 [label="BLOCKED", color="#bd2c00", penwidth=3.2, style=solid];
+  issue_442 -> issue_56 [label="BLOCKED", color="#bd2c00", penwidth=3.2, style=solid];
+  issue_56 -> issue_117 [label="BLOCKED", color="#bd2c00", penwidth=3.2, style=solid];
+  issue_86 -> issue_117 [label="BLOCKED", color="#bd2c00", penwidth=3.2, style=solid];
+  issue_86 -> issue_28 [label="BLOCKED", color="#bd2c00", penwidth=3.2, style=solid];
+  issue_86 -> issue_29 [label="BLOCKED", color="#bd2c00", penwidth=3.2, style=solid];
+  issue_84 -> issue_31 [label="BLOCKED", color="#bd2c00", penwidth=3.2, style=solid];
+}

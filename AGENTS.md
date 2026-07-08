@@ -31,6 +31,9 @@ This guide is for AI agents and human operators in the WARP TTD repository.
 - GitHub Issues are the live work tracker.
 - GitHub Milestones are the primary release/cycle grouping mechanism.
 - For live work status, use milestone membership plus issue labels/state.
+- `ROADMAP.md` is the generated orientation document over the live GitHub issue
+  graph. GitHub issue state, native parent/sub-issue relationships, and native
+  `blockedBy` / `blocking` dependency edges remain authoritative.
 
 ### Labeling Discipline
 - Use repository issue labels as governance signal (asap / cooldown / blocked /
@@ -43,6 +46,51 @@ This guide is for AI agents and human operators in the WARP TTD repository.
 2. Preserve milestone hygiene: move completed work to the next appropriate
    milestone state.
 3. Avoid adding unresolved `needs-design` debt for fully implemented behavior.
+4. If scope, sequencing, parent/child issue relationships, or blocked-by
+   dependencies changed, update the GitHub issue graph first, then run
+   `npm run roadmap:generate` and commit `ROADMAP.md`,
+   `docs/roadmap-dag.dot`, and `docs/roadmap-dag.svg`.
+
+## ROADMAP and Issue DAG Discipline
+
+The roadmap is a checked-in projection of GitHub Issues, not a parallel tracker.
+Before pushing a branch or opening a PR that changes product sequence, feature
+scope, release scope, issue dependencies, or child slice structure:
+
+1. Ensure every Goalpost is represented by a parent GitHub Issue.
+2. Ensure implementation slices are represented as GitHub child issues before
+   work starts on that Goalpost.
+3. Use GitHub native issue dependencies for `blocked by` / `blocking` state.
+   Do not encode blocker truth only in prose.
+4. When the planned blocker sequence in the roadmap script should be applied to
+   GitHub, run:
+
+   ```bash
+   npm run roadmap:sync -- --apply
+   ```
+
+5. Regenerate the roadmap artifacts:
+
+   ```bash
+   npm run roadmap:generate
+   ```
+
+6. Verify the checked-in roadmap matches GitHub:
+
+   ```bash
+   npm run roadmap:check
+   ```
+
+7. Commit all generated roadmap artifacts together with the issue-related
+   change:
+   - `ROADMAP.md`
+   - `docs/roadmap-dag.dot`
+   - `docs/roadmap-dag.svg`
+
+The Roadmap GitHub Action runs `npm run roadmap:check` with the GitHub token and
+Graphviz installed. A PR is not ready while this check fails. If GitHub Issues
+are intentionally changed after a branch is pushed, regenerate the roadmap on
+that branch before asking for final review.
 
 ## Topic Shelf Model
 
