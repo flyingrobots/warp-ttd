@@ -459,35 +459,110 @@ function issueFields(prefix = '') {
   `;
 }
 
-function fetchIssues() {
-  const fields = uniqueIssueNumbers()
-    .map((number) => `i${number}: issue(number: ${number}) { ${issueFields()} }`)
-    .join('\n');
+function repositoryIssueFields() {
+  return `
+    id
+    number
+    title
+    state
+    url
+    body
+    labels(first: 50) { nodes { name } }
+    milestone { title }
+    parent { number title url state }
+    repository { nameWithOwner }
+    blockedBy(first: 50) { nodes { id number title state url repository { nameWithOwner } labels(first: 20) { nodes { name } } } }
+  `;
+}
+
+function fetchRepositoryIssues() {
+  const issues = [];
+  let after = null;
+  do {
+    const afterArgument = after ? ', after: $after' : '';
+    const variableDeclaration = after ? '($after: String!)' : '';
+    const query = `
+      query RoadmapRepositoryIssues${variableDeclaration} {
+        repository(owner: "${OWNER}", name: "${REPO}") {
+          issues(first: 100${afterArgument}, states: [OPEN, CLOSED], orderBy: { field: CREATED_AT, direction: ASC }) {
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+            nodes {
+              ${repositoryIssueFields()}
+            }
+          }
+        }
+      }
+    `;
+    const data = graphql(query, after ? { after } : {});
+    const connection = data.repository.issues;
+    issues.push(...connection.nodes);
+    after = connection.pageInfo.hasNextPage ? connection.pageInfo.endCursor : null;
+  } while (after);
+  return issues;
+}
+
+function fetchIssue(number) {
   const query = `
-    query RoadmapIssues {
+    query RoadmapIssue {
       repository(owner: "${OWNER}", name: "${REPO}") {
-        ${fields}
+        issue(number: ${number}) {
+          ${issueFields()}
+        }
       }
     }
   `;
   const data = graphql(query);
+  return data.repository.issue;
+}
+
+function fetchIssues() {
   const issues = new Map();
-  for (const value of Object.values(data.repository)) {
-    if (value !== null) {
+  const trackedNumbers = new Set(uniqueIssueNumbers());
+  const remember = (value, options = {}) => {
+    if (value === null) {
+      return;
+    }
+    if (options.replace === true || !issues.has(value.number)) {
       issues.set(value.number, value);
-      for (const subIssue of value.subIssues.nodes) {
-        if (!issues.has(subIssue.number)) {
-          issues.set(subIssue.number, subIssue);
-        }
+    }
+    for (const subIssue of value.subIssues?.nodes ?? []) {
+      if (!issues.has(subIssue.number)) {
+        issues.set(subIssue.number, subIssue);
       }
-      for (const blocker of value.blockedBy.nodes) {
-        if (!issues.has(blocker.number)) {
-          issues.set(blocker.number, blocker);
-        }
+    }
+    for (const blocker of value.blockedBy?.nodes ?? []) {
+      if (!issues.has(blocker.number)) {
+        issues.set(blocker.number, blocker);
       }
+    }
+  };
+  for (const number of trackedNumbers) {
+    remember(fetchIssue(number), { replace: true });
+  }
+  for (const issue of fetchRepositoryIssues()) {
+    if (trackedNumbers.has(issue.number)) {
+      remember(issue);
+    } else if (trackedNumbers.has(issue.parent?.number)) {
+      remember(issue, { replace: true });
     }
   }
   return issues;
+}
+
+function subIssuesFor(issue, issues) {
+  const children = new Map();
+  for (const subIssue of issue?.subIssues?.nodes ?? []) {
+    children.set(subIssue.number, subIssue);
+  }
+  for (const candidate of issues.values()) {
+    if (candidate.parent?.number === issue?.number && !children.has(candidate.number)) {
+      children.set(candidate.number, candidate);
+    }
+  }
+  return [...children.values()].sort((a, b) => a.number - b.number);
 }
 
 function labelsOf(issue) {
@@ -665,7 +740,7 @@ function buildMarkdown(issues) {
       lines.push('');
       lines.push('GitHub checklist:');
       lines.push(`- ${checkboxFor(issue)} ${issueLink(issue, goalpost.number)} - parent goalpost`);
-      const subIssues = issue?.subIssues?.nodes ?? [];
+      const subIssues = subIssuesFor(issue, issues);
       if (subIssues.length === 0) {
         if (issue?.state === 'CLOSED') {
           lines.push(`  - ${CHECKED_BOX} No child slice issues recorded before the roadmap DAG contract existed.`);
@@ -673,7 +748,7 @@ function buildMarkdown(issues) {
           lines.push(`  - ${OPEN_BOX} Create child slice issues before implementation starts.`);
         }
       } else {
-        for (const subIssue of subIssues.sort((a, b) => a.number - b.number)) {
+        for (const subIssue of subIssues) {
           lines.push(`  - ${checkboxFor(subIssue)} ${issueLink(subIssue, subIssue.number)} - child slice`);
         }
       }
@@ -778,7 +853,7 @@ function buildDot(issues) {
       lines.push('      style="rounded,dashed";');
       lines.push(`      ${dotId(goalpost.number)} [label=${dotString(label)}, fillcolor="${attrs.fill}", color="${attrs.stroke}", fontcolor="${attrs.font}", URL=${dotString(issue?.url ?? '')}];`);
       emitted.add(goalpost.number);
-      for (const subIssue of issue?.subIssues?.nodes ?? []) {
+      for (const subIssue of subIssuesFor(issue, issues)) {
         const subAttrs = nodeAttributes(subIssue, issues);
         lines.push(`      ${dotId(subIssue.number)} [label=${dotString(`${dotIssuePrefix(subIssue)}\\n${subIssue.title}`)}, fillcolor="${subAttrs.fill}", color="${subAttrs.stroke}", fontcolor="${subAttrs.font}", URL=${dotString(subIssue.url)}];`);
         lines.push(`      ${dotId(goalpost.number)} -> ${dotId(subIssue.number)} [style=dotted, color="#6b7280", penwidth=1.0, label="slice"];`);
