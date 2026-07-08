@@ -1,7 +1,7 @@
 # ROADMAP
 
 This roadmap is the project ladder from current WARP TTD reality to the outcome-oriented debugger north star.
-GitHub Issues are authoritative for task state, parent/child issue relationships, and blocked-by/blocking edges.
+This repository's GitHub Issues are authoritative for task state, parent/child issue relationships, and repository-local blocked-by/blocking edges.
 Run `npm run roadmap:generate` after changing issue relationships, and commit this file plus the generated DAG artifacts.
 
 ![Roadmap DAG](docs/roadmap-dag.svg)
@@ -13,10 +13,10 @@ Run `npm run roadmap:generate` after changing issue relationships, and commit th
 | Milestone | Product-stage grouping from present day to north star. | This roadmap, reviewed in PRs. |
 | Goalpost | Feature-scoped parent issue that can be designed, reviewed, and closed. | GitHub parent issue. |
 | Slice | Commit-sized child issue under a goalpost. | GitHub sub-issue. |
-| Dependency | A `blockedBy` / `blocking` issue edge. | GitHub native issue dependency graph. |
+| Dependency | A `blockedBy` / `blocking` issue edge inside this repository. | GitHub native issue dependency graph. |
 
-Status colors in the DAG: green means open and unblocked, red means blocked by at least one open issue, and gray means completed.
-Dependency edges point from blocker to blocked issue. A red thick edge means the blocker is still open; a green normal edge means the blocker is complete.
+Status colors in the DAG: green means open and unblocked, red means blocked by at least one open issue in this repository, and gray means completed.
+Dependency edges point from repository-local blocker to blocked issue. A red thick edge means the blocker is still open; a green normal edge means the blocker is complete.
 The Graphviz `dot` layout is used as the Sugiyama-style layered layout for the roadmap DAG.
 
 ## Canonical Sources
@@ -339,7 +339,7 @@ GitHub checklist:
 - [ ] [#83 Causal query and breakpoint contract](https://github.com/flyingrobots/warp-ttd/issues/83) - parent goalpost
   - [ ] [#127 Plan slices for #83: Causal query and breakpoint contract](https://github.com/flyingrobots/warp-ttd/issues/127) - child slice
 Dependencies:
-- blocked by [#82 Debugger capability discovery read model](https://github.com/flyingrobots/warp-ttd/issues/82) (blocked by #79, #113)
+- blocked by [#82 Debugger capability discovery read model](https://github.com/flyingrobots/warp-ttd/issues/82) (blocked by #113, #79)
 
 #### Goalpost [#100 Cool idea: Why-not causal query surface](https://github.com/flyingrobots/warp-ttd/issues/100)
 
@@ -447,7 +447,7 @@ GitHub checklist:
 - [ ] [#116 COOL IDEA: Tap-shaped debugger session event outbox](https://github.com/flyingrobots/warp-ttd/issues/116) - parent goalpost
   - [ ] [#143 Plan slices for #116: COOL IDEA: Tap-shaped debugger session event outbox](https://github.com/flyingrobots/warp-ttd/issues/143) - child slice
 Dependencies:
-- blocked by [#82 Debugger capability discovery read model](https://github.com/flyingrobots/warp-ttd/issues/82) (blocked by #79, #113)
+- blocked by [#82 Debugger capability discovery read model](https://github.com/flyingrobots/warp-ttd/issues/82) (blocked by #113, #79)
 
 #### Goalpost [#85 Evidence ledger and investigation report export](https://github.com/flyingrobots/warp-ttd/issues/85)
 
@@ -485,7 +485,7 @@ GitHub checklist:
 - [ ] [#115 Compliance reporting as a TTD protocol extension](https://github.com/flyingrobots/warp-ttd/issues/115) - parent goalpost
   - [ ] [#142 Plan slices for #115: Compliance reporting as a TTD protocol extension](https://github.com/flyingrobots/warp-ttd/issues/142) - child slice
 Dependencies:
-- blocked by [#85 Evidence ledger and investigation report export](https://github.com/flyingrobots/warp-ttd/issues/85) (blocked by #84, #116)
+- blocked by [#85 Evidence ledger and investigation report export](https://github.com/flyingrobots/warp-ttd/issues/85) (blocked by #116, #84)
 
 ### M5. Human Workbench Over Agent-Readable Facts
 
@@ -521,11 +521,11 @@ GitHub checklist:
 - [ ] [#86 Human causal debugger workspace over agent-readable facts](https://github.com/flyingrobots/warp-ttd/issues/86) - parent goalpost
   - [ ] [#130 Plan slices for #86: Human causal debugger workspace over agent-readable facts](https://github.com/flyingrobots/warp-ttd/issues/130) - child slice
 Dependencies:
-- blocked by [#85 Evidence ledger and investigation report export](https://github.com/flyingrobots/warp-ttd/issues/85) (blocked by #84, #116)
+- blocked by [#85 Evidence ledger and investigation report export](https://github.com/flyingrobots/warp-ttd/issues/85) (blocked by #116, #84)
 
 #### Goalpost [#108 [LP-GP4-S1] Launchpad browser runtime hello target descriptor](https://github.com/flyingrobots/warp-ttd/issues/108)
 
-Status: **blocked by #78, #595**
+Status: **blocked by #78**
 
 User story: Add a Launchpad/browser runtime hello target descriptor.
 
@@ -540,11 +540,10 @@ GitHub checklist:
   - [ ] [#140 Plan slices for #108: [LP-GP4-S1] Launchpad browser runtime hello target descriptor](https://github.com/flyingrobots/warp-ttd/issues/140) - child slice
 Dependencies:
 - blocked by [#78 Continuum runtime discovery command and local registry](https://github.com/flyingrobots/warp-ttd/issues/78) (open)
-- blocked by [flyingrobots/echo#595 [LP-GP3-S1] Browser WASM static-content host capability](https://github.com/flyingrobots/echo/issues/595) (open)
 
 #### Goalpost [#107 [LP-GP4-S2] Browser replay tick history read model](https://github.com/flyingrobots/warp-ttd/issues/107)
 
-Status: **blocked by #82, #108, #111, #596, #594**
+Status: **blocked by #82, #108, #111**
 
 User story: Expose browser replay tick history as a debugger read model.
 
@@ -558,11 +557,9 @@ GitHub checklist:
 - [ ] [#107 [LP-GP4-S2] Browser replay tick history read model](https://github.com/flyingrobots/warp-ttd/issues/107) - parent goalpost
   - [ ] [#139 Plan slices for #107: [LP-GP4-S2] Browser replay tick history read model](https://github.com/flyingrobots/warp-ttd/issues/139) - child slice
 Dependencies:
-- blocked by [#82 Debugger capability discovery read model](https://github.com/flyingrobots/warp-ttd/issues/82) (blocked by #79, #113)
-- blocked by [#108 [LP-GP4-S1] Launchpad browser runtime hello target descriptor](https://github.com/flyingrobots/warp-ttd/issues/108) (blocked by #78, #595)
+- blocked by [#82 Debugger capability discovery read model](https://github.com/flyingrobots/warp-ttd/issues/82) (blocked by #113, #79)
+- blocked by [#108 [LP-GP4-S1] Launchpad browser runtime hello target descriptor](https://github.com/flyingrobots/warp-ttd/issues/108) (blocked by #78)
 - blocked by [#111 [LP-GP2-S3] Launchpad contract evidence package for debugger consumption](https://github.com/flyingrobots/warp-ttd/issues/111) (open)
-- blocked by [flyingrobots/echo#594 [LP-GP3-S2] Witnessed Launchpad intent receipts and readings](https://github.com/flyingrobots/echo/issues/594) (open)
-- blocked by [flyingrobots/echo#596 [LP-GP4-S4] Debugger-safe browser session fact export](https://github.com/flyingrobots/echo/issues/596) (open)
 
 #### Goalpost [#106 [LP-GP4-S3] Rewind current visit control contract](https://github.com/flyingrobots/warp-ttd/issues/106)
 
@@ -580,11 +577,11 @@ GitHub checklist:
 - [ ] [#106 [LP-GP4-S3] Rewind current visit control contract](https://github.com/flyingrobots/warp-ttd/issues/106) - parent goalpost
   - [ ] [#138 Plan slices for #106: [LP-GP4-S3] Rewind current visit control contract](https://github.com/flyingrobots/warp-ttd/issues/138) - child slice
 Dependencies:
-- blocked by [#107 [LP-GP4-S2] Browser replay tick history read model](https://github.com/flyingrobots/warp-ttd/issues/107) (blocked by #82, #108, #111, #594, #596)
+- blocked by [#107 [LP-GP4-S2] Browser replay tick history read model](https://github.com/flyingrobots/warp-ttd/issues/107) (blocked by #82, #108, #111)
 
 #### Goalpost [#56 Browser TTD delivery adapter](https://github.com/flyingrobots/warp-ttd/issues/56)
 
-Status: **blocked by #86, #108, #441, #442, #106, #14**
+Status: **blocked by #86, #108, #106**
 
 User story: Deliver the browser TTD adapter as a real witness target for the Workbench ladder.
 
@@ -598,12 +595,9 @@ GitHub checklist:
 - [ ] [#56 Browser TTD delivery adapter](https://github.com/flyingrobots/warp-ttd/issues/56) - parent goalpost
   - [ ] [#121 Plan slices for #56: Browser TTD delivery adapter](https://github.com/flyingrobots/warp-ttd/issues/121) - child slice
 Dependencies:
-- blocked by [flyingrobots-labs/flyingrobots.dev#14 [LP-GP3-S3] Launchpad client adapter drives Echo WASM intents](https://github.com/flyingrobots-labs/flyingrobots.dev/issues/14) (open)
 - blocked by [#86 Human causal debugger workspace over agent-readable facts](https://github.com/flyingrobots/warp-ttd/issues/86) (blocked by #85)
 - blocked by [#106 [LP-GP4-S3] Rewind current visit control contract](https://github.com/flyingrobots/warp-ttd/issues/106) (blocked by #107)
-- blocked by [#108 [LP-GP4-S1] Launchpad browser runtime hello target descriptor](https://github.com/flyingrobots/warp-ttd/issues/108) (blocked by #78, #595)
-- blocked by [flyingrobots/bijou#441 [LP-GP5-S2] WARP-TTD debugger scene IR fixture](https://github.com/flyingrobots/bijou/issues/441) (open)
-- blocked by [flyingrobots/bijou#442 [LP-GP5-S1] Browser renderer seam for ui-scene-ir](https://github.com/flyingrobots/bijou/issues/442) (open)
+- blocked by [#108 [LP-GP4-S1] Launchpad browser runtime hello target descriptor](https://github.com/flyingrobots/warp-ttd/issues/108) (blocked by #78)
 
 #### Goalpost [#117 VISOR target: inspect Bijou artifact bundles in the browser debugger](https://github.com/flyingrobots/warp-ttd/issues/117)
 
@@ -621,7 +615,7 @@ GitHub checklist:
 - [ ] [#117 VISOR target: inspect Bijou artifact bundles in the browser debugger](https://github.com/flyingrobots/warp-ttd/issues/117) - parent goalpost
   - [ ] [#144 Plan slices for #117: VISOR target: inspect Bijou artifact bundles in the browser debugger](https://github.com/flyingrobots/warp-ttd/issues/144) - child slice
 Dependencies:
-- blocked by [#56 Browser TTD delivery adapter](https://github.com/flyingrobots/warp-ttd/issues/56) (blocked by #14, #86, #106, #108, #441, #442)
+- blocked by [#56 Browser TTD delivery adapter](https://github.com/flyingrobots/warp-ttd/issues/56) (blocked by #86, #108, #106)
 - blocked by [#86 Human causal debugger workspace over agent-readable facts](https://github.com/flyingrobots/warp-ttd/issues/86) (blocked by #85)
 
 ### M6. North-Star Workbench, Worker, Verify, And Ledger Loop
@@ -709,7 +703,7 @@ Dependencies:
 
 ## Dependency Checklist
 
-These expected blocker edges are part of the planned product sequence. `npm run roadmap:check` verifies that GitHub native issue dependencies match them.
+These expected repository-local blocker edges are part of the planned product sequence. `npm run roadmap:check` verifies that GitHub native issue dependencies match them.
 
 - [x] [#76 Continuum Target Discovery Contract](https://github.com/flyingrobots/warp-ttd/issues/76) blocks [#80 Vendor-neutral Continuum runtime hello handshake](https://github.com/flyingrobots/warp-ttd/issues/80)
 - [x] [#80 Vendor-neutral Continuum runtime hello handshake](https://github.com/flyingrobots/warp-ttd/issues/80) blocks [#78 Continuum runtime discovery command and local registry](https://github.com/flyingrobots/warp-ttd/issues/78)

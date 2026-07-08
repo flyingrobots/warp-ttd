@@ -52,15 +52,15 @@ agent_entry_queries:
 <a id="entry-onboarding"></a>
 ## At a glance
 
-This shelf owns the project roadmap governance loop: GitHub Issues are authoritative, `ROADMAP.md` is the human-readable projection, and the Graphviz DAG is the generated dependency view embedded in the roadmap.
+This shelf owns the project roadmap governance loop: this repository's GitHub Issues are authoritative, `ROADMAP.md` is the human-readable projection, and the Graphviz DAG is the generated dependency view embedded in the roadmap.
 
 | Question | Answer |
 |---|---|
 | What this topic owns | Roadmap artifact generation, roadmap issue/DAG sync commands, PR readiness instructions in `AGENTS.md`, and the policy that software tests assert executable behavior rather than Markdown prose. |
-| What it does not own | Runtime protocol schema semantics, adapter behavior, UI behavior, or release packaging. |
+| What it does not own | Runtime protocol schema semantics, adapter behavior, UI behavior, release packaging, or private external-repository blocker state. |
 | How it works | `scripts/roadmap-dag.mjs` reads GitHub issue metadata, renders grouped Graphviz output, and checks that committed roadmap artifacts match issue state. |
 | Why this matters | Planning drift changes which work appears blocked, ready, or complete; stale artifacts can send agents and reviewers toward the wrong next slice. |
-| First prerequisite | GitHub issue state and native issue relationships must be synchronized before regenerating roadmap artifacts. |
+| First prerequisite | Repository-local GitHub issue state and native issue relationships must be synchronized before regenerating roadmap artifacts. |
 | What changes propagate | Roadmap script, workflow, and AGENTS edits alter PR readiness and planning governance for every future slice. |
 
 <a id="entry-edit"></a>
@@ -82,7 +82,7 @@ npm run docs:impact
 6. For runtime or package-script changes, also run the repository verification gate from `AGENTS.md`.
 
 High-risk compatibility boundary:
-- The GitHub issue graph is authoritative. Do not hand-edit generated DAG artifacts as the source of truth.
+- The repository-local GitHub issue graph is authoritative. Do not hand-edit generated DAG artifacts as the source of truth, and mirror any external blocker as a repository issue before treating it as a roadmap gate.
 
 <a id="entry-triage"></a>
 ## Failure modes
@@ -99,7 +99,7 @@ High-risk compatibility boundary:
 
 | Edge | Details |
 |---|---|
-| Depends on | GitHub Issues, GitHub native blocked-by/sub-issue relationships, Graphviz, and Node-based roadmap tooling. |
+| Depends on | Repository-local GitHub Issues, GitHub native blocked-by/sub-issue relationships, Graphviz, and Node-based roadmap tooling. |
 | Used by | Agents, PR authors, reviewers, CI, and roadmap readers. |
 | Cross-shelf impact | Governance changes may alter PR readiness, issue sequencing, and which slices are considered blocked or open, but they do not change runtime protocol behavior by themselves. |
 

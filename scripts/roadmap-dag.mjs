@@ -569,8 +569,16 @@ function labelsOf(issue) {
   return issue?.labels?.nodes?.map((label) => label.name) ?? [];
 }
 
+function isThisRepositoryIssue(issue) {
+  return issue?.repository?.nameWithOwner === `${OWNER}/${REPO}` || issue?.repository === undefined;
+}
+
+function blockerNodesOf(issue) {
+  return (issue?.blockedBy?.nodes ?? []).filter(isThisRepositoryIssue);
+}
+
 function openBlockers(issue, issues) {
-  return (issue?.blockedBy?.nodes ?? []).filter((blocker) => {
+  return blockerNodesOf(issue).filter((blocker) => {
     const live = issues.get(blocker.number) ?? blocker;
     return live.state !== 'CLOSED';
   });
@@ -654,7 +662,7 @@ function buildMarkdown(issues) {
   lines.push('# ROADMAP');
   lines.push('');
   lines.push('This roadmap is the project ladder from current WARP TTD reality to the outcome-oriented debugger north star.');
-  lines.push('GitHub Issues are authoritative for task state, parent/child issue relationships, and blocked-by/blocking edges.');
+  lines.push('This repository\'s GitHub Issues are authoritative for task state, parent/child issue relationships, and repository-local blocked-by/blocking edges.');
   lines.push('Run `npm run roadmap:generate` after changing issue relationships, and commit this file plus the generated DAG artifacts.');
   lines.push('');
   lines.push('![Roadmap DAG](docs/roadmap-dag.svg)');
@@ -666,10 +674,10 @@ function buildMarkdown(issues) {
   lines.push('| Milestone | Product-stage grouping from present day to north star. | This roadmap, reviewed in PRs. |');
   lines.push('| Goalpost | Feature-scoped parent issue that can be designed, reviewed, and closed. | GitHub parent issue. |');
   lines.push('| Slice | Commit-sized child issue under a goalpost. | GitHub sub-issue. |');
-  lines.push('| Dependency | A `blockedBy` / `blocking` issue edge. | GitHub native issue dependency graph. |');
+  lines.push('| Dependency | A `blockedBy` / `blocking` issue edge inside this repository. | GitHub native issue dependency graph. |');
   lines.push('');
-  lines.push('Status colors in the DAG: green means open and unblocked, red means blocked by at least one open issue, and gray means completed.');
-  lines.push('Dependency edges point from blocker to blocked issue. A red thick edge means the blocker is still open; a green normal edge means the blocker is complete.');
+  lines.push('Status colors in the DAG: green means open and unblocked, red means blocked by at least one open issue in this repository, and gray means completed.');
+  lines.push('Dependency edges point from repository-local blocker to blocked issue. A red thick edge means the blocker is still open; a green normal edge means the blocker is complete.');
   lines.push('The Graphviz `dot` layout is used as the Sugiyama-style layered layout for the roadmap DAG.');
   lines.push('');
   lines.push('## Canonical Sources');
@@ -752,7 +760,7 @@ function buildMarkdown(issues) {
           lines.push(`  - ${checkboxFor(subIssue)} ${issueLink(subIssue, subIssue.number)} - child slice`);
         }
       }
-      const blockers = issue?.blockedBy?.nodes ?? [];
+      const blockers = blockerNodesOf(issue);
       if (blockers.length > 0) {
         lines.push('Dependencies:');
         for (const blocker of blockers.sort((a, b) => a.number - b.number)) {
@@ -766,7 +774,7 @@ function buildMarkdown(issues) {
 
   lines.push('## Dependency Checklist');
   lines.push('');
-  lines.push('These expected blocker edges are part of the planned product sequence. `npm run roadmap:check` verifies that GitHub native issue dependencies match them.');
+  lines.push('These expected repository-local blocker edges are part of the planned product sequence. `npm run roadmap:check` verifies that GitHub native issue dependencies match them.');
   lines.push('');
   for (const edge of desiredEdges()) {
     const blocker = issues.get(edge.blocker);
@@ -866,7 +874,7 @@ function buildDot(issues) {
   const extraBlockers = new Map();
   for (const { goalpost } of modelGoalposts()) {
     const issue = issues.get(goalpost.number);
-    for (const blocker of issue?.blockedBy?.nodes ?? []) {
+    for (const blocker of blockerNodesOf(issue)) {
       if (!emitted.has(blocker.number)) {
         extraBlockers.set(blocker.number, issues.get(blocker.number) ?? blocker);
       }
@@ -886,7 +894,7 @@ function buildDot(issues) {
   }
   for (const { goalpost } of modelGoalposts()) {
     const issue = issues.get(goalpost.number);
-    for (const blocker of issue?.blockedBy?.nodes ?? []) {
+    for (const blocker of blockerNodesOf(issue)) {
       const liveBlocker = issues.get(blocker.number) ?? blocker;
       const blockerOpen = liveBlocker.state !== 'CLOSED';
       const color = blockerOpen ? '#bd2c00' : '#248232';
