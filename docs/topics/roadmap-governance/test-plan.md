@@ -6,6 +6,7 @@
 | R-RMAP-2 | CI can detect roadmap DAG drift before merge. | `.github/workflows/roadmap.yml`, `package.json`, `scripts/roadmap-dag.mjs` | Pull request checkout with GitHub token access and runner Graphviz. | `npm run roadmap:check` exits non-zero when generated Markdown or DOT differ from HEAD, and it verifies SVG presence/renderability without byte-comparing Graphviz-version-specific SVG layout. | covered |
 | R-RMAP-3 | Agents must update roadmap artifacts before opening pull requests for roadmap-governed work. | `AGENTS.md`, `ROADMAP.md` | PR preparation flow for issue-backed work. | The pre-PR checklist requires roadmap refresh before publication. | covered |
 | R-RMAP-4 | Software tests assert executable behavior or generated artifact consistency, not Markdown prose. | `test/protocolPublicationBoundary.spec.ts`, `package.json` | Protocol mirror schema and test script inventory. | Remaining tests compare generated TypeScript protocol mirrors to schema-backed contract data. | covered |
+| R-RMAP-5 | Native blocked-by edges for emitted child slices are rendered in both the generated Markdown checklist and Graphviz DAG, not only for parent goalposts. | `scripts/roadmap-dag.mjs`, `ROADMAP.md`, `docs/roadmap-dag.dot`, `docs/roadmap-dag.svg` | Repository issue graph containing #78 child slices #124 and #146 through #151, with native blocker edges #124 -> #146 -> #147 -> #148 -> #149 -> #150 -> #151. | `npm run roadmap:check` regenerates ROADMAP/DOT/SVG from GitHub and preserves child slice blocker rows plus solid dependency edges for each native child blocked-by relation. | covered |
 
 ## Fixtures
 
@@ -17,6 +18,7 @@
 
 - Roadmap check exits cleanly only when generated artifacts match the GitHub issue graph.
 - Child slice rendering remains stable when GitHub exposes the reverse `subIssues` edge, the child `parent` edge, or both.
+- Child slice native blocker edges render as checklist blocker rows and DOT/SVG dependency edges when both issues are emitted under a roadmap goalpost.
 - External-repository blockers do not alter roadmap status or DAG output unless a same-repository issue mirrors the dependency.
 - Stale `blocked` labels do not make an issue blocked when native open blockers are absent.
 - `npm run roadmap:sync -- --check` exits non-zero when planned native dependency edges are missing.

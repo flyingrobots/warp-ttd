@@ -263,7 +263,19 @@ Acceptance criteria:
 
 GitHub checklist:
 - [ ] [#78 Continuum runtime discovery command and local registry](https://github.com/flyingrobots/warp-ttd/issues/78) - parent goalpost
-  - [ ] [#124 Plan slices for #78: Continuum runtime discovery command and local registry](https://github.com/flyingrobots/warp-ttd/issues/124) - child slice
+  - [x] [#124 Plan slices for #78: Continuum runtime discovery command and local registry](https://github.com/flyingrobots/warp-ttd/issues/124) - child slice
+  - [ ] [#146 [0078-S1] Method design for local runtime discovery registry](https://github.com/flyingrobots/warp-ttd/issues/146) - child slice
+    - blocked by [#124 Plan slices for #78: Continuum runtime discovery command and local registry](https://github.com/flyingrobots/warp-ttd/issues/124) (completed)
+  - [ ] [#147 [0078-S2] Local runtime registry schema and fixture matrix](https://github.com/flyingrobots/warp-ttd/issues/147) - child slice
+    - blocked by [#146 [0078-S1] Method design for local runtime discovery registry](https://github.com/flyingrobots/warp-ttd/issues/146) (open)
+  - [ ] [#148 [0078-S3] Runtime discovery CLI JSON surface](https://github.com/flyingrobots/warp-ttd/issues/148) - child slice
+    - blocked by [#147 [0078-S2] Local runtime registry schema and fixture matrix](https://github.com/flyingrobots/warp-ttd/issues/147) (blocked by #146)
+  - [ ] [#149 [0078-S4] Runtime discovery MCP parity surface](https://github.com/flyingrobots/warp-ttd/issues/149) - child slice
+    - blocked by [#148 [0078-S3] Runtime discovery CLI JSON surface](https://github.com/flyingrobots/warp-ttd/issues/148) (blocked by #147)
+  - [ ] [#150 [0078-S5] Runtime discovery Manual and topic evidence update](https://github.com/flyingrobots/warp-ttd/issues/150) - child slice
+    - blocked by [#149 [0078-S4] Runtime discovery MCP parity surface](https://github.com/flyingrobots/warp-ttd/issues/149) (blocked by #148)
+  - [ ] [#151 [0078-S6] Runtime discovery validation and goalpost closeout](https://github.com/flyingrobots/warp-ttd/issues/151) - child slice
+    - blocked by [#150 [0078-S5] Runtime discovery Manual and topic evidence update](https://github.com/flyingrobots/warp-ttd/issues/150) (blocked by #149)
 Dependencies:
 - blocked by [#80 Vendor-neutral Continuum runtime hello handshake](https://github.com/flyingrobots/warp-ttd/issues/80) (completed)
 
