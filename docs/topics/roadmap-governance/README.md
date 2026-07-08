@@ -108,5 +108,5 @@ High-risk compatibility boundary:
 
 - Requirement rows `R-RMAP-1` through `R-RMAP-5` in `test-plan.md` define the governance contract.
 - Primary sources: `scripts/roadmap-dag.mjs`, `.github/workflows/roadmap.yml`, `AGENTS.md`, `ROADMAP.md`, and `package.json`.
-- Status-only ROADMAP/DAG projection changes, such as checking off completed child slices from GitHub issue state, are covered by `R-RMAP-1` and `R-RMAP-5`; they do not introduce new roadmap governance behavior.
+- Status-only ROADMAP/DAG projection changes, such as checking off completed child slices from GitHub issue state including #147, are covered by `R-RMAP-1` and `R-RMAP-5`; they do not introduce new roadmap governance behavior.
 - The retained protocol-boundary tests in `test/protocolPublicationBoundary.spec.ts` are behavior checks for generated protocol mirrors; Markdown/prose-examination tests are outside this shelf's accepted test model.
