@@ -834,6 +834,11 @@ function buildMarkdown(issues) {
       } else {
         for (const subIssue of subIssues) {
           lines.push(`  - ${checkboxFor(subIssue)} ${issueLink(subIssue, subIssue.number)} - child slice`);
+          const subIssueBlockers = blockerNodesOf(subIssue);
+          for (const blocker of subIssueBlockers.sort((a, b) => a.number - b.number)) {
+            const liveBlocker = issues.get(blocker.number) ?? blocker;
+            lines.push(`    - blocked by ${issueLink(liveBlocker, blocker.number)} (${statusLabel(liveBlocker, issues)})`);
+          }
         }
       }
       const blockers = blockerNodesOf(issue);
@@ -913,6 +918,7 @@ function nodeAttributes(issue, issues) {
 function buildDot(issues) {
   const lines = [];
   const emitted = new Set();
+  const emittedIssues = new Map();
   lines.push('digraph RoadmapDAG {');
   lines.push('  graph [layout=dot, rankdir=LR, compound=true, newrank=true, overlap=false, splines=ortho, bgcolor="white", fontname="Helvetica", label="WARP TTD Roadmap DAG (Graphviz dot / Sugiyama-style layered layout)", labelloc=t, fontsize=18];');
   lines.push('  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=10, margin="0.08,0.05"];');
@@ -937,19 +943,22 @@ function buildDot(issues) {
       lines.push('      style="rounded,dashed";');
       lines.push(`      ${dotId(goalpost.number)} [label=${dotString(label)}, fillcolor="${attrs.fill}", color="${attrs.stroke}", fontcolor="${attrs.font}", URL=${dotString(issue?.url ?? '')}];`);
       emitted.add(goalpost.number);
+      if (issue) {
+        emittedIssues.set(goalpost.number, issue);
+      }
       for (const subIssue of subIssuesFor(issue, issues)) {
         const subAttrs = nodeAttributes(subIssue, issues);
         lines.push(`      ${dotId(subIssue.number)} [label=${dotString(`${dotIssuePrefix(subIssue)}\\n${subIssue.title}`)}, fillcolor="${subAttrs.fill}", color="${subAttrs.stroke}", fontcolor="${subAttrs.font}", URL=${dotString(subIssue.url)}];`);
         lines.push(`      ${dotId(goalpost.number)} -> ${dotId(subIssue.number)} [style=dotted, color="#6b7280", penwidth=1.0, label="slice"];`);
         emitted.add(subIssue.number);
+        emittedIssues.set(subIssue.number, subIssue);
       }
       lines.push('    }');
     }
     lines.push('  }');
   }
   const extraBlockers = new Map();
-  for (const { goalpost } of modelGoalposts()) {
-    const issue = issues.get(goalpost.number);
+  for (const issue of emittedIssues.values()) {
     for (const blocker of blockerNodesOf(issue)) {
       if (!emitted.has(blocker.number)) {
         extraBlockers.set(blocker.number, issues.get(blocker.number) ?? blocker);
@@ -968,15 +977,23 @@ function buildDot(issues) {
     }
     lines.push('  }');
   }
-  for (const { goalpost } of modelGoalposts()) {
-    const issue = issues.get(goalpost.number);
+  const emittedEdges = new Set();
+  for (const issue of emittedIssues.values()) {
     for (const blocker of blockerNodesOf(issue)) {
+      const edgeKey = `${blocker.number}->${issue.number}`;
+      if (emittedEdges.has(edgeKey)) {
+        continue;
+      }
+      if (!emitted.has(blocker.number) || !emitted.has(issue.number)) {
+        continue;
+      }
+      emittedEdges.add(edgeKey);
       const liveBlocker = issues.get(blocker.number) ?? blocker;
       const blockerOpen = liveBlocker.state !== 'CLOSED';
       const color = blockerOpen ? '#bd2c00' : '#248232';
       const penwidth = blockerOpen ? '3.2' : '1.4';
       const label = blockerOpen ? 'BLOCKED' : 'OPEN';
-      lines.push(`  ${dotId(blocker.number)} -> ${dotId(goalpost.number)} [label=${dotString(label)}, color="${color}", penwidth=${penwidth}, style=solid];`);
+      lines.push(`  ${dotId(blocker.number)} -> ${dotId(issue.number)} [label=${dotString(label)}, color="${color}", penwidth=${penwidth}, style=solid];`);
     }
   }
   lines.push('}');
