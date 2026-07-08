@@ -442,9 +442,16 @@ function issueFields(prefix = '') {
     ${prefix}milestone { title }
     ${prefix}parent { number title url state }
     ${prefix}repository { nameWithOwner }
-    ${prefix}blockedBy(first: 100) { nodes { id number title state url repository { nameWithOwner } labels(first: 20) { nodes { name } } } }
-    ${prefix}blocking(first: 100) { nodes { id number title state url repository { nameWithOwner } labels(first: 20) { nodes { name } } } }
+    ${prefix}blockedBy(first: 100) {
+      pageInfo { hasNextPage endCursor }
+      nodes { id number title state url repository { nameWithOwner } labels(first: 20) { nodes { name } } }
+    }
+    ${prefix}blocking(first: 100) {
+      pageInfo { hasNextPage endCursor }
+      nodes { id number title state url repository { nameWithOwner } labels(first: 20) { nodes { name } } }
+    }
     ${prefix}subIssues(first: 100) {
+      pageInfo { hasNextPage endCursor }
       nodes {
         id
         number
@@ -453,7 +460,10 @@ function issueFields(prefix = '') {
         url
         repository { nameWithOwner }
         labels(first: 30) { nodes { name } }
-        blockedBy(first: 50) { nodes { id number title state url repository { nameWithOwner } } }
+        blockedBy(first: 50) {
+          pageInfo { hasNextPage endCursor }
+          nodes { id number title state url repository { nameWithOwner } }
+        }
       }
     }
   `;
@@ -471,7 +481,10 @@ function repositoryIssueFields() {
     milestone { title }
     parent { number title url state }
     repository { nameWithOwner }
-    blockedBy(first: 50) { nodes { id number title state url repository { nameWithOwner } labels(first: 20) { nodes { name } } } }
+    blockedBy(first: 50) {
+      pageInfo { hasNextPage endCursor }
+      nodes { id number title state url repository { nameWithOwner } labels(first: 20) { nodes { name } } }
+    }
   `;
 }
 
@@ -515,7 +528,70 @@ function fetchIssue(number) {
     }
   `;
   const data = graphql(query);
-  return data.repository.issue;
+  return hydrateIssueRelationships(data.repository.issue);
+}
+
+function fetchBlockedByPage(number, after) {
+  const query = `
+    query RoadmapBlockedByPage($after: String!) {
+      repository(owner: "${OWNER}", name: "${REPO}") {
+        issue(number: ${number}) {
+          blockedBy(first: 100, after: $after) {
+            pageInfo { hasNextPage endCursor }
+            nodes { id number title state url repository { nameWithOwner } labels(first: 20) { nodes { name } } }
+          }
+        }
+      }
+    }
+  `;
+  const data = graphql(query, { after });
+  return data.repository.issue.blockedBy;
+}
+
+function fetchSubIssuesPage(number, after) {
+  const query = `
+    query RoadmapSubIssuesPage($after: String!) {
+      repository(owner: "${OWNER}", name: "${REPO}") {
+        issue(number: ${number}) {
+          subIssues(first: 100, after: $after) {
+            pageInfo { hasNextPage endCursor }
+            nodes {
+              id
+              number
+              title
+              state
+              url
+              repository { nameWithOwner }
+              labels(first: 30) { nodes { name } }
+              blockedBy(first: 50) {
+                pageInfo { hasNextPage endCursor }
+                nodes { id number title state url repository { nameWithOwner } }
+              }
+            }
+          }
+        }
+      }
+    }
+  `;
+  const data = graphql(query, { after });
+  return data.repository.issue.subIssues;
+}
+
+function hydrateIssueRelationships(issue) {
+  if (!issue) {
+    return issue;
+  }
+  while (issue.blockedBy?.pageInfo?.hasNextPage) {
+    const next = fetchBlockedByPage(issue.number, issue.blockedBy.pageInfo.endCursor);
+    issue.blockedBy.nodes.push(...next.nodes);
+    issue.blockedBy.pageInfo = next.pageInfo;
+  }
+  while (issue.subIssues?.pageInfo?.hasNextPage) {
+    const next = fetchSubIssuesPage(issue.number, issue.subIssues.pageInfo.endCursor);
+    issue.subIssues.nodes.push(...next.nodes);
+    issue.subIssues.pageInfo = next.pageInfo;
+  }
+  return issue;
 }
 
 function fetchIssues() {
@@ -591,7 +667,7 @@ function statusOf(issue, issues) {
   if (issue.state === 'CLOSED') {
     return 'completed';
   }
-  if (labelsOf(issue).includes('blocked') || openBlockers(issue, issues).length > 0) {
+  if (openBlockers(issue, issues).length > 0) {
     return 'blocked';
   }
   return 'open';
@@ -653,7 +729,7 @@ function desiredEdges() {
 function missingDesiredEdges(issues) {
   return desiredEdges().filter(({ blocker, blocked }) => {
     const issue = issues.get(blocked);
-    return !issue?.blockedBy?.nodes?.some((node) => node.number === blocker);
+    return !blockerNodesOf(issue).some((node) => node.number === blocker);
   });
 }
 
@@ -983,7 +1059,7 @@ function check() {
   }
 }
 
-function sync(apply) {
+function sync({ apply = false, checkOnly = false } = {}) {
   const issues = fetchIssues();
   const missing = missingDesiredEdges(issues);
   if (missing.length === 0) {
@@ -1009,7 +1085,13 @@ function sync(apply) {
     }
   }
   if (!apply) {
-    console.log('Dry run only. Re-run with --apply to update GitHub native issue dependencies.');
+    const message = checkOnly
+      ? 'Roadmap blocker edges are missing.'
+      : 'Dry run only. Re-run with --apply to update GitHub native issue dependencies.';
+    console.log(message);
+    if (checkOnly) {
+      process.exitCode = 1;
+    }
   }
 }
 
@@ -1020,7 +1102,7 @@ try {
   } else if (command === 'check') {
     check();
   } else if (command === 'sync') {
-    sync(rest.includes('--apply'));
+    sync({ apply: rest.includes('--apply'), checkOnly: rest.includes('--check') });
   } else {
     usage();
     process.exitCode = 1;
