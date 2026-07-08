@@ -60,7 +60,7 @@ This shelf owns live target discovery and posture signaling used by CLI and MCP 
 
 | Question | Answer |
 |---|---|
-| What this topic owns | deterministic target enumeration, runtime hello posture, and normalized session/posture outputs. |
+| What this topic owns | deterministic target enumeration, runtime hello posture, local runtime discovery design, and normalized session/posture outputs. |
 | What it does not own | discovery transport internals that do not alter contract-exposed outputs. |
 | How it works | discovery inputs and protocol envelopes are normalized into posture-aware targets before surface consumers consume them. |
 | Why this matters | posture and target enumeration drive what users and automation can operate on next. |
@@ -111,5 +111,5 @@ High-risk compatibility boundary:
 
 ## Evidence
 
-- Normative claims are in `test-plan.md` rows `R-CTD-1` through `R-CTD-4`.
-- Primary sources: `src/app/runtimeHelloInspection.ts`, `src/app/liveTargetInspection.ts`, `src/app/liveTargetSessionInspection.ts`.
+- Normative claims are in `test-plan.md` rows `R-CTD-1` through `R-CTD-5`.
+- Primary sources: `src/app/runtimeHelloInspection.ts`, `src/app/liveTargetInspection.ts`, `src/app/liveTargetSessionInspection.ts`, and the Method design for runtime discovery under `docs/design/0078-continuum-runtime-discovery-command-and-local-registry/`.
