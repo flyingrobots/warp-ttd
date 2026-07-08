@@ -14,7 +14,7 @@ owner: WARP TTD Team
 code_owners:
   - James <james@flyingrobots.dev>
 status: active
-shelf_count: 12
+shelf_count: 13
 shelf_graph:
   - family: Protocol Layer
     shelves:
@@ -39,6 +39,9 @@ shelf_graph:
     shelves:
       - continuum-target-discovery
       - admission-chain-read-model
+  - family: Governance Layer
+    shelves:
+      - roadmap-governance
 shelves:
   - id: protocol-contract
     title: Protocol Contract
@@ -305,6 +308,28 @@ shelves:
       - id: triage
         intent: Resolve admission-chain and fallback failure modes.
         anchor: "#entry-triage"
+
+  - id: roadmap-governance
+    title: Roadmap Governance
+    path: roadmap-governance/README.md
+    family: Governance Layer
+    risk_level: medium
+    status: current
+    depends_on: []
+    used_by: []
+    agent_entry_queries:
+      - id: onboarding
+        intent: Understand roadmap issue authority and generated DAG artifacts.
+        anchor: "#entry-onboarding"
+      - id: edit
+        intent: Change roadmap generation, sync, or PR readiness rules.
+        anchor: "#entry-edit"
+      - id: triage
+        intent: Diagnose stale ROADMAP, DAG, or docs-impact state.
+        anchor: "#entry-triage"
+      - id: impact
+        intent: Review planning and publication impact for governance edits.
+        anchor: "#entry-impact"
 ---
 # Topic Shelf Registry
 
@@ -340,6 +365,7 @@ The source of truth for each shelf remains in each shelf directory and its `topi
 | Interface Layer | worldline-visualization | medium | `worldline-visualization/README.md` |
 | Discovery Layer | continuum-target-discovery | high | `continuum-target-discovery/README.md` |
 | Discovery Layer | admission-chain-read-model | high | `admission-chain-read-model/README.md` |
+| Governance Layer | roadmap-governance | medium | `roadmap-governance/README.md` |
 
 <a id="entry-edit"></a>
 ## Safe change path

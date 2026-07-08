@@ -1,0 +1,29 @@
+schema_version: 1
+id: "roadmap-governance"
+title: "Roadmap Governance"
+profile: "behavior"
+risk_level: "medium"
+lifecycle: active
+documentation_maturity: "current"
+owners:
+  - "james"
+depends_on:
+[]
+owns:
+  - "AGENTS.md"
+  - "ROADMAP.md"
+  - "docs/roadmap-dag.dot"
+  - "docs/roadmap-dag.svg"
+  - "scripts/roadmap-dag.mjs"
+  - ".github/workflows/roadmap.yml"
+  - "package.json"
+  - "test/protocolPublicationBoundary.spec.ts"
+  - "test/glossary.spec.ts"
+  - "test/methodDesignFormat.spec.ts"
+  - "test/ontologyDoctrine.spec.ts"
+entrypoints:
+  onboarding: "README.md#entry-onboarding"
+  edit: "README.md#entry-edit"
+  triage: "README.md#entry-triage"
+  impact: "README.md#entry-impact"
+test_plan: "test-plan.md"
