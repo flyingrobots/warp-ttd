@@ -520,7 +520,7 @@
 <g id="node25" class="node">
 <title>issue_147</title>
 <g id="a_node25"><a xlink:href="https://github.com/flyingrobots/warp-ttd/issues/147" xlink:title="#147\\n[0078&#45;S2] Local runtime registry schema and fixture matrix">
-<path fill="#d8f5d0" stroke="#248232" d="M2566.62,-1319C2566.62,-1319 2294.85,-1319 2294.85,-1319 2288.85,-1319 2282.85,-1313 2282.85,-1307 2282.85,-1307 2282.85,-1295 2282.85,-1295 2282.85,-1289 2288.85,-1283 2294.85,-1283 2294.85,-1283 2566.62,-1283 2566.62,-1283 2572.62,-1283 2578.62,-1289 2578.62,-1295 2578.62,-1295 2578.62,-1307 2578.62,-1307 2578.62,-1313 2572.62,-1319 2566.62,-1319"/>
+<path fill="#e5e7eb" stroke="#6b7280" d="M2566.62,-1319C2566.62,-1319 2294.85,-1319 2294.85,-1319 2288.85,-1319 2282.85,-1313 2282.85,-1307 2282.85,-1307 2282.85,-1295 2282.85,-1295 2282.85,-1289 2288.85,-1283 2294.85,-1283 2294.85,-1283 2566.62,-1283 2566.62,-1283 2572.62,-1283 2578.62,-1289 2578.62,-1295 2578.62,-1295 2578.62,-1307 2578.62,-1307 2578.62,-1313 2572.62,-1319 2566.62,-1319"/>
 <text xml:space="preserve" text-anchor="middle" x="2430.74" y="-1297.12" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#111827">#147\n[0078&#45;S2] Local runtime registry schema and fixture matrix</text>
 </a>
 </g>
@@ -536,7 +536,7 @@
 <g id="node26" class="node">
 <title>issue_148</title>
 <g id="a_node26"><a xlink:href="https://github.com/flyingrobots/warp-ttd/issues/148" xlink:title="#148\\n[0078&#45;S3] Runtime discovery CLI JSON surface">
-<path fill="#ffd7d7" stroke="#bd2c00" d="M3019.14,-1348C3019.14,-1348 2791.62,-1348 2791.62,-1348 2785.62,-1348 2779.62,-1342 2779.62,-1336 2779.62,-1336 2779.62,-1324 2779.62,-1324 2779.62,-1318 2785.62,-1312 2791.62,-1312 2791.62,-1312 3019.14,-1312 3019.14,-1312 3025.14,-1312 3031.14,-1318 3031.14,-1324 3031.14,-1324 3031.14,-1336 3031.14,-1336 3031.14,-1342 3025.14,-1348 3019.14,-1348"/>
+<path fill="#d8f5d0" stroke="#248232" d="M3019.14,-1348C3019.14,-1348 2791.62,-1348 2791.62,-1348 2785.62,-1348 2779.62,-1342 2779.62,-1336 2779.62,-1336 2779.62,-1324 2779.62,-1324 2779.62,-1318 2785.62,-1312 2791.62,-1312 2791.62,-1312 3019.14,-1312 3019.14,-1312 3025.14,-1312 3031.14,-1318 3031.14,-1324 3031.14,-1324 3031.14,-1336 3031.14,-1336 3031.14,-1342 3025.14,-1348 3019.14,-1348"/>
 <text xml:space="preserve" text-anchor="middle" x="2905.38" y="-1326.12" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#111827">#148\n[0078&#45;S3] Runtime discovery CLI JSON surface</text>
 </a>
 </g>
@@ -645,9 +645,9 @@
 <!-- issue_147&#45;&gt;issue_148 -->
 <g id="edge40" class="edge">
 <title>issue_147&#45;&gt;issue_148</title>
-<path fill="none" stroke="#bd2c00" stroke-width="3.2" d="M2578.96,-1315.5C2578.96,-1315.5 2767.59,-1315.5 2767.59,-1315.5"/>
-<polygon fill="#bd2c00" stroke="#bd2c00" stroke-width="3.2" points="2767.59,-1317.95 2774.59,-1315.5 2767.59,-1313.05 2767.59,-1317.95"/>
-<text xml:space="preserve" text-anchor="middle" x="2674.62" y="-1317.2" font-family="Helvetica,sans-Serif" font-size="9.00">BLOCKED</text>
+<path fill="none" stroke="#248232" stroke-width="1.4" d="M2578.96,-1315.5C2578.96,-1315.5 2770.32,-1315.5 2770.32,-1315.5"/>
+<polygon fill="#248232" stroke="#248232" stroke-width="1.4" points="2770.32,-1317.95 2777.32,-1315.5 2770.32,-1313.05 2770.32,-1317.95"/>
+<text xml:space="preserve" text-anchor="middle" x="2674.62" y="-1317.2" font-family="Helvetica,sans-Serif" font-size="9.00">OPEN</text>
 </g>
 <!-- issue_148&#45;&gt;issue_149 -->
 <g id="edge41" class="edge">

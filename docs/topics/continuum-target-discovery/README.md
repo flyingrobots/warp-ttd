@@ -62,7 +62,7 @@ This shelf owns live target discovery and posture signaling used by CLI and MCP 
 |---|---|
 | What this topic owns | deterministic target enumeration, runtime hello posture, local runtime discovery design, and normalized session/posture outputs. |
 | What it does not own | discovery transport internals that do not alter contract-exposed outputs. |
-| How it works | discovery inputs and protocol envelopes are normalized into posture-aware targets before surface consumers consume them. |
+| How it works | discovery inputs, runtime registry entries, and protocol envelopes are normalized into posture-aware targets before surface consumers consume them. |
 | Why this matters | posture and target enumeration drive what users and automation can operate on next. |
 | First prerequisite | understand protocol envelope and adapter resolution behavior. |
 | What changes propagate | discovery and posture updates are routed into session, CLI, and MCP outputs before tools and inspectors act. |
@@ -105,7 +105,7 @@ High-risk compatibility boundary:
 
 | Edge | Details |
 |---|---|
-| Depends on | `adapter-port-and-registry`, `adapter-implementations`, `protocol-contract`. |
+| Depends on | `adapter-port-and-registry`, `adapter-implementations`, `protocol-contract`, `runtime-discovery-registry`. |
 | Used by | `cli-interface`, `mcp-interface`, `debugger-session-core`. |
 | Cross-shelf impact | Posture updates can change user-visible target workflows and session bootstrap assumptions. |
 

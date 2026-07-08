@@ -11,6 +11,7 @@ depends_on:
   - "adapter-port-and-registry"
   - "adapter-implementations"
   - "protocol-contract"
+  - "runtime-discovery-registry"
 owns:
   - "docs/topics/continuum-target-discovery/test-plan.md"
   - "docs/design/0078-continuum-runtime-discovery-command-and-local-registry/continuum-runtime-discovery-command-and-local-registry.md"

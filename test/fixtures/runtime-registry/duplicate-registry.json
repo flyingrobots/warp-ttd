@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "warp-ttd.runtime-registry.v1",
+  "runtimes": [
+    {
+      "id": "same-runtime",
+      "connection": {
+        "mode": "descriptor-only"
+      }
+    },
+    {
+      "id": "same-runtime",
+      "connection": {
+        "mode": "descriptor-only"
+      }
+    }
+  ]
+}
