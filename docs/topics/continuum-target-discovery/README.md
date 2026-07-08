@@ -77,7 +77,7 @@ This shelf owns live target discovery and posture signaling used by CLI and MCP 
 Focused command:
 
 ```bash
-npm run test -- test/adapterRegistry.integration.spec.ts test/ontologyDoctrine.spec.ts
+npm run test -- test/liveTargetInspection.spec.ts test/runtimeHelloInspection.spec.ts test/mcpAdmissionChainSurface.spec.ts
 ```
 
 Focused verification command: `npm run test -- test/cliJson.spec.ts`
@@ -98,7 +98,7 @@ High-risk compatibility boundary:
 |---|---|---|---|---|
 | Target descriptor malformed | parser reports missing required discovery fields | posture returns obstructed or absent | validate descriptor ingestion and source filters | `test/adapterRegistry.integration.spec.ts` |
 | Runtime hello mismatch | changed status between equivalent targets | inconsistent runtime posture in CLI and MCP | compare outputs across discovery and runtime hello paths | `test/cliJson.spec.ts`, `test/mcpAdmissionChainSurface.spec.ts` |
-| Enumeration nondeterministic | unstable order in target listings | flaky automation or diff noise | verify sorting and stable input normalization | `test/ontologyDoctrine.spec.ts` |
+| Enumeration nondeterministic | unstable order in target listings | flaky automation or diff noise | verify sorting and stable input normalization | `test/liveTargetInspection.spec.ts`, `test/runtimeHelloInspection.spec.ts` |
 
 <a id="entry-impact"></a>
 ## Dependencies and impact
