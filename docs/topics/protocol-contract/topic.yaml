@@ -12,15 +12,12 @@ depends_on:
 owns:
   - "schemas/warp-ttd-protocol.graphql"
   - "src/protocol.ts"
-  - "AGENTS.md"
   - "scripts/docs-verify.mjs"
   - "scripts/hooks/pre-push"
   - ".docs-verify.config.json"
   - ".githooks/pre-commit"
   - ".github/workflows/ci.yml"
   - "CONTRIBUTING.md"
-  - "package.json"
-  - "package-lock.json"
 entrypoints:
   onboarding: "README.md#entry-onboarding"
   edit: "README.md#entry-edit"
