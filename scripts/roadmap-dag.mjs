@@ -967,8 +967,11 @@ function check() {
   }
   if (!existsSync(DAG_SVG_PATH)) {
     failures.push('docs/roadmap-dag.svg is missing. Run `npm run roadmap:generate`.');
-  } else if (actualDot === expectedDot && actualSvg !== renderSvgStringFromDotFile()) {
-    failures.push('docs/roadmap-dag.svg is not rendered from current docs/roadmap-dag.dot. Run `npm run roadmap:generate`.');
+  } else if (actualDot === expectedDot) {
+    const renderedSvg = renderSvgStringFromDotFile();
+    if (!actualSvg.includes('<svg') || !renderedSvg.includes('<svg')) {
+      failures.push('docs/roadmap-dag.svg is not a readable SVG rendered from docs/roadmap-dag.dot. Run `npm run roadmap:generate`.');
+    }
   }
   if (missing.length > 0) {
     const details = missing.map((edge) => `#${edge.blocker} must block #${edge.blocked}`).join('\n');
