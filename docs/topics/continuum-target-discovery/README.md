@@ -60,7 +60,7 @@ This shelf owns live target discovery and posture signaling used by CLI and MCP 
 
 | Question | Answer |
 |---|---|
-| What this topic owns | deterministic target enumeration, runtime hello posture, and normalized session/posture outputs. |
+| What this topic owns | deterministic target enumeration, runtime hello posture, local runtime discovery design, and normalized session/posture outputs. |
 | What it does not own | discovery transport internals that do not alter contract-exposed outputs. |
 | How it works | discovery inputs and protocol envelopes are normalized into posture-aware targets before surface consumers consume them. |
 | Why this matters | posture and target enumeration drive what users and automation can operate on next. |
@@ -77,7 +77,7 @@ This shelf owns live target discovery and posture signaling used by CLI and MCP 
 Focused command:
 
 ```bash
-npm run test -- test/adapterRegistry.integration.spec.ts test/ontologyDoctrine.spec.ts
+npm run test -- test/liveTargetInspection.spec.ts test/runtimeHelloInspection.spec.ts test/mcpAdmissionChainSurface.spec.ts
 ```
 
 Focused verification command: `npm run test -- test/cliJson.spec.ts`
@@ -98,7 +98,7 @@ High-risk compatibility boundary:
 |---|---|---|---|---|
 | Target descriptor malformed | parser reports missing required discovery fields | posture returns obstructed or absent | validate descriptor ingestion and source filters | `test/adapterRegistry.integration.spec.ts` |
 | Runtime hello mismatch | changed status between equivalent targets | inconsistent runtime posture in CLI and MCP | compare outputs across discovery and runtime hello paths | `test/cliJson.spec.ts`, `test/mcpAdmissionChainSurface.spec.ts` |
-| Enumeration nondeterministic | unstable order in target listings | flaky automation or diff noise | verify sorting and stable input normalization | `test/ontologyDoctrine.spec.ts` |
+| Enumeration nondeterministic | unstable order in target listings | flaky automation or diff noise | verify sorting and stable input normalization | `test/liveTargetInspection.spec.ts`, `test/runtimeHelloInspection.spec.ts` |
 
 <a id="entry-impact"></a>
 ## Dependencies and impact
@@ -111,5 +111,5 @@ High-risk compatibility boundary:
 
 ## Evidence
 
-- Normative claims are in `test-plan.md` rows `R-CTD-1` through `R-CTD-4`.
-- Primary sources: `src/app/runtimeHelloInspection.ts`, `src/app/liveTargetInspection.ts`, `src/app/liveTargetSessionInspection.ts`.
+- Normative claims are in `test-plan.md` rows `R-CTD-1` through `R-CTD-5`.
+- Primary sources: `src/app/runtimeHelloInspection.ts`, `src/app/liveTargetInspection.ts`, `src/app/liveTargetSessionInspection.ts`, and the Method design for runtime discovery under `docs/design/0078-continuum-runtime-discovery-command-and-local-registry/`.

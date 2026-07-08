@@ -113,3 +113,4 @@ High-risk compatibility boundary:
 
 - Normative claims are in `test-plan.md` rows `R-MCP-1` through `R-MCP-4`.
 - Primary sources: `src/mcp/*.ts`, `src/app/*.ts`, `src/app/runtimeHelloInspection.ts`.
+- The 0078 runtime discovery design names a future `warp_ttd.inspect_runtime_discovery` surface; no MCP behavior changes until #149 lands, so the current MCP evidence rows remain unchanged.

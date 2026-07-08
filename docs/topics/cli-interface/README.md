@@ -111,3 +111,4 @@ High-risk compatibility boundary:
 
 - Normative claims are in `test-plan.md` rows `R-CLI-1` through `R-CLI-4`.
 - Primary sources: `src/cli/*.ts`, `src/app/*.ts`, and protocol fixtures used in CLI tests.
+- The 0078 runtime discovery design names a future `discover --json` surface; no CLI behavior changes until #148 lands, so the current CLI evidence rows remain unchanged.

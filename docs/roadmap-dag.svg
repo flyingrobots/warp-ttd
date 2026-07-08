@@ -504,7 +504,7 @@
 <g id="node24" class="node">
 <title>issue_146</title>
 <g id="a_node24"><a xlink:href="https://github.com/flyingrobots/warp-ttd/issues/146" xlink:title="#146\\n[0078&#45;S1] Method design for local runtime discovery registry">
-<path fill="#d8f5d0" stroke="#248232" d="M2095.73,-1319C2095.73,-1319 1817.21,-1319 1817.21,-1319 1811.21,-1319 1805.21,-1313 1805.21,-1307 1805.21,-1307 1805.21,-1295 1805.21,-1295 1805.21,-1289 1811.21,-1283 1817.21,-1283 1817.21,-1283 2095.73,-1283 2095.73,-1283 2101.73,-1283 2107.73,-1289 2107.73,-1295 2107.73,-1295 2107.73,-1307 2107.73,-1307 2107.73,-1313 2101.73,-1319 2095.73,-1319"/>
+<path fill="#e5e7eb" stroke="#6b7280" d="M2095.73,-1319C2095.73,-1319 1817.21,-1319 1817.21,-1319 1811.21,-1319 1805.21,-1313 1805.21,-1307 1805.21,-1307 1805.21,-1295 1805.21,-1295 1805.21,-1289 1811.21,-1283 1817.21,-1283 1817.21,-1283 2095.73,-1283 2095.73,-1283 2101.73,-1283 2107.73,-1289 2107.73,-1295 2107.73,-1295 2107.73,-1307 2107.73,-1307 2107.73,-1313 2101.73,-1319 2095.73,-1319"/>
 <text xml:space="preserve" text-anchor="middle" x="1956.47" y="-1297.12" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#111827">#146\n[0078&#45;S1] Method design for local runtime discovery registry</text>
 </a>
 </g>
@@ -520,7 +520,7 @@
 <g id="node25" class="node">
 <title>issue_147</title>
 <g id="a_node25"><a xlink:href="https://github.com/flyingrobots/warp-ttd/issues/147" xlink:title="#147\\n[0078&#45;S2] Local runtime registry schema and fixture matrix">
-<path fill="#ffd7d7" stroke="#bd2c00" d="M2566.62,-1319C2566.62,-1319 2294.85,-1319 2294.85,-1319 2288.85,-1319 2282.85,-1313 2282.85,-1307 2282.85,-1307 2282.85,-1295 2282.85,-1295 2282.85,-1289 2288.85,-1283 2294.85,-1283 2294.85,-1283 2566.62,-1283 2566.62,-1283 2572.62,-1283 2578.62,-1289 2578.62,-1295 2578.62,-1295 2578.62,-1307 2578.62,-1307 2578.62,-1313 2572.62,-1319 2566.62,-1319"/>
+<path fill="#d8f5d0" stroke="#248232" d="M2566.62,-1319C2566.62,-1319 2294.85,-1319 2294.85,-1319 2288.85,-1319 2282.85,-1313 2282.85,-1307 2282.85,-1307 2282.85,-1295 2282.85,-1295 2282.85,-1289 2288.85,-1283 2294.85,-1283 2294.85,-1283 2566.62,-1283 2566.62,-1283 2572.62,-1283 2578.62,-1289 2578.62,-1295 2578.62,-1295 2578.62,-1307 2578.62,-1307 2578.62,-1313 2572.62,-1319 2566.62,-1319"/>
 <text xml:space="preserve" text-anchor="middle" x="2430.74" y="-1297.12" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#111827">#147\n[0078&#45;S2] Local runtime registry schema and fixture matrix</text>
 </a>
 </g>
@@ -638,9 +638,9 @@
 <!-- issue_146&#45;&gt;issue_147 -->
 <g id="edge39" class="edge">
 <title>issue_146&#45;&gt;issue_147</title>
-<path fill="none" stroke="#bd2c00" stroke-width="3.2" d="M2108.16,-1301C2108.16,-1301 2270.78,-1301 2270.78,-1301"/>
-<polygon fill="#bd2c00" stroke="#bd2c00" stroke-width="3.2" points="2270.78,-1303.45 2277.78,-1301 2270.78,-1298.55 2270.78,-1303.45"/>
-<text xml:space="preserve" text-anchor="middle" x="2186.85" y="-1302.2" font-family="Helvetica,sans-Serif" font-size="9.00">BLOCKED</text>
+<path fill="none" stroke="#248232" stroke-width="1.4" d="M2108.16,-1301C2108.16,-1301 2273.5,-1301 2273.5,-1301"/>
+<polygon fill="#248232" stroke="#248232" stroke-width="1.4" points="2273.5,-1303.45 2280.5,-1301 2273.5,-1298.55 2273.5,-1303.45"/>
+<text xml:space="preserve" text-anchor="middle" x="2186.85" y="-1302.2" font-family="Helvetica,sans-Serif" font-size="9.00">OPEN</text>
 </g>
 <!-- issue_147&#45;&gt;issue_148 -->
 <g id="edge40" class="edge">
