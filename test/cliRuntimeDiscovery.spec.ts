@@ -155,7 +155,9 @@ test("discover --json covers the registry obstruction fixture matrix", async () 
   for (const [fixture, code] of cases) {
     const data = discoveryData(await runDiscover(["--json", "--registry", fixturePath(fixture)]));
     assert.equal(registry(data)["posture"], "OBSTRUCTED");
-    assert.ok(discoveryRecords(data).every((record) => reasonCodes(record).includes(code)));
+    const records = discoveryRecords(data);
+    assert.ok(records.length > 0, `${fixture} emitted no discovery records`);
+    assert.ok(records.every((record) => reasonCodes(record).includes(code)));
   }
 });
 
