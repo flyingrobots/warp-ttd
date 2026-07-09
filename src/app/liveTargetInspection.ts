@@ -139,18 +139,24 @@ const DEFAULT_GRAFT_ROOT = "../graft";
 const GRAFT_GRAPH_NAME = "graft-ast";
 const TARGETS_JSON_ENV = "WARP_TTD_TARGETS_JSON";
 
-function resolveRoot(envName: string, fallback: string): string {
-  return path.resolve(process.env[envName] ?? fallback);
+function resolveRoot(
+  env: Readonly<NodeJS.ProcessEnv>,
+  envName: string,
+  fallback: string
+): string {
+  return path.resolve(env[envName] ?? fallback);
 }
 
 function rootPosture(rootPath: string): Exclude<LiveTargetRootPosture, "NOT_APPLICABLE"> {
   return fs.existsSync(rootPath) ? "PRESENT" : "MISSING";
 }
 
-export function liveTargetRootsFromEnv(): LiveTargetRoots {
+export function liveTargetRootsFromEnv(
+  env: Readonly<NodeJS.ProcessEnv> = process.env
+): LiveTargetRoots {
   return {
-    graftRoot: resolveRoot("WARP_TTD_GRAFT_ROOT", DEFAULT_GRAFT_ROOT),
-    jeditRoot: resolveRoot("WARP_TTD_JEDIT_ROOT", DEFAULT_JEDIT_ROOT)
+    graftRoot: resolveRoot(env, "WARP_TTD_GRAFT_ROOT", DEFAULT_GRAFT_ROOT),
+    jeditRoot: resolveRoot(env, "WARP_TTD_JEDIT_ROOT", DEFAULT_JEDIT_ROOT)
   };
 }
 

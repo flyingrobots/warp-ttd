@@ -3,6 +3,7 @@ import fs from "node:fs";
 import type { JsonObject, JsonValue } from "./generatedFamilyIngress.ts";
 import {
   defaultLiveTargetDescriptors,
+  liveTargetRootsFromEnv,
   type ContinuumDebugTargetConnection,
   type ContinuumDebugTargetDescriptor,
   type DescriptorOnlyConnectionDescriptor,
@@ -355,6 +356,28 @@ function metadataFromJson(
   return metadataFieldsFromJson(value, index);
 }
 
+function connectionRedactedFieldsFromJson(
+  value: JsonValue | undefined,
+  index: number
+): readonly string[] {
+  if (!isJsonObject(value)) return [];
+  return Object.keys(value)
+    .sort()
+    .filter(isSecretLikeField)
+    .map((key) => `runtimes[${String(index)}].connection.${key}`);
+}
+
+function entryRedactedFieldsFromJson(
+  value: JsonObject,
+  index: number,
+  metadataRedactedFields: readonly string[]
+): readonly string[] {
+  return [
+    ...metadataRedactedFields,
+    ...connectionRedactedFieldsFromJson(value["connection"], index)
+  ];
+}
+
 function generatedEntryId(index: number): string {
   return `warp-ttd-runtime-registry-entry-${String(index)}`;
 }
@@ -435,12 +458,17 @@ function entryFromJson(value: JsonValue, index: number): EntryNormalization {
   if (!isJsonObject(value)) return nonObjectEntry(index);
 
   const normalized = entryFieldsFromJson(value, index);
+  const redactedFields = entryRedactedFieldsFromJson(
+    value,
+    index,
+    normalized.metadata.redactedFields
+  );
   if (!normalized.idWasPresent) {
     return obstructedEntryNormalization({
       fields: normalized.fields,
       message: "Runtime registry entry id must be a non-empty string.",
       code: "REGISTRY_ENTRY_ID_INVALID",
-      redactedFields: normalized.metadata.redactedFields
+      redactedFields
     });
   }
   if (normalized.metadata.obstruction !== undefined) {
@@ -450,11 +478,11 @@ function entryFromJson(value: JsonValue, index: number): EntryNormalization {
         normalized.metadata.obstruction.message,
         normalized.fields
       ),
-      redactedFields: normalized.metadata.redactedFields,
+      redactedFields,
       reasons: [normalized.metadata.obstruction]
     };
   }
-  return connectedEntryNormalization(value, normalized.fields, normalized.metadata.redactedFields);
+  return connectedEntryNormalization(value, normalized.fields, redactedFields);
 }
 
 function duplicateRuntimeIds(
@@ -480,7 +508,7 @@ function obstructDuplicateRuntimeIds(
   const normalized = entries.map((entry) => {
     if (!duplicates.has(entry.id)) return entry;
     const message = `Duplicate runtime registry id ${entry.id} is not allowed.`;
-    reasons.push(reason("REGISTRY_ENTRY_DUPLICATE_ID", message));
+    reasons.push(reason("REGISTRY_DUPLICATE_ID", message));
     return obstructionEntry(entry.id, message, {
       label: entry.label,
       appKind: entry.appKind,
@@ -644,7 +672,7 @@ export function runtimeRegistryFromJson(
     const message = error instanceof Error ? error.message : "unknown JSON parse error";
     return obstructedResult(
       source,
-      reason("REGISTRY_JSON_PARSE_ERROR", `Runtime registry JSON could not be parsed: ${message}.`)
+      reason("REGISTRY_JSON_PARSE_FAILED", `Runtime registry JSON could not be parsed: ${message}.`)
     );
   }
 }
@@ -689,7 +717,7 @@ export function loadRuntimeRegistryFromEnv(
   }
 
   return resultFromRegistry({
-    registry: defaultRuntimeRegistry(),
+    registry: defaultRuntimeRegistry(liveTargetRootsFromEnv(env)),
     source: { kind: "DEFAULT" }
   });
 }

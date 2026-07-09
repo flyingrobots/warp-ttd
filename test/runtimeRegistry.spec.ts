@@ -25,6 +25,28 @@ test("loadRuntimeRegistryFromEnv emits built-in witness registry by default", ()
   assert.equal(result.inspection.entryCount, 2);
   assert.deepEqual(result.registry.runtimes.map((runtime) => runtime.id), ["jedit", "graft"]);
   assert.deepEqual(result.descriptors.map((descriptor) => descriptor.id), ["jedit", "graft"]);
+  assert.deepEqual(
+    result.registry.runtimes.map((runtime) => {
+      assert.ok("rootPath" in runtime.connection);
+      return runtime.connection.rootPath;
+    }),
+    [path.resolve("../jedit"), path.resolve("../graft")]
+  );
+});
+
+test("loadRuntimeRegistryFromEnv honors supplied default root env", () => {
+  const result = loadRuntimeRegistryFromEnv({
+    WARP_TTD_GRAFT_ROOT: "/tmp/runtime-registry-graft",
+    WARP_TTD_JEDIT_ROOT: "/tmp/runtime-registry-jedit"
+  });
+
+  assert.deepEqual(
+    result.registry.runtimes.map((runtime) => {
+      assert.ok("rootPath" in runtime.connection);
+      return runtime.connection.rootPath;
+    }),
+    ["/tmp/runtime-registry-jedit", "/tmp/runtime-registry-graft"]
+  );
 });
 
 test("runtime registry path fixture normalizes entries without leaking endpoint secrets", () => {
@@ -34,7 +56,10 @@ test("runtime registry path fixture normalizes entries without leaking endpoint 
   assert.equal(result.inspection.posture, "PRESENT");
   assert.equal(result.inspection.entryCount, 3);
   assert.equal(result.inspection.redaction.redacted, true);
-  assert.deepEqual(result.inspection.redaction.fields, ["runtimes[0].metadata.token"]);
+  assert.deepEqual(result.inspection.redaction.fields, [
+    "runtimes[0].metadata.token",
+    "runtimes[1].connection.authToken"
+  ]);
   assert.deepEqual(result.registry.runtimes.map((runtime) => runtime.id), [
     "local-echo",
     "vendor-endpoint",
@@ -55,7 +80,6 @@ test("runtime registry path fixture normalizes entries without leaking endpoint 
 
   const emitted = JSON.stringify(result);
   assert.equal(emitted.includes("must-not-leak"), false);
-  assert.equal(emitted.includes("authToken"), false);
   assert.equal(emitted.includes("https://example.invalid/runtime"), false);
 });
 
@@ -112,7 +136,7 @@ test("runtime registry duplicate ids obstruct every duplicated runtime", () => {
     ["OBSTRUCTED", "OBSTRUCTED"]
   );
   assert.ok(
-    result.inspection.reasons.every((entry) => entry.code === "REGISTRY_ENTRY_DUPLICATE_ID")
+    result.inspection.reasons.every((entry) => entry.code === "REGISTRY_DUPLICATE_ID")
   );
 });
 
@@ -122,7 +146,7 @@ test("runtime registry JSON parse failures remain machine-readable", () => {
   assert.equal(result.inspection.source.kind, "ENV_JSON");
   assert.equal(result.inspection.posture, "OBSTRUCTED");
   assert.deepEqual(result.inspection.reasons.map((entry) => entry.code), [
-    "REGISTRY_JSON_PARSE_ERROR"
+    "REGISTRY_JSON_PARSE_FAILED"
   ]);
   const runtime = result.registry.runtimes[0];
   assert.ok(runtime !== undefined);

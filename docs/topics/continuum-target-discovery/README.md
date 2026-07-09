@@ -105,9 +105,9 @@ High-risk compatibility boundary:
 
 | Edge | Details |
 |---|---|
-| Depends on | `adapter-port-and-registry`, `adapter-implementations`, `protocol-contract`, `runtime-discovery-registry`. |
+| Depends on | `adapter-port-and-registry`, `adapter-implementations`, `protocol-contract`. |
 | Used by | `cli-interface`, `mcp-interface`, `debugger-session-core`. |
-| Cross-shelf impact | Posture updates can change user-visible target workflows and session bootstrap assumptions. |
+| Cross-shelf impact | Posture updates can change user-visible target workflows, session bootstrap assumptions, and runtime registry descriptor projection. |
 
 ## Evidence
 
