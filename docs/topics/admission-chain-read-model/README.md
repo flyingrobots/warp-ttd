@@ -104,7 +104,7 @@ High-risk compatibility boundary:
 |---|---|
 | Depends on | admission-chain read-model modules and runtime hello inspection modules listed in frontmatter. |
 | Used by | `mcp-interface`, `cli-interface`, `tui-shell`, `debugger-session-core`. |
-| Cross-shelf impact | Posture shape changes change shell, MCP, and CLI behavior for target and chain inspection. |
+| Cross-shelf impact | Posture shape changes change shell, MCP, and CLI behavior for target and chain inspection; runtime registry source-selection changes can alter which target roots flow into this read model without changing its posture semantics. |
 
 ## Evidence
 
