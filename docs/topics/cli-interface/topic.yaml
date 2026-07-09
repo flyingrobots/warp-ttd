@@ -13,7 +13,11 @@ depends_on:
   - "continuum-target-discovery"
   - "adapter-port-and-registry"
 owns:
-[]
+  - "src/cli.ts"
+  - "src/errors.ts"
+  - "test/cliJson.spec.ts"
+  - "test/cliRuntimeDiscovery.spec.ts"
+  - "test/cliWorldline.spec.ts"
 entrypoints:
   onboarding: "README.md#entry-onboarding"
   edit: "README.md#entry-edit"
