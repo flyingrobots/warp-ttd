@@ -14,7 +14,7 @@ owner: WARP TTD Team
 code_owners:
   - James <james@flyingrobots.dev>
 status: active
-shelf_count: 13
+shelf_count: 14
 shelf_graph:
   - family: Protocol Layer
     shelves:
@@ -38,6 +38,7 @@ shelf_graph:
   - family: Discovery Layer
     shelves:
       - continuum-target-discovery
+      - runtime-discovery-registry
       - admission-chain-read-model
   - family: Governance Layer
     shelves:
@@ -61,6 +62,7 @@ shelves:
       - tui-shell
       - worldline-visualization
       - continuum-target-discovery
+      - runtime-discovery-registry
       - admission-chain-read-model
     agent_entry_queries:
       - id: onboarding
@@ -89,6 +91,7 @@ shelves:
       - cli-interface
       - mcp-interface
       - continuum-target-discovery
+      - runtime-discovery-registry
     agent_entry_queries:
       - id: onboarding
         intent: Learn adapter resolution and capability boundaries.
@@ -283,6 +286,7 @@ shelves:
     depends_on:
       - protocol-contract
     used_by:
+      - runtime-discovery-registry
       - admission-chain-read-model
     agent_entry_queries:
       - id: onboarding
@@ -291,6 +295,34 @@ shelves:
       - id: triage
         intent: Resolve discovery drift and hello contract mismatches.
         anchor: "#entry-triage"
+
+  - id: runtime-discovery-registry
+    title: Runtime Discovery Registry
+    path: runtime-discovery-registry/README.md
+    family: Discovery Layer
+    risk_level: medium
+    status: current
+    depends_on:
+      - continuum-target-discovery
+      - adapter-port-and-registry
+      - protocol-contract
+    used_by:
+      - continuum-target-discovery
+      - cli-interface
+      - mcp-interface
+    agent_entry_queries:
+      - id: onboarding
+        intent: Learn local runtime registry schema and source priority.
+        anchor: "#entry-onboarding"
+      - id: edit
+        intent: Change registry parsing, fixtures, or normalization.
+        anchor: "#entry-edit"
+      - id: triage
+        intent: Diagnose malformed runtime registry inputs.
+        anchor: "#entry-triage"
+      - id: impact
+        intent: Validate downstream CLI/MCP discovery implications.
+        anchor: "#entry-impact"
 
   - id: admission-chain-read-model
     title: Admission Chain Read Model
@@ -364,6 +396,7 @@ The source of truth for each shelf remains in each shelf directory and its `topi
 | Interface Layer | tui-shell | medium | `tui-shell/README.md` |
 | Interface Layer | worldline-visualization | medium | `worldline-visualization/README.md` |
 | Discovery Layer | continuum-target-discovery | high | `continuum-target-discovery/README.md` |
+| Discovery Layer | runtime-discovery-registry | medium | `runtime-discovery-registry/README.md` |
 | Discovery Layer | admission-chain-read-model | high | `admission-chain-read-model/README.md` |
 | Governance Layer | roadmap-governance | medium | `roadmap-governance/README.md` |
 

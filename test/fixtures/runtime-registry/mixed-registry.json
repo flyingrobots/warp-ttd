@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "warp-ttd.runtime-registry.v1",
+  "runtimes": [
+    {
+      "id": "local-echo",
+      "label": "Local Echo witness",
+      "appKind": "live Echo app",
+      "connection": {
+        "mode": "echo-root",
+        "rootPath": "/tmp/warp-ttd-runtime-registry/echo"
+      },
+      "metadata": {
+        "enabled": true,
+        "priority": 1,
+        "token": "must-not-leak"
+      }
+    },
+    {
+      "id": "vendor-endpoint",
+      "label": "Vendor endpoint",
+      "appKind": "Continuum-compatible endpoint",
+      "connection": {
+        "mode": "endpoint",
+        "url": "https://example.invalid/runtime",
+        "authToken": "must-not-leak"
+      },
+      "metadata": {
+        "vendor": "acme"
+      }
+    },
+    {
+      "id": "descriptor-only-demo",
+      "label": "Descriptor-only demo",
+      "appKind": "Continuum-compatible app",
+      "connection": {
+        "mode": "descriptor-only",
+        "adapterPosture": "UNSUPPORTED",
+        "reason": "Runtime hello producer is not installed."
+      },
+      "metadata": {
+        "note": null
+      }
+    }
+  ]
+}
