@@ -117,6 +117,34 @@ test("discover --json --registry reports mixed fixture without leaking secrets",
   assert.equal(emitted.includes("https://example.invalid/runtime"), false);
 });
 
+test("discover --json keeps valid registry entries independent from obstructed entries", async () => {
+  const configured = {
+    schemaVersion: "warp-ttd.runtime-registry.v1",
+    runtimes: [
+      {
+        id: "valid-descriptor",
+        connection: {
+          mode: "descriptor-only",
+          adapterPosture: "UNSUPPORTED",
+          reason: "Runtime hello producer is not installed."
+        }
+      },
+      { id: "broken-entry", connection: { mode: "echo-root" } }
+    ]
+  };
+  const data = discoveryData(await runDiscover(["--json"], {
+    WARP_TTD_RUNTIME_REGISTRY_JSON: JSON.stringify(configured)
+  }));
+  const records = discoveryRecords(data);
+  const valid = recordByTarget(records, "valid-descriptor");
+  const broken = recordByTarget(records, "broken-entry");
+
+  assert.equal(registry(data)["posture"], "OBSTRUCTED");
+  assertPosture(valid, "UNSUPPORTED", "DESCRIPTOR_UNSUPPORTED");
+  assert.equal(reasonCodes(valid).includes("REGISTRY_ENTRY_CONNECTION_OBSTRUCTED"), false);
+  assertPosture(broken, "OBSTRUCTED", "REGISTRY_ENTRY_CONNECTION_OBSTRUCTED");
+});
+
 test("discover --json covers the registry obstruction fixture matrix", async () => {
   const cases: readonly [string, string][] = [
     ["duplicate-registry.json", "REGISTRY_DUPLICATE_ID"],

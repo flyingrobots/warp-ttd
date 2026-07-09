@@ -130,8 +130,11 @@ function redactionForIndex(
 }
 
 function registryReasons(
-  registry: ContinuumRuntimeRegistryInspection
+  registry: ContinuumRuntimeRegistryInspection,
+  target: LiveTargetInspection
 ): readonly RuntimeDiscoveryReason[] {
+  if (registry.posture !== "OBSTRUCTED") return [];
+  if (target.adapterPosture !== "OBSTRUCTED") return [];
   return registry.reasons.map((entry) => reason(entry.code, entry.message, entry.source));
 }
 
@@ -173,7 +176,6 @@ function discoveryPostureFromTarget(
 }
 
 function discoveryPosture(args: RuntimeDiscoveryRecordArgs): RuntimeDiscoveryPosture {
-  if (args.registry.posture === "OBSTRUCTED") return "OBSTRUCTED";
   const targetPosture = discoveryPostureFromTarget(args.targetInspection);
   if (targetPosture !== undefined) return targetPosture;
   if (args.hello === undefined) return "OBSTRUCTED";
@@ -246,7 +248,7 @@ function discoveryRecord(args: RuntimeDiscoveryRecordArgs): ContinuumRuntimeDisc
     auth: consentPosture(target),
     redaction,
     reasons: [
-      ...registryReasons(args.registry),
+      ...registryReasons(args.registry, target),
       ...optionalReason(targetReason(target)),
       ...helloReasons(args.hello),
       ...redactionReasons(redaction)
