@@ -144,7 +144,8 @@ function resolveRoot(
   envName: string,
   fallback: string
 ): string {
-  return path.resolve(env[envName] ?? fallback);
+  const configured = env[envName]?.trim();
+  return path.resolve(configured === undefined || configured.length === 0 ? fallback : configured);
 }
 
 function rootPosture(rootPath: string): Exclude<LiveTargetRootPosture, "NOT_APPLICABLE"> {

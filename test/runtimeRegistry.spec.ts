@@ -49,6 +49,21 @@ test("loadRuntimeRegistryFromEnv honors supplied default root env", () => {
   );
 });
 
+test("loadRuntimeRegistryFromEnv treats blank default root env as unset", () => {
+  const result = loadRuntimeRegistryFromEnv({
+    WARP_TTD_GRAFT_ROOT: "",
+    WARP_TTD_JEDIT_ROOT: "   "
+  });
+
+  assert.deepEqual(
+    result.registry.runtimes.map((runtime) => {
+      assert.ok("rootPath" in runtime.connection);
+      return runtime.connection.rootPath;
+    }),
+    [path.resolve("../jedit"), path.resolve("../graft")]
+  );
+});
+
 test("runtime registry path fixture normalizes entries without leaking endpoint secrets", () => {
   const result = loadRuntimeRegistryFromPath(fixturePath("mixed-registry.json"));
 
@@ -81,6 +96,41 @@ test("runtime registry path fixture normalizes entries without leaking endpoint 
   const emitted = JSON.stringify(result);
   assert.equal(emitted.includes("must-not-leak"), false);
   assert.equal(emitted.includes("https://example.invalid/runtime"), false);
+});
+
+test("runtime registry redacts documented secret-like field names", () => {
+  const result = runtimeRegistryFromJson(JSON.stringify({
+    schemaVersion: RUNTIME_REGISTRY_SCHEMA_VERSION,
+    runtimes: [
+      {
+        id: "secret-bearing-runtime",
+        connection: {
+          mode: "descriptor-only",
+          authorization: "Bearer registry-secret",
+          cookie: "registry-cookie"
+        },
+        metadata: {
+          authorization: "metadata-authorization",
+          cookie: "metadata-cookie",
+          privateKey: "metadata-private-key"
+        }
+      }
+    ]
+  }));
+
+  assert.deepEqual(result.inspection.redaction.fields, [
+    "runtimes[0].metadata.authorization",
+    "runtimes[0].metadata.cookie",
+    "runtimes[0].metadata.privateKey",
+    "runtimes[0].connection.authorization",
+    "runtimes[0].connection.cookie"
+  ]);
+  const emitted = JSON.stringify(result);
+  assert.equal(emitted.includes("registry-secret"), false);
+  assert.equal(emitted.includes("registry-cookie"), false);
+  assert.equal(emitted.includes("metadata-authorization"), false);
+  assert.equal(emitted.includes("metadata-cookie"), false);
+  assert.equal(emitted.includes("metadata-private-key"), false);
 });
 
 test("runtime registry env JSON takes precedence over env path", () => {

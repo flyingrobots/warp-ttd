@@ -154,7 +154,7 @@ function isMetadataValue(value: JsonValue): value is RuntimeRegistryMetadataValu
 }
 
 function isSecretLikeField(field: string): boolean {
-  return /(?:secret|token|password|credential|api[_-]?key|private[_-]?key)/i.test(field);
+  return /(?:authorization|cookie|secret|token|password|credential|api[_-]?key|private[_-]?key)/i.test(field);
 }
 
 function optionalEntryFields(args: {

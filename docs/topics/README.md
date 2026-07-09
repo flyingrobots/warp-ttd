@@ -307,6 +307,7 @@ shelves:
       - adapter-port-and-registry
       - protocol-contract
     used_by:
+      - continuum-target-discovery
       - cli-interface
       - mcp-interface
     agent_entry_queries:

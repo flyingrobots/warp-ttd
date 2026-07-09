@@ -47,6 +47,7 @@ agent_entry_queries:
 ---
 
 <a id="entry-onboarding"></a>
+
 ## At a glance
 
 This shelf owns the local runtime registry contract used before the `discover --json` and MCP discovery surfaces exist.
@@ -61,6 +62,7 @@ This shelf owns the local runtime registry contract used before the `discover --
 | What changes propagate | source priority, redaction, or obstruction changes affect future CLI/MCP discovery output. |
 
 <a id="entry-edit"></a>
+
 ## Safe change path
 
 1. Update `test-plan.md` rows `R-RDR-*` before changing parser behavior.
@@ -82,16 +84,18 @@ High-risk compatibility boundary:
 - `loadRuntimeRegistryFromEnv` source priority is an agent-facing contract and should not change without explicit migration notes.
 
 <a id="entry-triage"></a>
+
 ## Failure modes
 
 | Failure shape | Detection signal | Consequence | First response | Verification |
 |---|---|---|---|---|
 | Registry schema version unsupported | `REGISTRY_SCHEMA_VERSION_UNSUPPORTED` reason | discovery receives one obstructed registry entry | confirm producer emits `warp-ttd.runtime-registry.v1` | `test/runtimeRegistry.spec.ts` |
-| Duplicate runtime IDs | `REGISTRY_ENTRY_DUPLICATE_ID` reason for each duplicate | duplicated runtimes are visible but obstructed | fix operator registry IDs before running discovery | duplicate fixture test |
+| Duplicate runtime IDs | `REGISTRY_DUPLICATE_ID` reason for each duplicate | duplicated runtimes are visible but obstructed | fix operator registry IDs before running discovery | duplicate fixture test |
 | Endpoint entry appears before #79 | descriptor-only `UNSUPPORTED` connection | endpoint is visible but not contacted | keep endpoint data out of discovery until consent/auth lands | mixed fixture test |
-| Secret-like metadata appears | `redaction.redacted` and field path | secret value is omitted from normalized output | move secrets to a future consent/auth mechanism | mixed fixture test |
+| Secret-like metadata or connection fields appear | `redaction.redacted` and field path | secret value is omitted from normalized output | move secrets to a future consent/auth mechanism | mixed fixture test |
 
 <a id="entry-impact"></a>
+
 ## Dependencies and impact
 
 | Edge | Details |
