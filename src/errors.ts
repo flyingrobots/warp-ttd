@@ -91,6 +91,16 @@ export class UnknownFlagsError extends Error {
   }
 }
 
+export class MissingFlagValueError extends Error {
+  public readonly flag: string;
+
+  public constructor(flag: string) {
+    super(`Missing value for flag: ${flag}`);
+    this.name = "MissingFlagValueError";
+    this.flag = flag;
+  }
+}
+
 export class UnknownAdapterKindError extends Error {
   public readonly kind: string;
 

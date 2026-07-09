@@ -3,20 +3,27 @@ import { buildAdmissionChainReadModel } from "./app/admissionChainReadModel.ts";
 import { DebuggerSession } from "./app/debuggerSession.ts";
 import { inspectLiveTargets } from "./app/liveTargetInspection.ts";
 import { inspectLiveTargetSessions } from "./app/liveTargetSessionInspection.ts";
+import { inspectRuntimeDiscovery } from "./app/runtimeDiscovery.ts";
 import { inspectRuntimeHello } from "./app/runtimeHelloInspection.ts";
 import { buildTickRows } from "./tui/worldlineLayout.ts";
 import type { FrameData } from "./tui/worldlineLayout.ts";
 import {
+  MissingFlagValueError,
   UnexpectedArgumentsError,
   UnknownFlagsError,
   UnsupportedCommandError
 } from "./errors.ts";
 
-type Command = "demo" | "hello" | "catalog" | "frame" | "step" | "effects" | "deliveries" | "context" | "session" | "worldline" | "targets" | "target-session" | "runtime-hello" | "admission-chain";
-type AdapterCommand = Exclude<Command, "targets" | "target-session" | "runtime-hello">;
+type Command = "demo" | "hello" | "catalog" | "frame" | "step" | "effects" | "deliveries" | "context" | "session" | "worldline" | "targets" | "target-session" | "runtime-hello" | "admission-chain" | "discover";
+type AdapterCommand = Exclude<Command, "targets" | "target-session" | "runtime-hello" | "discover">;
 type PrintableValue = object | string | number | boolean | null | undefined;
 type PrintFn = (envelope: string, data: PrintableValue, label?: string) => void;
 type CliHandler = (ctx: CliContext) => Promise<void>;
+interface ParsedArgs {
+  readonly command: Command;
+  readonly json: boolean;
+  readonly registryPath?: string;
+}
 
 const VALID_COMMANDS = new Set<Command>([
   "admission-chain",
@@ -24,6 +31,7 @@ const VALID_COMMANDS = new Set<Command>([
   "context",
   "deliveries",
   "demo",
+  "discover",
   "effects",
   "frame",
   "hello",
@@ -32,6 +40,20 @@ const VALID_COMMANDS = new Set<Command>([
   "step",
   "targets",
   "target-session",
+  "worldline"
+]);
+
+const ADAPTER_COMMANDS = new Set<AdapterCommand>([
+  "admission-chain",
+  "catalog",
+  "context",
+  "deliveries",
+  "demo",
+  "effects",
+  "frame",
+  "hello",
+  "session",
+  "step",
   "worldline"
 ]);
 
@@ -45,35 +67,88 @@ interface CliContext extends PrintContext {
   headId: string;
 }
 
+interface InspectionCommandArgs extends PrintContext {
+  readonly command: Command;
+  readonly registryPath?: string;
+}
+
+interface ArgScan {
+  readonly positional: readonly string[];
+  readonly unknown: readonly string[];
+  readonly registryPath?: string | undefined;
+  readonly missingValueFlag?: string | undefined;
+}
+
 function isValidCommand(cmd: string): cmd is Command {
   return (VALID_COMMANDS as Set<string>).has(cmd);
 }
 
-function parseArgs(argv: string[]): { command: Command; json: boolean } {
+function isAdapterCommand(cmd: Command): cmd is AdapterCommand {
+  return (ADAPTER_COMMANDS as Set<string>).has(cmd);
+}
+
+function registryPathField(registryPath: string | undefined): Pick<ParsedArgs, "registryPath"> | object {
+  return registryPath === undefined ? {} : { registryPath };
+}
+
+function appendScannedArg(scan: ArgScan, arg: string): ArgScan {
+  if (arg.startsWith("--")) {
+    return { ...scan, unknown: [...scan.unknown, arg] };
+  }
+  return { ...scan, positional: [...scan.positional, arg] };
+}
+
+function scanRegistryFlag(args: readonly string[], index: number, scan: ArgScan): ArgScan {
+  const value = args[index + 1];
+  if (value === undefined || value.startsWith("--")) {
+    return { ...scan, missingValueFlag: "--registry" };
+  }
+  return { ...scan, registryPath: value };
+}
+
+function scanArgs(args: readonly string[]): ArgScan {
+  let scan: ArgScan = { positional: [], unknown: [] };
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index] ?? "";
+    if (arg === "--json") continue;
+    if (arg === "--registry") {
+      scan = scanRegistryFlag(args, index, scan);
+      index += 1;
+      continue;
+    }
+    scan = appendScannedArg(scan, arg);
+  }
+  return scan;
+}
+
+function selectedCommand(positional: readonly string[]): Command {
+  const command = positional[0];
+  if (command === undefined) return "demo";
+  if (isValidCommand(command)) return command;
+  throw new UnsupportedCommandError(command);
+}
+
+function assertRegistryFlagScope(command: Command, registryPath: string | undefined): void {
+  if (registryPath !== undefined && command !== "discover") {
+    throw new UnexpectedArgumentsError(["--registry", registryPath]);
+  }
+}
+
+function parseArgs(argv: string[]): ParsedArgs {
   const args = argv.slice(2);
   const json = args.includes("--json");
-  const positional = args.filter((a) => !a.startsWith("--"));
-  const unknown = args.filter((a) => a.startsWith("--") && a !== "--json");
+  const scanned = scanArgs(args);
 
-  if (unknown.length > 0) {
-    throw new UnknownFlagsError(unknown);
-  }
+  if (scanned.missingValueFlag !== undefined) throw new MissingFlagValueError(scanned.missingValueFlag);
+  if (scanned.unknown.length > 0) throw new UnknownFlagsError([...scanned.unknown]);
 
-  if (positional.length > 1) {
-    throw new UnexpectedArgumentsError(positional.slice(1));
-  }
+  const command = selectedCommand(scanned.positional);
+  const commandWasProvided = scanned.positional[0] !== undefined;
+  const extraArgs = scanned.positional.slice(commandWasProvided ? 1 : 0);
+  if (extraArgs.length > 0) throw new UnexpectedArgumentsError([...extraArgs]);
 
-  const command = positional[0];
-
-  if (command === undefined) {
-    return { command: "demo", json };
-  }
-
-  if (isValidCommand(command)) {
-    return { command, json };
-  }
-
-  throw new UnsupportedCommandError(command);
+  assertRegistryFlagScope(command, scanned.registryPath);
+  return { command, json, ...registryPathField(scanned.registryPath) };
 }
 
 function writeLine(line: string): void {
@@ -174,6 +249,24 @@ async function handleRuntimeHello(ctx: PrintContext): Promise<void> {
   printList(ctx, "ContinuumRuntimeHelloInspection", await inspectRuntimeHello());
 }
 
+async function handleDiscover(
+  ctx: PrintContext,
+  registryPath: string | undefined
+): Promise<void> {
+  ctx.print("ContinuumRuntimeDiscoveryInspection", await inspectRuntimeDiscovery({
+    ...registryPathField(registryPath)
+  }));
+}
+
+async function handleInspectionCommand(args: InspectionCommandArgs): Promise<boolean> {
+  if (args.command === "targets") await handleTargets(args);
+  else if (args.command === "target-session") await handleTargetSession(args);
+  else if (args.command === "runtime-hello") await handleRuntimeHello(args);
+  else if (args.command === "discover") await handleDiscover(args, args.registryPath);
+  else return false;
+  return true;
+}
+
 async function collectWorldlineFrames(ctx: CliContext): Promise<FrameData[]> {
   const maxFrame = await ctx.adapter.seekToFrame(ctx.headId, Number.MAX_SAFE_INTEGER);
   const frames: FrameData[] = [];
@@ -264,23 +357,11 @@ const COMMAND_HANDLERS: Record<AdapterCommand, CliHandler> = {
 };
 
 async function main(): Promise<void> {
-  const { command, json } = parseArgs(process.argv);
+  const parsed = parseArgs(process.argv);
+  const { command, json } = parsed;
   const print = createPrintFn(json);
 
-  if (command === "targets") {
-    await handleTargets({ json, print });
-    return;
-  }
-
-  if (command === "target-session") {
-    await handleTargetSession({ json, print });
-    return;
-  }
-
-  if (command === "runtime-hello") {
-    await handleRuntimeHello({ json, print });
-    return;
-  }
+  if (await handleInspectionCommand({ ...parsed, print })) return;
 
   const ctx: CliContext = {
     adapter: new EchoFixtureAdapter(),
@@ -289,6 +370,7 @@ async function main(): Promise<void> {
     print
   };
 
+  if (!isAdapterCommand(command)) return;
   await COMMAND_HANDLERS[command](ctx);
 }
 
