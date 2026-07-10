@@ -13,7 +13,9 @@ depends_on:
   - "protocol-contract"
 owns:
   - "docs/topics/runtime-discovery-registry/test-plan.md"
+  - "src/app/runtimeDiscovery.ts"
   - "src/app/runtimeRegistry.ts"
+  - "test/cliRuntimeDiscovery.spec.ts"
   - "test/runtimeRegistry.spec.ts"
   - "test/fixtures/runtime-registry/*.json"
 entrypoints:

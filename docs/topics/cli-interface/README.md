@@ -60,12 +60,12 @@ This shelf captures machine contracts for CLI outputs and command dispatch. It i
 
 | Question | Answer |
 |---|---|
-| What this topic owns | command parsing, output envelopes, and deterministic serialization for session/worldline surfaces. |
+| What this topic owns | command parsing, output envelopes, and deterministic serialization for session, worldline, target, runtime hello, and runtime discovery surfaces. |
 | What it does not own | transport discovery internals and protocol schema evolution. |
 | How it works | reader-facing commands map to parsed operations and emit normalized machine-readable envelopes. |
 | Why this matters | CLI contracts are often scripts’ primary integration surface and therefore high-impact on automation stability. |
 | First prerequisite | `protocol-contract` and `debugger-session-core` snapshot semantics. |
-| What changes propagate | command-shape edits alter every downstream automation path that consumes CLI envelopes or shell-facing session transitions. |
+| What changes propagate | command-shape edits alter every downstream automation path that consumes CLI envelopes, discovery posture, or shell-facing session transitions. |
 
 <a id="entry-edit"></a>
 ## Safe change path
@@ -77,7 +77,7 @@ This shelf captures machine contracts for CLI outputs and command dispatch. It i
 Focused command:
 
 ```bash
-npm run test -- test/cliJson.spec.ts test/cliWorldline.spec.ts
+npm run test -- test/cliJson.spec.ts test/cliRuntimeDiscovery.spec.ts test/cliWorldline.spec.ts
 ```
 
 Full verification:
@@ -97,6 +97,7 @@ High-risk compatibility boundary:
 | Unsupported command or invalid flags | parse failure and non-zero exit | no command output | validate dispatch table and argument validation | `test/cliJson.spec.ts` |
 | Wrong JSON/JSONL envelope | schema drift in snapshots | consumer breakage and parser failures | compare output keys against protocol contract tables | `test/cliJson.spec.ts`, `test/cliWorldline.spec.ts` |
 | Target inspection mismatch | posture or root mismatch in `target-session` output | operators see stale/incorrect posture | inspect discovery descriptors and runtime hello flow | `test/adapterRegistry.integration.spec.ts` |
+| Runtime discovery mismatch | wrong `discover --json` posture or reason code | agents choose the wrong next runtime action | inspect registry input, target inspection, and runtime hello facts together | `test/cliRuntimeDiscovery.spec.ts` |
 
 <a id="entry-impact"></a>
 ## Dependencies and impact
@@ -111,5 +112,5 @@ High-risk compatibility boundary:
 
 - Normative claims are in `test-plan.md` rows `R-CLI-1` through `R-CLI-4`.
 - Primary sources: `src/cli/*.ts`, `src/app/*.ts`, and protocol fixtures used in CLI tests.
-- The 0078 runtime discovery design names a future `discover --json` surface; no CLI behavior changes until #148 lands, so the current CLI evidence rows remain unchanged.
-- The #147 runtime registry parser and fixture matrix are preparatory inputs for #148; they add no command dispatch, JSONL envelope, or CLI output keys in this slice.
+- `discover --json` emits one `ContinuumRuntimeDiscoveryInspection` JSONL envelope from the #147 registry fixture matrix.
+- Runtime discovery CLI behavior is covered by `test/cliRuntimeDiscovery.spec.ts`.
