@@ -103,9 +103,9 @@ digraph RoadmapDAG {
       issue_78 -> issue_146 [style=dotted, color="#6b7280", penwidth=1.0, label="slice"];
       issue_147 [label="#147\\n[0078-S2] Local runtime registry schema and fixture matrix", fillcolor="#e5e7eb", color="#6b7280", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/147"];
       issue_78 -> issue_147 [style=dotted, color="#6b7280", penwidth=1.0, label="slice"];
-      issue_148 [label="#148\\n[0078-S3] Runtime discovery CLI JSON surface", fillcolor="#d8f5d0", color="#248232", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/148"];
+      issue_148 [label="#148\\n[0078-S3] Runtime discovery CLI JSON surface", fillcolor="#e5e7eb", color="#6b7280", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/148"];
       issue_78 -> issue_148 [style=dotted, color="#6b7280", penwidth=1.0, label="slice"];
-      issue_149 [label="#149\\n[0078-S4] Runtime discovery MCP parity surface", fillcolor="#ffd7d7", color="#bd2c00", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/149"];
+      issue_149 [label="#149\\n[0078-S4] Runtime discovery MCP parity surface", fillcolor="#d8f5d0", color="#248232", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/149"];
       issue_78 -> issue_149 [style=dotted, color="#6b7280", penwidth=1.0, label="slice"];
       issue_150 [label="#150\\n[0078-S5] Runtime discovery Manual and topic evidence update", fillcolor="#ffd7d7", color="#bd2c00", fontcolor="#111827", URL="https://github.com/flyingrobots/warp-ttd/issues/150"];
       issue_78 -> issue_150 [style=dotted, color="#6b7280", penwidth=1.0, label="slice"];
@@ -293,7 +293,7 @@ digraph RoadmapDAG {
   issue_124 -> issue_146 [label="OPEN", color="#248232", penwidth=1.4, style=solid];
   issue_146 -> issue_147 [label="OPEN", color="#248232", penwidth=1.4, style=solid];
   issue_147 -> issue_148 [label="OPEN", color="#248232", penwidth=1.4, style=solid];
-  issue_148 -> issue_149 [label="BLOCKED", color="#bd2c00", penwidth=3.2, style=solid];
+  issue_148 -> issue_149 [label="OPEN", color="#248232", penwidth=1.4, style=solid];
   issue_149 -> issue_150 [label="BLOCKED", color="#bd2c00", penwidth=3.2, style=solid];
   issue_150 -> issue_151 [label="BLOCKED", color="#bd2c00", penwidth=3.2, style=solid];
   issue_78 -> issue_79 [label="BLOCKED", color="#bd2c00", penwidth=3.2, style=solid];

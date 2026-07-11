@@ -104,9 +104,10 @@ High-risk compatibility boundary:
 |---|---|
 | Depends on | admission-chain read-model modules and runtime hello inspection modules listed in frontmatter. |
 | Used by | `mcp-interface`, `cli-interface`, `tui-shell`, `debugger-session-core`. |
-| Cross-shelf impact | Posture shape changes change shell, MCP, and CLI behavior for target and chain inspection; runtime registry source-selection changes can alter which target roots flow into this read model without changing its posture semantics. |
+| Cross-shelf impact | Posture shape changes change shell, MCP, and CLI behavior for target and chain inspection; runtime registry source-selection and runtime-discovery MCP additions can alter sibling target-inspection surfaces without changing admission-chain posture semantics. |
 
 ## Evidence
 
 - Normative claims are in `test-plan.md` rows `R-ACR-1` through `R-ACR-4`.
 - Primary sources: `src/app/admissionChainReadModel.ts`, `src/app/liveTargetSessionInspection.ts`, `src/mcp/admissionChainSurface.ts`.
+- The `warp_ttd.inspect_runtime_discovery` tool is registered beside admission-chain inspection in `src/mcp/admissionChainSurface.ts`; its parity tests exercise MCP transport registration while leaving `R-ACR-1` through `R-ACR-4` unchanged.
