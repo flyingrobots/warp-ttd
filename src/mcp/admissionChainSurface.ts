@@ -14,6 +14,7 @@ import {
 } from "../app/admissionChainReadModel.ts";
 import { DebuggerSession } from "../app/debuggerSession.ts";
 import { inspectLiveTargets } from "../app/liveTargetInspection.ts";
+import { inspectRuntimeDiscovery } from "../app/runtimeDiscovery.ts";
 import { inspectRuntimeHello } from "../app/runtimeHelloInspection.ts";
 import type { AdapterCapability } from "../protocol.ts";
 
@@ -32,7 +33,8 @@ export const MCP_ADMISSION_TOOL_NAMES = {
   inspectReadings: "warp_ttd.inspect_readings",
   inspectAdmissionChain: "warp_ttd.inspect_admission_chain",
   inspectLiveTargets: "warp_ttd.inspect_live_targets",
-  inspectRuntimeHello: "warp_ttd.inspect_runtime_hello"
+  inspectRuntimeHello: "warp_ttd.inspect_runtime_hello",
+  inspectRuntimeDiscovery: "warp_ttd.inspect_runtime_discovery"
 } as const;
 
 export type McpAdmissionToolName =
@@ -49,6 +51,12 @@ export interface LiveTargetsInspection extends JsonObject {
 
 export interface RuntimeHelloInspection extends JsonObject {
   runtimeHello: readonly JsonObject[];
+}
+
+export interface RuntimeDiscoveryInspection extends JsonObject {
+  schemaVersion: string;
+  registry: JsonObject;
+  runtimeDiscovery: readonly JsonObject[];
 }
 
 export interface McpAdmissionChainServerOptions {
@@ -98,6 +106,10 @@ export async function inspectRuntimeHelloPosture(): Promise<RuntimeHelloInspecti
   return {
     runtimeHello: (await inspectRuntimeHello()).map((inspection) => jsonObject(inspection))
   };
+}
+
+export async function inspectRuntimeDiscoveryPosture(): Promise<RuntimeDiscoveryInspection> {
+  return jsonObject(await inspectRuntimeDiscovery()) as RuntimeDiscoveryInspection;
 }
 
 function toolResult(data: JsonObject): CallToolResult {
@@ -198,6 +210,16 @@ function runtimeHelloTool(): ReadOnlyToolRegistration {
   };
 }
 
+function runtimeDiscoveryTool(): ReadOnlyToolRegistration {
+  return {
+    name: MCP_ADMISSION_TOOL_NAMES.inspectRuntimeDiscovery,
+    title: "Inspect Runtime Discovery",
+    description:
+      "Return read-only Continuum runtime discovery posture for configured targets.",
+    callback: () => inspectRuntimeDiscoveryPosture()
+  };
+}
+
 function mcpToolRegistrations(
   getSession: () => Promise<DebuggerSession>
 ): readonly ReadOnlyToolRegistration[] {
@@ -207,7 +229,8 @@ function mcpToolRegistrations(
     readingTool(getSession),
     admissionChainTool(getSession),
     liveTargetsTool(),
-    runtimeHelloTool()
+    runtimeHelloTool(),
+    runtimeDiscoveryTool()
   ];
 }
 

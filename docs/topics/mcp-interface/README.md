@@ -60,9 +60,9 @@ This shelf defines read-only MCP tool behavior for inspection and admission-chai
 
 | Question | Answer |
 |---|---|
-| What this topic owns | tool registration, output payload shaping, read-only execution contracts, and cache-sensitive session reuse. |
+| What this topic owns | tool registration, output payload shaping, read-only execution contracts, cache-sensitive session reuse, and runtime discovery MCP parity. |
 | What it does not own | mutation-capable tool surfaces and interactive transport negotiation. |
-| How it works | MCP tooling reads session-derived material and projects it into read-only tool outputs with deterministic payload shaping. |
+| How it works | MCP tooling reads session-derived or discovery material and projects it into read-only tool outputs with deterministic payload shaping. |
 | Why this matters | inspection and automation clients rely on MCP outputs for triage and operational truth. |
 | First prerequisite | `protocol-contract` and `continuum-target-discovery`. |
 | What changes propagate | tool-contract changes shift what MCP callers can read, cache, and triage across sessions. |
@@ -99,6 +99,7 @@ High-risk compatibility boundary:
 | Tool list regression | expected tool missing from initialization | MCP clients fail to discover session functions | compare static tool registry and boot sequence | `test/mcpAdmissionChainSurface.spec.ts` |
 | Read-only violation | mutation-like request accepted for inspection endpoint | contract breach and safety risk | enforce read-only wrappers and guard handlers | `test/mcpAdmissionChainSurface.spec.ts` |
 | Session cache mismatch | session outputs vary across repeated tool calls | stale or incorrect posture in clients | validate cache invalidation and descriptor keys | `test/mcpAdmissionChainSurface.spec.ts` |
+| Runtime discovery parity drift | MCP `warp_ttd.inspect_runtime_discovery` differs from the runtime discovery read model | agents receive conflicting CLI/MCP posture facts | compare MCP structured content with `inspectRuntimeDiscovery` output | `test/mcpAdmissionChainSurface.spec.ts` |
 
 <a id="entry-impact"></a>
 ## Dependencies and impact
@@ -107,11 +108,11 @@ High-risk compatibility boundary:
 |---|---|
 | Depends on | `protocol-contract`, `debugger-session-core`, `shared-family-facts`, `continuum-target-discovery`. |
 | Used by | `cli-interface`, `tui-shell`, `worldline-visualization`, `admission-chain-read-model`. |
-| Cross-shelf impact | Tool output changes should be mirrored in CLI and discovery assertions. |
+| Cross-shelf impact | Tool output changes should be mirrored in CLI and runtime discovery assertions. |
 
 ## Evidence
 
-- Normative claims are in `test-plan.md` rows `R-MCP-1` through `R-MCP-4`.
+- Normative claims are in `test-plan.md` rows `R-MCP-1` through `R-MCP-5`.
 - Primary sources: `src/mcp/*.ts`, `src/app/*.ts`, `src/app/runtimeHelloInspection.ts`.
-- The 0078 runtime discovery design names a future `warp_ttd.inspect_runtime_discovery` surface; no MCP behavior changes until #149 lands, so the current MCP evidence rows remain unchanged.
-- The #147 runtime registry parser and fixture matrix are preparatory inputs for #149; they add no MCP tool registration, tool output field, or session cache behavior in this slice.
+- The `warp_ttd.inspect_runtime_discovery` surface returns the same runtime discovery read model that backs `discover --json`.
+- Runtime registry parser and fixture behavior remain upstream inputs; MCP parity evidence covers only the read-only tool projection over that read model.

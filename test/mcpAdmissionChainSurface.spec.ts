@@ -11,6 +11,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { EchoFixtureAdapter } from "../src/adapters/echoFixtureAdapter.ts";
 import { LIVE_ECHO_ADAPTER_PROBE_SCHEMA_VERSION } from "../src/app/echoAdapterProbe.ts";
 import { LIVE_ECHO_FAMILY_FACTS_MANIFEST } from "../src/app/liveEchoFamilyIntake.ts";
+import { inspectRuntimeDiscovery } from "../src/app/runtimeDiscovery.ts";
 import {
   MCP_ADMISSION_TOOL_NAMES,
   createMcpAdmissionChainServer
@@ -27,6 +28,7 @@ import { createFixture } from "./helpers/gitWarpFixture.ts";
 const HEAD_ID = "head:main";
 const MCP_INSPECT_LIVE_TARGETS_TOOL = "warp_ttd.inspect_live_targets";
 const MCP_INSPECT_RUNTIME_HELLO_TOOL = "warp_ttd.inspect_runtime_hello";
+const MCP_INSPECT_RUNTIME_DISCOVERY_TOOL = "warp_ttd.inspect_runtime_discovery";
 const GENERATED_ARTIFACT_ROOT = "dist/generated/continuum-echo-inspect";
 const REQUIRED_GENERATED_FILES = [
   "schemas.generated.ts",
@@ -201,6 +203,47 @@ function assertDefaultRuntimeHelloInspection(runtimeHello: readonly JsonObject[]
     false
   );
   assert.equal("evidence" in hello, false);
+}
+
+function runtimeDiscoveryRecords(data: JsonObject): readonly JsonObject[] {
+  return requireArray(data["runtimeDiscovery"], "runtimeDiscovery")
+    .map((entry) => requireRecord(entry, "runtimeDiscovery entry"));
+}
+
+function runtimeDiscoveryRecordByTarget(
+  records: readonly JsonObject[],
+  id: string
+): JsonObject {
+  const record = records.find((entry) => {
+    const target = requireRecord(entry["target"], "runtimeDiscovery.target");
+    return target["targetId"] === id;
+  });
+  assert.ok(record !== undefined, `missing runtime discovery record ${id}`);
+  return record;
+}
+
+function runtimeDiscoveryReasonCodes(record: JsonObject): readonly string[] {
+  return requireArray(record["reasons"], "runtimeDiscovery.reasons")
+    .map((entry) => requireRecord(entry, "runtimeDiscovery.reason")["code"])
+    .filter((code): code is string => typeof code === "string");
+}
+
+function assertRuntimeDiscoveryPosture(record: JsonObject, posture: string, code: string): void {
+  const target = requireRecord(record["target"], "runtimeDiscovery.target");
+  const targetId = requireString(target["targetId"], "runtimeDiscovery.target.targetId");
+  assert.equal(record["discoveryPosture"], posture);
+  assert.ok(
+    runtimeDiscoveryReasonCodes(record).includes(code),
+    `${targetId} missing ${code}`
+  );
+}
+
+function restoreEnv(name: string, value: string | undefined): void {
+  if (value === undefined) {
+    Reflect.deleteProperty(process.env, name);
+  } else {
+    process.env[name] = value;
+  }
 }
 
 function requireString(value: JsonValue | undefined, label: string): string {
@@ -505,6 +548,94 @@ test("MCP runtime hello inspection exposes the CLI-equivalent read model", async
       process.env["WARP_TTD_GRAFT_ROOT"] = previousGraftRoot;
     }
     await fixture.cleanup();
+    await closeMcp(client, server);
+  }
+});
+
+test("MCP runtime discovery inspection exposes the CLI-equivalent read model", async () => {
+  const fixture = await createFixture("runtime-discovery-mcp-graft", "graft-ast");
+  const previousJeditRoot = process.env["WARP_TTD_JEDIT_ROOT"];
+  const previousGraftRoot = process.env["WARP_TTD_GRAFT_ROOT"];
+  const previousRegistryJson = process.env["WARP_TTD_RUNTIME_REGISTRY_JSON"];
+  const previousRegistryPath = process.env["WARP_TTD_RUNTIME_REGISTRY_PATH"];
+  const { client, server } = await connectMcp();
+
+  try {
+    process.env["WARP_TTD_JEDIT_ROOT"] = path.join(fixture.tempDir, "missing-jedit");
+    process.env["WARP_TTD_GRAFT_ROOT"] = fixture.tempDir;
+    delete process.env["WARP_TTD_RUNTIME_REGISTRY_JSON"];
+    delete process.env["WARP_TTD_RUNTIME_REGISTRY_PATH"];
+
+    const result = structuredContent(await client.callTool({
+      name: MCP_INSPECT_RUNTIME_DISCOVERY_TOOL,
+      arguments: {}
+    }));
+    assert.deepEqual(result, await inspectRuntimeDiscovery());
+    const records = runtimeDiscoveryRecords(result);
+
+    assert.equal(result.schemaVersion, "warp-ttd.continuum-runtime-discovery-inspection.v1");
+    assertRuntimeDiscoveryPosture(
+      runtimeDiscoveryRecordByTarget(records, "jedit"),
+      "ABSENT",
+      "LOCAL_ROOT_MISSING"
+    );
+    assertRuntimeDiscoveryPosture(
+      runtimeDiscoveryRecordByTarget(records, "graft"),
+      "REACHABLE",
+      "RUNTIME_HELLO_PRESENT"
+    );
+  } finally {
+    restoreEnv("WARP_TTD_JEDIT_ROOT", previousJeditRoot);
+    restoreEnv("WARP_TTD_GRAFT_ROOT", previousGraftRoot);
+    restoreEnv("WARP_TTD_RUNTIME_REGISTRY_JSON", previousRegistryJson);
+    restoreEnv("WARP_TTD_RUNTIME_REGISTRY_PATH", previousRegistryPath);
+    await fixture.cleanup();
+    await closeMcp(client, server);
+  }
+});
+
+test("MCP runtime discovery preserves registry obstruction and redaction posture", async () => {
+  const previousRegistryJson = process.env["WARP_TTD_RUNTIME_REGISTRY_JSON"];
+  const previousRegistryPath = process.env["WARP_TTD_RUNTIME_REGISTRY_PATH"];
+  const { client, server } = await connectMcp();
+
+  try {
+    process.env["WARP_TTD_RUNTIME_REGISTRY_JSON"] = JSON.stringify({
+      schemaVersion: "warp-ttd.runtime-registry.v1",
+      runtimes: [
+        {
+          id: "vendor-endpoint",
+          connection: {
+            mode: "endpoint",
+            url: "https://example.invalid/runtime",
+            authToken: "must-not-leak"
+          }
+        },
+        { id: "broken-entry", connection: { mode: "echo-root" } }
+      ]
+    });
+    delete process.env["WARP_TTD_RUNTIME_REGISTRY_PATH"];
+
+    const result = structuredContent(await client.callTool({
+      name: MCP_INSPECT_RUNTIME_DISCOVERY_TOOL,
+      arguments: {}
+    }));
+    const records = runtimeDiscoveryRecords(result);
+    const endpoint = runtimeDiscoveryRecordByTarget(records, "vendor-endpoint");
+
+    assert.equal(requireRecord(result["registry"], "registry")["posture"], "OBSTRUCTED");
+    assertRuntimeDiscoveryPosture(endpoint, "UNSUPPORTED", "ENDPOINT_CONSENT_NOT_DESIGNED");
+    assert.equal(endpoint["consent"], "DESIGN_DEFERRED");
+    assertRuntimeDiscoveryPosture(
+      runtimeDiscoveryRecordByTarget(records, "broken-entry"),
+      "OBSTRUCTED",
+      "REGISTRY_ENTRY_CONNECTION_OBSTRUCTED"
+    );
+    assert.equal(JSON.stringify(result).includes("must-not-leak"), false);
+    assert.equal(JSON.stringify(result).includes("https://example.invalid/runtime"), false);
+  } finally {
+    restoreEnv("WARP_TTD_RUNTIME_REGISTRY_JSON", previousRegistryJson);
+    restoreEnv("WARP_TTD_RUNTIME_REGISTRY_PATH", previousRegistryPath);
     await closeMcp(client, server);
   }
 });
