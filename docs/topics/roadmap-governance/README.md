@@ -11,9 +11,9 @@ targets:
   - roadmap DAG generation
   - GitHub issue dependency sync
   - pre-pull-request governance
-status_last_reviewed: 2026-07-08
+status_last_reviewed: 2026-07-16
 date_created: 2026-07-08
-date_last_updated: 2026-07-08
+date_last_updated: 2026-07-16
 author: James <james@flyingrobots.dev>
 code_owners:
   - James <james@flyingrobots.dev>
@@ -31,7 +31,7 @@ verification:
     - npm run docs:check
     - npm run docs:evidence
     - npm run docs:impact
-  last_run: 2026-07-08
+  last_run: 2026-07-16
   notes: "Use Node 22 through mise when local Node versions cannot install native dependencies."
 test_plan: test-plan.md
 agent_entry_queries:
@@ -109,5 +109,6 @@ High-risk compatibility boundary:
 - Requirement rows `R-RMAP-1` through `R-RMAP-5` in `test-plan.md` define the governance contract.
 - Primary sources: `scripts/roadmap-dag.mjs`, `.github/workflows/roadmap.yml`, `AGENTS.md`, `ROADMAP.md`, and `package.json`.
 - Status-only ROADMAP/DAG projection changes, such as checking off completed child slices from GitHub issue state including #147, are covered by `R-RMAP-1` and `R-RMAP-5`; they do not introduce new roadmap governance behavior.
+- Goalpost projection changes, including #166 and its native blocker edges to #83, #84, and #86, are covered by `R-RMAP-1`; they change the planned work graph without changing runtime or roadmap-generator semantics.
 - Runtime command package-script additions, such as `npm run discover`, require the roadmap pre-push gate but do not change roadmap governance semantics when `npm run roadmap:check` remains green.
 - The retained protocol-boundary tests in `test/protocolPublicationBoundary.spec.ts` are behavior checks for generated protocol mirrors; Markdown/prose-examination tests are outside this shelf's accepted test model.
