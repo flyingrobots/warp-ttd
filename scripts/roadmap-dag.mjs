@@ -203,11 +203,25 @@ const ROADMAP_MODEL = [
     ],
     goalposts: [
       {
+        number: 166,
+        story:
+          'Inspect one exact causal coordinate through a selected observer perspective without changing actual history or effective authority.',
+        requirements: [
+          'Actual suffix, revelation, knowability, bounded alternatives, coverage, evidence, and obstruction posture are explicit.',
+          'CLI JSON and MCP expose the same pinned observer-relative reading before human rendering.',
+        ],
+        acceptance: [
+          'Two observer plans at one exact coordinate may receive different lawful readings while preserving the same admitted actual suffix.',
+          'Missing history, malformed evidence, and incomplete future coverage remain typed obstructions or residuals.',
+        ],
+        blockedBy: [83],
+      },
+      {
         number: 84,
         story: 'Design and expose the counterfactual branch workbench and worldline comparison read model.',
         requirements: ['Branch basis, intervention, assumptions, divergence, and comparison facts are explicit.'],
         acceptance: ['A reviewer can audit what changed and why from structured output.'],
-        blockedBy: [83],
+        blockedBy: [83, 166],
       },
       {
         number: 98,
@@ -286,7 +300,7 @@ const ROADMAP_MODEL = [
         story: 'Design and implement the human causal debugger workspace over agent-readable facts.',
         requirements: ['Evidence Timeline, Fact Inspector, and Inquiry Workbench compose prior structured surfaces.'],
         acceptance: ['No visual-only truth is required to understand or audit a debugging session.'],
-        blockedBy: [85],
+        blockedBy: [85, 166],
       },
       {
         number: 108,
