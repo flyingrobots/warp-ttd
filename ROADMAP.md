@@ -268,12 +268,12 @@ GitHub checklist:
     - blocked by [#124 Plan slices for #78: Continuum runtime discovery command and local registry](https://github.com/flyingrobots/warp-ttd/issues/124) (completed)
   - [x] [#147 [0078-S2] Local runtime registry schema and fixture matrix](https://github.com/flyingrobots/warp-ttd/issues/147) - child slice
     - blocked by [#146 [0078-S1] Method design for local runtime discovery registry](https://github.com/flyingrobots/warp-ttd/issues/146) (completed)
-  - [ ] [#148 [0078-S3] Runtime discovery CLI JSON surface](https://github.com/flyingrobots/warp-ttd/issues/148) - child slice
+  - [x] [#148 [0078-S3] Runtime discovery CLI JSON surface](https://github.com/flyingrobots/warp-ttd/issues/148) - child slice
     - blocked by [#147 [0078-S2] Local runtime registry schema and fixture matrix](https://github.com/flyingrobots/warp-ttd/issues/147) (completed)
   - [ ] [#149 [0078-S4] Runtime discovery MCP parity surface](https://github.com/flyingrobots/warp-ttd/issues/149) - child slice
-    - blocked by [#148 [0078-S3] Runtime discovery CLI JSON surface](https://github.com/flyingrobots/warp-ttd/issues/148) (open)
+    - blocked by [#148 [0078-S3] Runtime discovery CLI JSON surface](https://github.com/flyingrobots/warp-ttd/issues/148) (completed)
   - [ ] [#150 [0078-S5] Runtime discovery Manual and topic evidence update](https://github.com/flyingrobots/warp-ttd/issues/150) - child slice
-    - blocked by [#149 [0078-S4] Runtime discovery MCP parity surface](https://github.com/flyingrobots/warp-ttd/issues/149) (blocked by #148)
+    - blocked by [#149 [0078-S4] Runtime discovery MCP parity surface](https://github.com/flyingrobots/warp-ttd/issues/149) (open)
   - [ ] [#151 [0078-S6] Runtime discovery validation and goalpost closeout](https://github.com/flyingrobots/warp-ttd/issues/151) - child slice
     - blocked by [#150 [0078-S5] Runtime discovery Manual and topic evidence update](https://github.com/flyingrobots/warp-ttd/issues/150) (blocked by #149)
 Dependencies:
@@ -389,9 +389,29 @@ Acceptance criteria:
 - Actual-vs-branch and recorded-run-vs-recorded-run comparison facts are exportable.
 - Assumption and obstruction posture are visible in every branch comparison.
 
-#### Goalpost [#84 Counterfactual branch workbench and worldline comparison](https://github.com/flyingrobots/warp-ttd/issues/84)
+#### Goalpost [#166 Observer perspective and knowability read model](https://github.com/flyingrobots/warp-ttd/issues/166)
 
 Status: **blocked by #83**
+
+User story: Inspect one exact causal coordinate through a selected observer perspective without changing actual history or effective authority.
+
+Requirements:
+- Actual suffix, revelation, knowability, bounded alternatives, coverage, evidence, and obstruction posture are explicit.
+- CLI JSON and MCP expose the same pinned observer-relative reading before human rendering.
+
+Acceptance criteria:
+- Two observer plans at one exact coordinate may receive different lawful readings while preserving the same admitted actual suffix.
+- Missing history, malformed evidence, and incomplete future coverage remain typed obstructions or residuals.
+
+GitHub checklist:
+- [ ] [#166 Observer perspective and knowability read model](https://github.com/flyingrobots/warp-ttd/issues/166) - parent goalpost
+  - [ ] [#167 Plan slices for #166: Observer perspective and knowability read model](https://github.com/flyingrobots/warp-ttd/issues/167) - child slice
+Dependencies:
+- blocked by [#83 Causal query and breakpoint contract](https://github.com/flyingrobots/warp-ttd/issues/83) (blocked by #82)
+
+#### Goalpost [#84 Counterfactual branch workbench and worldline comparison](https://github.com/flyingrobots/warp-ttd/issues/84)
+
+Status: **blocked by #166, #83**
 
 User story: Design and expose the counterfactual branch workbench and worldline comparison read model.
 
@@ -406,6 +426,7 @@ GitHub checklist:
   - [ ] [#128 Plan slices for #84: Counterfactual branch workbench and worldline comparison](https://github.com/flyingrobots/warp-ttd/issues/128) - child slice
 Dependencies:
 - blocked by [#83 Causal query and breakpoint contract](https://github.com/flyingrobots/warp-ttd/issues/83) (blocked by #82)
+- blocked by [#166 Observer perspective and knowability read model](https://github.com/flyingrobots/warp-ttd/issues/166) (blocked by #83)
 
 #### Goalpost [#98 Cool idea: Causal delta minimizer for counterfactual branches](https://github.com/flyingrobots/warp-ttd/issues/98)
 
@@ -423,7 +444,7 @@ GitHub checklist:
 - [ ] [#98 Cool idea: Causal delta minimizer for counterfactual branches](https://github.com/flyingrobots/warp-ttd/issues/98) - parent goalpost
   - [ ] [#136 Plan slices for #98: Cool idea: Causal delta minimizer for counterfactual branches](https://github.com/flyingrobots/warp-ttd/issues/136) - child slice
 Dependencies:
-- blocked by [#84 Counterfactual branch workbench and worldline comparison](https://github.com/flyingrobots/warp-ttd/issues/84) (blocked by #83)
+- blocked by [#84 Counterfactual branch workbench and worldline comparison](https://github.com/flyingrobots/warp-ttd/issues/84) (blocked by #166, #83)
 
 ### M4. Evidence Ledger And Durable Investigation Assets
 
@@ -477,7 +498,7 @@ GitHub checklist:
 - [ ] [#85 Evidence ledger and investigation report export](https://github.com/flyingrobots/warp-ttd/issues/85) - parent goalpost
   - [ ] [#129 Plan slices for #85: Evidence ledger and investigation report export](https://github.com/flyingrobots/warp-ttd/issues/129) - child slice
 Dependencies:
-- blocked by [#84 Counterfactual branch workbench and worldline comparison](https://github.com/flyingrobots/warp-ttd/issues/84) (blocked by #83)
+- blocked by [#84 Counterfactual branch workbench and worldline comparison](https://github.com/flyingrobots/warp-ttd/issues/84) (blocked by #166, #83)
 - blocked by [#116 COOL IDEA: Tap-shaped debugger session event outbox](https://github.com/flyingrobots/warp-ttd/issues/116) (blocked by #82)
 
 #### Goalpost [#115 Compliance reporting as a TTD protocol extension](https://github.com/flyingrobots/warp-ttd/issues/115)
@@ -519,7 +540,7 @@ Acceptance criteria:
 
 #### Goalpost [#86 Human causal debugger workspace over agent-readable facts](https://github.com/flyingrobots/warp-ttd/issues/86)
 
-Status: **blocked by #85**
+Status: **blocked by #166, #85**
 
 User story: Design and implement the human causal debugger workspace over agent-readable facts.
 
@@ -534,6 +555,7 @@ GitHub checklist:
   - [ ] [#130 Plan slices for #86: Human causal debugger workspace over agent-readable facts](https://github.com/flyingrobots/warp-ttd/issues/130) - child slice
 Dependencies:
 - blocked by [#85 Evidence ledger and investigation report export](https://github.com/flyingrobots/warp-ttd/issues/85) (blocked by #116, #84)
+- blocked by [#166 Observer perspective and knowability read model](https://github.com/flyingrobots/warp-ttd/issues/166) (blocked by #83)
 
 #### Goalpost [#108 [LP-GP4-S1] Launchpad browser runtime hello target descriptor](https://github.com/flyingrobots/warp-ttd/issues/108)
 
@@ -607,7 +629,7 @@ GitHub checklist:
 - [ ] [#56 Browser TTD delivery adapter](https://github.com/flyingrobots/warp-ttd/issues/56) - parent goalpost
   - [ ] [#121 Plan slices for #56: Browser TTD delivery adapter](https://github.com/flyingrobots/warp-ttd/issues/121) - child slice
 Dependencies:
-- blocked by [#86 Human causal debugger workspace over agent-readable facts](https://github.com/flyingrobots/warp-ttd/issues/86) (blocked by #85)
+- blocked by [#86 Human causal debugger workspace over agent-readable facts](https://github.com/flyingrobots/warp-ttd/issues/86) (blocked by #166, #85)
 - blocked by [#106 [LP-GP4-S3] Rewind current visit control contract](https://github.com/flyingrobots/warp-ttd/issues/106) (blocked by #107)
 - blocked by [#108 [LP-GP4-S1] Launchpad browser runtime hello target descriptor](https://github.com/flyingrobots/warp-ttd/issues/108) (blocked by #78)
 
@@ -628,7 +650,7 @@ GitHub checklist:
   - [ ] [#144 Plan slices for #117: VISOR target: inspect Bijou artifact bundles in the browser debugger](https://github.com/flyingrobots/warp-ttd/issues/144) - child slice
 Dependencies:
 - blocked by [#56 Browser TTD delivery adapter](https://github.com/flyingrobots/warp-ttd/issues/56) (blocked by #86, #108, #106)
-- blocked by [#86 Human causal debugger workspace over agent-readable facts](https://github.com/flyingrobots/warp-ttd/issues/86) (blocked by #85)
+- blocked by [#86 Human causal debugger workspace over agent-readable facts](https://github.com/flyingrobots/warp-ttd/issues/86) (blocked by #166, #85)
 
 ### M6. North-Star Workbench, Worker, Verify, And Ledger Loop
 
@@ -675,7 +697,7 @@ GitHub checklist:
 - [ ] [#28 Tooling: Reliving debugger UX (Constraint Lens + Provenance Heatmap)](https://github.com/flyingrobots/warp-ttd/issues/28) - parent goalpost
   - [ ] [#118 Plan slices for #28: Tooling: Reliving debugger UX (Constraint Lens + Provenance Heatmap)](https://github.com/flyingrobots/warp-ttd/issues/118) - child slice
 Dependencies:
-- blocked by [#86 Human causal debugger workspace over agent-readable facts](https://github.com/flyingrobots/warp-ttd/issues/86) (blocked by #85)
+- blocked by [#86 Human causal debugger workspace over agent-readable facts](https://github.com/flyingrobots/warp-ttd/issues/86) (blocked by #166, #85)
 
 #### Goalpost [#29 TT2: Reliving debugger MVP (scrub timeline + causal slice + fork branch)](https://github.com/flyingrobots/warp-ttd/issues/29)
 
@@ -693,7 +715,7 @@ GitHub checklist:
 - [ ] [#29 TT2: Reliving debugger MVP (scrub timeline + causal slice + fork branch)](https://github.com/flyingrobots/warp-ttd/issues/29) - parent goalpost
   - [ ] [#119 Plan slices for #29: TT2: Reliving debugger MVP (scrub timeline + causal slice + fork branch)](https://github.com/flyingrobots/warp-ttd/issues/119) - child slice
 Dependencies:
-- blocked by [#86 Human causal debugger workspace over agent-readable facts](https://github.com/flyingrobots/warp-ttd/issues/86) (blocked by #85)
+- blocked by [#86 Human causal debugger workspace over agent-readable facts](https://github.com/flyingrobots/warp-ttd/issues/86) (blocked by #166, #85)
 
 #### Goalpost [#31 TT3: Rulial diff / worldline compare MVP](https://github.com/flyingrobots/warp-ttd/issues/31)
 
@@ -711,7 +733,7 @@ GitHub checklist:
 - [ ] [#31 TT3: Rulial diff / worldline compare MVP](https://github.com/flyingrobots/warp-ttd/issues/31) - parent goalpost
   - [ ] [#120 Plan slices for #31: TT3: Rulial diff / worldline compare MVP](https://github.com/flyingrobots/warp-ttd/issues/120) - child slice
 Dependencies:
-- blocked by [#84 Counterfactual branch workbench and worldline comparison](https://github.com/flyingrobots/warp-ttd/issues/84) (blocked by #83)
+- blocked by [#84 Counterfactual branch workbench and worldline comparison](https://github.com/flyingrobots/warp-ttd/issues/84) (blocked by #166, #83)
 
 ## Dependency Checklist
 
@@ -724,13 +746,16 @@ These expected repository-local blocker edges are part of the planned product se
 - [x] [#113 Reconcile TTD protocol schemas with warp-ttd](https://github.com/flyingrobots/warp-ttd/issues/113) blocks [#82 Debugger capability discovery read model](https://github.com/flyingrobots/warp-ttd/issues/82)
 - [x] [#82 Debugger capability discovery read model](https://github.com/flyingrobots/warp-ttd/issues/82) blocks [#83 Causal query and breakpoint contract](https://github.com/flyingrobots/warp-ttd/issues/83)
 - [x] [#83 Causal query and breakpoint contract](https://github.com/flyingrobots/warp-ttd/issues/83) blocks [#100 Cool idea: Why-not causal query surface](https://github.com/flyingrobots/warp-ttd/issues/100)
+- [x] [#83 Causal query and breakpoint contract](https://github.com/flyingrobots/warp-ttd/issues/83) blocks [#166 Observer perspective and knowability read model](https://github.com/flyingrobots/warp-ttd/issues/166)
 - [x] [#83 Causal query and breakpoint contract](https://github.com/flyingrobots/warp-ttd/issues/83) blocks [#84 Counterfactual branch workbench and worldline comparison](https://github.com/flyingrobots/warp-ttd/issues/84)
+- [x] [#166 Observer perspective and knowability read model](https://github.com/flyingrobots/warp-ttd/issues/166) blocks [#84 Counterfactual branch workbench and worldline comparison](https://github.com/flyingrobots/warp-ttd/issues/84)
 - [x] [#84 Counterfactual branch workbench and worldline comparison](https://github.com/flyingrobots/warp-ttd/issues/84) blocks [#98 Cool idea: Causal delta minimizer for counterfactual branches](https://github.com/flyingrobots/warp-ttd/issues/98)
 - [x] [#82 Debugger capability discovery read model](https://github.com/flyingrobots/warp-ttd/issues/82) blocks [#116 COOL IDEA: Tap-shaped debugger session event outbox](https://github.com/flyingrobots/warp-ttd/issues/116)
 - [x] [#84 Counterfactual branch workbench and worldline comparison](https://github.com/flyingrobots/warp-ttd/issues/84) blocks [#85 Evidence ledger and investigation report export](https://github.com/flyingrobots/warp-ttd/issues/85)
 - [x] [#116 COOL IDEA: Tap-shaped debugger session event outbox](https://github.com/flyingrobots/warp-ttd/issues/116) blocks [#85 Evidence ledger and investigation report export](https://github.com/flyingrobots/warp-ttd/issues/85)
 - [x] [#85 Evidence ledger and investigation report export](https://github.com/flyingrobots/warp-ttd/issues/85) blocks [#115 Compliance reporting as a TTD protocol extension](https://github.com/flyingrobots/warp-ttd/issues/115)
 - [x] [#85 Evidence ledger and investigation report export](https://github.com/flyingrobots/warp-ttd/issues/85) blocks [#86 Human causal debugger workspace over agent-readable facts](https://github.com/flyingrobots/warp-ttd/issues/86)
+- [x] [#166 Observer perspective and knowability read model](https://github.com/flyingrobots/warp-ttd/issues/166) blocks [#86 Human causal debugger workspace over agent-readable facts](https://github.com/flyingrobots/warp-ttd/issues/86)
 - [x] [#78 Continuum runtime discovery command and local registry](https://github.com/flyingrobots/warp-ttd/issues/78) blocks [#108 [LP-GP4-S1] Launchpad browser runtime hello target descriptor](https://github.com/flyingrobots/warp-ttd/issues/108)
 - [x] [#108 [LP-GP4-S1] Launchpad browser runtime hello target descriptor](https://github.com/flyingrobots/warp-ttd/issues/108) blocks [#107 [LP-GP4-S2] Browser replay tick history read model](https://github.com/flyingrobots/warp-ttd/issues/107)
 - [x] [#82 Debugger capability discovery read model](https://github.com/flyingrobots/warp-ttd/issues/82) blocks [#107 [LP-GP4-S2] Browser replay tick history read model](https://github.com/flyingrobots/warp-ttd/issues/107)
