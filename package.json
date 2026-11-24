@@ -53,11 +53,11 @@
     "@flyingrobots/bijou-tui": "^4.4.0",
     "@git-stunts/git-warp": "^16.0.0",
     "@git-stunts/plumbing": "^2.8.0",
-    "@modelcontextprotocol/sdk": "^1.29.0"
+    "@modelcontextprotocol/sdk": "^1.32.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@mermaid-js/mermaid-cli": "^11.15.0",
+    "@mermaid-js/mermaid-cli": "^11.17.1",
     "@types/node": "^22.19.15",
     "eslint": "^10.1.0",
     "typescript": "^5.9.3",
