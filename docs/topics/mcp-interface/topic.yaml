@@ -13,7 +13,9 @@ depends_on:
   - "shared-family-facts"
   - "continuum-target-discovery"
 owns:
-[]
+  - "src/mcp/admissionChainSurface.ts"
+  - "src/mcp/main.ts"
+  - "test/mcpAdmissionChainSurface.spec.ts"
 entrypoints:
   onboarding: "README.md#entry-onboarding"
   edit: "README.md#entry-edit"
